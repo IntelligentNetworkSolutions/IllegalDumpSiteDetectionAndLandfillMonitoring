@@ -1,0 +1,327 @@
+﻿@using MainApp.Helpers;
+@using Microsoft.AspNetCore.Http.Extensions;
+@using Microsoft.AspNetCore.Localization;
+@using SD.Helpers;
+@model Models.ViewModels.MyProfileViewModel
+@{
+    ViewData["Title"] = @DbResHtml.T("My profile", "Resources");
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("User account page", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title">@DbResHtml.T("User Data", "Resources")</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="col-form-label">@DbResHtml.T("First name", "Resources")</label>
+                                <input class="form-control" readonly value="@Model.FirstName" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="col-form-label">@DbResHtml.T("Last name", "Resources")</label>
+                                <input class="form-control" readonly value="@Model.LastName" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="col-form-label">@DbResHtml.T("Username", "Resources")</label>
+                                <input class="form-control" readonly value="@Model.Username" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="col-form-label">@DbResHtml.T("Email", "Resources")</label>
+                                <input class="form-control" readonly value="@Model.Email" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <form method="post" asp-area="IntranetPortal" asp-controller="Account" asp-action="UpdatePassword">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h3 class="card-title">@DbResHtml.T("Change password", "Resources")</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="currentPassword" class="form-label">@DbResHtml.T("Current Password", "Resources")</label>
+                                <input id="currentPassword" type="password" name="currentPassword" class="form-control" required />                                
+                            </div>
+                            <div class="form-group">
+                                <label for="password" class="form-label">@DbResHtml.T("Password", "Resources")</label>
+                                <input type="password" class="form-control" name="password" id="password" autocomplete="new-password" onkeyup='check()' required>
+                               
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword" class="control-label">@DbResHtml.T("Confirm Password", "Resources")</label>
+                                <input type="password" id="confirmPassword" name="confirmNewPassword" class="form-control" autocomplete="new-password" onkeyup='check()' required />
+                                <span id='message'></span>
+                            </div>
+                            <div class="form-group">
+                                <input class="btn bg-gradient-success" type="button" value="@DbResHtml.T("Submit", "Resources")" onclick="submitFormChangePassword(event)" />
+                            </div>
+
+                        </div>
+                    </div>
+                </form>
+                @*<form method="post" asp-area="IntranetPortal" asp-controller="Account" asp-action="UpdatePassword">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h3 class="card-title">@DbResHtml.T("Change password", "Resources")</h3>
+                        </div>
+                        <div class="card-body">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <input type="hidden" asp-for="UserId" />
+                            <input type="hidden" asp-for="FirstName" />
+                            <input type="hidden" asp-for="LastName" />
+                            <input type="hidden" asp-for="Username" />
+                            <input type="hidden" asp-for="Email" />
+                            
+                            <div class="form-group">
+                                <label asp-for="CurrentPassword" class="form-label">@DbResHtml.T("Current Password", "Resources")</label>
+                                <input asp-for="CurrentPassword" id="insertedCurrentPassword" type="password" class="form-control" required />
+                                <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="NewPassword" class="form-label">@DbResHtml.T("Password", "Resources")</label>
+                                <input asp-for="NewPassword" type="password" class="form-control" id="password" autocomplete="new-password" onkeyup='check();' required>
+                                <span asp-validation-for="NewPassword" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="ConfirmNewPassword" class="control-label">@DbResHtml.T("Confirm Password", "Resources")</label>
+                                <input asp-for="ConfirmNewPassword" type="password" id="confirmPassword" class="form-control" autocomplete="new-password" onkeyup='check();' required />
+                                <span asp-validation-for="ConfirmNewPassword" class="text-danger"></span>
+                                <span id='message'></span>
+                            </div>
+                            <div class="form-group">
+                                <input class="btn bg-gradient-success" type="submit" value="@DbResHtml.T("Submit", "Resources")" onclick="submitFormChangePassword(event)" />
+                            </div>
+                            
+                        </div>
+                    </div>
+                </form>*@
+            </div>
+            <div class="col-md-6">
+                <form method="post" asp-area="IntranetPortal" asp-controller="Account" asp-action="SetCulture">
+                    <div class="card">
+                        <div class="card-header text-white bg-dark">
+                            <div class="card-title">@DbResHtml.T("Preferred Language", "Resources")</div>
+                        </div>
+                        <div class="card-body">
+                            @{
+                                var httpContext = ViewContext.HttpContext;
+                                var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture;
+                                var currentUrl = UriHelper.BuildRelative(httpContext.Request.PathBase, httpContext.Request.Path, httpContext.Request.QueryString);
+                            }
+                            <input type="hidden" name="returnUrl" value="@currentUrl">
+                            <div class="form-group">
+                                <label class="col-form-label">@DbResHtml.T("Language", "Resources")</label>
+                                <select class="form-control" name="culture" id="ddlPreferredLanguages"></select>
+                            </div>
+                            <div class="float-right">
+                                <button class="btn bg-gradient-success" type="submit" onclick="checkInsertedLanguage(event)">@DbResHtml.T("Submit", "Resources")</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+        $(document).ready(function(){
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetAllLanguages", "Account", new { Area = "IntranetPortal" })",
+                data: {},
+                success: function (data) {
+                    var responseArray = JSON.parse(data);
+                    Object.keys(responseArray).forEach(function (key) {
+                        $("#ddlPreferredLanguages").append($('<option></option>').val(key).html(responseArray[key]));
+                    });
+                    var prefLang = "@Model.PreferredLanguage";
+                    $("#ddlPreferredLanguages").val(prefLang);
+
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        text: `@DbResHtml.T("Something went wrong!", "Resources") - ${req.status}`
+                    })
+                }
+            });
+            $('#ddlPreferredLanguages').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Select language", "Resources")",
+                allowClear: true
+            })
+        });
+
+        function checkInsertedLanguage(event) {
+            if ($("#ddlPreferredLanguages").val() == "") {
+                event.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Language is required", "Resources")',
+                })
+                return;
+            }
+        }
+
+        var check = function () {
+            var passwordMinLength = @Model.PasswordMinLength;
+            var passwordMustHaveLetters = "@Model.PasswordMustHaveLetters";
+            var passwordMustHaveNumbers = "@Model.PasswordMustHaveNumbers";
+            var regExpLetter = /[a-zA-Z]/g
+
+            if ($('#password').val() != '' || $('#confirmPassword').val() != ''){
+                if ($("#password").val().length < passwordMinLength || (passwordMustHaveLetters == "True" && !regExpLetter.test($("#password").val()))
+                    || (passwordMustHaveNumbers == "True" && !/\d/.test($("#password").val()))) {
+                    $('#message').css('color', 'red');
+                    var message = "@DbResHtml.T("Minimum password length: ", "Resources")" + passwordMinLength;
+
+                    if (passwordMustHaveLetters == "True") {
+                        message += "@DbResHtml.T(". Must contain at least one letter", "Resources")";
+                    }
+                    if (passwordMustHaveNumbers == "True") {
+                        message += "@DbResHtml.T(". Must contain at least one number ", "Resources")";
+                    }
+                    $('#message').html(message);
+                }
+                else if ($('#password').val() == $('#confirmPassword').val()) {
+                    $('#message').css('color', 'green');
+                    $('#message').html('@DbResHtml.T("matching", "Resources")');
+                }
+                else {
+                    $('#message').css('color', 'red');
+                    $('#message').html('@DbResHtml.T("not matching", "Resources")');
+                }
+            }else{
+                $('#message').empty();
+            }
+            
+        }
+
+        function submitFormChangePassword(event) {
+            var passwordMinLength = @Model.PasswordMinLength;
+            var passwordMustHaveLetters = "@Model.PasswordMustHaveLetters";
+            var passwordMustHaveNumbers = "@Model.PasswordMustHaveNumbers";
+            var regExpLetter = /[a-zA-Z]/g;                                
+          
+            if (($('#confirmPassword').val() != "" || $('#password').val() != "") && $("#password").val().length < passwordMinLength) {                
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Minimum characters for password: ", "Resources")' + passwordMinLength
+                })
+                event.preventDefault();
+                return false;
+            }
+            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && passwordMustHaveLetters == "True" && !regExpLetter.test($("#password").val())) {
+                
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Password must contain at least one letter", "Resources")' + passwordMinLength
+                })
+                event.preventDefault();
+                return false;
+            }
+            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && passwordMustHaveNumbers == "True" && !/\d/.test($("#password").val())) {
+                
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Password must contain at least one number", "Resources")' + passwordMinLength
+                })
+                event.preventDefault();
+                return false;
+            }
+            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && $('#confirmPassword').val() != $('#password').val()) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Passwords do not match!", "Resources")'
+                })
+                event.preventDefault();
+                return false;
+            }
+            else {
+                var userId = "@Model.UserId";
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("UpdatePassword", "Account", new { Area = "IntranetPortal" })",
+                    data: {
+                        currentPassword: $.trim($("#currentPassword").val()),
+                        password: $.trim($("#password").val()),
+                        confirmNewPassword: $.trim($("#confirmPassword").val()),
+                        userId: userId
+                    },
+                    success: function (data) {  
+                        $("#password").val("");
+                        $("#confirmPassword").val("");
+                        $("#currentPassword").val("");
+                        $('#message').empty();
+                        if (data.currentPasswordFailed == true){
+                            Swal.fire({
+                                icon: 'warning',
+                                text: '@DbResHtml.T("Current password is incorrect!", "Resources")'
+                            })
+                        }else if(data.paswwordFieldsEmpty == true){
+                            Swal.fire({
+                                icon: 'warning',
+                                text: '@DbResHtml.T("Please provied correct password values!", "Resources")'
+                            })
+                        }else if(data.passwordUpdatedSuccessfully == true){
+                             Swal.fire({
+                                icon: 'success',
+                                text: '@DbResHtml.T("Password has been successfully changed", "Resources")'
+                            })
+                        } else if (data.userDbNotFound) {
+                            Swal.fire({
+                                icon: 'warning',
+                                text: '@DbResHtml.T("User not found!", "Resources")'
+                            })
+                        } else if (data.wrongUserId) {
+                            Swal.fire({
+                                icon: 'warning',
+                                text: '@DbResHtml.T("Wrong user id!", "Resources")'
+                            })
+                        } else{
+                            Swal.fire({
+                                icon: 'error',
+                                text: '@DbResHtml.T("Something went wrong!", "Resources")'
+                            })
+                        }
+                       
+                    },
+                    error: function (req, status, error) {
+                        Swal.fire({
+                            icon: 'error',
+                            text: `@DbResHtml.T("Something went wrong!", "Resources") - ${req.status}`
+                        })
+                    }
+                });
+            }
+        }
+    </script>
+}

@@ -1,0 +1,68 @@
+﻿@using MainApp.Helpers;
+@using Microsoft.AspNetCore.Localization;
+@model IEnumerable<Models.ViewModels.AuditLogListViewModel>
+
+<div class="table-responsive">
+    <table class="table table-striped" id="auditDataTable">
+        <thead>
+            <tr>
+                <th>
+                    @DbResHtml.T("Audit Internal User", "Resources")
+                </th>
+                <th>
+                    @DbResHtml.T("Audit Action", "Resources")
+                </th>
+                <th>
+                    @DbResHtml.T("Entity Type", "Resources")
+                </th>
+                <th>
+                    @DbResHtml.T("Audit Date", "Resources")
+                </th>
+                <th>
+                    @DbResHtml.T("Action", "Resources")
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-area="IntranetPortal" asp-controller="AuditLogs" asp-action="RedirectToUserManagement" asp-route-username="@item.AuditInternalUser" target="_blank"> @item.AuditInternalUser</a>
+                    </td>
+                    
+                    <td>
+                        @Html.DisplayFor(modelItem => item.AuditAction)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.EntityType)
+                    </td>
+                    <td>
+                        @Convert.ToDateTime(item.AuditDate).ToString("dd.MM.yyyy HH:mm:ss")
+                    </td>
+                    <td>
+                        <button onclick="viewAuditData('@item.AuditLogId')" class="mb-1 btn bg-gradient-success far fa-eye" data-toggle="modal" data-target="#auditDataModal" title=" @DbResHtml.T("Audit data", "Resources")"></button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+            @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+    $(document).ready(function () {
+        $('#auditDataTable').DataTable({
+            paging: true,
+            pageLength: 100,
+            "language": {
+               "url": "@langPath"
+            }
+        });
+
+    })
+</script>

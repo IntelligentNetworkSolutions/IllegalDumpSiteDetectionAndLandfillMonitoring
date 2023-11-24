@@ -1,0 +1,395 @@
+﻿@using MainApp.Helpers;
+@using Microsoft.AspNetCore.Localization;
+@using SD.Helpers;
+@model Models.ViewModels.UserManagementEditUserViewModel
+
+
+@{
+    ViewData["Title"] = @DbResHtml.T("Edit User", "Resources");
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Edit user roles, claims and additional data", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <form asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="EditUser" method="post" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h3 class="card-title">@DbResHtml.T("Form for edit user", "Resources")</h3>
+                        </div>
+                        <div class="card-body">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <label asp-for="FirstName" class="form-label">@DbResHtml.T("First name", "Resources")</label>
+                                <input asp-for="FirstName" type="text" class="form-control" required>
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="LastName" class="form-label">@DbResHtml.T("Last name", "Resources")</label>
+                                <input asp-for="LastName" type="text" class="form-control" required>
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="UserName" class="form-label">@DbResHtml.T("Username", "Resources")</label>
+                                <input asp-for="UserName" id="insertedUsername" type="text" class="form-control" required>
+                                <span asp-validation-for="UserName" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Email" class="form-label">Email</label>
+                                <input asp-for="Email" id="insertedEmailAddress" type="email" class="form-control" required>
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="PhoneNumber" class="form-label">@DbResHtml.T("Name", "Resources")</label>
+                                <input asp-for="PhoneNumber" type="text" class="form-control" required>
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="RolesInsert" class="form-label">@DbResHtml.T("Multiple roles", "Resources")</label>
+                                <select name="RolesInsert" id="rolesInsertId" class="form-control select2" style="width:100%;" onchange="checkRoleClaims()" multiple>
+                                    @foreach (var item in Model.RolesInsert)
+                                    {
+                                        <option value="@item" selected="selected">
+                                            @Model.Roles.Where(z => z.Id == @item).FirstOrDefault().Name
+                                        </option>
+                                    }
+                                    @foreach (var item in Model.Roles.Where(z => !Model.RolesInsert.Contains(z.Id)))
+                                    {
+                                        <option value="@item.Id">
+                                            @item.Name
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Password" class="form-label">@DbResHtml.T("Password", "Resources")</label>
+                                <input asp-for="Password" type="password" class="form-control" id="password" autocomplete="new-password" onkeyup='checkPassword();'>
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="ConfirmPassword" class="control-label">@DbResHtml.T("Confirm Password", "Resources")</label>
+                                <input asp-for="ConfirmPassword" id="confirmPassword" class="form-control" autocomplete="new-password" onkeyup='checkPassword();' />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                <span id='message'></span>
+                            </div>
+                            <div class="form-group clearfix">
+                                <div class="icheck-success">
+                                    <input asp-for="IsActive.Value" type="checkbox" id="isActive" name="IsActive">
+                                    <label for="isActive">@DbResHtml.T("Enable user", "Resources")</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input @( !User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles) ? "disabled='disabled'" : "") type="submit" onclick="formSubmit(event)" value="@DbResHtml.T("Save", "Resources")" class="mb-1 btn bg-gradient-success border-0" />
+                                <a asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="Index" class="mb-1 btn bg-gradient-secondary border-0">@DbResHtml.T("Back To List", "Resources")</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h3 class="card-title">@DbResHtml.T("Add additional privileges", "Resources")</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped my-4 w-100" id="editUserTable">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                @DbResHtml.T("Privilege name", "Resources")
+                                            </th>
+                                            <th>
+                                                @DbResHtml.T("Privilege description", "Resources")
+                                            </th>
+                                            <th>
+                                                @DbResHtml.T("Included privileges", "Resources")
+                                            </th>
+
+                                            <th data-check-all="data-check-all">
+                                                <div class="icheck-success mb-0">
+                                                    <input id="checkAll" data-title="Check All" type="checkbox" data-toggle="tooltip">
+                                                    <label for="checkAll">@DbResHtml.T("Check all claims", "Resources")</label>
+                                                </div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @Html.HiddenFor(z => z.Id)
+                                        @foreach (SD.AuthClaim item in Model.Claims)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @Html.DisplayFor(modelItem => item.Value)
+                                                </td>
+                                                <td>
+                                                    @item.Description
+                                                </td>
+                                                <td>
+                                                    <div class="form-group clearfix">
+                                                        <div class="icheck-success">
+                                                            <input id="roles-@item.Value" class="roleClaims " name="RoleClaims" value="@item.Value" type="checkbox">
+                                                            <label for="roles-@item.Value"></label>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="form-group clearfix">
+                                                        <div class="icheck-success">
+                                                            <input id="claims-@item.Value" class="userClaims" name="ClaimsInsert" value="@item.Value" type="checkbox">
+                                                            <label for="claims-@item.Value"></label>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+@section Scripts{
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+        var checkPassword = function () {
+            var passwordMinLength = @Model.PasswordMinLength;
+            var passwordMustHaveLetters = "@Model.PasswordMustHaveLetters";
+            var passwordMustHaveNumbers = "@Model.PasswordMustHaveNumbers";
+            var regExpLetter = /[a-zA-Z]/g
+
+            if ($('#password').val() != '' || $('#confirmPassword').val() != '') {
+                if ($("#password").val().length < passwordMinLength || (passwordMustHaveLetters == "True" && !regExpLetter.test($("#password").val()))
+                    || (passwordMustHaveNumbers == "True" && !/\d/.test($("#password").val()))) {
+                    $('#message').css('color', 'red');
+                    var message = "@DbResHtml.T("Minimum password length: ", "Resources")" + passwordMinLength;
+
+                    if (passwordMustHaveLetters == "True") {
+                        message += "@DbResHtml.T(". Must contain at least one letter", "Resources")";
+                    }
+                    if (passwordMustHaveNumbers == "True") {
+                        message += "@DbResHtml.T(". Must contain at least one number ", "Resources")";
+                    }
+                    $('#message').html(message);
+                }
+                else if ($('#password').val() == $('#confirmPassword').val()) {
+                    $('#message').css('color', 'green');
+                    $('#message').html('@DbResHtml.T("matching", "Resources")');
+                }
+                else {
+                    $('#message').css('color', 'red');
+                    $('#message').html('@DbResHtml.T("not matching", "Resources")');
+                }
+            } else {
+                $('#message').empty();
+            }
+
+        }
+        function formSubmit(event) {
+
+            var passwordMinLength = @Model.PasswordMinLength;
+            var passwordMustHaveLetters = "@Model.PasswordMustHaveLetters";
+            var passwordMustHaveNumbers = "@Model.PasswordMustHaveNumbers";
+            var regExpLetter = /[a-zA-Z]/g;
+            var regexForEmail = /^([\w.\-]+)@@([\w\-]+)((\.(\w){2,3})+)$/;
+            var insertedUsername = $("#insertedUsername").val();
+            var insertedEmail = $("#insertedEmailAddress").val();
+            var allAppUsers = @Html.Raw(Json.Serialize(Model.AllUsersExceptCurrent));
+            var existingEmail = [];
+            var existingUsername = [];
+            existingEmail = [];
+            existingUsername = [];
+
+            if (!regexForEmail.test(insertedEmail)) {
+                event.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Please use a valid format for email address", "Resources")'
+                })
+                return;
+            }
+
+            for (var i = 0; i < allAppUsers.length; i++) {
+                if (insertedUsername == allAppUsers[i].userName) {
+                    existingUsername.push(allAppUsers[i].userName);
+                }
+                if (insertedEmail == allAppUsers[i].email) {
+                    existingEmail.push(allAppUsers[i].email);
+                }
+            }
+
+            if (existingEmail.length !== 0 && existingUsername.length === 0) {
+                event.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("User with the same email already exists!", "Resources")'
+                })
+                return;
+            } else if (existingEmail.length === 0 && existingUsername.length !== 0) {
+                event.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                   text: '@DbResHtml.T("User with the same username already exists!", "Resources")'
+                })
+                return;
+            } else if (existingEmail.length !== 0 && existingUsername.length !== 0) {
+                event.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("User with the same email annd username already exists!", "Resources")'
+                })
+                return;
+            } else {
+                return true;
+            }
+
+            if (($('#confirmPassword').val() != "" || $('#password').val() != "") && $("#password").val().length < passwordMinLength) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Minimum characters for password: ", "Resources")' + passwordMinLength
+                })
+                event.preventDefault();
+                return false;
+            }
+            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && passwordMustHaveLetters == "True" && !regExpLetter.test($("#password").val())) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Password must contain at least one letter", "Resources")' + passwordMinLength
+                })
+                event.preventDefault();
+                return false;
+            }
+            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && passwordMustHaveNumbers == "True" && !/\d/.test($("#password").val())) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Password must contain at least one number", "Resources")' + passwordMinLength
+                })
+                event.preventDefault();
+                return false;
+            }
+            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && $('#confirmPassword').val() != $('#password').val()) {
+                Swal.fire({
+                    icon: 'warning',
+                    text: '@DbResHtml.T("Passwords do not match!", "Resources")'
+                })
+                event.preventDefault();
+                return false;
+            }
+            else {
+                $("#editUserTable").DataTable().destroy();
+                return true;
+            }
+        }
+        function checkRoleClaims(initialRoles) {
+            $('.roleClaims').each(function () { $(this).prop("checked", false); });
+
+            if (initialRoles === undefined)
+                var selectedRoles = $("#rolesInsertId").val();
+            else
+                var selectedRoles = initialRoles;
+            for (const role of selectedRoles) {
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("GetRoleClaims", "UserManagement")",
+                    data: {
+                        roleId: role
+                    },
+                    dataType: "json",
+                    success: function (data) {
+                        $('.roleClaims').each(function () {
+                            var sThisVal = $(this).val();
+                            for (var i = 0; i < data.length; i++) {
+                                if (data[i].claimType == sThisVal) { $(this).prop("checked", true); }
+                            }
+                            $(this).prop("disabled", true);
+                        });
+                    },
+                    error: function (req, status, error) {
+                        ajaxErrorHandlingAlert("error", req.status);
+                    }
+                });
+            }
+        }
+        // get user roles to JS array
+        var initialRoles = [];
+        @foreach (var r in Model.RolesInsert)
+        {
+            @:initialRoles.push("@r");
+        }
+                                //get user claims to JS array
+                                var initialClaims = [];
+        @foreach (var c in Model.ClaimsInsert)
+        {
+            @:initialClaims.push("@c");
+        }
+
+            (function () {
+                $(initTableCheckAll);
+
+                function initTableCheckAll() {
+                    $('[data-check-all]').on('change', function () {
+                        var $this = $(this),
+                            index = $this.index() + 1,
+                            checkbox = $this.find('input[type="checkbox"]'),
+                            table = $this.parents('table'); // Make sure to affect only the correct checkbox column
+
+                        table.find('tbody > tr > td:nth-child(' + index + ') input[type="checkbox"]').prop('checked', checkbox[0].checked);
+                    });
+                }
+            })();
+        $(document).ready(function () {
+
+            $('#editUserTable').DataTable({
+                paging: true,
+                pageLength: 100,
+                "language": {
+                    "url": "@langPath"
+                }
+
+            });
+            $('#rolesInsertId').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: 'Please select role'
+            });
+            $('.roleClaims').each(function () {
+                $(this).prop("disabled", true);
+            });
+
+            $('.userClaims').each(function () {
+                var checkBox = $(this);
+                if (initialClaims.includes(checkBox.val())) {
+                    checkBox.prop("checked", true);
+                }
+            });
+        });
+
+        checkRoleClaims(initialRoles);
+    </script>
+}

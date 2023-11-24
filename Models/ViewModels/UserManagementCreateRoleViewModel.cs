@@ -1,0 +1,25 @@
+﻿using Microsoft.AspNetCore.Identity;
+using SD;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Models.ViewModels
+{
+    public class UserManagementCreateRoleViewModel : IdentityRole
+    {       
+        public ICollection<AuthClaim> Claims { get; set; }
+
+        public List<string> ClaimsInsert { get; set; }
+
+        public UserManagementCreateRoleViewModel()
+        {
+
+            Claims = new List<AuthClaim>();
+
+            ClaimsInsert = new List<string>();
+        }
+    }
+}

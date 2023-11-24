@@ -1,0 +1,73 @@
+﻿@using MainApp.Filters;
+@using MainApp.Helpers;
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewData["Title"] -  @DbResHtml.T("Waste detection", "Resources")</title>
+    <link rel="icon" type="image/x-icon"  href="~/logo.png" asp-append-version="true">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/select2/css/select2.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" href="~/AdminLTE/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+    <link rel="stylesheet" href="~/AdminLTE/css/adminlte.css">
+    <link rel="stylesheet" href="~/css/sidebar.css">
+
+    @if (IsSectionDefined("Styles"))
+    {
+        @RenderSection("Styles", required: false)
+    }
+</head>
+<body class="hold-transition sidebar-mini">
+    <div class="wrapper">
+         <partial name="_HorizontalNavbar"/>
+         <partial name="_Sidebar"/>       
+        <div class="content-wrapper">       
+             @RenderBody()
+
+            @if (IsSectionDefined("BodyArea"))
+            {
+                @RenderSection("BodyArea", required: false)
+            }
+        </div>
+        <aside class="control-sidebar control-sidebar-dark">
+        </aside>
+    </div>
+
+    <script src="~/AdminLTE/plugins/jquery/jquery.min.js"></script>
+    <script src="~/AdminLTE/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/tempus-dominus-helper.js"></script>
+    <script src="~/AdminLTE/plugins/select2/js/select2.full.min.js"></script>
+    <script src="~/AdminLTE/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/AdminLTE/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script src="~/AdminLTE/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+    <script src="~/AdminLTE/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+    <script src="~/AdminLTE/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+    <script src="~/AdminLTE/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+    <script src="~/AdminLTE/plugins/jszip/jszip.min.js"></script>
+    <script src="~/AdminLTE/plugins/pdfmake/pdfmake.min.js"></script>
+    <script src="~/AdminLTE/plugins/pdfmake/vfs_fonts.js"></script>
+    <script src="~/AdminLTE/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+    <script src="~/AdminLTE/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+    <script src="~/AdminLTE/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+    <script src="~/AdminLTE/plugins/sweetalert2/sweetalert2.min.js"></script>
+    <script src="~/AdminLTE/plugins/moment/moment.min.js"></script>
+    <script src="~/AdminLTE/plugins/daterangepicker/daterangepicker.js"></script>
+    <script src="~/AdminLTE/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="~/AdminLTE/js/adminlte.min.js"></script>
+    <script>
+        $('[data-widget="pushmenu"]').PushMenu('toggle');
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+

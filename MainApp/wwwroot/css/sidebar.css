@@ -1,0 +1,21 @@
+﻿
+[class*="sidebar-dark-"] .nav-sidebar .nav-item .nav-link {
+    color: #525252 !important;
+}
+
+    [class*="sidebar-dark-"] .nav-sidebar .nav-item .nav-link:hover {
+        color: #28a745 !important;
+        background-color: #dfdfdf;
+    }
+
+[class*="sidebar-dark-"] .nav-sidebar .nav-treeview .nav-item .nav-link {
+    color: #989898 !important;
+}
+
+    [class*="sidebar-dark-"] .nav-sidebar .nav-treeview .nav-item .nav-link:hover {
+        color: #28a745 !important;
+    }
+
+[class*="sidebar-dark-"] {
+    background-color: whitesmoke;
+}

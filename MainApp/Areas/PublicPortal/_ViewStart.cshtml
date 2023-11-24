@@ -1,0 +1,5 @@
+﻿@using Services.Interfaces
+@inject ILayoutService layout;
+@{
+    Layout = await layout.GetLayout();
+}

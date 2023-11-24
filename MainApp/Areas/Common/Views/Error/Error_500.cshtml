@@ -1,0 +1,30 @@
+﻿@using MainApp.Helpers;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@{
+    Layout = "../Shared/_LayoutPage.cshtml";
+    ViewData["Title"] = "Error";
+}
+<div class="abs-center wd-xl w-100">
+    <!-- START card-->
+    <div class="text-center mb-4">
+        <div class="mb-3">
+            <em class="fab fa-whmcs fa-5x text-olive"></em>
+        </div>
+        <div class="text-lg mb-3">500</div>
+        <p class="lead m-0 text-olive">@DbResHtml.T("Oh! Something went wrong","Resources") <i class="far fa-frown"></i></p>
+        <p class="text-muted">@DbResHtml.T("Don't worry, we're now checking this.","Resources")</p>
+        <p>In the meantime, please try one of those links below or come back in a moment</p>
+    </div>
+    <ul class="list-inline text-center text-sm mb-4">
+        <li class="list-inline-item">
+            <a class="btn bg-gradient-olive" href="~/@Configuration["DomainSettings:MainApp"]">@DbResHtml.T("Home", "Resources")</a>
+        </li>
+    </ul>
+    <div class="p-3 text-center">
+        <span class="mr-2">&copy;</span>
+        <span>2023</span>
+        <span class="mr-2">-</span>
+        <span>UNICEF</span>
+    </div>
+</div>

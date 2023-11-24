@@ -1,0 +1,1090 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<root>
+   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+      <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+      <xsd:element name="root" msdata:IsDataSet="true">
+         <xsd:complexType>
+            <xsd:choice maxOccurs="unbounded">
+               <xsd:element name="metadata">
+                  <xsd:complexType>
+                     <xsd:sequence>
+                        <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                     </xsd:sequence>
+                     <xsd:attribute name="name" use="required" type="xsd:string" />
+                     <xsd:attribute name="type" type="xsd:string" />
+                     <xsd:attribute name="mimetype" type="xsd:string" />
+                     <xsd:attribute ref="xml:space" />
+                  </xsd:complexType>
+               </xsd:element>
+               <xsd:element name="assembly">
+                  <xsd:complexType>
+                     <xsd:attribute name="alias" type="xsd:string" />
+                     <xsd:attribute name="name" type="xsd:string" />
+                  </xsd:complexType>
+               </xsd:element>
+               <xsd:element name="data">
+                  <xsd:complexType>
+                     <xsd:sequence>
+                        <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                        <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+                     </xsd:sequence>
+                     <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+                     <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+                     <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+                     <xsd:attribute ref="xml:space" />
+                  </xsd:complexType>
+               </xsd:element>
+               <xsd:element name="resheader">
+                  <xsd:complexType>
+                     <xsd:sequence>
+                        <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                     </xsd:sequence>
+                     <xsd:attribute name="name" type="xsd:string" use="required" />
+                  </xsd:complexType>
+               </xsd:element>
+            </xsd:choice>
+         </xsd:complexType>
+      </xsd:element>
+   </xsd:schema>
+   <resheader name="resmimetype">
+      <value>text/microsoft-resx</value>
+   </resheader>
+   <resheader name="version">
+      <value>2.0</value>
+   </resheader>
+   <resheader name="reader">
+      <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+   </resheader>
+   <resheader name="writer">
+      <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+   </resheader>
+   <data name="Account" xml:space="preserve">
+      <value>Account</value>
+   </data>
+   <data name="Action" xml:space="preserve">
+      <value>Action</value>
+   </data>
+   <data name="Add additional privileges" xml:space="preserve">
+      <value>Add additional privileges:</value>
+   </data>
+   <data name="Add coordinates for legalization procedure" xml:space="preserve">
+      <value>Add coordinates for legalization procedure</value>
+   </data>
+   <data name="Add group" xml:space="preserve">
+      <value>Add group</value>
+   </data>
+   <data name="Add inputs for legalization procedure" xml:space="preserve">
+      <value>Add inputs for legalization procedure</value>
+   </data>
+   <data name="Add inputs for poi busines entities" xml:space="preserve">
+      <value>Add inputs for poi busines entities</value>
+   </data>
+   <data name="Add layer" xml:space="preserve">
+      <value>Add layer</value>
+   </data>
+   <data name="Add Legalization polygon" xml:space="preserve">
+      <value>Add Legalization polygon</value>
+   </data>
+   <data name="Add Map" xml:space="preserve">
+      <value>Add Map</value>
+   </data>
+   <data name="Add more" xml:space="preserve">
+      <value>Add more</value>
+   </data>
+   <data name="Add new Application Setting" xml:space="preserve">
+      <value>Create form for add new application setting</value>
+   </data>
+   <data name="Add new Group" xml:space="preserve">
+      <value>Add new Group</value>
+   </data>
+   <data name="Add new Layer" xml:space="preserve">
+      <value>Add new Layer</value>
+   </data>
+   <data name="Add new Map" xml:space="preserve">
+      <value>Add new Map</value>
+   </data>
+   <data name="Add new Role" xml:space="preserve">
+      <value>Add new Role</value>
+   </data>
+   <data name="Add new User" xml:space="preserve">
+      <value>Add new User</value>
+   </data>
+   <data name="Add poi busines entities point" xml:space="preserve">
+      <value>Add poi busines entities point</value>
+   </data>
+   <data name="Add Role" xml:space="preserve">
+      <value>Add Role</value>
+   </data>
+   <data name="Add Setting" xml:space="preserve">
+      <value>Add Setting</value>
+   </data>
+   <data name="Add User" xml:space="preserve">
+      <value>Add User</value>
+   </data>
+   <data name="Add, edit, delete and view maps, add groups and layers" xml:space="preserve">
+      <value>Add, edit, delete and view maps, add groups and layers.</value>
+   </data>
+   <data name="Add, edit, delete and view users, roles and claims" xml:space="preserve">
+      <value>Add, edit, delete and view users, roles and claims.</value>
+   </data>
+   <data name="Add, edit, delete and view users, roles and privileges" xml:space="preserve">
+      <value>Add, edit, delete and view users, roles and privileges.</value>
+   </data>
+   <data name="Add, edit, delete application settings" xml:space="preserve">
+      <value>Add, edit, delete application settings.</value>
+   </data>
+   <data name="Address" xml:space="preserve">
+      <value>Address</value>
+   </data>
+   <data name="All Layers" xml:space="preserve">
+      <value>All Layers</value>
+   </data>
+   <data name="Application Settings" xml:space="preserve">
+      <value>Application Settings</value>
+   </data>
+   <data name="Are you sure you want to delete business entities" xml:space="preserve">
+      <value>Are you sure you want to delete business entities?</value>
+   </data>
+   <data name="Are you sure you want to delete this" xml:space="preserve">
+      <value>Are you sure you want to delete this?</value>
+   </data>
+   <data name="Are you sure you want to delete this document" xml:space="preserve">
+      <value>Are you sure you want to delete this document?</value>
+   </data>
+   <data name="Are you sure you want to delete this legalization" xml:space="preserve">
+      <value>Are you sure you want to delete this legalization?</value>
+   </data>
+   <data name="Are you sure you want to delete this Role" xml:space="preserve">
+      <value>Are you sure you want to delete this Role?</value>
+   </data>
+   <data name="Are you sure you want to delete this User" xml:space="preserve">
+      <value>Are you sure you want to delete this User?</value>
+   </data>
+   <data name="Area" xml:space="preserve">
+      <value>Area</value>
+   </data>
+   <data name="Area (calculated) m2" xml:space="preserve">
+      <value>Area (calculated) (m2)</value>
+   </data>
+   <data name="Area m2" xml:space="preserve">
+      <value>Area (m2)</value>
+   </data>
+   <data name="Attach" xml:space="preserve">
+      <value>Attach</value>
+   </data>
+   <data name="Attach / Download legalization documents" xml:space="preserve">
+      <value>Attach / Download legalization documents</value>
+   </data>
+   <data name="Attach and view plot conditions" xml:space="preserve">
+      <value>Attach and view plot conditions.</value>
+   </data>
+   <data name="Attach documents" xml:space="preserve">
+      <value>Attach documents</value>
+   </data>
+   <data name="Attach plot conditions form" xml:space="preserve">
+      <value>Attach plot conditions form</value>
+   </data>
+   <data name="Back to List" xml:space="preserve">
+      <value>Back to List</value>
+   </data>
+   <data name="Building area" xml:space="preserve">
+      <value>Building area</value>
+   </data>
+   <data name="Building Permits" xml:space="preserve">
+      <value>Building Permits</value>
+   </data>
+   <data name="Building Plot" xml:space="preserve">
+      <value>Building Plot</value>
+   </data>
+   <data name="Building Plots" xml:space="preserve">
+      <value>Building Plots</value>
+   </data>
+   <data name="Business Entities" xml:space="preserve">
+      <value>Business entities</value>
+   </data>
+   <data name="Business Entity" xml:space="preserve">
+      <value>Business Entity</value>
+   </data>
+   <data name="Cadastral Municipality" xml:space="preserve">
+      <value>Cadastral Municipality</value>
+   </data>
+   <data name="Cadastral parcel number" xml:space="preserve">
+      <value>Cadastral parcel number</value>
+   </data>
+   <data name="Cadastral Plot" xml:space="preserve">
+      <value>Cadastral Plot</value>
+   </data>
+   <data name="Cadastral plot number" xml:space="preserve">
+      <value>Cadastral plot number</value>
+   </data>
+   <data name="Cadastral Plots" xml:space="preserve">
+      <value>Cadastral Plots</value>
+   </data>
+   <data name="Cancel" xml:space="preserve">
+      <value>Cancel</value>
+   </data>
+   <data name="Cancelled" xml:space="preserve">
+      <value>Cancelled</value>
+   </data>
+   <data name="CenterX" xml:space="preserve">
+      <value>CenterX</value>
+   </data>
+   <data name="CenterY" xml:space="preserve">
+      <value>CenterY</value>
+   </data>
+   <data name="Change password" xml:space="preserve">
+      <value>Change password</value>
+   </data>
+   <data name="Change Password Form" xml:space="preserve">
+      <value>Change Password Form</value>
+   </data>
+   <data name="Check All Privileges" xml:space="preserve">
+      <value>Check All Privileges</value>
+   </data>
+   <data name="Class Purpose" xml:space="preserve">
+      <value>Class Purpose</value>
+   </data>
+   <data name="Close" xml:space="preserve">
+      <value>Close</value>
+   </data>
+   <data name="Compatible purpose class" xml:space="preserve">
+      <value>Compatible purpose class</value>
+   </data>
+   <data name="Completed successfully" xml:space="preserve">
+      <value>Completed successfully!</value>
+   </data>
+   <data name="Confirm application setting deleting" xml:space="preserve">
+      <value>Confirm application setting deleting.</value>
+   </data>
+   <data name="Confirm group deleting" xml:space="preserve">
+      <value>Confirm group deleting.</value>
+   </data>
+   <data name="Confirm layer deleting" xml:space="preserve">
+      <value>Confirm layer deleting.</value>
+   </data>
+   <data name="Confirm map deleting" xml:space="preserve">
+      <value>Confirm map deleting.</value>
+   </data>
+   <data name="Confirm New Password" xml:space="preserve">
+      <value>Confirm New Password *</value>
+   </data>
+   <data name="Confirm Password" xml:space="preserve">
+      <value>Confirm Password</value>
+   </data>
+   <data name="Construction area (calculated) m2" xml:space="preserve">
+      <value>Construction area (calculated) (m2)</value>
+   </data>
+   <data name="Construction area m2" xml:space="preserve">
+      <value>Construction area (m2)</value>
+   </data>
+   <data name="Contact Person" xml:space="preserve">
+      <value>Contact Person</value>
+   </data>
+   <data name="Create" xml:space="preserve">
+      <value>Create</value>
+   </data>
+   <data name="Create account" xml:space="preserve">
+      <value>Create account</value>
+   </data>
+   <data name="Create form explanation" xml:space="preserve">
+      <value>Create form explanation:</value>
+   </data>
+   <data name="Create form for add new application setting" xml:space="preserve">
+      <value>Create form for add new application setting</value>
+   </data>
+   <data name="Create form for add new group" xml:space="preserve">
+      <value>Create form for add new group:</value>
+   </data>
+   <data name="Create form for add new group explanation" xml:space="preserve">
+      <value>Create form for add new group explanation:</value>
+   </data>
+   <data name="Create form for add new Layer" xml:space="preserve">
+      <value>Create form for add new Layer:</value>
+   </data>
+   <data name="Create form for add new Layer explanation" xml:space="preserve">
+      <value>Create form for add new Layer explanation:</value>
+   </data>
+   <data name="Create form for add new map" xml:space="preserve">
+      <value>Create form for add new map:</value>
+   </data>
+   <data name="Create form for add new role" xml:space="preserve">
+      <value>Create form for add new role:</value>
+   </data>
+   <data name="Create form for add new user" xml:space="preserve">
+      <value>Create form for add new user:</value>
+   </data>
+   <data name="Create form form explanation" xml:space="preserve">
+      <value>Create form form explanation</value>
+   </data>
+   <data name="Current Password" xml:space="preserve">
+      <value>Current Password *</value>
+   </data>
+   <data name="Current password Public" xml:space="preserve">
+      <value>Current password</value>
+   </data>
+   <data name="Data type" xml:space="preserve">
+      <value>Data type</value>
+   </data>
+   <data name="Date" xml:space="preserve">
+      <value>Date</value>
+   </data>
+   <data name="Decision number" xml:space="preserve">
+      <value>Decision number</value>
+   </data>
+   <data name="Default Resolution" xml:space="preserve">
+      <value>Default Resolution</value>
+   </data>
+   <data name="Delete" xml:space="preserve">
+      <value>Delete</value>
+   </data>
+   <data name="Delete Application Setting" xml:space="preserve">
+      <value>Delete Application Setting</value>
+   </data>
+   <data name="Delete business entities" xml:space="preserve">
+      <value>Delete business entities</value>
+   </data>
+   <data name="Delete Group" xml:space="preserve">
+      <value>Delete Group</value>
+   </data>
+   <data name="Delete Layer" xml:space="preserve">
+      <value>Delete Layer</value>
+   </data>
+   <data name="Delete Map" xml:space="preserve">
+      <value>Delete Map</value>
+   </data>
+   <data name="Deleted" xml:space="preserve">
+      <value>Deleted!</value>
+   </data>
+   <data name="Deleted successfully" xml:space="preserve">
+      <value>Deleted successfully!</value>
+   </data>
+   <data name="Description" xml:space="preserve">
+      <value>Description</value>
+   </data>
+   <data name="Document Name" xml:space="preserve">
+      <value>Document Name</value>
+   </data>
+   <data name="Documents" xml:space="preserve">
+      <value>Documents</value>
+   </data>
+   <data name="Download" xml:space="preserve">
+      <value>Download</value>
+   </data>
+   <data name="Edit" xml:space="preserve">
+      <value>Edit</value>
+   </data>
+   <data name="Edit Application Setting" xml:space="preserve">
+      <value>Edit Application Setting</value>
+   </data>
+   <data name="Edit application setting form" xml:space="preserve">
+      <value>Edit application setting form</value>
+   </data>
+   <data name="Edit form for role" xml:space="preserve">
+      <value>Edit form for role:</value>
+   </data>
+   <data name="Edit form for user" xml:space="preserve">
+      <value>Edit form for user:</value>
+   </data>
+   <data name="Edit Group" xml:space="preserve">
+      <value>Edit Group</value>
+   </data>
+   <data name="Edit Group form" xml:space="preserve">
+      <value>Edit Group form:</value>
+   </data>
+   <data name="Edit Group form explanation" xml:space="preserve">
+      <value>Edit Group form explanation:</value>
+   </data>
+   <data name="Edit Layer" xml:space="preserve">
+      <value>Edit Layer</value>
+   </data>
+   <data name="Edit Layer form" xml:space="preserve">
+      <value>Edit Layer form:</value>
+   </data>
+   <data name="Edit Layer form explanation" xml:space="preserve">
+      <value>Edit Layer form explanation:</value>
+   </data>
+   <data name="Edit Map" xml:space="preserve">
+      <value>Edit Map</value>
+   </data>
+   <data name="Edit map form" xml:space="preserve">
+      <value>Edit map form:</value>
+   </data>
+   <data name="Edit map form explanation" xml:space="preserve">
+      <value>Edit map form explanation</value>
+   </data>
+   <data name="Edit poi business entities" xml:space="preserve">
+      <value>Edit poi business entities</value>
+   </data>
+   <data name="Edit Role" xml:space="preserve">
+      <value>Edit Role</value>
+   </data>
+   <data name="Edit User" xml:space="preserve">
+      <value>Edit User</value>
+   </data>
+   <data name="Email" xml:space="preserve">
+      <value>Email</value>
+   </data>
+   <data name="Email address" xml:space="preserve">
+      <value>Email address</value>
+   </data>
+   <data name="Email Description" xml:space="preserve">
+      <value>Email Description</value>
+   </data>
+   <data name="Enable user" xml:space="preserve">
+      <value>Enable user</value>
+   </data>
+   <data name="Enter email" xml:space="preserve">
+      <value>Enter email</value>
+   </data>
+   <data name="Enter search term" xml:space="preserve">
+      <value>Enter search term</value>
+   </data>
+   <data name="Example" xml:space="preserve">
+      <value>Example</value>
+   </data>
+   <data name="File uploaded successfully" xml:space="preserve">
+      <value>File uploaded successfully!</value>
+   </data>
+   <data name="Fill CenterX is number field, predefined placeholder" xml:space="preserve">
+      <value>Fill CenterX is number field, predefined placeholder</value>
+   </data>
+   <data name="Fill CenterY is number field with Y coordinates" xml:space="preserve">
+      <value>Fill CenterY is number field with Y coordinates</value>
+   </data>
+   <data name="Fill Default Resolution field with default map resolution" xml:space="preserve">
+      <value>Fill Default Resolution field with default map resolution</value>
+   </data>
+   <data name="Fill Group Description Json field" xml:space="preserve">
+      <value>Fill Group Description Json field.</value>
+   </data>
+   <data name="Fill Group Js field" xml:space="preserve">
+      <value>Fill Group Js field.</value>
+   </data>
+   <data name="Fill Group Name with the name of the group" xml:space="preserve">
+      <value>Fill Group Name with the name of the group.</value>
+   </data>
+   <data name="Fill Group Name with the name of the group. This field is wmpty if layer belongs to map" xml:space="preserve">
+      <value>Fill Group Name with the name of the group. This field is wmpty if layer belongs to map.</value>
+   </data>
+   <data name="Fill Group Order for order. This is number field" xml:space="preserve">
+      <value>Fill Group Order for order. This is number field</value>
+   </data>
+   <data name="Fill Group Title Json field" xml:space="preserve">
+      <value>Fill Group Title Json field.</value>
+   </data>
+   <data name="Fill Layer Description Json field" xml:space="preserve">
+      <value>Fill Layer Description Json field.</value>
+   </data>
+   <data name="Fill Layer Js field" xml:space="preserve">
+      <value>Fill Layer Js field.</value>
+   </data>
+   <data name="Fill Layer Name with the name of the layer" xml:space="preserve">
+      <value>Fill Layer Name with the name of the layer.</value>
+   </data>
+   <data name="Fill Layer Order for order. This is number field" xml:space="preserve">
+      <value>Fill Layer Order for order. This is number field.</value>
+   </data>
+   <data name="Fill Layer Title Json field" xml:space="preserve">
+      <value>Fill Layer Title Json field.</value>
+   </data>
+   <data name="Fill map Name with the name of the map" xml:space="preserve">
+      <value>Fill map Name with the name of the map</value>
+   </data>
+   <data name="Fill Map Name with the name of the map if you want to change it" xml:space="preserve">
+      <value>Fill Map Name with the name of the map if you want to change it.</value>
+   </data>
+   <data name="Fill Map Name with the name of the map if you want to change it. This field is wmpty if layer belongs to group" xml:space="preserve">
+      <value>Fill Map Name with the name of the map if you want to change it. This field is wmpty if layer belongs to group</value>
+   </data>
+   <data name="Fill MaxX is number field, predefined placeholder" xml:space="preserve">
+      <value>Fill MaxX is number field, predefined placeholder</value>
+   </data>
+   <data name="Fill MaxY is number field, predefined placeholder" xml:space="preserve">
+      <value>Fill MaxY is number field, predefined placeholder</value>
+   </data>
+   <data name="Fill MinX is number field, predefined placeholder" xml:space="preserve">
+      <value>Fill MinX is number field, predefined placeholder</value>
+   </data>
+   <data name="Fill MinY is number field, predefined placeholder" xml:space="preserve">
+      <value>Fill MinY is number field, predefined placeholder</value>
+   </data>
+   <data name="Fill projection with the projection of the map" xml:space="preserve">
+      <value>Fill projection with the projection of the map</value>
+   </data>
+   <data name="Fill Resolution field is field with list of numbers" xml:space="preserve">
+      <value>Fill Resolution field is field with list of numbers</value>
+   </data>
+   <data name="Fill Tile Grid Js field with javascript for map" xml:space="preserve">
+      <value>Fill Tile Grid Js field with javascript for map</value>
+   </data>
+   <data name="Finalize the procedure" xml:space="preserve">
+      <value>Finalize the procedure</value>
+   </data>
+   <data name="Finish procedure" xml:space="preserve">
+      <value>Finish procedure</value>
+   </data>
+   <data name="Finished" xml:space="preserve">
+      <value>Finished</value>
+   </data>
+   <data name="First Name" xml:space="preserve">
+      <value>First Name</value>
+   </data>
+   <data name="Floors" xml:space="preserve">
+      <value>Floors</value>
+   </data>
+   <data name="Forgot your password" xml:space="preserve">
+      <value>Forgot your password?</value>
+   </data>
+   <data name="Form for application setting inserting" xml:space="preserve">
+      <value>Form for application setting inserting.</value>
+   </data>
+   <data name="Form for application setting update" xml:space="preserve">
+      <value>Form for application setting update.</value>
+   </data>
+   <data name="Form for group updating" xml:space="preserve">
+      <value>Form for group updating.</value>
+   </data>
+   <data name="Form for inserting a new group" xml:space="preserve">
+      <value>Form for inserting a new group.</value>
+   </data>
+   <data name="Form for inserting a new layer" xml:space="preserve">
+      <value>Form for inserting a new layer.</value>
+   </data>
+   <data name="Form for layer updating" xml:space="preserve">
+      <value>Form for layer updating.</value>
+   </data>
+   <data name="Form for map inserting" xml:space="preserve">
+      <value>Form for map inserting.</value>
+   </data>
+   <data name="Form for map updating" xml:space="preserve">
+      <value>Form for map updating.</value>
+   </data>
+   <data name="Form for role updating" xml:space="preserve">
+      <value>Form for role updating.</value>
+   </data>
+   <data name="Form for user editing" xml:space="preserve">
+      <value>Form for user editing.</value>
+   </data>
+   <data name="Form for user management" xml:space="preserve">
+      <value>Form for user management.</value>
+   </data>
+   <data name="Fullname" xml:space="preserve">
+      <value>Fullname</value>
+   </data>
+   <data name="General conditions" xml:space="preserve">
+      <value>General conditions</value>
+   </data>
+   <data name="Generate Plot Certificate" xml:space="preserve">
+      <value>Generate Plot Certificate</value>
+   </data>
+   <data name="Green area (calculated) m2" xml:space="preserve">
+      <value>Green area (calculated) (m2)</value>
+   </data>
+   <data name="Green area m2" xml:space="preserve">
+      <value>Green area (m2)</value>
+   </data>
+   <data name="Green Cadastre" xml:space="preserve">
+      <value>Green Cadastre</value>
+   </data>
+   <data name="Gross area" xml:space="preserve">
+      <value>Gross area</value>
+   </data>
+   <data name="Gross area m2" xml:space="preserve">
+      <value>Gross area (m2)</value>
+   </data>
+   <data name="Group Configurations" xml:space="preserve">
+      <value>Group Configurations</value>
+   </data>
+   <data name="Group Description Json" xml:space="preserve">
+      <value>Group Description Json</value>
+   </data>
+   <data name="Group Js" xml:space="preserve">
+      <value>Group Js</value>
+   </data>
+   <data name="Group Name" xml:space="preserve">
+      <value>Group Name</value>
+   </data>
+   <data name="Group Opacity" xml:space="preserve">
+      <value>Group Opacity</value>
+   </data>
+   <data name="Group Order" xml:space="preserve">
+      <value>Group Order</value>
+   </data>
+   <data name="Group Title Json" xml:space="preserve">
+      <value>Group Title Json</value>
+   </data>
+   <data name="Groups" xml:space="preserve">
+      <value>Groups</value>
+   </data>
+   <data name="Groups for all maps" xml:space="preserve">
+      <value>Groups for all maps</value>
+   </data>
+   <data name="Groups for map name" xml:space="preserve">
+      <value>Groups for map name</value>
+   </data>
+   <data name="Have an account" xml:space="preserve">
+      <value>Have an account?</value>
+   </data>
+   <data name="Hello" xml:space="preserve">
+      <value>Hello</value>
+   </data>
+   <data name="I agree with the" xml:space="preserve">
+      <value>I agree with the</value>
+   </data>
+   <data name="In progress" xml:space="preserve">
+      <value>In progress</value>
+   </data>
+   <data name="Included Privileges" xml:space="preserve">
+      <value>Included Privileges</value>
+   </data>
+   <data name="Info" xml:space="preserve">
+      <value>Info</value>
+   </data>
+   <data name="INS Admin" xml:space="preserve">
+      <value>INS Admin</value>
+   </data>
+   <data name="Invalid polygon" xml:space="preserve">
+      <value>Invalid polygon!</value>
+   </data>
+   <data name="Investor" xml:space="preserve">
+      <value>Investor</value>
+   </data>
+   <data name="Key" xml:space="preserve">
+      <value>Key</value>
+   </data>
+   <data name="Language" xml:space="preserve">
+      <value>Language</value>
+   </data>
+   <data name="Last Name" xml:space="preserve">
+      <value>Last Name</value>
+   </data>
+   <data name="Layer Configurations" xml:space="preserve">
+      <value>Layer Configurations</value>
+   </data>
+   <data name="Layer Description Json" xml:space="preserve">
+      <value>Layer Description Json</value>
+   </data>
+   <data name="Layer Js" xml:space="preserve">
+      <value>Layer Js</value>
+   </data>
+   <data name="Layer Name" xml:space="preserve">
+      <value>Layer Name</value>
+   </data>
+   <data name="Layer Order" xml:space="preserve">
+      <value>Layer Order</value>
+   </data>
+   <data name="Layer Title Json" xml:space="preserve">
+      <value>Layer Title Json</value>
+   </data>
+   <data name="Layers" xml:space="preserve">
+      <value>Layers</value>
+   </data>
+   <data name="Layers for all maps" xml:space="preserve">
+      <value>Layers for all maps</value>
+   </data>
+   <data name="Layers for group name" xml:space="preserve">
+      <value>Layers for group name</value>
+   </data>
+   <data name="Layers for map name" xml:space="preserve">
+      <value>Layers for map name</value>
+   </data>
+   <data name="Legalization" xml:space="preserve">
+      <value>Legalization</value>
+   </data>
+   <data name="Legalization has been deleted" xml:space="preserve">
+      <value>Legalization has been deleted.</value>
+   </data>
+   <data name="Legalization procedure" xml:space="preserve">
+      <value>Legalization procedure</value>
+   </data>
+   <data name="Legalization Statistics" xml:space="preserve">
+      <value>Legalization Statistics</value>
+   </data>
+   <data name="Legalization type" xml:space="preserve">
+      <value>Legalization type</value>
+   </data>
+   <data name="Legislation" xml:space="preserve">
+      <value>Legislation</value>
+   </data>
+   <data name="Loading" xml:space="preserve">
+      <value>Loading...</value>
+   </data>
+   <data name="Login" xml:space="preserve">
+      <value>Login</value>
+   </data>
+   <data name="Logout" xml:space="preserve">
+      <value>Logout</value>
+   </data>
+   <data name="Map" xml:space="preserve">
+      <value>Map</value>
+   </data>
+   <data name="Map Configuration" xml:space="preserve">
+      <value>Map Configuration</value>
+   </data>
+   <data name="Map Configurations" xml:space="preserve">
+      <value>Map Configurations</value>
+   </data>
+   <data name="Map Name" xml:space="preserve">
+      <value>Map Name</value>
+   </data>
+   <data name="Map Name or Group Name" xml:space="preserve">
+      <value>Map Name or Group Name</value>
+   </data>
+   <data name="Maps" xml:space="preserve">
+      <value>Maps</value>
+   </data>
+   <data name="Maximum height" xml:space="preserve">
+      <value>Maximum height</value>
+   </data>
+   <data name="MaxX" xml:space="preserve">
+      <value>MaxX</value>
+   </data>
+   <data name="MaxY" xml:space="preserve">
+      <value>MaxY</value>
+   </data>
+   <data name="Measure area" xml:space="preserve">
+      <value>Measure area</value>
+   </data>
+   <data name="Measure length" xml:space="preserve">
+      <value>Measure length</value>
+   </data>
+   <data name="MinX" xml:space="preserve">
+      <value>MinX</value>
+   </data>
+   <data name="MinY" xml:space="preserve">
+      <value>MinY</value>
+   </data>
+   <data name="Module" xml:space="preserve">
+      <value>Module</value>
+   </data>
+   <data name="Modules" xml:space="preserve">
+      <value>Modules</value>
+   </data>
+   <data name="Multiple Role" xml:space="preserve">
+      <value>Multiple Role</value>
+   </data>
+   <data name="Municipality of Centar" xml:space="preserve">
+      <value>Municipality of Centar</value>
+   </data>
+   <data name="Name" xml:space="preserve">
+      <value>Name</value>
+   </data>
+   <data name="Name of the plan" xml:space="preserve">
+      <value>Name of the plan</value>
+   </data>
+   <data name="Need to Register" xml:space="preserve">
+      <value>Need to Register?</value>
+   </data>
+   <data name="New Password" xml:space="preserve">
+      <value>New Password*</value>
+   </data>
+   <data name="New Password Public" xml:space="preserve">
+      <value>New password</value>
+   </data>
+   <data name="No data avaliable" xml:space="preserve">
+      <value>No data avaliable!</value>
+   </data>
+   <data name="No document attached" xml:space="preserve">
+      <value>No document attached!</value>
+   </data>
+   <data name="Notifications" xml:space="preserve">
+      <value>Notifications</value>
+   </data>
+   <data name="Number" xml:space="preserve">
+      <value>Number</value>
+   </data>
+   <data name="Numerical" xml:space="preserve">
+      <value>Numerical</value>
+   </data>
+   <data name="Numerical indicators" xml:space="preserve">
+      <value>Numerical indicators</value>
+   </data>
+   <data name="Object number" xml:space="preserve">
+      <value>Object number</value>
+   </data>
+   <data name="Object purpose" xml:space="preserve">
+      <value>Object purpose</value>
+   </data>
+   <data name="OK" xml:space="preserve">
+      <value>OK</value>
+   </data>
+   <data name="Order" xml:space="preserve">
+      <value>Order</value>
+   </data>
+   <data name="Overlap" xml:space="preserve">
+      <value>Overlap</value>
+   </data>
+   <data name="Parking spaces" xml:space="preserve">
+      <value>Parking spaces</value>
+   </data>
+   <data name="Password" xml:space="preserve">
+      <value>Password</value>
+   </data>
+   <data name="Percentage of construction" xml:space="preserve">
+      <value>Percentage of construction</value>
+   </data>
+   <data name="Phone" xml:space="preserve">
+      <value>Phone</value>
+   </data>
+   <data name="Phone Number" xml:space="preserve">
+      <value>Phone Number</value>
+   </data>
+   <data name="Planning period" xml:space="preserve">
+      <value>Planning period</value>
+   </data>
+   <data name="Please attach document" xml:space="preserve">
+      <value>Please attach document!</value>
+   </data>
+   <data name="Please choose entities type" xml:space="preserve">
+      <value>Please choose entities type...</value>
+   </data>
+   <data name="Please choose language" xml:space="preserve">
+      <value>Please choose language...</value>
+   </data>
+   <data name="Please choose municipality" xml:space="preserve">
+      <value>Please choose municipality...</value>
+   </data>
+   <data name="Please choose plot" xml:space="preserve">
+      <value>Please choose plot...</value>
+   </data>
+   <data name="Please choose purpose" xml:space="preserve">
+      <value>Please choose purpose...</value>
+   </data>
+   <data name="Please choose scale" xml:space="preserve">
+      <value>Please choose scale...</value>
+   </data>
+   <data name="Please fill in all the required fields" xml:space="preserve">
+      <value>Please fill in all the required fields!</value>
+   </data>
+   <data name="Please fill in search term" xml:space="preserve">
+      <value>Please fill in search term!</value>
+   </data>
+   <data name="Please insert valid data" xml:space="preserve">
+      <value>Please insert valid data!</value>
+   </data>
+   <data name="Please select" xml:space="preserve">
+      <value>Please select</value>
+   </data>
+   <data name="Please select plot data from table" xml:space="preserve">
+      <value>Please select plot data from table!</value>
+   </data>
+   <data name="Plot Conditions" xml:space="preserve">
+      <value>Plot Conditions</value>
+   </data>
+   <data name="Plot Conditions Management" xml:space="preserve">
+      <value>Plot Conditions Management</value>
+   </data>
+   <data name="Predefined field for Map Name or Group Name, depends if the layer apear in map or in group" xml:space="preserve">
+      <value>Predefined field for Map Name or Group Name, depends if the layer apear in map or in group.</value>
+   </data>
+   <data name="Preferred Language" xml:space="preserve">
+      <value>Preferred Language</value>
+   </data>
+   <data name="Preferred language is set successfully" xml:space="preserve">
+      <value>Preferred language is set successfully!</value>
+   </data>
+   <data name="Privilege Description" xml:space="preserve">
+      <value>Privilege Description</value>
+   </data>
+   <data name="Privilege Name" xml:space="preserve">
+      <value>Privilege Name</value>
+   </data>
+   <data name="Privileges" xml:space="preserve">
+      <value>Privileges</value>
+   </data>
+   <data name="Produce" xml:space="preserve">
+      <value>Produce</value>
+   </data>
+   <data name="Project" xml:space="preserve">
+      <value>Project</value>
+   </data>
+   <data name="Projection" xml:space="preserve">
+      <value>Projection</value>
+   </data>
+   <data name="Public GIS Portal" xml:space="preserve">
+      <value>Public GIS Portal</value>
+   </data>
+   <data name="Purpose" xml:space="preserve">
+      <value>Purpose</value>
+   </data>
+   <data name="Purpose class" xml:space="preserve">
+      <value>Purpose class</value>
+   </data>
+   <data name="Register" xml:space="preserve">
+      <value>Register</value>
+   </data>
+   <data name="Register Now" xml:space="preserve">
+      <value>Register Now</value>
+   </data>
+   <data name="Relation of greenery with construction area" xml:space="preserve">
+      <value>Relation of greenery with construction area (%)</value>
+   </data>
+   <data name="Relation of greenery with construction calculated area" xml:space="preserve">
+      <value>Relation of greenery with construction calculated area (%)</value>
+   </data>
+   <data name="Remember Me" xml:space="preserve">
+      <value>Remember Me</value>
+   </data>
+   <data name="Resolutions" xml:space="preserve">
+      <value>Resolutions</value>
+   </data>
+   <data name="Retype Password" xml:space="preserve">
+      <value>Retype Password</value>
+   </data>
+   <data name="Role" xml:space="preserve">
+      <value>Role</value>
+   </data>
+   <data name="Role form for user management" xml:space="preserve">
+      <value>Role form for user management.</value>
+   </data>
+   <data name="Role Name" xml:space="preserve">
+      <value>Role Name</value>
+   </data>
+   <data name="Roles" xml:space="preserve">
+      <value>Roles</value>
+   </data>
+   <data name="Save" xml:space="preserve">
+      <value>Save</value>
+   </data>
+   <data name="Search" xml:space="preserve">
+      <value>Search</value>
+   </data>
+   <data name="Search full" xml:space="preserve">
+      <value>Search</value>
+   </data>
+   <data name="Search Type" xml:space="preserve">
+      <value>Search Type</value>
+   </data>
+   <data name="Select last extent" xml:space="preserve">
+      <value>Select last extent</value>
+   </data>
+   <data name="Select zoom area" xml:space="preserve">
+      <value>Select zoom area</value>
+   </data>
+   <data name="Setting Data Type" xml:space="preserve">
+      <value>Setting Data Type</value>
+   </data>
+   <data name="Setting Description" xml:space="preserve">
+      <value>Setting Description</value>
+   </data>
+   <data name="Setting Key" xml:space="preserve">
+      <value>Setting Key</value>
+   </data>
+   <data name="Setting Module" xml:space="preserve">
+      <value>Setting Module</value>
+   </data>
+   <data name="Setting Value" xml:space="preserve">
+      <value>Setting Value</value>
+   </data>
+   <data name="Settings" xml:space="preserve">
+      <value>Settings</value>
+   </data>
+   <data name="Show on map" xml:space="preserve">
+      <value>Show on map</value>
+   </data>
+   <data name="Signup" xml:space="preserve">
+      <value>Signup</value>
+   </data>
+   <data name="Special" xml:space="preserve">
+      <value>Special</value>
+   </data>
+   <data name="Special conditions" xml:space="preserve">
+      <value>Special conditions</value>
+   </data>
+   <data name="Statistic1" xml:space="preserve">
+      <value>Statistic1</value>
+   </data>
+   <data name="Statistics" xml:space="preserve">
+      <value>Statistics</value>
+   </data>
+   <data name="Subject number" xml:space="preserve">
+      <value>Subject number</value>
+   </data>
+   <data name="Submit" xml:space="preserve">
+      <value>Submit</value>
+   </data>
+   <data name="Successfully finalized legalization procedure" xml:space="preserve">
+      <value>Successfully finalized legalization procedure!</value>
+   </data>
+   <data name="Technical number" xml:space="preserve">
+      <value>Technical number</value>
+   </data>
+   <data name="terms" xml:space="preserve">
+      <value>terms</value>
+   </data>
+   <data name="There is no data for this application" xml:space="preserve">
+      <value>There is no data for this application.</value>
+   </data>
+   <data name="User Account form" xml:space="preserve">
+      <value>User Account form</value>
+   </data>
+   <data name="User Management" xml:space="preserve">
+      <value>User Management</value>
+   </data>
+   <data name="User Name" xml:space="preserve">
+      <value>User Name</value>
+   </data>
+   <data name="User Roles" xml:space="preserve">
+      <value>User Roles</value>
+   </data>
+   <data name="Username" xml:space="preserve">
+      <value>Username</value>
+   </data>
+   <data name="Users" xml:space="preserve">
+      <value>Users</value>
+   </data>
+   <data name="Utilization coefficient" xml:space="preserve">
+      <value>Utilization coefficient</value>
+   </data>
+   <data name="Utilization coefficient m2" xml:space="preserve">
+      <value>Utilization coefficient (m2)</value>
+   </data>
+   <data name="Value" xml:space="preserve">
+      <value>Value</value>
+   </data>
+   <data name="View Groups" xml:space="preserve">
+      <value>View Groups</value>
+   </data>
+   <data name="View Layers" xml:space="preserve">
+      <value>View Layers</value>
+   </data>
+   <data name="View Maps" xml:space="preserve">
+      <value>View Maps</value>
+   </data>
+   <data name="View plot conditions" xml:space="preserve">
+      <value>View plot conditions</value>
+   </data>
+   <data name="View Privileges" xml:space="preserve">
+      <value>View Privileges</value>
+   </data>
+   <data name="View Roles" xml:space="preserve">
+      <value>View Roles</value>
+   </data>
+   <data name="View, edit and delete Groups and add layers" xml:space="preserve">
+      <value>View, edit and delete Groups and add layers.</value>
+   </data>
+   <data name="View, edit and delete Layers" xml:space="preserve">
+      <value>View, edit and delete Layers.</value>
+   </data>
+   <data name="Web" xml:space="preserve">
+      <value>Web</value>
+   </data>
+   <data name="X coordinate" xml:space="preserve">
+      <value>X coordinate</value>
+   </data>
+   <data name="Y coordinate" xml:space="preserve">
+      <value>Y coordinate</value>
+   </data>
+   <data name="Your file has been deleted" xml:space="preserve">
+      <value>Your file has been deleted.</value>
+   </data>
+   <data name="Your file is safe" xml:space="preserve">
+      <value>Your file is safe</value>
+   </data>
+   <data name="Your Legalization is safe" xml:space="preserve">
+      <value>Your Legalization is safe</value>
+   </data>
+   <data name="Your password has been changed successfully" xml:space="preserve">
+      <value>Your password has been changed successfully!</value>
+   </data>
+</root>
