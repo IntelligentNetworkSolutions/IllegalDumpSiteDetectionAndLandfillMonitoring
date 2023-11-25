@@ -1,0 +1,13 @@
+{
+  "ApplicationStartupMode": "PublicPortal", /*IntranetPortal, PublicPortal*/
+  "DomainSettings": {
+    "MainAppPath": "MainApp"
+  },
+  "DefaultLocale": {
+    "wastedetectiondev.mk": "en"
+  },
+  "PortalLayout": {
+    "IntranetPortalLayout": "~/Areas/IntranetPortal/Views/Shared/_Layout.cshtml",
+    "PublicPortalLayout": "~/Areas/PublicPortal/Views/Shared/_Layout.cshtml"
+  }
+}

@@ -11,9 +11,9 @@ namespace Dal.Helpers
     public class ApplicationSettingsHelper
     {
 
-        private readonly ApplicationSettingsDa _applicationSettingsDa;
+        private readonly IApplicationSettingsDa _applicationSettingsDa;
         private readonly ConcurrentDictionary<string, ApplicationSettings> _cache;
-        public ApplicationSettingsHelper(ApplicationSettingsDa applicationSettingsDa)
+        public ApplicationSettingsHelper(IApplicationSettingsDa applicationSettingsDa)
         {
             _applicationSettingsDa = applicationSettingsDa;
             _cache = new ConcurrentDictionary<string, ApplicationSettings>();

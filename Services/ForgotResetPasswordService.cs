@@ -1,19 +1,8 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
-using MailSend;
-using MailSend.Interfaces;
+﻿using MailSend.Interfaces;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using Models.DTOs;
 using Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Services
 {
@@ -23,7 +12,6 @@ namespace Services
         private readonly IConfiguration _configuration;
         private readonly IHttpContextAccessor _httpContextAccessor;
        
-
         public ForgotResetPasswordService(IMailService mailService, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _mailService = mailService;
@@ -34,7 +22,6 @@ namespace Services
         {
             try
             {
-
                 var server = _configuration["MailSettings:Server"];
                 var port = Int32.Parse(_configuration["MailSettings:Port"]);
                 var email = _configuration["MailSettings:Email"];
