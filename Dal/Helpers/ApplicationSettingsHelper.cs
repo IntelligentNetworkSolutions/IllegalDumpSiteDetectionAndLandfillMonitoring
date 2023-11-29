@@ -1,4 +1,5 @@
 ﻿using Models;
+using Services.Interfaces.Repositories;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -19,17 +20,21 @@ namespace Dal.Helpers
             _cache = new ConcurrentDictionary<string, ApplicationSettings>();
         }
 
+        // TODO: This should be private
         public string GetApplicationSetting(string configurationName, string defaultValue = null)
         {
+            // TODO: Needs try catch , if try catch here it can be removed from all following parametarized get methods
+            var appSetting = 
+                _cache.GetOrAdd(configurationName, 
+                                i => _applicationSettingsDa.GetApplicationConfiguration(configurationName));
 
-            var appSetting = _cache.GetOrAdd(configurationName, i => _applicationSettingsDa.GetApplicationConfiguration(configurationName));
             if (appSetting != null)
                 return appSetting.Value;
-
-            else if (appSetting == null && defaultValue != null)
+            
+            if (appSetting == null && defaultValue != null)
                 return defaultValue;
-            else
-                throw new Exception("Application setings error: The settings for " + configurationName + " does not exist");
+            
+            throw new Exception("Application setings error: The settings for " + configurationName + " does not exist");
         }
 
         public string GetApplicationSettingString(string configurationName, string defaultValue = null)
@@ -41,12 +46,14 @@ namespace Dal.Helpers
             }
             catch (Exception e)
             {
+                // TODO: Review -> Higher probablity of setting not found than invalid cast to string
                 throw new Exception("Application setings error: Invalid cast to string " + configurationName, e);
             }
         }
 
         public int GetApplicationSettingInteger(string configurationName, string defaultValue = null)
         {
+            // TODO: Review -> Higher probablity of setting not found than invalid cast to string, add try parse to know if not found or parse error
             try
             {
                 var value = GetApplicationSetting(configurationName, defaultValue);
@@ -60,6 +67,7 @@ namespace Dal.Helpers
 
         public DateTime GetApplicationSettingDateTime(string configurationName, string defaultValue = null)
         {
+            // TODO: Review -> Higher probablity of setting not found than invalid cast to string, add try parse to know if not found or parse error
             try
             {
                 var value = GetApplicationSetting(configurationName, defaultValue);
@@ -73,6 +81,7 @@ namespace Dal.Helpers
 
         public decimal GetApplicationSettingDecimal(string configurationName, string defaultValue = null)
         {
+            // TODO: Review -> Higher probablity of setting not found than invalid cast to string, add try parse to know if not found or parse error
             try
             {
                 var value = GetApplicationSetting(configurationName, defaultValue);
@@ -84,10 +93,9 @@ namespace Dal.Helpers
             }
         }
 
-
-
         public bool GetApplicationSettingBool(string configurationName, string defaultValue = null)
         {
+            // TODO: Review -> Higher probablity of setting not found than invalid cast to string, add try parse to know if not found or parse error
             try
             {
                 var value = GetApplicationSetting(configurationName, defaultValue);
@@ -98,7 +106,5 @@ namespace Dal.Helpers
                 throw new Exception("Application setings error: Invalid cast to bool " + configurationName, e);
             }
         }
-
-
     }
 }

@@ -272,7 +272,9 @@ app.Use(async (context, next) =>
 });
 if (applicationStartMode == ApplicationStartModes.IntranetPortal)
 {
-    app.MapControllers().RequireAuthorization();
+    app.MapControllers()
+        //.RequireAuthorization()
+        ;
     app.MapRazorPages();
     app.MapControllerRoute(
         name: "default",

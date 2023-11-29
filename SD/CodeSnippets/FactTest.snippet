@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+	<CodeSnippet Format="1.0.0">
+		<Header>
+			<Title>
+				Create a Fact Test - Code Snippet
+			</Title>
+			<Description>
+				A code snippet for creating a Fact Test method.
+			</Description>
+			<Author>
+				Bodan Gjozinski
+			</Author>
+			<Shortcut>
+				facttest
+			</Shortcut>
+		</Header>
+		<Snippet>
+			<Declarations>
+				<Literal>
+					<ID>
+						WhatIsTested
+					</ID>
+					<ToolTip>
+						What is being Tested, the name of the method, variable, constructor ...
+					</ToolTip>
+					<Default>
+						GetAll
+					</Default>
+				</Literal>
+				<Literal>
+					<ID>
+						WhatScenarioIsTested
+					</ID>
+					<ToolTip>
+						What Scenario is being Tested, the conditions under which the test should run (Intranet/Public, Default/Provided Parameter ...)
+					</ToolTip>
+					<Default>
+						PublicPortal
+					</Default>
+				</Literal>
+				<Literal>
+					<ID>
+						ExpectedBehaviour
+					</ID>
+					<ToolTip>
+						What is the expacted behaviour (return value, database change ...) of the method under the given scenario
+					</ToolTip>
+					<Default>
+						ReturnsTrue
+					</Default>
+				</Literal>
+			</Declarations>
+			<Code Language="CSharp">
+				<![CDATA[
+					[Fact]
+					public async Task $WhatIsTested$_$WhatScenarioIsTested$_$ExpectedBehaviour$()
+					{
+						// Arrange - Arrange your objects, create and set $WhatIsTested$ them up as necessary.
+						
+						
+						// Act - Act on an object $WhatScenarioIsTested$.
+						
+						
+						// Assert - Assert that something is as expected $ExpectedBehaviour$.
+						
+					}
+				]]>
+			</Code>
+		</Snippet>
+	</CodeSnippet>
+</CodeSnippets>

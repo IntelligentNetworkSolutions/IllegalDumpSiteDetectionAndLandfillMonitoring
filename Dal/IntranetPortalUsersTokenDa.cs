@@ -20,6 +20,8 @@ namespace Dal
             _db = db;
             _logger = logger;
         }
+
+        // TODO: Test
         public async Task<Int32> CreateIntranetPortalUserToken(string token, string userId)
         {
             try
@@ -57,8 +59,6 @@ namespace Dal
                 user.PasswordHash = passwordHashed.HashPassword(user, password);
                 _db.Users.Update(user);
 
-
-
                 return await _db.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -68,6 +68,7 @@ namespace Dal
             }
         }
 
+        // TODO: Test
         public async Task<Int32> UpdateIsTokenUsedForUser(string token, string userId)
         {
             try
@@ -83,12 +84,15 @@ namespace Dal
                 throw ex;
             }
         }
+
+        // TODO: Change to Nullable
         public async Task<ApplicationUser> GetUser(string userId)
         {
             try
             {
-                return await _db.Users.Where(z => z.Id == userId).
-                FirstOrDefaultAsync();
+                return await _db.Users.Where(z => z.Id == userId)
+                                        .FirstOrDefaultAsync();
+                //return await _db.Users.SingleOrDefaultAsync(z => z.Id == userId);
             }
             catch (Exception ex)
             {
@@ -109,6 +113,18 @@ namespace Dal
                 {
                     return false;
                 }
+
+                //var intranetPortalUsersToken =
+                //    await _db.IntranetPortalUsersTokens
+                //                .Where(x => x.Token == token
+                //                        && x.ApplicationUserId == userId
+                //                        && x.isTokenUsed == false)
+                //                .FirstOrDefaultAsync();
+
+                //if (intranetPortalUsersToken != null)
+                //    return true;
+
+                //return false;
             }
             catch (Exception ex)
             {
