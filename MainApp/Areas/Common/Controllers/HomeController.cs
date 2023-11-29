@@ -18,6 +18,7 @@ namespace MainApp.Areas.Common.Controllers
             _configuration = configuration;
         }
 
+        [AllowAnonymous]
         public IActionResult Index()
         {
             string defaultRoute = "";

@@ -19,4 +19,8 @@
     <ProjectReference Include="..\SD\SD.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Interfaces\Services\" />
+  </ItemGroup>
+
 </Project>

@@ -28,6 +28,7 @@ using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Westwind.Globalization.AspnetCore;
 using SD.Helpers;
 using Westwind.Globalization;
+using Services.Interfaces.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 string applicationStartMode = builder.Configuration["ApplicationStartupMode"];
@@ -92,8 +93,11 @@ builder.Services.AddMvc()
             .AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore)
             .AddViewLocalization()
             .AddDataAnnotationsLocalization();
+
 builder.Services.AddDefaultIdentity<ApplicationUser>().AddEntityFrameworkStores<ApplicationDbContext>();
+
 builder.Services.AddDbContext<ApplicationDbContext>();
+
 if (applicationStartMode == ApplicationStartModes.IntranetPortal)
 {
     builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -116,12 +120,13 @@ builder.Services.TryAddScoped<PasswordValidationHelper>();
 builder.Services.TryAddScoped<ModulesAndAuthClaimsHelper>();
 builder.Services.TryAddScoped<UserManagementDa>();
 builder.Services.TryAddScoped<IntranetPortalUsersTokenDa>();
-builder.Services.TryAddScoped<ApplicationSettingsDa>();
+builder.Services.TryAddScoped<IApplicationSettingsDa, ApplicationSettingsDa>();
 builder.Services.TryAddScoped<AuditLogsDa>();
 builder.Services.TryAddScoped<AuditLogBl>();
 builder.Services.TryAddScoped<ILayoutService, LayoutService>();
 builder.Services.TryAddScoped<IForgotResetPasswordService, ForgotResetPasswordService>();
 builder.Services.TryAddScoped<IMailService, MailService>();
+
 Audit.Core.Configuration.Setup()
                .UseEntityFramework(_ => _
                    .AuditTypeMapper(t => typeof(AuditLog))
@@ -187,6 +192,7 @@ Audit.Core.Configuration.AddOnSavingAction(scope =>
 
     }
 });
+
 var app = builder.Build();
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);

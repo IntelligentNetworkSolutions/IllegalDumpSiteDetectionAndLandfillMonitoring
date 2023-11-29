@@ -1,0 +1,13 @@
+{
+  "ApplicationStartupMode": "WrongPortal",
+  "DomainSettings": {
+    "MainAppPath": "WrongApp"
+  },
+  "DefaultLocale": {
+    "wastedetectiondev.mk": "wrong"
+  },
+  "PortalLayout": {
+    "IntranetPortalLayout": "WrongIntranetLayout",
+    "PublicPortalLayout": "WrongPublicLayout"
+  }
+}
