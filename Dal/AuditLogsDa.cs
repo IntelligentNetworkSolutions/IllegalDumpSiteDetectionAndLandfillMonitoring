@@ -24,9 +24,9 @@ namespace Dal
         {
             try
             {
-                return await _db.AuditLog.OrderByDescending(x => x.AuditDate).
-                AsNoTracking().
-                ToListAsync();
+                return await _db.AuditLog.OrderByDescending(x => x.AuditDate)
+                                            .AsNoTracking()
+                                            .ToListAsync();
             }
             catch (Exception ex)
             {
@@ -34,12 +34,14 @@ namespace Dal
                 throw ex;
             }
         }
+
+        // TODO: Change to Nullable ? if first or default
         public async Task<AuditLog> GetAuditData(int auditLogId)
         {
             try
             {
-                return await _db.AuditLog.Where(z => z.AuditLogId == auditLogId).
-                FirstOrDefaultAsync();
+                return await _db.AuditLog.Where(z => z.AuditLogId == auditLogId)
+                                            .FirstOrDefaultAsync();
             }
             catch (Exception ex)
             {
@@ -47,6 +49,8 @@ namespace Dal
                 throw ex;
             }
         }
+
+        // TODO: Test
         public async Task<ICollection<AuditLog>> GetAllFromToDate(DateTime dateFrom, DateTime dateTo)
         {
             var query = _db.AuditLog.AsQueryable();
@@ -62,6 +66,8 @@ namespace Dal
 
             return await query.AsNoTracking().ToListAsync();
         }
+
+        // TODO: Test
         public async Task<ICollection<AuditLog>> GetAllByUsernameFromToDate(string internalUsername, DateTime? dateFrom, DateTime? dateTo, string action, string type)
         {
             var query = _db.AuditLog.AsQueryable();
@@ -88,13 +94,15 @@ namespace Dal
             }
             return await query.AsNoTracking().Take(5000).ToListAsync();
         }
+
         public async Task<List<string>> GetAuditActions()
         {
             try
             {
-                return await _db.AuditLog.GroupBy(z => z.AuditAction).Select(z => z.Key).
-                AsNoTracking().
-                ToListAsync();
+                return await _db.AuditLog.GroupBy(z => z.AuditAction)
+                                            .Select(z => z.Key)
+                                            .AsNoTracking()
+                                            .ToListAsync();
             }
             catch (Exception ex)
             {

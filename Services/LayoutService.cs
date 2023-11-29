@@ -14,7 +14,7 @@ namespace Services
     {
         
         private IConfiguration _configuration;
-        // TO-DO: Remove Context Accessor ?
+        // TODO: Remove Context Accessor ?
         private readonly IHttpContextAccessor _contextAccessor;
 
         public LayoutService(IConfiguration configuration,

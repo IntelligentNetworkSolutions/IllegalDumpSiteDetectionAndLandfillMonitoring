@@ -20,7 +20,7 @@ namespace Tests.ServicesTests
         }
 
         [Fact]
-        public async Task LayoutServiceTest_GetLayout_WrongSettings_ReturnsNotNull()
+        public async Task GetLayout_WrongSettings_ReturnsNotNull()
         {
             // Arrange
             var wrongLayoutService = new LayoutService(_fixture.WrongConfiguration, _fixture.ContextAccessor);
@@ -33,7 +33,7 @@ namespace Tests.ServicesTests
         }
 
         [Fact]
-        public async Task LayoutServiceTest_GetLayout_WrongSettings_ReturnsEmpty()
+        public async Task GetLayout_WrongSettings_ReturnsEmpty()
         {
             // Arrange
             var wrongLayoutService = new LayoutService(_fixture.WrongConfiguration, _fixture.ContextAccessor);
@@ -46,7 +46,7 @@ namespace Tests.ServicesTests
         }
 
         [Fact]
-        public async Task LayoutServiceTest_GetLayout_WrongSettings_ReturnsNotEmpty()
+        public async Task GetLayout_WrongSettings_ReturnsNotEmpty()
         {
             // Arrange
             var wrongLayoutService = new LayoutService(_fixture.WrongConfiguration, _fixture.ContextAccessor);
@@ -59,7 +59,7 @@ namespace Tests.ServicesTests
         }
 
         [Fact]
-        public async Task LayoutServiceTest_GetLayout_BothSettingModes_ReturnNotNullNotEmpty()
+        public async Task GetLayout_BothSettingModes_ReturnNotNullNotEmpty()
         {
             // Arrange
             var intranetLayoutService = new LayoutService(_fixture.PublicConfiguration, _fixture.ContextAccessor);
@@ -77,7 +77,7 @@ namespace Tests.ServicesTests
         }
 
         [Fact]
-        public async Task LayoutServiceTest_GetLayout_BothSettingModes_ContainsAppStartupMode()
+        public async Task GetLayout_BothSettingModes_ContainsAppStartupMode()
         {
             // Arrange
             string intranetAppStartupMode = SD.ApplicationStartModes.IntranetPortal;
@@ -101,5 +101,20 @@ namespace Tests.ServicesTests
 
             Assert.Contains(intranetAppStartupMode, returnedIntranetLayout);
         }
+
+
+        [Fact]
+        public async Task GetUserById_PublicPortal_ReturnsObject()
+        {
+            // Arrange - Arrange your objects, create and set GetUserById them up as necessary.
+
+
+            // Act - Act on an object PublicPortal.
+
+
+            // Assert - Assert that something is as expected ReturnsObject.
+
+        }
+
     }
 }
