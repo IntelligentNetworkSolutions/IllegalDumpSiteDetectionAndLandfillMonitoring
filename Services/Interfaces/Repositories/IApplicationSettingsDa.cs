@@ -10,7 +10,7 @@ namespace Services.Interfaces.Repositories
 {
     public interface IApplicationSettingsDa
     {
-        // TO-DO: 🤔 ViewModels in Models/Domain hmmm 🤔🤔🤔 should be dtos then AutoMapper maybe
+        // TODO: 🤔 ViewModels in Models/Domain hmmm 🤔🤔🤔 should be dtos then AutoMapper maybe
         Task<ApplicationSettings> AddApplicationSettings(ApplicationSettingsCreateViewModel model);
         Task<List<string>> GetAllApplicationSettingsKeys();
 

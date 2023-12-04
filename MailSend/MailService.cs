@@ -32,6 +32,7 @@ namespace MailSend
             }
             catch (Exception ex)
             {
+                // TODO: 🤔 Review to see if exception should be thrown 🤔🤔🤔
                 throw ex;
             }
 

@@ -12,6 +12,8 @@ namespace SD.Helpers
     {
         public static bool HasAuthClaim(this IPrincipal user, AuthClaim authClaim)
         {
+            // TODO: Return Real Value
+            return true;
             var result = false;
             if (HasCustomClaim(user, "SpecialAuthClaim", "insadmin") ||
                 HasCustomClaim(user, "AuthorizationClaim", authClaim.Value))

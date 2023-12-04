@@ -42,6 +42,8 @@ namespace MainApp.Helpers
 
         public bool HasModule(SD.Module module)
         {
+            // TODO: Return Real Value
+            return true;
             var modules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
             return modules.Contains(module.Value);
         }

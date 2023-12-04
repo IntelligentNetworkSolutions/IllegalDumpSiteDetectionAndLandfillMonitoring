@@ -83,10 +83,12 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                @if (User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
+                                @* 🧹🧹🧹🧹🧹 *@
+                                @* @if (User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
                                 {
-                                    <input type="submit" value="@DbResHtml.T("Create", "Resources")" onclick="formSubmit(event)" class="mb-1 mr-2 btn bg-gradient-success border-0" />
-                                }
+                                <input type="submit" value="@DbResHtml.T("Create", "Resources")" onclick="formSubmit(event)" class="mb-1 mr-2 btn bg-gradient-success border-0" />
+                                } *@
+                                <input type="submit" value="@DbResHtml.T("Create", "Resources")" onclick="formSubmit(event)" class="mb-1 mr-2 btn bg-gradient-success border-0" />
                                 <a asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="Index" class="mb-1 btn bg-gradient-secondary border-0">@DbResHtml.T("Back To List", "Resources")</a>
                             </div>
                         </div>
@@ -168,6 +170,7 @@
             var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
             var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
         }
+
             $(document).ready(function () {
                 $('.roleClaims').each(function () {
                     $(this).prop("disabled", true);
@@ -249,7 +252,7 @@
             }
 
         }
-      
+
         function checkRoleClaims() {
             $('.roleClaims').each(function () { $(this).prop("checked", false); });
             var selectedRoles = $("#rolesInsert").val();
@@ -334,7 +337,7 @@
                 return true;
             }
 
-            if (($('#confirmPassword').val() != "" || $('#password').val() != "") && $("#password").val().length < passwordMinLength) {               
+            if (($('#confirmPassword').val() != "" || $('#password').val() != "") && $("#password").val().length < passwordMinLength) {
                 Swal.fire({
                     icon: 'warning',
                     text: '@DbResHtml.T("Minimum characters for password: ", "Resources")' + passwordMinLength
@@ -342,7 +345,7 @@
                 event.preventDefault();
                 return false;
             }
-            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && passwordMustHaveLetters == "True" && !regExpLetter.test($("#password").val())) {                
+            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && passwordMustHaveLetters == "True" && !regExpLetter.test($("#password").val())) {
                 Swal.fire({
                     icon: 'warning',
                     text: '@DbResHtml.T("Password must contain at least one letter", "Resources")' + passwordMinLength
@@ -350,7 +353,7 @@
                 event.preventDefault();
                 return false;
             }
-            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && passwordMustHaveNumbers == "True" && !/\d/.test($("#password").val())) {                
+            else if (($('#confirmPassword').val() != "" || $('#password').val() != "") && passwordMustHaveNumbers == "True" && !/\d/.test($("#password").val())) {
                 Swal.fire({
                     icon: 'warning',
                     text: '@DbResHtml.T("Password must contain at least one number", "Resources")' + passwordMinLength

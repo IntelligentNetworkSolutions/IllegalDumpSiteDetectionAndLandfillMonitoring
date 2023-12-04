@@ -3,15 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Models;
 using Models.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Services.Interfaces.Repositories;
 
 namespace Dal
 {
-    public class ApplicationSettingsDa
+    public class ApplicationSettingsDa : IApplicationSettingsDa
     {
         private readonly ApplicationDbContext _db;
         private static ILogger<ApplicationSettingsDa> _logger;

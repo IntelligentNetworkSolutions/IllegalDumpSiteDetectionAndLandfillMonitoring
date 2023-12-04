@@ -32,6 +32,8 @@ namespace MainApp.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
+            // TODO: 🧹 Middleware Attribute -> AuthorizeClaim 🧹🧹🧹
+            /*
             if (!User.HasAuthClaim(SD.AuthClaims.UserManagement) || !_modulesAndAuthClaimsHelper.HasModule(SD.Modules.UserManagement))
             {
                 var errorPath = _configuration["ErrorViewsPath:Error403"];
@@ -44,11 +46,11 @@ namespace MainApp.Areas.IntranetPortal.Controllers
                     return StatusCode(403);
                 }
             }
-
+            */
             UserManagementViewModel model = new UserManagementViewModel();
             var users = await _userManagementDa.GetAllIntanetPortalUsers();
             var roles = await _userManagementDa.GetRoles();
-            var userRoles = await _userManagementDa.GetUserRoles();           
+            var userRoles = await _userManagementDa.GetUserRoles();
             model.Users = users.Select(z => new UserManagementUserViewModel
             {
                 FirstName = z.FirstName,
@@ -69,8 +71,11 @@ namespace MainApp.Areas.IntranetPortal.Controllers
             return View(model);
         }
 
+        [HttpGet]
         public async Task<IActionResult> CreateUser()
         {
+            // TODO: 🧹 Middleware Attribute -> AuthorizeClaim 🧹🧹🧹
+            /*
             if (!User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles) || !_modulesAndAuthClaimsHelper.HasModule(SD.Modules.UserManagement))
             {
                 var errorPath = _configuration["ErrorViewsPath:Error403"];
@@ -83,14 +88,38 @@ namespace MainApp.Areas.IntranetPortal.Controllers
                     return StatusCode(403);
                 }
             }
-            UserManagementCreateUserViewModel model = new UserManagementCreateUserViewModel();
-            model.Roles = _userManagementDa.GetRoles().Result.ToList();
-            model.Claims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result;
-            model.RoleClaims = _userManagementDa.GetAllRoleClaims().Result;
-            model.PasswordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength");
-            model.PasswordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters");
-            model.PasswordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");
-            model.AllUsers = await _userManagementDa.GetAllIntanetPortalUsers();
+            */
+
+            // TODO: 🧹 Create Seed for initial load 🧹🧹🧹
+            #region Get Pass App Settings
+            int passwordMinLength;
+            bool passwordMustHaveLetters;
+            bool passwordMustHaveNumbers;
+            try
+            {
+                passwordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength");
+                passwordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters");
+                passwordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");
+            }
+            catch (Exception ex)
+            {
+                passwordMinLength = 3;
+                passwordMustHaveLetters = false;
+                passwordMustHaveNumbers = false;
+            }
+            #endregion
+
+            UserManagementCreateUserViewModel model = new UserManagementCreateUserViewModel()
+            {
+                Roles = _userManagementDa.GetRoles().Result.ToList(),
+                Claims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result,
+                RoleClaims = _userManagementDa.GetAllRoleClaims().Result,
+                PasswordMinLength = passwordMinLength,
+                PasswordMustHaveLetters = passwordMustHaveLetters,
+                PasswordMustHaveNumbers = passwordMustHaveNumbers,
+                AllUsers = await _userManagementDa.GetAllIntanetPortalUsers()
+            };
+
             return View(model);
         }
 
@@ -98,6 +127,8 @@ namespace MainApp.Areas.IntranetPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(UserManagementCreateUserViewModel user)
         {
+            // TODO: 🧹 Middleware Attribute -> AuthorizeClaim 🧹🧹🧹
+            /*
             if (!User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles) || !_modulesAndAuthClaimsHelper.HasModule(SD.Modules.UserManagement))
             {
                 var errorPath = _configuration["ErrorViewsPath:Error403"];
@@ -110,6 +141,8 @@ namespace MainApp.Areas.IntranetPortal.Controllers
                     return StatusCode(403);
                 }
             }
+            */
+            // TODO: ⚠️ !!! Password validation is only front end ⚠️⚠️⚠️
             if (ModelState.IsValid)
             {
                 user.UserName = user.UserName?.Trim();
@@ -128,7 +161,6 @@ namespace MainApp.Areas.IntranetPortal.Controllers
                 }
                 foreach (var claim in user.ClaimsInsert)
                 {
-
                     _userManagementDa.AddClaimForUser(u.Id, claim);
                 }
                 return RedirectToAction(nameof(Index));
@@ -143,7 +175,7 @@ namespace MainApp.Areas.IntranetPortal.Controllers
             user.AllUsers = await _userManagementDa.GetAllIntanetPortalUsers();
             return View(user);
         }
-        
+
         public async Task<IActionResult> EditUser(string id)
         {
             if (id == null)
@@ -175,10 +207,10 @@ namespace MainApp.Areas.IntranetPortal.Controllers
             model.IsActive = user.IsActive;
             model.PasswordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength");
             model.PasswordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters");
-            model.PasswordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");            
+            model.PasswordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");
             model.RolesInsert = roles.Where(z => userRole.Contains(z.Id)).Select(z => z.Id).ToList();
             model.Roles = roles.ToList();
-            model.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();           
+            model.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
             model.ClaimsInsert = claims.Select(z => z.ClaimValue).ToList();
             model.AllUsersExceptCurrent = await _userManagementDa.GetAllIntanetPortalUsersExcludingCurrent(user.Id);
 

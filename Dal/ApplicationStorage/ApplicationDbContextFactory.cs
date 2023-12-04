@@ -19,11 +19,12 @@ namespace Dal.ApplicationStorage
         /// <returns></returns>
         public ApplicationDbContext CreateDbContext(string[] args)
         {
-
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5434;Database=WasteDetection;Username=postgres;Password=3103;Pooling=true",
-                db => db.UseNetTopologySuite());
-
+            //optionsBuilder.UseNpgsql("Host=localhost;Port=5434;Database=WasteDetection;Username=postgres;Password=3103;Pooling=true",
+            //    db => db.UseNetTopologySuite());
+            optionsBuilder.UseNpgsql("Host=localhost;Port=5434;Database=waste_detection;Username=postgres;Password=admin;Pooling=true;",
+                db => db.UseNetTopologySuite()
+                );
 
             return new ApplicationDbContext(optionsBuilder.Options, null);
         }
