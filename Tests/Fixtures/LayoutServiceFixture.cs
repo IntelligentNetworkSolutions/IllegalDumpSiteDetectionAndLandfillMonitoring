@@ -11,31 +11,71 @@ namespace Tests.Fixtures
 {
     public class LayoutServiceFixture : IDisposable
     {
-        public IConfiguration WrongConfiguration { get; }
-        public IConfiguration IntranetConfiguration { get; }
-        public IConfiguration PublicConfiguration { get; }
+        public IConfiguration? WrongConfiguration { get; }
+        public IConfiguration? IntranetConfiguration { get; }
+        public IConfiguration? PublicConfiguration { get; }
 
         public IHttpContextAccessor ContextAccessor { get; }
 
         public LayoutServiceFixture()
         {
-            string wrongDummyConfigFilePath = "C:\\Visual Studio Projects\\IllegalDumpSiteDetectionAndLandfillMonitoring\\Tests\\ConfigDummies\\WrongAppSettingsDummy.json";
-            var wrongDummyCfgBuilder = new ConfigurationBuilder();
-            wrongDummyCfgBuilder.AddJsonFile(wrongDummyConfigFilePath);
-            WrongConfiguration = wrongDummyCfgBuilder.Build();
+            const string configDummiesDirName = "ConfigDummies";
+            const string wrongAppSettingsDummyName = "WrongAppSettingsDummy.json";
+            const string intranetAppSettingsDummyName = "IntranetAppSettingsDummy.json";
+            const string publicAppSettingsDummyName = "PublicAppSettingsDummy.json";
 
-            string intranetDummyConfigFilePath = "C:\\Visual Studio Projects\\IllegalDumpSiteDetectionAndLandfillMonitoring\\Tests\\ConfigDummies\\IntranetAppSettingsDummy.json";
-            var intranetDummyCfgBuilder = new ConfigurationBuilder();
-            intranetDummyCfgBuilder.AddJsonFile(intranetDummyConfigFilePath);
-            IntranetConfiguration = intranetDummyCfgBuilder.Build();
+            try
+            {
+                string baseDirPath = AppDomain.CurrentDomain.BaseDirectory;
+                string testProjDirName = "/Tests";
+                if (baseDirPath.Contains("bin"))
+                    testProjDirName = "../" + testProjDirName;
 
-            string publicDummyConfigFilePath = "C:\\Visual Studio Projects\\IllegalDumpSiteDetectionAndLandfillMonitoring\\Tests\\ConfigDummies\\PublicAppSettingsDummy.json";
-            var publicDummyCfgBuilder = new ConfigurationBuilder();
-            publicDummyCfgBuilder.AddJsonFile(publicDummyConfigFilePath);
-            PublicConfiguration = publicDummyCfgBuilder.Build();
+                if (baseDirPath.Contains("Debug"))
+                    testProjDirName = "../" + testProjDirName;
 
-            var contextAccesorMoq = new Mock<IHttpContextAccessor>();
-            ContextAccessor = contextAccesorMoq.Object;
+                if (baseDirPath.Contains("Release"))
+                    testProjDirName = "../" + testProjDirName;
+
+                if (baseDirPath.Contains("net7.0"))
+                    testProjDirName = "../" + testProjDirName;
+
+                if (baseDirPath.Contains("Tests"))
+                    testProjDirName = "../" + testProjDirName;
+
+                
+                string wrongDummyConfigFilePath = Path.Join(baseDirPath, testProjDirName, configDummiesDirName, wrongAppSettingsDummyName);
+                var wrongDummyCfgBuilder = new ConfigurationBuilder();
+                wrongDummyCfgBuilder.AddJsonFile(wrongDummyConfigFilePath);
+                WrongConfiguration = wrongDummyCfgBuilder.Build();
+
+                string intranetDummyConfigFilePath = Path.Join(baseDirPath, testProjDirName, configDummiesDirName, intranetAppSettingsDummyName);
+                var intranetDummyCfgBuilder = new ConfigurationBuilder();
+                intranetDummyCfgBuilder.AddJsonFile(intranetDummyConfigFilePath);
+                IntranetConfiguration = intranetDummyCfgBuilder.Build();
+
+                string publicDummyConfigFilePath = Path.Join(baseDirPath, testProjDirName, configDummiesDirName, publicAppSettingsDummyName);
+                var publicDummyCfgBuilder = new ConfigurationBuilder();
+                publicDummyCfgBuilder.AddJsonFile(publicDummyConfigFilePath);
+                PublicConfiguration = publicDummyCfgBuilder.Build();
+
+                var contextAccesorMoq = new Mock<IHttpContextAccessor>();
+                ContextAccessor = contextAccesorMoq.Object;
+            }
+            catch (Exception ex)
+            {
+                var wrongDummyCfgBuilder = new Mock<ConfigurationBuilder>();
+                WrongConfiguration = wrongDummyCfgBuilder.Object.Build();
+
+                var intranetDummyCfgBuilder = new Mock<ConfigurationBuilder>();
+                IntranetConfiguration = intranetDummyCfgBuilder.Object.Build();
+
+                var publicDummyCfgBuilder = new Mock<ConfigurationBuilder>();
+                PublicConfiguration = publicDummyCfgBuilder.Object.Build();
+
+                var contextAccesorMoq = new Mock<IHttpContextAccessor>();
+                ContextAccessor = contextAccesorMoq.Object;
+            }
         }
 
         public void Dispose()
