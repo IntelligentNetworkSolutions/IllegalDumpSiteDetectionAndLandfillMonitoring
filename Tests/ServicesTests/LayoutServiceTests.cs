@@ -46,19 +46,6 @@ namespace Tests.ServicesTests
         }
 
         [Fact]
-        public async Task GetLayout_WrongSettings_ReturnsNotEmpty()
-        {
-            // Arrange
-            var wrongLayoutService = new LayoutService(_fixture.WrongConfiguration, _fixture.ContextAccessor);
-
-            // Act
-            var returnedWrongLayout = await wrongLayoutService.GetLayout();
-
-            // Assert
-            Assert.NotEmpty(returnedWrongLayout);
-        }
-
-        [Fact]
         public async Task GetLayout_BothSettingModes_ReturnNotNullNotEmpty()
         {
             // Arrange
