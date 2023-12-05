@@ -12,7 +12,10 @@ on:
 jobs:
   build:
 
-    runs-on: windows-2019
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2019, ubuntu-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -26,3 +29,5 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Display OS version
+      run: echo "Running on ${{ matrix.os }}"
