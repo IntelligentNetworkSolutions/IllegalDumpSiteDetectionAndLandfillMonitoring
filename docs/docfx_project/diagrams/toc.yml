@@ -1,0 +1,8 @@
+- name: Diagrams
+  href: intro.md
+- name: Training
+  href: training_process_diagram.md
+- name: Detection
+  href: detection_process_diagram.md
+- name: EntityRelationship
+  href: entity_relationship_diagram.md

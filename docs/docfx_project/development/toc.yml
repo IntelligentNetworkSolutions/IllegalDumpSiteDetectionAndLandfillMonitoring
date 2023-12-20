@@ -1,0 +1,9 @@
+- name: Development
+  href: intro.md
+- name: Usefull Links
+  href: usefull-links.md
+- name: Secrets
+  href: shhh_secrets.md
+- name: Think Licensing
+  href: think-licensing.md
+
