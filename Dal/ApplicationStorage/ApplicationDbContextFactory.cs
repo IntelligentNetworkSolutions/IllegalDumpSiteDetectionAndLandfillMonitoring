@@ -1,10 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Dal.ApplicationStorage
 {
@@ -19,12 +14,19 @@ namespace Dal.ApplicationStorage
         /// <returns></returns>
         public ApplicationDbContext CreateDbContext(string[] args)
         {
+            if (args.Length != 1)
+                throw new ArgumentException("Please provide the connection string as a command-line argument.");
+
+            string connectionString = args[0];
+
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            //optionsBuilder.UseNpgsql("Host=localhost;Port=5434;Database=WasteDetection;Username=postgres;Password=3103;Pooling=true",
-            //    db => db.UseNetTopologySuite());
-            optionsBuilder.UseNpgsql("Host=localhost;Port=5434;Database=waste_detection;Username=postgres;Password=admin;Pooling=true;",
-                db => db.UseNetTopologySuite()
-                );
+            
+            optionsBuilder.UseNpgsql(connectionString, db => db.UseNetTopologySuite());
+
+            // cd DAL
+            // dotnet ef migrations add MigrationName -- "YourConnectionString"
+            // dotnet ef migrations remove -- "YourConnectionString"
+            // dotnet ef database update -- "YourConnectionString"
 
             return new ApplicationDbContext(optionsBuilder.Options, null);
         }

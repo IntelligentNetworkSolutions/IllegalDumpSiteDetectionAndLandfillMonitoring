@@ -1,0 +1,529 @@
+﻿@using MainApp.MVC.Helpers;
+@using Microsoft.AspNetCore.Localization;
+@using SD.Helpers;
+@model MainApp.MVC.ViewModels.IntranetPortal.UserManagement.UserManagementViewModel
+@{
+    ViewData["Title"] = @DbResHtml.T("User management", "Resources");
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Add, edit, delete and view users, roles and privileges", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title">@DbResHtml.T("Users", "Resources")</h3>
+                    </div>
+                    <div class="card-body">
+                        @if (User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
+                        {
+                            <div class="text-sm mb-3">
+                                <a class="mb-1 btn bg-gradient-primary" asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="CreateUser">@DbResHtml.T("Add user", "Resources")</a>
+                            </div>
+                        }
+                        <table id="usersTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("User Name", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Email", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Role", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Enabled", "Resources")
+                                    </th>
+                                    <th class="notexport">
+                                        @DbResHtml.T("Action", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in (Model.Users))
+                                {
+                                    <tr>
+                                        <td>@item.UserName</td>
+                                        <td>@item.Email</td>
+                                        <td>@(item.Roles.Count > 1 ? (item.Roles.FirstOrDefault().Name + "...") : (item.Roles.Count > 0 ? item.Roles.FirstOrDefault().Name : ""))</td>
+                                        <td>@item.IsActive</td>
+                                        <td>
+                                            @if (User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
+                                            {
+                                                <a asp-controller="UserManagement" asp-action="EditUser" asp-route-id="@item.Id" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Edit", "Resources")">
+                                                    <i class="far fa-edit"></i>
+                                                </a>
+                                            }
+                                            @if (User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
+                                            {
+                                                <button onclick="deleteUser('@item.Id',this)" class="mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteUserModal" title="@DbResHtml.T("Delete", "Resources")">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            }
+                                            @if (User.HasAuthClaim(SD.AuthClaims.UserManagementViewUserClaims))
+                                            {
+                                                <button onclick="getUserClaims('@item.Id')" class="mb-1 btn bg-gradient-success" data-toggle="modal" data-target="#claimsModal" title="@DbResHtml.T("Privileges", "Resources")">
+                                                    <i class="fas fa-book-open"></i>
+                                                </button>
+                                            }
+                                            @if (User.HasAuthClaim(SD.AuthClaims.UserManagementViewUserRoles))
+                                            {
+                                                <button onclick="getUserRoles('@item.Id')" class="mb-1 btn bg-gradient-info" data-toggle="modal" data-target="#rolesModal" title="@DbResHtml.T("Roles", "Resources")">
+                                                    <i class="fas fa-user"></i>
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title">@DbResHtml.T("Roles", "Resources")</h3>
+                    </div>
+                    <div class="card-body">
+                        @if (User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
+                        {
+                            <div class="text-sm mb-3">
+                                <a class="mb-1 btn bg-gradient-primary" asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="CreateRole">@DbResHtml.T("Add role", "Resources")</a>
+                            </div>
+                        }
+                        <table id="rolesTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>@DbResHtml.T("Role name", "Resources")</th>
+                                    <th class="notexport">@DbResHtml.T("Actions", "Resources")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in (Model.Roles))
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td>
+                                            @if (User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
+                                            {
+                                                <a asp-controller="UserManagement" asp-action="EditRole" asp-route-id="@item.Id" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Edit", "Resources")">
+                                                    <i class="far fa-edit"></i>
+                                                </a>
+                                            }
+                                            @if (User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
+                                            {
+                                                <button onclick="deleteRole('@item.Id',this)" class="mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteRoleModal" title="@DbResHtml.T("Delete", "Resources")">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            }
+                                            @if (User.HasAuthClaim(SD.AuthClaims.UserManagementViewRoleClaims))
+                                            {
+                                                <button onclick="getRoleClaims('@item.Id')" class="mb-1 btn bg-gradient-success mb-1" data-toggle="modal" data-target="#roleClaimsModal" title="@DbResHtml.T("Privileges", "Resources")">
+                                                    <i class="fas fa-book-open"></i>
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    @{
+        var httpContext = ViewContext.HttpContext;
+        var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+        var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+    }
+    <script>
+        $(function () {
+            $("#usersTable").DataTable({
+                paging: true,
+                pageLength: 10,
+                "language": {
+                    "url": "@langPath"
+                },
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        className: 'btn bg-gradient-success border-0',
+                        text: '<i class="fas fa-file-alt"></i>',
+                        titleAttr: "Export to excel",
+                        filename: "Intranet portal users - @DateTime.Now.ToString("dd.MM.yyyy")",
+                        exportOptions: {
+                            columns: ':not(.notexport)'
+                        }
+                    }
+                ]
+            });
+            $("#rolesTable").DataTable({
+                paging: true,
+                pageLength: 10,
+                "language": {
+                    "url": "@langPath"
+                },
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        className: 'btn bg-gradient-success border-0',
+                        text: '<i class="fas fa-file-alt"></i>',
+                        titleAttr: "Export to excel",
+                        filename: "Roles - @DateTime.Now.ToString("dd.MM.yyyy")",
+                        exportOptions: {
+                            columns: ':not(.notexport)'
+                        },
+                    }
+                ]
+            });
+            $('#deleteUserTable').DataTable({
+                "bPaginate": false,
+                "bLengthChange": false,
+                "bFilter": false,
+                "bSort": false,
+                "bInfo": false
+            });
+            $('#deleteRoleTable').DataTable({
+                "bPaginate": false,
+                "bLengthChange": false,
+                "bFilter": false,
+                "bSort": false,
+                "bInfo": false
+            });
+
+        });
+        var deleteBtn = null;
+        function deleteUser(userId, btn) {
+            deleteBtn = btn;
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteUser", "UserManagement")",
+                data: {
+                    id: userId
+                },
+                success: function (data) {
+                    $("#userTBody").html("");
+                    $("#userId").val(userId);
+                    $("#userTBody").append("<tr><td>" + data.userName + "</td>"
+                        + "<td>" + data.email + "</td>"
+                        + " <td> " + data.phoneNumber + "</td>"
+                        + "</tr >");
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+        function deleteUserConfirmed() {
+            var userId = $("#userId").val();
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteUserConfirmed", "UserManagement")",
+                data: {
+                    id: userId
+                },
+                success: function (data) {
+                    if (deleteBtn != null) {
+                        deleteBtn.parentElement.parentElement.remove();
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+        function deleteRole(roleId, btn) {
+            deleteBtn = btn;
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteRole", "UserManagement")",
+                data: {
+                    id: roleId
+                },
+                success: function (data) {
+                    $("#roleTBody").html("");
+                    $("#roleId").val(roleId);
+                    $("#roleTBody").append("<tr><td>" + data.name + "</td>" + "</tr >");
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+        function deleteRoleConfirmed() {
+            var roleId = $("#roleId").val();
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteRoleConfirmed", "UserManagement")",
+                data: {
+                    id: roleId
+                },
+                success: function (data) {
+                    if (deleteBtn != null) {
+                        deleteBtn.parentElement.parentElement.remove();
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+        function getUserClaims(userId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetUserClaims", "UserManagement")",
+                data: {
+                    userId: userId
+                },
+                success: function (data) {
+                    $("#claimsTBody").html("");
+                    if (data.length === 0) {
+                        $("#claimsTBody").append("<tr><td class='text-center'><small>" + "No claims for this user" + "</small></td></tr>")
+                    } else {
+                        for (var i = 0; i < data.length; i++) {
+                            $("#claimsTBody").append("<tr><td>" + data[i].claimValue + "</td></tr>")
+                        }
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+        function getUserRoles(userId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetUserRoles", "UserManagement")",
+                data: {
+                    userId: userId
+                },
+                success: function (data) {
+                    $("#rolesTBody").html("");
+                    if (data.length === 0) {
+                        $("#rolesTBody").append("<tr><td class='text-center'><small>" + "No roles for this user" + "</small></td></tr>")
+                    } else {
+                        for (var i = 0; i < data.length; i++) {
+                            $("#rolesTBody").append("<tr><td>" + data[i].name + "</td></tr>")
+                        }
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+        function getRoleClaims(roleId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetRoleClaims", "UserManagement")",
+                data: {
+                    roleId: roleId
+                },
+                success: function (data) {
+                    $("#roleClaimsTBody").html("");
+                    if (data.length === 0) {
+                        $("#roleClaimsTBody").append("<tr><td class='text-center'><small>" + "No claims for this role" + "</small></td></tr>")
+                    } else {
+                        for (var i = 0; i < data.length; i++) {
+                            $("#roleClaimsTBody").append("<tr><td>" + data[i].claimValue + "</td></tr>")
+                        }
+                    }
+
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+    </script>
+
+}
+
+
+@section BodyArea{
+    <div class="modal" id="deleteUserModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@DbResHtml.T("Are you sure you want to delete this user", "Resources")</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped my-4 w-100" id="deleteUserTable">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("User name", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Email description", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Phone number", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTBody">
+                            </tbody>
+                        </table>
+                        <div class="modal-footer">
+                            <input type="hidden" id="userId" />
+                            <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteUserConfirmed()" data-dismiss="modal" aria-label="Delete">
+                                <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="deleteRoleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@DbResHtml.T("Are you sure you want to delete this role", "Resources") </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped my-4 w-100" id="deleteRoleTable">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Role name", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="roleTBody">
+                            </tbody>
+                        </table>
+                        <div class="modal-footer">
+                            <input type="hidden" id="roleId" />
+                            <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteRoleConfirmed()" data-dismiss="modal" aria-label="Delete">
+                                <span aria-hidden="true">@DbResHtml.T("Delete", "Resources")</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="claimsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@DbResHtml.T("Privileges", "Resources")</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped my-4 w-100" id="viewUserClaimsTable">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Privilege description", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="claimsTBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="rolesModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@DbResHtml.T("User roles", "Resources")</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped my-4 w-100" id="viewRoleClaimsTable">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Role name", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="rolesTBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="roleClaimsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">@DbResHtml.T("Privileges", "Resources")</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped my-4 w-100" id="viewRoleClaimsTable">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Privilege description", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="roleClaimsTBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+

@@ -23,7 +23,7 @@ namespace Tests.ServicesTests
         public async Task GetLayout_WrongSettings_ReturnsNotNull()
         {
             // Arrange
-            var wrongLayoutService = new LayoutService(_fixture.WrongConfiguration, _fixture.ContextAccessor);
+            var wrongLayoutService = new LayoutService(_fixture.WrongConfiguration);
 
             // Act
             var returnedWrongLayout = await wrongLayoutService.GetLayout();
@@ -36,7 +36,7 @@ namespace Tests.ServicesTests
         public async Task GetLayout_WrongSettings_ReturnsEmpty()
         {
             // Arrange
-            var wrongLayoutService = new LayoutService(_fixture.WrongConfiguration, _fixture.ContextAccessor);
+            var wrongLayoutService = new LayoutService(_fixture.WrongConfiguration);
 
             // Act
             var returnedWrongLayout = await wrongLayoutService.GetLayout();
@@ -49,8 +49,8 @@ namespace Tests.ServicesTests
         public async Task GetLayout_BothSettingModes_ReturnNotNullNotEmpty()
         {
             // Arrange
-            var intranetLayoutService = new LayoutService(_fixture.PublicConfiguration, _fixture.ContextAccessor);
-            var publicLayoutService = new LayoutService(_fixture.PublicConfiguration, _fixture.ContextAccessor);
+            var intranetLayoutService = new LayoutService(_fixture.PublicConfiguration);
+            var publicLayoutService = new LayoutService(_fixture.PublicConfiguration);
 
             // Act
             var returnedIntranetLayout = await intranetLayoutService.GetLayout();
@@ -70,8 +70,8 @@ namespace Tests.ServicesTests
             string intranetAppStartupMode = SD.ApplicationStartModes.IntranetPortal;
             string publicAppStartupMode = SD.ApplicationStartModes.PublicPortal;
 
-            var intranetLayoutService = new LayoutService(_fixture.IntranetConfiguration, _fixture.ContextAccessor);
-            var publicLayoutService = new LayoutService(_fixture.PublicConfiguration, _fixture.ContextAccessor);
+            var intranetLayoutService = new LayoutService(_fixture.IntranetConfiguration);
+            var publicLayoutService = new LayoutService(_fixture.PublicConfiguration);
 
             // Act
             var returnedPublicLayout = await publicLayoutService.GetLayout();

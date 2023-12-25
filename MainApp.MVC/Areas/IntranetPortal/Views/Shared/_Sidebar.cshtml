@@ -1,0 +1,85 @@
+﻿@using MainApp.MVC.Filters;
+@using MainApp.MVC.Helpers;
+@using SD.Helpers;
+@inject ModulesAndAuthClaimsHelper modulesAndAuthClaims
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="Index" class="brand-link bg-success border-bottom">
+        <img src="~/logo.png" alt=" @DbResHtml.T("Waste detection", "Resources")" class="brand-image img-circle elevation-3" style="opacity: .8">
+        <span class="brand-text font-weight-light"> @DbResHtml.T("Waste detection", "Resources")</span>
+    </a>
+    <div class="sidebar">
+        <nav class="mt-2">
+
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">              
+               @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+                {
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" title="@DbResHtml.T("Super admin", "Resources")">
+                            <i class="fas fa-cog"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Super admin", "Resources")
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Index" title="@DbResHtml.T("Application settings", "Resources")" class="nav-link">
+                                    <i class="fas fa-sm fa-wrench"></i>
+                                    <p><small> @DbResHtml.T("Application settings", "Resources")</small></p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/LocalizationAdmin" title="@DbResHtml.T("Localization", "Resources")" class="nav-link">
+                                    <i class="fas fa-sm fa-globe"></i>
+                                    <p><small> @DbResHtml.T("Localization", "Resources")</small></p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+                @if (User.HasAuthClaim(SD.AuthClaims.Admin))
+                {
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" title="@DbResHtml.T("Admin", "Resources")">
+                            <i class="fas fa-user-alt"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Admin", "Resources")
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @if (User.HasAuthClaim(SD.AuthClaims.UserManagement) && modulesAndAuthClaims.HasModule(SD.Modules.UserManagement))
+                            {
+                                <li class="nav-item">
+                                    <a asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="Index" title="@DbResHtml.T("User management", "Resources")" class="nav-link">
+                                        <i class="fas fa-users"></i>
+                                        <p><small> @DbResHtml.T("User management", "Resources")</small></p>
+                                    </a>
+                                </li>
+                            }
+                            @if (User.HasAuthClaim(SD.AuthClaims.AuditLog) && modulesAndAuthClaims.HasModule(SD.Modules.AuditLog))
+                            {
+                                <li class="nav-item">
+                                    <a asp-area="IntranetPortal" asp-controller="AuditLogs" asp-action="Index" title=" @DbResHtml.T("Audit logs", "Resources")" class="nav-link">
+                                        <i class="fas fa-file-signature"></i>
+                                        <p><small> @DbResHtml.T("Audit logs", "Resources")</small></p>
+                                    </a>
+                                </li>
+                            }
+                            @if (User.HasAuthClaim(SD.AuthClaims.SpecialActions) && modulesAndAuthClaims.HasModule(SD.Modules.SpecialActions))
+                            {
+                                <li class="nav-item">
+                                    <a asp-area="IntranetPortal" asp-controller="SpecialActions" asp-action="Index" title="@DbResHtml.T("Special actions", "Resources")" class="nav-link">
+                                        <i class="fas fa-play-circle"></i>
+                                        <p><small> @DbResHtml.T("Special actions", "Resources")</small></p>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+</aside>

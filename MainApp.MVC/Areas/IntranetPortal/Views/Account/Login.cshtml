@@ -1,0 +1,51 @@
+﻿@model MainApp.MVC.ViewModels.IntranetPortal.Account.LoginViewModel;
+@using MainApp.MVC.Helpers;
+@using Microsoft.AspNetCore.Http.Extensions;
+@{
+    ViewData["Title"] = @DbResHtml.T("Login", "Resources");
+    Layout = "~/Areas/IntranetPortal/Views/Shared/_LayoutPage.cshtml";
+}
+<p class="login-box-msg">@DbResHtml.T("Login form", "Resources")</p>
+<form class="mb-3" method="post" asp-action="Login" asp-controller="Account" asp-area="IntranetPortal">
+    @Html.AntiForgeryToken()
+    @{
+        var httpContext = ViewContext.HttpContext;
+        var currentUrl = UriHelper.BuildRelative(httpContext.Request.PathBase, httpContext.Request.Path, httpContext.Request.QueryString);
+    }
+    <input type="hidden" name="returnUrl" value="@Context.Request.Query["ReturnUrl"]">
+    <div class="input-group mb-3">
+        <input class="form-control border-right-0" id="input-username" name="username" type="text" placeholder="@DbResHtml.T("Username", "Resources")" autocomplete="off" required="required" />
+        <div class="input-group-append">
+            <div class="input-group-text">
+                <span class="fas fa-envelope"></span>
+            </div>
+        </div>
+    </div>
+    <div class="input-group mb-3">
+        <input class="form-control border-right-0" id="input-password" type="password" name="password" placeholder="@DbResHtml.T("Password", "Resources")" required="required" />
+        <div class="input-group-append">
+            <div class="input-group-text">
+                <span class="fas fa-lock"></span>
+            </div>
+        </div>
+    </div>
+    <div class="mb-4 text-danger">@ViewData.ModelState["msgError"]?.Errors[0].ErrorMessage</div>
+    <div class="row">
+        <div class="col-8">
+            <div class="icheck-success">
+
+                <input type="checkbox" value="true" checked data-val="true" name="remember" id="remember" />
+                <input type="hidden" value="false" name="remember">
+                <label for="remember">
+                   @DbResHtml.T("Remember me", "Resources")
+                </label>
+            </div>
+        </div>
+        <div class="col-4">
+            <button type="submit" class="btn btn-success btn-block">@DbResHtml.T("Login", "Resources")</button>
+        </div>
+    </div>
+</form>
+<p class="mb-1">
+    <a class="text-success" href="@Url.Action("ForgotPassword", "Account", new { area = "IntranetPortal" })">@DbResHtml.T("Forgot your password?", "Resources")</a>
+</p>

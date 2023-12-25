@@ -1,0 +1,34 @@
+﻿@using MainApp.MVC.Filters;
+@using MainApp.MVC.Helpers;
+@using SD.Helpers;
+@inject ModulesAndAuthClaimsHelper modulesAndAuthClaims
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a asp-area="PublicPortal" asp-controller="PublicPortalHome" asp-action="Index" class="brand-link bg-success border-bottom">
+        <img src="~/logo.png" alt=" @DbResHtml.T("Waste detection", "Resources")" class="brand-image img-circle elevation-3" style="opacity: .8">
+        <span class="brand-text font-weight-light"> @DbResHtml.T("Waste detection", "Resources")</span>
+    </a>
+    <div class="sidebar">
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-item">
+                    <a href="#" class="nav-link" title="@DbResHtml.T("Test", "Resources")">
+                        <i class="fas fa-cog"></i> &nbsp;&nbsp;
+                        <p>
+                            @DbResHtml.T("Test", "Resources")
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="fas fa-sm fa-wrench"></i>
+                                <p><small> @DbResHtml.T("Test", "Resources")</small></p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>                
+            </ul>
+        </nav>
+    </div>
+</aside>

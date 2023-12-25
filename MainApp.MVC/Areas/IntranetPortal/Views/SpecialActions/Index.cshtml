@@ -1,0 +1,101 @@
+﻿@using Dal.Helpers;
+@using MainApp.MVC.Helpers;
+@using SD.Helpers;
+@inject ApplicationSettingsHelper applicationSettingsHelper;
+@{
+    var mainAppResetTranslationCacheUrl = applicationSettingsHelper.GetApplicationSettingString("TranslationClearCacheMainApp");
+    var publicPortalResetTranslationCacheUrl = applicationSettingsHelper.GetApplicationSettingString("TranslationClearCachePublicPortal");
+    ViewData["Title"] = @DbResHtml.T("Special actions", "Resources");
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Special admin actions", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-4 mt-4">
+                @if (User.HasAuthClaim(SD.AuthClaims.SpecialActionsResetTranslationCache))
+                {
+                    <div class="info-box">
+                        <span class="info-box-icon bg-gradient-olive"><i class="fas fa-language"></i></span>
+                        <div class="info-box-content text-center">
+                            <span class="info-box-text">@DbResHtml.T("Reset translation cache", "Resources")</span>
+                            <span class="info-box-number">
+                                <button class="mb-1 btn bg-gradient-olive" onclick="resetTranslationCache(event)" title=@DbResHtml.T("Reset translation cache", "Resources")>@DbResHtml.T("Reset", "Resources")</button>
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+    <script>
+        function resetTranslationCache(event) {
+            var errors = [];
+
+            var promiseMainApp = $.ajax({
+                url: "@mainAppResetTranslationCacheUrl",
+                type: "GET",
+            }).then(function (response) {
+            }).fail(function (req, status, error) {
+                if (req.status == 404) {
+                    errors.push("@DbResHtml.T("Main app - The requested resource could not be found.", "Resources")");
+                } else {
+                    errors.push("@DbResHtml.T("Main app - An error occurred while processing your request.", "Resources")");
+                }
+            });
+
+            var promisePublicPortal = $.ajax({
+                url: "@publicPortalResetTranslationCacheUrl",
+                type: "GET"
+            }).then(function (response) {
+               
+            }).fail(function (req, status, error) {
+                if (req.status == 404) {
+                    errors.push("@DbResHtml.T("Public portal - The requested resource could not be found.", "Resources")");
+                } else {
+                    errors.push("@DbResHtml.T("Public portal - An error occurred while processing your request.", "Resources")");
+                }
+            });
+
+            Promise.allSettled([promiseMainApp, promisePublicPortal])
+                .then((results) => {
+                    var hasErrors = results.some(result => result.status === 'rejected');
+                    if (hasErrors) {
+                        var mappedErrors = errors.join('\n');
+                        swal.fire({
+                            title: "@DbResHtml.T("The following requests failed:", "Resources")",
+                            text: mappedErrors,
+                            icon: "error"
+                        });
+                    } else {
+                        swal.fire({
+                            icon: "success",
+                            text: "@DbResHtml.T("Translation cache cleared successfully", "Resources")"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                               location.reload();
+                            }
+                        });
+                    }
+                });
+        }
+    </script>
+}

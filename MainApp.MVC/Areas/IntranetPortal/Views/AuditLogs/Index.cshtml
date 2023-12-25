@@ -1,0 +1,201 @@
+﻿@using MainApp.MVC.Helpers;
+@model MainApp.MVC.ViewModels.IntranetPortal.AuditLog.AuditLogViewModel
+@{
+    ViewData["Title"] = @DbResHtml.T("Audit Logs", "Resources");
+}
+
+@section Styles{
+    <link href="~/css/AuditLog/json-viewer.css" rel="stylesheet" />
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted"> @DbResHtml.T("View audit logs", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row">
+                            <div class="col-md-3 col-sm-3 col-lg-3">
+                                @Html.DropDownListFor(m => m, new SelectList(Model.InternalUsersList, "Username", "FullName"), "", new { @class = "form-control", id = "ddlinternaluser", name = "ddlinternaluser" })
+                            </div>
+                            <div class="col-md-3 col-sm-3 col-lg-3">
+                                <div class="input-group date" id="addDateFromPicker" data-target-input="nearest">
+                                    <input placeholder="@DbResHtml.T("Date From", "Resources")" id="addDateFrom" type="text" class="form-control datetimepicker-input" data-target="#addDateFromPicker" />
+                                    <div class="input-group-append" data-target="#addDateFromPicker" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="far fa-calendar-alt"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-sm-3 col-lg-3">
+                                <div class="input-group" id="addDateToPicker" data-target-input="nearest">
+                                    <input placeholder="@DbResHtml.T("Date To", "Resources")" type="text" id="addDateTo" class="form-control datetimepicker-input" data-target="#addDateToPicker" />
+                                    <div class="input-group-append" data-target="#addDateToPicker" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="far fa-calendar-alt"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-1 col-sm-1 col-lg-1">
+                                <button id="btnSubmit" class="btn btn-outline-primary rounded-right align-bottom" type="button" onclick="onclickSearch()">
+                                    @DbResHtml.T("Search", "Resources")
+                                </button>
+                            </div>
+                            <div class="col-md-1 col-sm-1 col-lg-1">
+                                <a class="btn btn-warning text-white" href="" onclick="getUrlActionExport()" id="exportUrl" target="_blank">  @DbResHtml.T("Export", "Resources")</a>
+                            </div>
+                        </div>
+                        <br />
+                        <div class="row">
+                            <div class="col-md-3 col-sm-3 col-lg-3">
+                                @Html.DropDownListFor(m => m, new SelectList(Model.AuditActionsList), "", new { @class = "form-control", id = "ddlauditaction", name = "ddlauditaction" })
+                            </div>
+                            <div class="col-md-3 col-sm-3 col-lg-3">
+                                <div class="input-group date">
+                                    <input type="text" class="form-control" id="entityType" placeholder=" @DbResHtml.T("Entity Type", "Resources")">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body" id="divRez">
+                        <div id="searchResult"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+    <script src="~/js/AuditLog/json-viewer.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#divRez").hide();
+            createDatePicker('#addDateFromPicker, #addDateToPicker');  
+            //$('#addDateFromPicker').datetimepicker({
+            //    format: 'L'
+            //});
+            //$('#addDateToPicker').datetimepicker({
+            //    format: 'L'
+            //});
+            $('#ddlinternaluser').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: " @DbResHtml.T("Please select user", "Resources")",
+                allowClear: true
+            })
+            $('#ddlauditaction').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: " @DbResHtml.T("Please select action", "Resources")",
+                allowClear: true
+            })
+        });
+
+        function onclickSearch() {
+            var dateFrom = getDefaultFormatDate('#addDateFromPicker');
+            var dateTo = getDefaultFormatDate('#addDateToPicker');
+            var internalUsername = $("#ddlinternaluser").val();
+            var action = $("#ddlauditaction").val();
+            var type = $("#entityType").val();
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("_AuditLogs", "AuditLogs", new { Area = "IntranetPortal" })",
+                data: {
+                    internalUsername: internalUsername,
+                    dateFrom: dateFrom,
+                    dateTo: dateTo,
+                    actionType: action,
+                    type: type
+                },
+                async: true,
+                dataType: "text",
+                success: function (data) {
+                    $('#searchResult').html(data);
+                    $("#divRez").show();
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+        function getUrlActionExport() {
+
+            var action = "@Url.Action("ExportAuditLog", "AuditLogs", new { Area = "IntranetPortal" })" + "?";
+            if ($("#ddlinternaluser").val() != undefined && $("#ddlinternaluser").val() != "") {
+                action += "&internalUsername=" + $("#ddlinternaluser").val();
+            }
+            if ($("#datefrom").val() != undefined && $("#datefrom").val() != "") {
+                action += "&dateFrom=" + $("#datefrom").val();
+            }
+            if ($("#datefrom").val() != undefined && $("#datefrom").val() != "") {
+                action += "&dateFrom=" + $("#datefrom").val();
+            }
+            if ($("#dateTo").val() != undefined && $("#dateTo").val() != "") {
+                action += "&dateTo=" + $("#dateto").val();
+            }
+            if ($("#entityType").val() != undefined && $("#entityType").val() != "") {
+                action += "&type=" + $("#entityType").val();
+            }
+            if ($("#ddlauditaction").val() != undefined && $("#ddlauditaction").val() != "") {
+                action += "&actionType=" + $("#ddlauditaction").val();
+            }
+            $("#exportUrl").attr("href", action);
+        }
+
+        function viewAuditData(auditDataId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetAuditData", "AuditLogs", new { Area = "IntranetPortal" })",
+                data: {
+                    id: auditDataId
+                },
+                success: function (data) {
+                    $("#auditDataTBody").html("");
+                    var jsonViewer = new JSONViewer();
+
+                    $("#auditDataTBody").append("<div id='json'>" + "</div>");
+                    document.querySelector("#json").appendChild(jsonViewer.getContainer());
+                    jsonViewer.showJSON(JSON.parse(data.auditData), -1, -1);
+
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+    </script>
+}
+
+@section BodyArea
+    {
+    <div class="modal" id="auditDataModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title"> @DbResHtml.T("Audit data", "Resources")</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="auditDataTBody"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
