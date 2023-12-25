@@ -28,7 +28,6 @@ using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Westwind.Globalization.AspnetCore;
 using SD.Helpers;
 using Westwind.Globalization;
-using Services.Interfaces.Repositories;
 using Services.Interfaces.Services;
 using Dal.Repositories;
 using DAL.Repositories;
