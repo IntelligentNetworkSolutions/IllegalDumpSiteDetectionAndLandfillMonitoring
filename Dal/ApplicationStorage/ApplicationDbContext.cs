@@ -2,19 +2,12 @@
 using Dal.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualBasic.FileIO;
-using Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Entities;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Dal.ApplicationStorage
 {
-	public class ApplicationDbContext : AuditIdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : AuditIdentityDbContext<ApplicationUser>
 	{
 
 		public IConfiguration _configuration { get; }
@@ -28,14 +21,17 @@ namespace Dal.ApplicationStorage
 
         public virtual DbSet<ApplicationSettings> ApplicationSettings { get; set; }
         public virtual DbSet<IntranetPortalUsersToken> IntranetPortalUsersTokens { get; set; }
+
         public virtual DbSet<AuditLog> AuditLog { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
 			if (!optionsBuilder.IsConfigured)
 			{
-				var connectionString = _configuration.GetConnectionString("MasterDatabase");
+                //var connectionString = _configuration.GetConnectionString("MasterDatabase");
+                //var connectionString = _configuration["DetectDumpsMonitorLandfills_ConnectionString"];
+                var connectionString = _configuration["ConnectionStrings:MasterDatabase"];
 
-				string applicationStartMode = _configuration.GetSection("ApplicationStartupMode").Value;
+                string applicationStartMode = _configuration.GetSection("ApplicationStartupMode").Value;
 
 				optionsBuilder.UseNpgsql(connectionString, db => db.UseNetTopologySuite()
 								.MigrationsAssembly(typeof(ApplicationDbContext).GetTypeInfo().Assembly.GetName().Name));

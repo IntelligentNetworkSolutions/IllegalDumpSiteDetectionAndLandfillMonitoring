@@ -31,7 +31,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MainApp\MainApp.csproj" />
+    <ProjectReference Include="..\DAL\DAL.csproj" />
+    <ProjectReference Include="..\DTOs\DTOs.csproj" />
+    <ProjectReference Include="..\Entities\Entities.csproj" />
+    <ProjectReference Include="..\MailSend\MailSend.csproj" />
+    <ProjectReference Include="..\MainApp.BL\MainApp.BL.csproj" />
+    <ProjectReference Include="..\MainApp.MVC\MainApp.MVC.csproj" />
+    <ProjectReference Include="..\SD\SD.csproj" />
   </ItemGroup>
 
 </Project>

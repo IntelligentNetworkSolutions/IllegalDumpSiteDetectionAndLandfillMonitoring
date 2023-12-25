@@ -1,7 +1,7 @@
-﻿using MailKit.Net.Smtp;
+﻿using DTOs.MainApp.MVC;
+using MailKit.Net.Smtp;
 using MailSend.Interfaces;
 using MimeKit;
-using Models.DTOs;
 
 namespace MailSend
 {

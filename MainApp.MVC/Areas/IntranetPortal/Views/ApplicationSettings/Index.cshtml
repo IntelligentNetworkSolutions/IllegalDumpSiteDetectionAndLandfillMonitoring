@@ -1,0 +1,119 @@
+﻿@using MainApp.MVC.Helpers;
+@using Microsoft.AspNetCore.Localization;
+@using SD.Helpers;
+@model IEnumerable<MainApp.MVC.ViewModels.IntranetPortal.ApplicationSettings.ApplicationSettingsViewModel>
+@{
+    ViewData["Title"] = @DbResHtml.T("Application Settings", "Resources");
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Add, edit, delete and view application settings", "Resources") </small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title">@DbResHtml.T("Application settings", "Resources")</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-sm mb-3">
+                            <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Create" class="mb-1 btn bg-gradient-primary">@DbResHtml.T("Add setting", "Resources")</a>
+                        </div>
+                        <table id="applicationSettingsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Setting Key", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Setting Value", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Setting Description", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Setting Module", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Setting Data Type", "Resources")
+                                    </th>
+                                    <th class="notexport">
+                                        @DbResHtml.T("Action", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.Key</td>
+                                        <td>@item.Value</td>
+                                        <td>@item.Description</td>
+                                        <td>@item.Module</td>
+                                        <td>@item.DataType</td>
+                                        <td>
+                                            <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Edit" asp-route-settingKey="@item.Key" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Edit", "Resources")">
+                                                <i class="far fa-edit"></i>
+                                            </a>
+                                            <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Delete" asp-route-key="@item.Key" class="mb-1 btn bg-gradient-danger" title="@DbResHtml.T("Delete", "Resources")">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+     @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+     }
+    <script>
+        $(document).ready(function () {
+            $('#applicationSettingsTable').DataTable({
+                paging: true,
+                pageLength: 100,
+                "language": {
+                    "url": "@langPath"
+                },
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        className: 'btn btn-success',
+                        text: '<i class="fas fa-file-alt"></i>',
+                        titleAttr: "Export to excel",
+                        filename: "Application Settings - @DateTime.Now.ToString("dd.MM.yyyy")",
+                        exportOptions: {
+                            columns: ':not(.notexport)'
+                        }
+                    }
+                ]
+            });
+        });
+    </script>
+}
