@@ -21,20 +21,25 @@ namespace Dal.Helpers
             _cache = new ConcurrentDictionary<string, ApplicationSettings>();
         }
 
-        // TODO: This should be private
-        public string GetApplicationSetting(string configurationName, string defaultValue = null)
+        private string GetApplicationSetting(string configurationName, string defaultValue = null)
         {
-            // TODO: Needs try catch , if try catch here it can be removed from all following parametarized get methods
-            var appSetting = 
-                _cache.GetOrAdd(configurationName, 
-                                i => _applicationSettingsDa.GetApplicationConfiguration(configurationName));
+            try
+            {
+                // TODO: Needs try catch , if try catch here it can be removed from all following parametarized get methods
+                var appSetting =
+                    _cache.GetOrAdd(configurationName,
+                                    i => _applicationSettingsDa.GetApplicationConfiguration(configurationName));
 
-            if (appSetting != null)
-                return appSetting.Value;
-            
-            if (appSetting == null && defaultValue != null)
-                return defaultValue;
-            
+                if (appSetting != null)
+                    return appSetting.Value;
+
+                if (appSetting == null && defaultValue != null)
+                    return defaultValue;
+            }
+            catch (Exception ex)
+            {
+
+            }
             throw new Exception("Application setings error: The settings for " + configurationName + " does not exist");
         }
 
