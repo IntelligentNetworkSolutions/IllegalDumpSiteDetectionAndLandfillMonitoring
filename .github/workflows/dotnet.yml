@@ -9,7 +9,7 @@ on:
   pull_request:
     branches: [ "master" ]
 
-  workflow_dispatch: # This event allows manual triggering
+workflow_dispatch: # This event allows manual triggering
 
 jobs:
   build:
