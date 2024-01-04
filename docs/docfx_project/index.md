@@ -1,15 +1,9 @@
-# Available Docs
+# Available Docs  
 
-## Diagrams
+## Development  
 
-### Training Process Diagram  
+- [Development Docs](development/intro.md)  
 
-- [Training Process Diagram](diagrams/training_process_diagram.md)  
+## Diagrams  
 
-### Detection Process Diagram  
-
-- [Detection Process Diagram](diagrams/detection_process_diagram.md)  
-
-### Entity Relationship Diagram  
-
-- [Entity Relationship Diagram](diagrams/entity_relationship_diagram.md)  
+- [Diagrams](diagrams/intro.md)  
