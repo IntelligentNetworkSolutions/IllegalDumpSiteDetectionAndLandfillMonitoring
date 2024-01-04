@@ -37,7 +37,7 @@ namespace Tests.Fixtures
                 if (baseDirPath.Contains("Release"))
                     testProjDirName = "../" + testProjDirName;
 
-                if (baseDirPath.Contains("net7.0"))
+                if (baseDirPath.Contains("net8.0"))
                     testProjDirName = "../" + testProjDirName;
 
                 if (baseDirPath.Contains("Tests"))
