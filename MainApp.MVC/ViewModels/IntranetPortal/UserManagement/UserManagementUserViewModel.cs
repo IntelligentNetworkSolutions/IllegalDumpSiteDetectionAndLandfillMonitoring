@@ -1,47 +1,26 @@
-﻿using Entities;
+﻿using DTOs.MainApp.MVC;
+using Entities;
 using Microsoft.AspNetCore.Identity;
 using SD;
 using System.ComponentModel.DataAnnotations;
 
 namespace MainApp.MVC.ViewModels.IntranetPortal.UserManagement
 {
-    public class UserManagementUserViewModel : ApplicationUser
+    public class UserManagementUserViewModel
     {
-        public List<IdentityRole> Roles { get; set; }
-
-        public List<string> RolesInsert { get; set; }
-
-        public ICollection<AuthClaim> Claims { get; set; }
-
-        public List<IdentityRoleClaim<string>> RoleClaims { get; set; }
-
-        public List<string> ClaimsInsert { get; set; }
-
-        [DataType(DataType.Password)]
-        public string Password { get; set; }
-
-        [DataType(DataType.Password)]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-        public string ConfirmPassword { get; set; }
-
-        [DataType(DataType.Password)]
-        public string CurrentPassword { get; set; }
-
-        public string PreferredLanguage { get; set; }
-
-        public int PasswordMinLength { get; set; }
-
-        public bool PasswordMustHaveNumbers { get; set; }
-
-        public bool PasswordMustHaveLetters { get; set; }
-        public bool PasswordMustHaveSpecialChar { get; set; }
+        public string Id { get; set; }
+        public string? UserName { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public bool? IsActive { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public List<RoleDTO> Roles { get; set; }
+        
 
         public UserManagementUserViewModel()
         {
-            Roles = new List<IdentityRole>();
-            RolesInsert = new List<string>();
-            RoleClaims = new List<IdentityRoleClaim<string>>();
-            ClaimsInsert = new List<string>();
+            Roles = new List<RoleDTO>();
 
         }
     }

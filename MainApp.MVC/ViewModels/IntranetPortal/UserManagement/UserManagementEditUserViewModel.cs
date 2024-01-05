@@ -1,19 +1,20 @@
-﻿using Entities;
+﻿using DTOs.MainApp.MVC;
+using Entities;
 using Microsoft.AspNetCore.Identity;
 using SD;
 using System.ComponentModel.DataAnnotations;
 
 namespace MainApp.MVC.ViewModels.IntranetPortal.UserManagement
 {
-    public class UserManagementEditUserViewModel : ApplicationUser
+    public class UserManagementEditUserViewModel
     {
-        public List<IdentityRole> Roles { get; set; }
+        public List<RoleDTO> Roles { get; set; }
 
         public List<string> RolesInsert { get; set; }
 
         public ICollection<AuthClaim> Claims { get; set; }
 
-        public List<IdentityRoleClaim<string>> RoleClaims { get; set; }
+        public List<RoleClaimDTO> RoleClaims { get; set; }
 
         public List<string> ClaimsInsert { get; set; }
 
@@ -27,17 +28,24 @@ namespace MainApp.MVC.ViewModels.IntranetPortal.UserManagement
         public bool PasswordMustHaveNumbers { get; set; }
 
         public bool PasswordMustHaveLetters { get; set; }
-        public bool PasswordMustHaveSpecialChar { get; set; }
-        public IEnumerable<ApplicationUser> AllUsersExceptCurrent { get; set; }
-
+        public IEnumerable<UserDTO> AllUsersExceptCurrent { get; set; }
+        public string Id { get; set; }
+        public string Email { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public bool? IsActive { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string UserName { get; set; }
+        public string? NormalizedUserName { get; set; }
+        public bool EmailConfirmed { get; set; }
         public UserManagementEditUserViewModel()
         {
-            Roles = new List<IdentityRole>();
+            Roles = new List<RoleDTO>();
             RolesInsert = new List<string>();
-            RoleClaims = new List<IdentityRoleClaim<string>>();
+            RoleClaims = new List<RoleClaimDTO>();
             ClaimsInsert = new List<string>();
             Claims = new List<AuthClaim>();
-            AllUsersExceptCurrent = new List<ApplicationUser>();
+            AllUsersExceptCurrent = new List<UserDTO>();
 
         }
     }

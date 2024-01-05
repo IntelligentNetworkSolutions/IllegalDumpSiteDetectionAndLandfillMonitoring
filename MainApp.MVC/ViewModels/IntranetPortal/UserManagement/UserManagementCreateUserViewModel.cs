@@ -1,27 +1,25 @@
-﻿using Entities;
+﻿using DTOs.MainApp.MVC;
+using Entities;
 using Microsoft.AspNetCore.Identity;
 using SD;
 using System.ComponentModel.DataAnnotations;
 
 namespace MainApp.MVC.ViewModels.IntranetPortal.UserManagement
 {
-    public class UserManagementCreateUserViewModel : ApplicationUser
+    public class UserManagementCreateUserViewModel
     {
-        public List<IdentityRole> Roles { get; set; }
+        public List<RoleDTO> Roles { get; set; }
 
         public List<string> RolesInsert { get; set; }
 
         public ICollection<AuthClaim> Claims { get; set; }
 
-        public List<IdentityRoleClaim<string>> RoleClaims { get; set; }
+        public List<RoleClaimDTO> RoleClaims { get; set; }
 
         public List<string> ClaimsInsert { get; set; }
 
-        [DataType(DataType.Password)]
         public string Password { get; set; }
 
-        [DataType(DataType.Password)]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; }
 
         public int PasswordMinLength { get; set; }
@@ -29,18 +27,25 @@ namespace MainApp.MVC.ViewModels.IntranetPortal.UserManagement
         public bool PasswordMustHaveNumbers { get; set; }
 
         public bool PasswordMustHaveLetters { get; set; }
-        public bool PasswordMustHaveSpecialChar { get; set; }
 
-        public IEnumerable<ApplicationUser> AllUsers { get; set; }
+        public IEnumerable<UserDTO> AllUsers { get; set; }
+
+        public string? Id { get; set; }
+        public string Email { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public bool? IsActive { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string UserName { get; set; }
 
         public UserManagementCreateUserViewModel()
         {
-            Roles = new List<IdentityRole>();
+            Roles = new List<RoleDTO>();
             RolesInsert = new List<string>();
-            RoleClaims = new List<IdentityRoleClaim<string>>();
+            RoleClaims = new List<RoleClaimDTO>();
             ClaimsInsert = new List<string>();
             Claims = new List<AuthClaim>();
-            AllUsers = new List<ApplicationUser>();
+            AllUsers = new List<UserDTO>();
 
         }
     }

@@ -18,6 +18,7 @@ using Westwind.Globalization;
 using Microsoft.EntityFrameworkCore.Metadata;
 using MainApp.MVC.ViewModels.IntranetPortal.Account;
 using DAL.Repositories;
+using Services.Interfaces.Services;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -32,8 +33,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 		private readonly ApplicationSettingsHelper _applicationSettingsHelper;
 		private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _hostingEnvironment;
+        private readonly IUserManagementService _userManagementService;
+        public AccountController(UserManager<ApplicationUser> userManager, AddClaimsForIntranetPortalUserHelper addClaimsForIntranetPortalUserHelper, UserManagementDa userManaagementDa, IntranetPortalUsersTokenDa intranetPortalUsersTokenDa, IForgotResetPasswordService forgotResetPasswordService, ApplicationSettingsHelper applicationSettingsHelper, IConfiguration configuration, IWebHostEnvironment hostingEnvironment, IUserManagementService userManagementService)
 
-        public AccountController(UserManager<ApplicationUser> userManager, AddClaimsForIntranetPortalUserHelper addClaimsForIntranetPortalUserHelper, UserManagementDa userManaagementDa, IntranetPortalUsersTokenDa intranetPortalUsersTokenDa, IForgotResetPasswordService forgotResetPasswordService, ApplicationSettingsHelper applicationSettingsHelper, IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
 		{
 			_userManager = userManager;
 			_addClaimsForIntranetPortalUserHelper = addClaimsForIntranetPortalUserHelper;
@@ -43,6 +45,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 			_applicationSettingsHelper = applicationSettingsHelper;
 			_configuration = configuration;
             _hostingEnvironment = hostingEnvironment;
+            _userManagementService = userManagementService;
 		}
 
         public async Task<IActionResult> Logout()
@@ -271,7 +274,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var id = User.FindFirstValue("UserId");
             if(id != null)
             {
-                var appUser = await _userManagementDa.GetUser(id);
+                var appUser = await _userManagementDa.GetUserById(id);
                 MyProfileViewModel model = new MyProfileViewModel();
                 model.FirstName = appUser.FirstName;
                 model.LastName = appUser.LastName;
@@ -319,7 +322,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     return NotFound();
                 }
             }
-            var appUser = await _userManagementDa.GetUser(id);
+            var appUser = await _userManagementDa.GetUserById(id);
             if(appUser == null)
             {
                 var errorPath = _configuration["ErrorViewsPath:Error404"];
@@ -333,7 +336,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
             }
 
-            await _userManagementDa.AddLanguageClaimForUser(appUser.Id, culture);
+            //await _userManagementDa.AddLanguageClaimForUser(appUser.Id, culture);
+            await _userManagementService.AddLanguageClaimForUser(appUser.Id, culture);
 
             HttpContext.Response.Cookies.Append(
                 CookieRequestCultureProvider.DefaultCookieName,
@@ -357,7 +361,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 model.PasswordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength", "10");
                 model.PasswordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters", "true");
                 model.PasswordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers", "true");
-                var userDb = await _userManagementDa.GetUser(userId);  
+                var userDb = await _userManagementDa.GetUserById(userId);  
                 
                 if(userDb != null)
                 {
