@@ -1,13 +1,29 @@
 # View Available Diagrams
 
-## Training Process Diagram  
+## Solution Architecture  
 
-- [Training Process Diagram](training_process_diagram.md)  
+- [Solution Architecture Diagram](solution-architecture/solution-architecture-diagram.md)  
 
-## Detection Process Diagram  
+## Entity Relationship  
 
-- [Detection Process Diagram](detection_process_diagram.md)  
+- [Entity Relationship Diagram](entity-relationship/entity-relationship-vertical-diagram.md)  
 
-## Entity Relationship Diagram  
+## Dataset Creation Process  
 
-- [Entity Relationship Diagram](entity_relationship_diagram.md)  
+- [Dataset Creation Diagram](dataset-creation-process/dataset-creation-process-diagram.md)  
+
+## Manage Dataset Screen  
+
+- [Manage Dataset Screen](manage-dataset/manage-dataset-screen.md)  
+
+## Add Image and Annotations Process and Screen  
+  
+- [Add Image and Annotations Process Diagram and Screen](add-image-n-annotations/add-image-n-annotations-process-n-screen.md)  
+
+## AI Model Training Process  
+
+- [Training Process Diagram](ai-model-training-process/ai-model-training-process-diagram.md)  
+
+## Detection Process  
+
+- [Detection Process Diagram](detection-process/detection-process-diagram.md)  

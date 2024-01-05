@@ -1,8 +1,17 @@
 - name: Diagrams
   href: intro.md
-- name: Training
-  href: training_process_diagram.md
-- name: Detection
-  href: detection_process_diagram.md
-- name: EntityRelationship
-  href: entity_relationship_diagram.md
+- name: Solution Architecture
+  href: solution-architecture/solution-architecture-diagram.md
+- name: Entity Relationship
+  href: entity-relationship/entity-relationship-vertical-diagram.md
+- name: Dataset Creation Process
+  href: dataset-creation-process/dataset-creation-process-diagram.md
+- name: Manage Dataset Screen
+  href: manage-dataset/manage-dataset-screen.md
+- name: Add Image and Annotations Process and Screen
+  href: add-image-n-annotations/add-image-n-annotations-process-n-screen.md
+- name: AI Model Training Process
+  href: ai-model-training-process/ai-model-training-process-diagram.md
+- name: Detection Process
+  href: detection-process/detection-process-diagram.md
+

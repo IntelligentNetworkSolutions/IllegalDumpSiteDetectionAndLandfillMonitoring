@@ -23,18 +23,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
-            if (!User.HasAuthClaim(SD.AuthClaims.SpecialActions) || !_modulesAndAuthClaims.HasModule(SD.Modules.SpecialActions))
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
-            }
+            // TODO
+            //if (!User.HasAuthClaim(SD.AuthClaims.SpecialActions) || !_modulesAndAuthClaims.HasModule(SD.Modules.SpecialActions))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             return View();
         }       
     }

@@ -35,6 +35,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly IUserManagementService _userManagementService;
         public AccountController(UserManager<ApplicationUser> userManager, AddClaimsForIntranetPortalUserHelper addClaimsForIntranetPortalUserHelper, UserManagementDa userManaagementDa, IntranetPortalUsersTokenDa intranetPortalUsersTokenDa, IForgotResetPasswordService forgotResetPasswordService, ApplicationSettingsHelper applicationSettingsHelper, IConfiguration configuration, IWebHostEnvironment hostingEnvironment, IUserManagementService userManagementService)
+
 		{
 			_userManager = userManager;
 			_addClaimsForIntranetPortalUserHelper = addClaimsForIntranetPortalUserHelper;
@@ -46,11 +47,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _hostingEnvironment = hostingEnvironment;
             _userManagementService = userManagementService;
 		}
+
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction(nameof(Login));
         }
+
         [AllowAnonymous]
 		public IActionResult Login()
 		{
