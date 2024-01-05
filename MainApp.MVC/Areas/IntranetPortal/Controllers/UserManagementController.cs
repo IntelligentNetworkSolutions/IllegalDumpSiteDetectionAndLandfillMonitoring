@@ -14,6 +14,10 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using MainApp.MVC.ViewModels.IntranetPortal.UserManagement;
+using MainApp.MVC.ViewModels.IntranetPortal.AuditLog;
+using DTOs.MainApp.MVC;
+using DocumentFormat.OpenXml.Office2010.Excel;
+using Humanizer;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -21,14 +25,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     public class UserManagementController : Controller
     {
         private readonly IUserManagementService _userManagementService;
-        private readonly UserManagementDa _userManagementDa;
         private readonly ModulesAndAuthClaimsHelper _modulesAndAuthClaimsHelper;
         private readonly ApplicationSettingsHelper _applicationSettingsHelper;
         private readonly PasswordValidationHelper _passwordValidationHelper;
         private readonly IConfiguration _configuration;
-        public UserManagementController(UserManagementDa userManagementDa, ModulesAndAuthClaimsHelper modulesAndAuthClaimsHelper, ApplicationSettingsHelper applicationSettingsHelper, PasswordValidationHelper passwordValidationHelper, IConfiguration configuration, IUserManagementService userManagementService)
+        public UserManagementController(ModulesAndAuthClaimsHelper modulesAndAuthClaimsHelper, ApplicationSettingsHelper applicationSettingsHelper, PasswordValidationHelper passwordValidationHelper, IConfiguration configuration, IUserManagementService userManagementService)
         {
-            _userManagementDa = userManagementDa;
             _modulesAndAuthClaimsHelper = modulesAndAuthClaimsHelper;
             _applicationSettingsHelper = applicationSettingsHelper;
             _passwordValidationHelper = passwordValidationHelper;
@@ -54,9 +56,22 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             */
             UserManagementViewModel model = new UserManagementViewModel();
-            var users = await _userManagementDa.GetAllIntanetPortalUsers();
-            var roles = await _userManagementDa.GetRoles();
-            var userRoles = await _userManagementDa.GetUserRoles();
+            var users = await _userManagementService.GetAllIntanetPortalUsers();
+            if (users is null)
+            {
+                throw new Exception("Users not found");
+            }
+            var roles = await _userManagementService.GetAllRoles();
+            if (roles is null)
+            {
+                throw new Exception("Roles not found");
+            }
+            var userRoles = await _userManagementService.GetAllUserRoles();
+            if (userRoles is null)
+            {
+                throw new Exception("User roles not found");
+            }
+
             model.Users = users.Select(z => new UserManagementUserViewModel
             {
                 FirstName = z.FirstName,
@@ -97,41 +112,42 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             */
 
             // TODO: 🧹 Create Seed for initial load 🧹🧹🧹
-            #region Get Pass App Settings
-            int passwordMinLength;
-            bool passwordMustHaveLetters;
-            bool passwordMustHaveNumbers;
-            try
-            {
-                passwordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength");
-                passwordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters");
-                passwordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");
-            }
-            catch (Exception ex)
-            {
-                passwordMinLength = 3;
-                passwordMustHaveLetters = false;
-                passwordMustHaveNumbers = false;
-            }
-            #endregion
+            //#region Get Pass App Settings
+            //int passwordMinLength;
+            //bool passwordMustHaveLetters;
+            //bool passwordMustHaveNumbers;
+            //try
+            //{
+            //    passwordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength");
+            //    passwordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters");
+            //    passwordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");
+            //}
+            //catch (Exception ex)
+            //{
+            //    passwordMinLength = 3;
+            //    passwordMustHaveLetters = false;
+            //    passwordMustHaveNumbers = false;
+            //}
+            //#endregion
 
-            UserManagementCreateUserViewModel model = new UserManagementCreateUserViewModel()
-            {
-                Roles = _userManagementDa.GetRoles().Result.ToList(),
-                Claims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result,
-                RoleClaims = _userManagementDa.GetAllRoleClaims().Result,
-                PasswordMinLength = passwordMinLength,
-                PasswordMustHaveLetters = passwordMustHaveLetters,
-                PasswordMustHaveNumbers = passwordMustHaveNumbers,
-                AllUsers = await _userManagementDa.GetAllIntanetPortalUsers()
+            UserManagementDTO dto = new();
+            dto = await _userManagementService.FillUserManagementDto(dto);
+            UserManagementCreateUserViewModel model = new()
+            {                
+                PasswordMinLength = dto.PasswordMinLength,
+                PasswordMustHaveLetters = dto.PasswordMustHaveLetters,
+                PasswordMustHaveNumbers = dto.PasswordMustHaveNumbers,
+                Roles = dto.Roles,
+                Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims(),
+                AllUsers = dto.AllUsers,
+                RoleClaims = dto.RoleClaims
             };
-
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateUser(UserManagementCreateUserViewModel user)
+        public async Task<IActionResult> CreateUser(UserManagementCreateUserViewModel viewModel)
         {
             // TODO: 🧹 Middleware Attribute -> AuthorizeClaim 🧹🧹🧹
             /*
@@ -149,133 +165,136 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             */
             // TODO: ⚠️ !!! Password validation is only front end ⚠️⚠️⚠️
-            if (ModelState.IsValid)
-            {
-                user.UserName = user.UserName?.Trim();
-                user.Email = user.Email?.Trim();
-                user.IsActive ??= false;
-                user.Password = user.Password?.Trim();
-                user.ConfirmPassword = user.ConfirmPassword?.Trim();
+            if (!ModelState.IsValid)
+            {             
+                UserManagementDTO dto = new();
+                dto = await _userManagementService.FillUserManagementDto(dto);
+                viewModel.Roles = dto.Roles;
+                viewModel.Claims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result;
+                viewModel.RoleClaims = dto.RoleClaims;
+                viewModel.PasswordMinLength = dto.PasswordMinLength;
+                viewModel.PasswordMustHaveLetters = dto.PasswordMustHaveLetters;
+                viewModel.PasswordMustHaveNumbers = dto.PasswordMustHaveNumbers;
+                viewModel.AllUsers = dto.AllUsers;
 
-                var password = new PasswordHasher<ApplicationUser>();
-                var hashed = password.HashPassword(user, user.Password);
-                user.PasswordHash = hashed;
-                var u = await _userManagementDa.AddUser(user);
-                foreach (var role in user.RolesInsert)
-                {
-                    await _userManagementDa.AddRoleForUser(u.Id, role);
-                }
-                foreach (var claim in user.ClaimsInsert)
-                {
-                    _userManagementDa.AddClaimForUser(u.Id, claim);
-                }
-                return RedirectToAction(nameof(Index));
+                return View(viewModel);
             }
 
-            user.Roles = _userManagementDa.GetRoles().Result.ToList();
-            user.Claims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result;
-            user.RoleClaims = _userManagementDa.GetAllRoleClaims().Result;
-            user.PasswordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength");
-            user.PasswordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters");
-            user.PasswordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");
-            user.AllUsers = await _userManagementDa.GetAllIntanetPortalUsers();
-            return View(user);
+            UserManagementDTO userManagementDTO = new()
+            {
+                Email = viewModel.Email,
+                FirstName = viewModel.FirstName,
+                LastName = viewModel.LastName,
+                IsActive = viewModel.IsActive,
+                PhoneNumber = viewModel.PhoneNumber,
+                UserName = viewModel.UserName,
+                Password = viewModel.Password,
+                ConfirmPassword = viewModel.ConfirmPassword,               
+                RolesInsert = viewModel.RolesInsert,
+                ClaimsInsert = viewModel.ClaimsInsert
+            };
+
+            await _userManagementService.AddUser(userManagementDTO);
+            return RedirectToAction(nameof(Index));
         }
 
         public async Task<IActionResult> EditUser(string id)
         {
-            if (id == null)
+            if (id is null)
             {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return NotFound();
-                }
+                //var errorPath = _configuration["ErrorViewsPath:Error404"];
+                //if (!string.IsNullOrEmpty(errorPath))
+                //{
+                //    return Redirect(errorPath);
+                //}
+                //else
+                //{
+                //    return NotFound();
+                //}
             }
+            UserManagementDTO dto = new()
+            {
+                Id = id
+            };
 
-            UserManagementEditUserViewModel model = new UserManagementEditUserViewModel();
-            var user = await _userManagementDa.GetUser(id);
-            var roles = await _userManagementDa.GetRoles();
-            var userRoles = await _userManagementDa.GetUserRoles();
-            var userRole = userRoles.Where(z => z.UserId == user.Id).Select(z => z.RoleId).ToList();
-            var claims = await _userManagementDa.GetClaimsForUser(user.Id);
-
-            model.FirstName = user.FirstName;
-            model.LastName = user.LastName;
-            model.UserName = user.UserName;
-            model.PhoneNumber = user.PhoneNumber;
-            model.Id = user.Id;
-            model.Email = user.Email;
-            model.IsActive = user.IsActive;
-            model.PasswordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength");
-            model.PasswordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters");
-            model.PasswordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");
-            model.RolesInsert = roles.Where(z => userRole.Contains(z.Id)).Select(z => z.Id).ToList();
-            model.Roles = roles.ToList();
-            model.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
-            model.ClaimsInsert = claims.Select(z => z.ClaimValue).ToList();
-            model.AllUsersExceptCurrent = await _userManagementDa.GetAllIntanetPortalUsersExcludingCurrent(user.Id);
+            dto = await _userManagementService.FillUserManagementDto(dto);
+            UserManagementEditUserViewModel model = new()
+            {
+                Id = dto.Id,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                UserName = dto.UserName,
+                PhoneNumber = dto.PhoneNumber,
+                Email = dto.Email,
+                IsActive = dto.IsActive,
+                PasswordMinLength = dto.PasswordMinLength,
+                PasswordMustHaveLetters = dto.PasswordMustHaveLetters,
+                PasswordMustHaveNumbers = dto.PasswordMustHaveNumbers,
+                RolesInsert = dto.RolesInsert,
+                Roles = dto.Roles,
+                Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims(),
+                ClaimsInsert = dto.ClaimsInsert,
+                AllUsersExceptCurrent = dto.AllUsersExceptCurrent
+            };
 
             return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> EditUser(UserManagementEditUserViewModel user)
+        public async Task<IActionResult> EditUser(UserManagementEditUserViewModel viewModel)
         {
-            var id = User.FindFirstValue("UserId");
-            var appUser = _userManagementDa.GetUser(id).Result;
-            if (!User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles)
-                || (user.UserName == "insadmin" && appUser.UserName != "insadmin"))
+            //var id = User.FindFirstValue("UserId");
+            //var appUser = _userManagementDa.GetUser(id).Result;
+            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles)
+            //    || (user.UserName == "insadmin" && appUser.UserName != "insadmin"))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
+            if (!ModelState.IsValid)
             {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
+                UserManagementDTO dto = new()
                 {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
-            }
-            if (ModelState.IsValid)
-            {
-                user.UserName = user.UserName?.Trim();
-                user.Email = user.Email?.Trim();
-                user.Password = user.Password?.Trim();
-                user.ConfirmPassword = user.ConfirmPassword?.Trim();
+                    Id = viewModel.Id
+                };
+                dto = await _userManagementService.FillUserManagementDto(dto);
+                viewModel.PasswordMinLength = dto.PasswordMinLength;
+                viewModel.PasswordMustHaveLetters = dto.PasswordMustHaveLetters;
+                viewModel.PasswordMustHaveNumbers = dto.PasswordMustHaveNumbers;
+                viewModel.RolesInsert = dto.RolesInsert;
+                viewModel.Roles = dto.Roles;
+                viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
+                viewModel.ClaimsInsert = dto.ClaimsInsert;
+                viewModel.AllUsersExceptCurrent = dto.AllUsersExceptCurrent;  
 
-                var u = await _userManagementDa.UpdateUser(user);
-                _userManagementDa.DeleteClaimsRolesForUser((ApplicationUser)user);
-                foreach (var role in user.RolesInsert)
-                {
-                    await _userManagementDa.AddRoleForUser(u.Id, role);
-                }
-
-                foreach (var claim in user.ClaimsInsert)
-                {
-                    _userManagementDa.AddClaimForUser(u.Id, claim);
-                }
-                return RedirectToAction(nameof(Index));
+                return View(viewModel);
             }
 
-            var roles = await _userManagementDa.GetRoles();
-            var userRoles = await _userManagementDa.GetUserRoles();
-            var userRole = userRoles.Where(z => z.UserId == user.Id).Select(z => z.RoleId).ToList();
-            var claims = await _userManagementDa.GetClaimsForUser(user.Id);
-            user.PasswordMinLength = _applicationSettingsHelper.GetApplicationSettingInteger("PasswordMinLength");
-            user.PasswordMustHaveLetters = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveLetters");
-            user.PasswordMustHaveNumbers = _applicationSettingsHelper.GetApplicationSettingBool("PasswordMustHaveNumbers");
-            user.RolesInsert = roles.Where(z => userRole.Contains(z.Id)).Select(z => z.Id).ToList();
-            user.Roles = roles.ToList();
-            user.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
-            user.ClaimsInsert = claims.Select(z => z.ClaimValue).ToList();
-            user.AllUsersExceptCurrent = await _userManagementDa.GetAllIntanetPortalUsersExcludingCurrent(id);
-            return View(user);
-
+            UserManagementDTO userManagementDTO = new()
+            {
+                Id = viewModel.Id,
+                Email = viewModel.Email,
+                FirstName = viewModel.FirstName,
+                LastName = viewModel.LastName,
+                IsActive = viewModel.IsActive,
+                PhoneNumber = viewModel.PhoneNumber,
+                UserName = viewModel.UserName,
+                Password = viewModel.Password,
+                ConfirmPassword = viewModel.ConfirmPassword,
+                NormalizedUserName = viewModel.NormalizedUserName,
+                EmailConfirmed = viewModel.EmailConfirmed,
+                RolesInsert = viewModel.RolesInsert,
+                ClaimsInsert = viewModel.ClaimsInsert
+            };
+            await _userManagementService.UpdateUser(userManagementDTO);
+            return RedirectToAction(nameof(Index));                      
         }
 
         public async Task<IActionResult> CreateRole()
@@ -287,156 +306,172 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateRole(UserManagementCreateRoleViewModel role)
+        public async Task<IActionResult> CreateRole(UserManagementCreateRoleViewModel viewModel)
         {
-            if (!User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
+            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
+
+            if (!ModelState.IsValid)
             {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
+                viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
+                return View(viewModel);
             }
 
-            if (ModelState.IsValid)
+            RoleManagementDTO roleManagementDTO = new()
             {
-                if (role.Name != null)
-                {
-                    role.Name = role.Name.Trim();
-                }
-                var r = await _userManagementDa.AddRole((IdentityRole)role);
+                Name = viewModel.Name,
+                NormalizedName = viewModel.NormalizedName,
+                ClaimsInsert = viewModel.ClaimsInsert
+            };
+            await _userManagementService.AddRole(roleManagementDTO);
 
-                foreach (var claim in role.ClaimsInsert)
-                {
-                    _userManagementDa.AddClaimForRole(r.Id, claim);
-                }
-
-                return RedirectToAction(nameof(Index));
-            }
-            return View(role);
+            return RedirectToAction(nameof(Index));           
         }
 
         public async Task<IActionResult> EditRole(string id)
         {
-            if (id == null)
+            if (id is null)
             {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return NotFound();
-                }
+                //var errorPath = _configuration["ErrorViewsPath:Error404"];
+                //if (!string.IsNullOrEmpty(errorPath))
+                //{
+                //    return Redirect(errorPath);
+                //}
+                //else
+                //{
+                //    return NotFound();
+                //}
             }
-            var role = await _userManagementDa.GetRole(id);
-            UserManagementEditRoleViewModel model = new UserManagementEditRoleViewModel();
-            model.Name = role.Name;
+            RoleManagementDTO dto = new()
+            { 
+                Id = id
+            };
+            dto = await _userManagementService.FillRoleManagementDto(dto);
+            UserManagementEditRoleViewModel viewModel = new()
+            {
+                Id = dto.Id,
+                Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims(),
+                ClaimsInsert = dto.ClaimsInsert,                
+                Name = dto.Name,
+                NormalizedName = dto.NormalizedName
+            };
 
-            model.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
-            var claims = await _userManagementDa.GetClaimsForRole(role.Id);
-            model.ClaimsInsert = claims.Select(z => z.ClaimValue).ToList();
-            return View(model);
+            return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditRole(UserManagementEditRoleViewModel role)
+        public async Task<IActionResult> EditRole(UserManagementEditRoleViewModel viewModel)
         {
-            if (!User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
+            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
+            if (!ModelState.IsValid)
+            {               
+                RoleManagementDTO dto = new()
                 {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
+                    Id = viewModel.Id
+                };
+                dto = await _userManagementService.FillRoleManagementDto(dto);
+                viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
+                viewModel.ClaimsInsert = dto.ClaimsInsert;
+                return View(viewModel);
             }
-            if (ModelState.IsValid)
+            RoleManagementDTO roleManagementDTO = new()
             {
-                if (role.Name != null)
-                {
-                    role.Name = role.Name.Trim();
-                }
-                var u = await _userManagementDa.UpdateRole((IdentityRole)role);
-                _userManagementDa.DeleteClaimsForRole((IdentityRole)role);
-                foreach (var claim in role.ClaimsInsert)
-                {
-                    _userManagementDa.AddClaimForRole(u.Id, claim);
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(role);
+                Id = viewModel.Id,
+                Name = viewModel.Name,
+                NormalizedName = viewModel.NormalizedName,
+                ClaimsInsert = viewModel.ClaimsInsert
+            };
+            await _userManagementService.UpdateRole(roleManagementDTO);
+            return RedirectToAction(nameof(Index));
+            
         }
 
         [HttpPost]
-        public async Task<IdentityRole> DeleteRole(string id)
+        public async Task<RoleDTO> DeleteRole(string id)
         {
-            var role = await _userManagementDa.GetRole(id);
-            return role;
+            return await _userManagementService.GetRoleById(id);
+            
         }
 
         [HttpPost]
         public async Task<IActionResult> DeleteRoleConfirmed(string id)
         {
-            if (!User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
-            }
+            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
 
-            var userManagement = await _userManagementDa.DeleteRole(id);
+            await _userManagementService.DeleteRole(id);
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
-        public async Task<ApplicationUser> DeleteUser(string id)
+        public async Task<UserDTO> DeleteUser(string id)
         {
-            var user = await _userManagementDa.GetUser(id);
-            return user;
+            return await _userManagementService.GetUserById(id);
+            
         }
 
         [HttpPost]
         public async Task<IActionResult> DeleteUserConfirmed(string id)
         {
-            if (!User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
-            }
+            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
 
-            var userManagement = await _userManagementDa.DeleteUser(id);
+            await _userManagementService.DeleteUser(id);
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
-        public List<IdentityRoleClaim<string>> GetRoleClaims(string roleId)
+        public List<RoleClaimDTO> GetRoleClaims(string roleId)
         {
-            var roleClaims = _userManagementDa.GetClaimsForRole(roleId).Result.Select(z => z.ClaimValue).ToList();
+            var roleClaims = _userManagementService.GetRoleClaims(roleId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList();
+            if (roleClaims is null)
+            {
+                throw new Exception("Role claims not found");
+            }
             return _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => roleClaims.Contains(z.Value))
-            .Select(z => new IdentityRoleClaim<string>
+            .Select(z => new RoleClaimDTO
             {
                 ClaimType = z.Value,
                 ClaimValue = z.Description
@@ -445,22 +480,25 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
-        public List<IdentityUserClaim<string>> GetUserClaims(string userId)
+        public List<UserClaimDTO> GetUserClaims(string userId)
         {
-            var userClaims = _userManagementDa.GetClaimsForUser(userId).Result.Select(z => z.ClaimValue).ToList();
-            return _modulesAndAuthClaimsHelper.GetAuthClaims().Result
-                                                .Where(z => userClaims.Contains(z.Value))
-                                                .Select(z => new IdentityUserClaim<string>
-                                                {
-                                                    ClaimType = z.Value,
-                                                    ClaimValue = z.Description
-                                                }).ToList();
+            var userClaims = _userManagementService.GetUserClaims(userId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList();
+            if (userClaims is null)
+            {
+                throw new Exception("User claims not found");
+            }
+            return _modulesAndAuthClaimsHelper.GetAuthClaims().Result .Where(z => userClaims.Contains(z.Value))
+            .Select(z => new UserClaimDTO
+            {
+                ClaimType = z.Value,
+                ClaimValue = z.Description
+            }).ToList();
         }
 
         [HttpPost]
-        public async Task<List<IdentityRole>> GetUserRoles(string userId)
+        public async Task<List<RoleDTO>> GetUserRoles(string userId)
         {
-            return await _userManagementDa.GetRolesForUser(userId);
+            return await _userManagementService.GetRolesForUser(userId);
         }
 
         [HttpGet]
@@ -476,7 +514,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var rolesNameAsc = await wholeDbSetQuery.OrderBy(x => x.Name).ToListAsync();
             var rolesNameDesc = await wholeDbSetQuery.OrderByDescending(x => x.Name).ToListAsync();
 
-            var constructedQuery = 
+            var constructedQuery =
                 ConstructPagedEFQuery<IdentityRole>(wholeDbSetQuery, numRows, pageNumber, orderByProp, orderIsAscending);
 
             List<IdentityRole> pagedRoles = await constructedQuery.ToListAsync();

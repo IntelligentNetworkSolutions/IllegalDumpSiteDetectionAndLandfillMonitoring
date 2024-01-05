@@ -16,9 +16,9 @@ namespace DAL.Interfaces.Repositories
 
         Task<ApplicationUser> GetUserByUsername(string username);
 
-        Task<List<IdentityUserClaim<string>>> GetClaimsForUser(string userId);
+        Task<List<IdentityUserClaim<string>>> GetClaimsForUserByUserIdAndClaimType(string userId, string claimType);
 
-        Task<List<IdentityRole>> GetRolesForUser(string userId);
+        Task<List<IdentityRole>> GetRolesForUser(List<string> userRoles);
 
         Task<ApplicationUser> GetUserByEmail(string email);
 
@@ -27,35 +27,37 @@ namespace DAL.Interfaces.Repositories
         Task<IdentityRole> GetRole(string roleId);
 
         Task<List<IdentityRoleClaim<string>>> GetAllRoleClaims();
-        Task<List<IdentityRoleClaim<string>>> GetClaimsForRole(string roleId);
+        Task<List<IdentityRoleClaim<string>>> GetClaimsForRoleByRoleIdAndClaimType(string roleId, string claimType);
 
-        Task<ApplicationUser> GetUser(string userId);
+        Task<ApplicationUser> GetUserById(string userId);
         Task<ICollection<IdentityUserRole<string>>> GetUserRoles();
-
+        Task<ICollection<IdentityUserRole<string>>> GetUserRolesByUserId(string userId);
 
         Task<string> GetPreferredLanguage(string userId);
 
-        Task AddLanguageClaimForUser(string userId, string claimValue);
+        //Task AddLanguageClaimForUser(string userId, string claimValue);
+        Task AddLanguageClaimForUser(IdentityUserClaim<string> claimDb);
+        Task UpdateLanguageClaimForUser(IdentityUserClaim<string> claimDb);
 
         Task<IdentityRole> AddRole(IdentityRole role);
 
-        void AddClaimForRole(string id, string claim);
+        Task AddClaimForRole(IdentityRoleClaim<string> forInsert);
 
-        void AddClaimForUser(string id, string claim);
+        Task AddClaimForUser(IdentityUserClaim<string> forInsert);
 
-        Task<IdentityUserRole<string>> AddRoleForUser(string userId, string roleId);
+        Task<IdentityUserRole<string>> AddRoleForUser(IdentityUserRole<string> userRole);
 
         Task<ApplicationUser> AddUser(ApplicationUser user);
 
         Task<IdentityRole> UpdateRole(IdentityRole role);
         Task<ApplicationUser> UpdateUser(ApplicationUser user);
 
-        void DeleteClaimsRolesForUser(ApplicationUser user);
+        Task DeleteClaimsRolesForUser(List<IdentityUserClaim<string>> userClaims, ICollection<IdentityUserRole<string>> userRoles);
 
-        void DeleteClaimsForRole(IdentityRole role);
-        Task<IdentityRole> DeleteRole(string id);
+        Task DeleteClaimsForRole(List<IdentityRoleClaim<string>> roleClaims);
+        Task<IdentityRole> DeleteRole(IdentityRole role);
 
-        Task<ApplicationUser> DeleteUser(string id);
+        Task<ApplicationUser> DeleteUser(ApplicationUser user);
 
 
     }
