@@ -14,6 +14,8 @@ using Dal.Repositories;
 using DAL.Repositories;
 using MainApp.MVC.Infrastructure.Register;
 using MainApp.MVC.Infrastructure.Configure;
+using MainApp.BL.Mappers;
+using MainApp.MVC.Mappers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +64,8 @@ builder.Services.TryAddScoped<AuditLogBl>();
 builder.Services.TryAddScoped<ILayoutService, LayoutService>();
 builder.Services.TryAddScoped<IForgotResetPasswordService, ForgotResetPasswordService>();
 builder.Services.TryAddScoped<IMailService, MailService>();
+services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfile).Assembly);
 
 services.RegisterAuditNet();
 
