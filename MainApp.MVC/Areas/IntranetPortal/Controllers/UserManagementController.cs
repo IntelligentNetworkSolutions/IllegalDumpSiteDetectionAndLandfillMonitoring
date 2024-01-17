@@ -18,6 +18,7 @@ using MainApp.MVC.ViewModels.IntranetPortal.AuditLog;
 using DTOs.MainApp.MVC;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using Humanizer;
+using AutoMapper;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -29,13 +30,20 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly ApplicationSettingsHelper _applicationSettingsHelper;
         private readonly PasswordValidationHelper _passwordValidationHelper;
         private readonly IConfiguration _configuration;
-        public UserManagementController(ModulesAndAuthClaimsHelper modulesAndAuthClaimsHelper, ApplicationSettingsHelper applicationSettingsHelper, PasswordValidationHelper passwordValidationHelper, IConfiguration configuration, IUserManagementService userManagementService)
+        private readonly IMapper _mapper;
+        public UserManagementController(ModulesAndAuthClaimsHelper modulesAndAuthClaimsHelper, 
+                                        ApplicationSettingsHelper applicationSettingsHelper, 
+                                        PasswordValidationHelper passwordValidationHelper, 
+                                        IConfiguration configuration, 
+                                        IUserManagementService userManagementService,
+                                        IMapper mapper)
         {
             _modulesAndAuthClaimsHelper = modulesAndAuthClaimsHelper;
             _applicationSettingsHelper = applicationSettingsHelper;
             _passwordValidationHelper = passwordValidationHelper;
             _configuration = configuration;
             _userManagementService = userManagementService;
+            _mapper = mapper;
         }
 
         public async Task<IActionResult> Index()
@@ -56,32 +64,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             */
             UserManagementViewModel model = new UserManagementViewModel();
-            var users = await _userManagementService.GetAllIntanetPortalUsers();
-            if (users is null)
-            {
-                throw new Exception("Users not found");
-            }
-            var roles = await _userManagementService.GetAllRoles();
-            if (roles is null)
-            {
-                throw new Exception("Roles not found");
-            }
-            var userRoles = await _userManagementService.GetAllUserRoles();
-            if (userRoles is null)
-            {
-                throw new Exception("User roles not found");
-            }
+            var users = await _userManagementService.GetAllIntanetPortalUsers() ?? throw new Exception("Users not found");
+            var roles = await _userManagementService.GetAllRoles() ?? throw new Exception("Roles not found");
+            var userRoles = await _userManagementService.GetAllUserRoles() ?? throw new Exception("User roles not found");
 
-            model.Users = users.Select(z => new UserManagementUserViewModel
-            {
-                FirstName = z.FirstName,
-                LastName = z.LastName,
-                Id = z.Id,
-                UserName = z.UserName,
-                PhoneNumber = z.PhoneNumber,
-                Email = z.Email,
-                IsActive = z.IsActive
-            }).ToList();
+            model.Users = _mapper.Map<List<UserManagementUserViewModel>>(users);
 
             foreach (var user in model.Users)
             {
@@ -132,16 +119,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             UserManagementDTO dto = new();
             dto = await _userManagementService.FillUserManagementDto(dto);
-            UserManagementCreateUserViewModel model = new()
-            {                
-                PasswordMinLength = dto.PasswordMinLength,
-                PasswordMustHaveLetters = dto.PasswordMustHaveLetters,
-                PasswordMustHaveNumbers = dto.PasswordMustHaveNumbers,
-                Roles = dto.Roles,
-                Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims(),
-                AllUsers = dto.AllUsers,
-                RoleClaims = dto.RoleClaims
-            };
+            var model = _mapper.Map<UserManagementCreateUserViewModel>(dto) ?? throw new Exception("Model not found");            
+            model.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
+           
             return View(model);
         }
 
@@ -166,34 +146,16 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             */
             // TODO: ⚠️ !!! Password validation is only front end ⚠️⚠️⚠️
             if (!ModelState.IsValid)
-            {             
+            {
                 UserManagementDTO dto = new();
                 dto = await _userManagementService.FillUserManagementDto(dto);
-                viewModel.Roles = dto.Roles;
+                viewModel = _mapper.Map<UserManagementCreateUserViewModel>(dto);
                 viewModel.Claims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result;
-                viewModel.RoleClaims = dto.RoleClaims;
-                viewModel.PasswordMinLength = dto.PasswordMinLength;
-                viewModel.PasswordMustHaveLetters = dto.PasswordMustHaveLetters;
-                viewModel.PasswordMustHaveNumbers = dto.PasswordMustHaveNumbers;
-                viewModel.AllUsers = dto.AllUsers;
-
+               
                 return View(viewModel);
             }
-
-            UserManagementDTO userManagementDTO = new()
-            {
-                Email = viewModel.Email,
-                FirstName = viewModel.FirstName,
-                LastName = viewModel.LastName,
-                IsActive = viewModel.IsActive,
-                PhoneNumber = viewModel.PhoneNumber,
-                UserName = viewModel.UserName,
-                Password = viewModel.Password,
-                ConfirmPassword = viewModel.ConfirmPassword,               
-                RolesInsert = viewModel.RolesInsert,
-                ClaimsInsert = viewModel.ClaimsInsert
-            };
-
+           
+            var userManagementDTO = _mapper.Map<UserManagementDTO>(viewModel) ?? throw new Exception("User management DTO not found");
             await _userManagementService.AddUser(userManagementDTO);
             return RedirectToAction(nameof(Index));
         }
@@ -214,29 +176,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             UserManagementDTO dto = new()
             {
-                Id = id
+                Id = id!
             };
 
             dto = await _userManagementService.FillUserManagementDto(dto);
-            UserManagementEditUserViewModel model = new()
-            {
-                Id = dto.Id,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                UserName = dto.UserName,
-                PhoneNumber = dto.PhoneNumber,
-                Email = dto.Email,
-                IsActive = dto.IsActive,
-                PasswordMinLength = dto.PasswordMinLength,
-                PasswordMustHaveLetters = dto.PasswordMustHaveLetters,
-                PasswordMustHaveNumbers = dto.PasswordMustHaveNumbers,
-                RolesInsert = dto.RolesInsert,
-                Roles = dto.Roles,
-                Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims(),
-                ClaimsInsert = dto.ClaimsInsert,
-                AllUsersExceptCurrent = dto.AllUsersExceptCurrent
-            };
-
+            var model = _mapper.Map<UserManagementEditUserViewModel>(dto) ?? throw new Exception("Model not found");
+            model.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
+           
             return View(model);
         }
 
@@ -265,42 +211,23 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     Id = viewModel.Id
                 };
                 dto = await _userManagementService.FillUserManagementDto(dto);
-                viewModel.PasswordMinLength = dto.PasswordMinLength;
-                viewModel.PasswordMustHaveLetters = dto.PasswordMustHaveLetters;
-                viewModel.PasswordMustHaveNumbers = dto.PasswordMustHaveNumbers;
-                viewModel.RolesInsert = dto.RolesInsert;
-                viewModel.Roles = dto.Roles;
+                viewModel = _mapper.Map<UserManagementEditUserViewModel>(dto);
                 viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
-                viewModel.ClaimsInsert = dto.ClaimsInsert;
-                viewModel.AllUsersExceptCurrent = dto.AllUsersExceptCurrent;  
-
+               
                 return View(viewModel);
             }
 
-            UserManagementDTO userManagementDTO = new()
-            {
-                Id = viewModel.Id,
-                Email = viewModel.Email,
-                FirstName = viewModel.FirstName,
-                LastName = viewModel.LastName,
-                IsActive = viewModel.IsActive,
-                PhoneNumber = viewModel.PhoneNumber,
-                UserName = viewModel.UserName,
-                Password = viewModel.Password,
-                ConfirmPassword = viewModel.ConfirmPassword,
-                NormalizedUserName = viewModel.NormalizedUserName,
-                EmailConfirmed = viewModel.EmailConfirmed,
-                RolesInsert = viewModel.RolesInsert,
-                ClaimsInsert = viewModel.ClaimsInsert
-            };
+            var userManagementDTO = _mapper.Map<UserManagementDTO>(viewModel) ?? throw new Exception("User Management DTO not found");
             await _userManagementService.UpdateUser(userManagementDTO);
             return RedirectToAction(nameof(Index));                      
         }
 
         public async Task<IActionResult> CreateRole()
         {
-            var model = new UserManagementCreateRoleViewModel();
-            model.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
+            var model = new UserManagementCreateRoleViewModel
+            {
+                Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims()
+            };
             return View(model);
         }
 
@@ -326,13 +253,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
                 return View(viewModel);
             }
-
-            RoleManagementDTO roleManagementDTO = new()
-            {
-                Name = viewModel.Name,
-                NormalizedName = viewModel.NormalizedName,
-                ClaimsInsert = viewModel.ClaimsInsert
-            };
+            
+            var roleManagementDTO = _mapper.Map<RoleManagementDTO>(viewModel) ?? throw new Exception("Role Management DTO not found");
             await _userManagementService.AddRole(roleManagementDTO);
 
             return RedirectToAction(nameof(Index));           
@@ -354,17 +276,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             RoleManagementDTO dto = new()
             { 
-                Id = id
+                Id = id!
             };
             dto = await _userManagementService.FillRoleManagementDto(dto);
-            UserManagementEditRoleViewModel viewModel = new()
-            {
-                Id = dto.Id,
-                Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims(),
-                ClaimsInsert = dto.ClaimsInsert,                
-                Name = dto.Name,
-                NormalizedName = dto.NormalizedName
-            };
+            var viewModel = _mapper.Map<UserManagementEditRoleViewModel>(dto) ?? throw new Exception("Model not found");
+            viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();          
 
             return View(viewModel);
         }
@@ -392,17 +308,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     Id = viewModel.Id
                 };
                 dto = await _userManagementService.FillRoleManagementDto(dto);
+                viewModel = _mapper.Map<UserManagementEditRoleViewModel>(dto);
                 viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
-                viewModel.ClaimsInsert = dto.ClaimsInsert;
+               
                 return View(viewModel);
             }
-            RoleManagementDTO roleManagementDTO = new()
-            {
-                Id = viewModel.Id,
-                Name = viewModel.Name,
-                NormalizedName = viewModel.NormalizedName,
-                ClaimsInsert = viewModel.ClaimsInsert
-            };
+            var roleManagementDTO = _mapper.Map<RoleManagementDTO>(viewModel) ?? throw new Exception("Role Management DTO not found");          
             await _userManagementService.UpdateRole(roleManagementDTO);
             return RedirectToAction(nameof(Index));
             
@@ -465,34 +376,30 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public List<RoleClaimDTO> GetRoleClaims(string roleId)
         {
-            var roleClaims = _userManagementService.GetRoleClaims(roleId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList();
-            if (roleClaims is null)
-            {
-                throw new Exception("Role claims not found");
-            }
-            return _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => roleClaims.Contains(z.Value))
-            .Select(z => new RoleClaimDTO
-            {
-                ClaimType = z.Value,
-                ClaimValue = z.Description
-            }).ToList();
+            var roleClaims = _userManagementService.GetRoleClaims(roleId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList() ?? throw new Exception("Role claims not found");
+            var listOfRoleAuthClaims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => roleClaims.Contains(z.Value)).ToList();
+            return _mapper.Map<List<RoleClaimDTO>>(listOfRoleAuthClaims);
+            //return _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => roleClaims.Contains(z.Value))
+            //.Select(z => new RoleClaimDTO
+            //{
+            //    ClaimType = z.Value,
+            //    ClaimValue = z.Description
+            //}).ToList();
 
         }
 
         [HttpPost]
         public List<UserClaimDTO> GetUserClaims(string userId)
         {
-            var userClaims = _userManagementService.GetUserClaims(userId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList();
-            if (userClaims is null)
-            {
-                throw new Exception("User claims not found");
-            }
-            return _modulesAndAuthClaimsHelper.GetAuthClaims().Result .Where(z => userClaims.Contains(z.Value))
-            .Select(z => new UserClaimDTO
-            {
-                ClaimType = z.Value,
-                ClaimValue = z.Description
-            }).ToList();
+            var userClaims = _userManagementService.GetUserClaims(userId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList() ?? throw new Exception("User claims not found");
+            var listOfAuthClaims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => userClaims.Contains(z.Value)).ToList();
+            return _mapper.Map<List<UserClaimDTO>>(listOfAuthClaims);
+            //return _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => userClaims.Contains(z.Value))
+            //.Select(z => new UserClaimDTO
+            //{
+            //    ClaimType = z.Value,
+            //    ClaimValue = z.Description
+            //}).ToList();
         }
 
         [HttpPost]
@@ -502,7 +409,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpGet]
-        public async Task<List<IdentityRole>> GetQueryBuiltRoles()
+        public async Task<List<IdentityRole>?> GetQueryBuiltRoles()
         {
             IQueryable<IdentityRole> wholeDbSetQuery = _userManagementService.GetRolesAsQueriable();
 
