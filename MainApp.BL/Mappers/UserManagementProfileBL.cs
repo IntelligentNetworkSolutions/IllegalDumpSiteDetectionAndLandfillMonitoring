@@ -1,15 +1,7 @@
 ﻿using AutoMapper;
-using DocumentFormat.OpenXml.Bibliography;
-using DTOs.MainApp.MVC;
+using DTOs.MainApp.BL;
 using Entities;
 using Microsoft.AspNetCore.Identity;
-using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MainApp.BL.Mappers
 {

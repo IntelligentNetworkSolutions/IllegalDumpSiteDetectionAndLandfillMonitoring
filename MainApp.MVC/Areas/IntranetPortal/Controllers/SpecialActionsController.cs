@@ -1,8 +1,6 @@
-﻿using Dal.Helpers;
+﻿using DAL.Interfaces.Helpers;
 using MainApp.MVC.Helpers;
 using Microsoft.AspNetCore.Mvc;
-using SD.Helpers;
-using Westwind.Globalization;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -11,14 +9,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     public class SpecialActionsController : Controller
     {
         private readonly ModulesAndAuthClaimsHelper _modulesAndAuthClaims;
-        private readonly ApplicationSettingsHelper _applicationSettingsHelper;
+        private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IConfiguration _configuration;
 
-        public SpecialActionsController(ModulesAndAuthClaimsHelper modulesAndAuthClaims, ApplicationSettingsHelper applicationSettingsHelper, IConfiguration configuration)
+        public SpecialActionsController(ModulesAndAuthClaimsHelper modulesAndAuthClaims, IConfiguration configuration, IAppSettingsAccessor appSettingsAccessor)
         {
             _modulesAndAuthClaims = modulesAndAuthClaims;
-            _applicationSettingsHelper = applicationSettingsHelper;
             _configuration = configuration;
+            _appSettingsAccessor = appSettingsAccessor;
         }
 
         public async Task<IActionResult> Index()

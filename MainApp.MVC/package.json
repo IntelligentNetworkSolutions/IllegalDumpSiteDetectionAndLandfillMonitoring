@@ -1,0 +1,35 @@
+{
+  "name": "dump_site_detection_landfill_monitoring",
+  "version": "1.0.0",
+  "description": "Detection of Illegal Dump Sites and Monitoring of Legal Landfills",
+  "main": "Program.cs",
+  "scripts": {
+    "test": "dotnet test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring.git"
+  },
+  "keywords": [
+    "open_source",
+    "dumpsite",
+    "dump_site",
+    "detect-dump_site",
+    "landfill",
+    "monitor-landfill",
+    "fasterrcnn",
+    "faster-r-cnn",
+    "pointcloud",
+    "point-cloud",
+    "fullstack"
+  ],
+  "author": "INS-IntelligentNetworkSolutions",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/issues"
+  },
+  "homepage": "https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring#readme",
+  "dependencies": {
+    "ol": "^8.2.0"
+  }
+}

@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace Dal.Migrations
+namespace DAL.Migrations
 {
     /// <inheritdoc />
     public partial class moduleNullable : Migration

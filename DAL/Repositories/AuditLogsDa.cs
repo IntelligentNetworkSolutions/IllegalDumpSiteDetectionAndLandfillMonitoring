@@ -1,11 +1,10 @@
-﻿using Dal.ApplicationStorage;
+﻿using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using DAL.Interfaces.Repositories;
 

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
-using DTOs.MainApp.MVC;
-using MainApp.MVC.Helpers;
+using DTOs.MainApp.BL;
 using MainApp.MVC.ViewModels.IntranetPortal.UserManagement;
 using SD;
 

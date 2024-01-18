@@ -1,13 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DAL.Extensions;
+using Microsoft.EntityFrameworkCore;
 
-namespace Dal.Extensions
+namespace DAL.Extensions
 {
-	public static class ModelBuilderExtensions
+    public static class ModelBuilderExtensions
 	{
 		public static void SetEntityNamingConvention(this ModelBuilder modelBuilder)
 		{

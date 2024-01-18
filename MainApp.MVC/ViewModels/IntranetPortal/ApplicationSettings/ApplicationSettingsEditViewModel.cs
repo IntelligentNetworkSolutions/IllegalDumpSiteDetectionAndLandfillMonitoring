@@ -1,10 +1,12 @@
-﻿using SD;
+﻿using System.ComponentModel.DataAnnotations;
+using SD;
 using SD.Enums;
 
 namespace MainApp.MVC.ViewModels.IntranetPortal.ApplicationSettings
 {
     public class ApplicationSettingsEditViewModel
     {
+        [Required]
         public string Key { get; set; }
         public string Value { get; set; }
         public string Description { get; set; }

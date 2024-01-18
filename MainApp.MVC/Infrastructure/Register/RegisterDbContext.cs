@@ -1,4 +1,4 @@
-﻿using Dal.ApplicationStorage;
+﻿using DAL.ApplicationStorage;
 
 namespace MainApp.MVC.Infrastructure.Register
 {

@@ -1,11 +1,11 @@
 ﻿using Audit.EntityFramework;
-using Dal.Extensions;
+using DAL.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Entities;
 using System.Reflection;
 
-namespace Dal.ApplicationStorage
+namespace DAL.ApplicationStorage
 {
     public class ApplicationDbContext : AuditIdentityDbContext<ApplicationUser>
 	{
@@ -27,8 +27,6 @@ namespace Dal.ApplicationStorage
 		{
 			if (!optionsBuilder.IsConfigured)
 			{
-                //var connectionString = _configuration.GetConnectionString("MasterDatabase");
-                //var connectionString = _configuration["DetectDumpsMonitorLandfills_ConnectionString"];
                 var connectionString = _configuration["ConnectionStrings:MasterDatabase"];
 
                 string applicationStartMode = _configuration.GetSection("ApplicationStartupMode").Value;
@@ -41,9 +39,6 @@ namespace Dal.ApplicationStorage
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
-			// Customize the ASP.NET Identity model and override the defaults if needed.
-			// For example, you can rename the ASP.NET Identity table names and more.
-			// Add your customizations after calling base.OnModelCreating(builder);
 
 			// builder.HasPostgresExtension("postgis");
 
@@ -55,10 +50,6 @@ namespace Dal.ApplicationStorage
 			//entity.HasIndex(e => e.Geom)
 			//    .HasName("admin_granica_oc_geom_idx")
 			//    .HasMethod("gist"); //ova e biten metod na indeksiranje za geom
-
-			
-
 		}
-
 	}
 }
