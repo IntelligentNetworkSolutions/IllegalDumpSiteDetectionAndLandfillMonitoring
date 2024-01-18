@@ -1,24 +1,16 @@
-﻿using Dal;
-using Dal.Helpers;
+﻿using DAL.Helpers;
 using MainApp.MVC.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Entities;
-using SD.Helpers;
-using Services;
 using Services.Interfaces.Services;
 using System.Data;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
 using MainApp.MVC.ViewModels.IntranetPortal.UserManagement;
-using MainApp.MVC.ViewModels.IntranetPortal.AuditLog;
-using DTOs.MainApp.MVC;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using Humanizer;
 using AutoMapper;
+using DTOs.MainApp.BL;
+using DAL.Interfaces.Helpers;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -27,22 +19,22 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     {
         private readonly IUserManagementService _userManagementService;
         private readonly ModulesAndAuthClaimsHelper _modulesAndAuthClaimsHelper;
-        private readonly ApplicationSettingsHelper _applicationSettingsHelper;
+        private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly PasswordValidationHelper _passwordValidationHelper;
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
+
         public UserManagementController(ModulesAndAuthClaimsHelper modulesAndAuthClaimsHelper, 
-                                        ApplicationSettingsHelper applicationSettingsHelper, 
-                                        PasswordValidationHelper passwordValidationHelper, 
-                                        IConfiguration configuration, 
-                                        IUserManagementService userManagementService,
-                                        IMapper mapper)
+            PasswordValidationHelper passwordValidationHelper, IConfiguration configuration, 
+            IUserManagementService userManagementService, 
+            IAppSettingsAccessor appSettingsAccessor,
+            IMapper mapper)
         {
             _modulesAndAuthClaimsHelper = modulesAndAuthClaimsHelper;
-            _applicationSettingsHelper = applicationSettingsHelper;
             _passwordValidationHelper = passwordValidationHelper;
             _configuration = configuration;
             _userManagementService = userManagementService;
+            _appSettingsAccessor = appSettingsAccessor;
             _mapper = mapper;
         }
 
@@ -264,6 +256,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         {
             if (id is null)
             {
+                // TODO
                 //var errorPath = _configuration["ErrorViewsPath:Error404"];
                 //if (!string.IsNullOrEmpty(errorPath))
                 //{
@@ -316,14 +309,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var roleManagementDTO = _mapper.Map<RoleManagementDTO>(viewModel) ?? throw new Exception("Role Management DTO not found");          
             await _userManagementService.UpdateRole(roleManagementDTO);
             return RedirectToAction(nameof(Index));
-            
         }
 
         [HttpPost]
         public async Task<RoleDTO> DeleteRole(string id)
         {
             return await _userManagementService.GetRoleById(id);
-            
         }
 
         [HttpPost]
@@ -350,7 +341,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public async Task<UserDTO> DeleteUser(string id)
         {
             return await _userManagementService.GetUserById(id);
-            
         }
 
         [HttpPost]
@@ -385,7 +375,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             //    ClaimType = z.Value,
             //    ClaimValue = z.Description
             //}).ToList();
-
         }
 
         [HttpPost]

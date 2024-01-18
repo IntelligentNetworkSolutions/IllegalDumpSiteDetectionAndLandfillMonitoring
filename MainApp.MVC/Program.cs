@@ -5,15 +5,17 @@ using SD;
 using Microsoft.IdentityModel.Logging;
 using Services.Interfaces;
 using Services;
-using Dal;
-using Dal.Helpers;
+using DAL.Helpers;
 using MailSend.Interfaces;
 using MailSend;
 using Services.Interfaces.Services;
-using Dal.Repositories;
 using DAL.Repositories;
 using MainApp.MVC.Infrastructure.Register;
 using MainApp.MVC.Infrastructure.Configure;
+using DAL.Interfaces.Repositories;
+using DAL.Interfaces.Helpers;
+using MainApp.BL.Interfaces.Services;
+using MainApp.BL.Services;
 using MainApp.BL.Mappers;
 using MainApp.MVC.Mappers;
 
@@ -50,11 +52,14 @@ services.RegisterAuthorizationMiddleware();
 
 services.AddHttpContextAccessor();
 
+builder.Services.TryAddScoped<IApplicationSettingsRepo, ApplicationSettingsRepo>();
+builder.Services.TryAddScoped<IAppSettingsAccessor, AppSettingsAccessor>();
 builder.Services.TryAddScoped<ApplicationSettingsHelper>();
+builder.Services.TryAddScoped<IApplicationSettingsService, ApplicationSettingsService>();
 builder.Services.TryAddScoped<AddClaimsForIntranetPortalUserHelper>();
 builder.Services.TryAddScoped<PasswordValidationHelper>();
 builder.Services.TryAddScoped<ModulesAndAuthClaimsHelper>();
-builder.Services.TryAddScoped<UserManagementDa>();
+builder.Services.TryAddScoped<IUserManagementDa, UserManagementDa>();
 builder.Services.TryAddScoped<IntranetPortalUsersTokenDa>();
 builder.Services.TryAddScoped<ApplicationSettingsDa>();
 //builder.Services.TryAddScoped<IApplicationSettingsDa, ApplicationSettingsDa>();

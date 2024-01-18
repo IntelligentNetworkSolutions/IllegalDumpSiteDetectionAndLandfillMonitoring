@@ -13,6 +13,5 @@ namespace SD.Enums
         Integer,
         Decimal,
         DateTime
-
     }
 }

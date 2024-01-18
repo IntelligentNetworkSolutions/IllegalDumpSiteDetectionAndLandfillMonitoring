@@ -1,5 +1,4 @@
-﻿using DTOs;
-using DTOs.MainApp.MVC;
+﻿using DTOs.MainApp.BL;
 using MailSend.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;

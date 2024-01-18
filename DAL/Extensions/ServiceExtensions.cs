@@ -1,16 +1,11 @@
-﻿using Dal.ApplicationStorage;
+﻿using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Dal.Extensions
+namespace DAL.Extensions
 {
-	public static class ServiceExtensions
+    public static class ServiceExtensions
 	{
 		public static void ConfigureApplicationDbContext(this IServiceCollection services, IConfiguration config)
 		{

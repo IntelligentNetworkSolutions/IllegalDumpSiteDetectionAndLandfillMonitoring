@@ -1,4 +1,4 @@
-﻿using DTOs.MainApp.MVC;
+﻿using DTOs.MainApp.BL;
 using MailKit.Net.Smtp;
 using MailSend.Interfaces;
 using MimeKit;

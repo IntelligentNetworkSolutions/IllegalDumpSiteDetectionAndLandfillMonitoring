@@ -24,10 +24,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="MailSendTests\" />
-    <Folder Include="ModelsTests\" />
-    <Folder Include="MainAppTests\" />
-    <Folder Include="SDTests\" />
+    <Folder Include="MailSend.Tests\" />
+    <Folder Include="Entities.Tests\" />
+    <Folder Include="MainApp.BL.Tests\" />
+    <Folder Include="DTOs.Tests\" />
+    <Folder Include="SD.Tests\" />
   </ItemGroup>
 
   <ItemGroup>

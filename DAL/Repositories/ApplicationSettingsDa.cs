@@ -1,4 +1,4 @@
-﻿using Dal.ApplicationStorage;
+﻿using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Entities;
@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using System;
-//using Services.Interfaces.Repositories;
 
-namespace Dal.Repositories
+namespace DAL.Repositories
 {
     public class ApplicationSettingsDa //: IApplicationSettingsDa
     {

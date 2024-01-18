@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
 
-namespace Dal.Extensions
+namespace DAL.Extensions
 {
-	public static class StringExtensions
+    public static class StringExtensions
 	{
 		public static string ToSnakeCase(this string input)
 		{

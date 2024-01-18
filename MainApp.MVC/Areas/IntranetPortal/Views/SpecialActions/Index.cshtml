@@ -1,10 +1,11 @@
-﻿@using Dal.Helpers;
+﻿@using DAL.Helpers;
 @using MainApp.MVC.Helpers;
 @using SD.Helpers;
 @inject ApplicationSettingsHelper applicationSettingsHelper;
 @{
-    var mainAppResetTranslationCacheUrl = applicationSettingsHelper.GetApplicationSettingString("TranslationClearCacheMainApp");
-    var publicPortalResetTranslationCacheUrl = applicationSettingsHelper.GetApplicationSettingString("TranslationClearCachePublicPortal");
+    // TODO: Maybe Unconmment
+    // var mainAppResetTranslationCacheUrl = applicationSettingsHelper.GetApplicationSettingString("TranslationClearCacheMainApp");
+    // var publicPortalResetTranslationCacheUrl = applicationSettingsHelper.GetApplicationSettingString("TranslationClearCachePublicPortal");
     ViewData["Title"] = @DbResHtml.T("Special actions", "Resources");
 }
 <div class="content-header bg-gradient-white border-bottom mb-4">
@@ -49,31 +50,7 @@
     <script>
         function resetTranslationCache(event) {
             var errors = [];
-
-            var promiseMainApp = $.ajax({
-                url: "@mainAppResetTranslationCacheUrl",
-                type: "GET",
-            }).then(function (response) {
-            }).fail(function (req, status, error) {
-                if (req.status == 404) {
-                    errors.push("@DbResHtml.T("Main app - The requested resource could not be found.", "Resources")");
-                } else {
-                    errors.push("@DbResHtml.T("Main app - An error occurred while processing your request.", "Resources")");
-                }
-            });
-
-            var promisePublicPortal = $.ajax({
-                url: "@publicPortalResetTranslationCacheUrl",
-                type: "GET"
-            }).then(function (response) {
-               
-            }).fail(function (req, status, error) {
-                if (req.status == 404) {
-                    errors.push("@DbResHtml.T("Public portal - The requested resource could not be found.", "Resources")");
-                } else {
-                    errors.push("@DbResHtml.T("Public portal - An error occurred while processing your request.", "Resources")");
-                }
-            });
+            // TODO: Maybe Dont Promise :D
 
             Promise.allSettled([promiseMainApp, promisePublicPortal])
                 .then((results) => {

@@ -1,5 +1,4 @@
-﻿using DTOs.MainApp.MVC;
-using Microsoft.AspNetCore.Identity;
+﻿using DTOs.MainApp.BL;
 
 namespace MainApp.MVC.ViewModels.IntranetPortal.UserManagement
 {

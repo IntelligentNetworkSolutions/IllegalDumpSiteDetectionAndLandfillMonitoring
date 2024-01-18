@@ -1,8 +1,4 @@
-﻿using DTOs.MainApp.MVC;
-using Entities;
-using Microsoft.AspNetCore.Identity;
-using SD;
-using System.ComponentModel.DataAnnotations;
+﻿using DTOs.MainApp.BL;
 
 namespace MainApp.MVC.ViewModels.IntranetPortal.UserManagement
 {

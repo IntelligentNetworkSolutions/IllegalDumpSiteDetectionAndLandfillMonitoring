@@ -1,0 +1,389 @@
+﻿@using MainApp.MVC.Helpers
+@{
+    ViewData["Title"] = @DbResHtml.T("Annotate", "Resources");
+}
+
+@section Styles {
+    <link type="text/css" href="../node_modules/ol/ol.css" />
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">
+                    @DbResHtml.T("Add, edit, delete and view image annotations", "Resources")
+                </small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-success">
+                            @DbResHtml.T("Home", "Resources")
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">
+                        @ViewData["Title"]
+                    </li>
+                    <li>
+                        @ViewData["Title"]
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title">
+                            @DbResHtml.T("Image Annotations", "Resources")
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <small>
+                            @DbResHtml.T("The Image that is being annotated on", "Resources")
+                        </small>
+                        <div class="img-fluid">
+                            <div id="map" class="map" style="height: 500px;"></div>
+                            <div class="row">
+                                <select id="mode">
+                                    <option value="modify">select a feature to modify</option>
+                                    <option value="draw">draw new features</option>
+                                </select>
+                            </div>
+                            <div class="row">
+                                <div class="col-auto">
+                                    <span class="input-group">
+                                        <label class="input-group-text" for="type">Shape type:</label>
+                                        <select class="form-select" id="type">
+                                            <option value="Circle">Circle</option>
+                                            <option value="Square">Square</option>
+                                            <option value="Box">Box</option>
+                                            <option value="Star">Star</option>
+                                            <option value="None">None</option>
+                                        </select>
+                                        <input class="form-control" type="button" value="Undo" id="undo">
+                                    </span>
+                                </div>
+                            </div>
+
+                            @* <img class="img-fluid" src="~/images/test-dataset-images/vardariste_1.png"
+                            alt="@DbResHtml.T("The Image that is being annotated on", "Resources")" /> *@
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title">
+                            @DbResHtml.T("Annotation Toolbar", "Resources")
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li>
+                                @DbResHtml.T("Bounding Box", "Resources")
+                            </li>
+                            <li>
+                                @DbResHtml.T("Class Picker", "Resources")
+                            </li>
+                            <li>
+                                @DbResHtml.T("Show/Hide Annotations", "Resources")
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @* <script src="../node_modules/ol/dist/ol.js"></script> *@
+    <script src="/lib/ol/ol.js"></script>
+
+    <script>
+        ol.proj.useGeographic();
+
+        // Map views always need a projection.  Here we just want to map image coordinates directly to map coordinates,
+        // so we create a projection that uses the image extent in pixels.
+        const extent = [0, 0, 1807, 785];
+        const projection = new ol.proj.Projection({
+            code: 'xkcd-image',
+            units: 'pixels',
+            extent: extent,
+        });
+
+        const vectorSource = new ol.source.Vector({ wrapX: false, format: new ol.format.GeoJSON() });
+        const vectorLayer = new ol.layer.Vector({ source: vectorSource });
+
+        const select = new ol.interaction.Select();
+
+        const modify = new ol.interaction.Modify({
+            features: select.getFeatures(),
+        });
+
+        const draw = new ol.interaction.Draw({
+            type: 'Polygon',
+            source: vectorSource,
+        });
+
+        const snap = new ol.interaction.Snap({
+            source: vectorSource,
+        });
+
+        const translate = new ol.interaction.Translate({
+            features: select.getFeatures(),
+        });
+
+        const map = new ol.Map({
+            layers: [
+                new ol.layer.Image({
+                    source: new ol.source.ImageStatic({
+                        url: '/images/test-dataset-images/vardariste_1.png',
+                        projection: projection,
+                        imageExtent: extent,
+                    }),
+                }),
+                vectorLayer
+            ],
+            target: 'map',
+            view: new ol.View({
+                projection: projection,
+                center: ol.extent.getCenter(extent),
+                zoom: 2,
+                maxZoom: 8,
+            }),
+        });
+
+        //#region Extent Draw with Shift
+        // const extentInteraction = new ol.interaction.Extent({ condition: ol.events.condition.shiftKeyOnly });
+        // map.addInteraction(extentInteraction);
+
+        // const typeSelect = document.getElementById('type');
+
+        // let drawWithShift; // global so we can remove it later
+        // function addInteraction() {
+        //     let value = typeSelect.value;
+        //     if (value !== 'None') {
+        //         let geometryFunction;
+        //         if (value === 'Square') {
+        //             value = 'Circle';
+        //             geometryFunction = ol.interaction.Draw.createRegularPolygon(4);
+        //         } else if (value === 'Box') {
+        //             value = 'Circle';
+        //             geometryFunction = ol.interaction.Draw.createBox();
+        //         } else if (value === 'Star') {
+        //             value = 'Circle';
+        //             geometryFunction = function (coordinates, geometry) {
+        //                 const center = coordinates[0];
+        //                 const last = coordinates[coordinates.length - 1];
+        //                 const dx = center[0] - last[0];
+        //                 const dy = center[1] - last[1];
+        //                 const radius = Math.sqrt(dx * dx + dy * dy);
+        //                 const rotation = Math.atan2(dy, dx);
+        //                 const newCoordinates = [];
+        //                 const numPoints = 12;
+        //                 for (let i = 0; i < numPoints; ++i) {
+        //                     const angle = rotation + (i * 2 * Math.PI) / numPoints;
+        //                     const fraction = i % 2 === 0 ? 1 : 0.5;
+        //                     const offsetX = radius * fraction * Math.cos(angle);
+        //                     const offsetY = radius * fraction * Math.sin(angle);
+        //                     newCoordinates.push([center[0] + offsetX, center[1] + offsetY]);
+        //                 }
+        //                 newCoordinates.push(newCoordinates[0].slice());
+        //                 if (!geometry) {
+        //                     geometry = new ol.geom.Polygon([newCoordinates]);
+        //                 } else {
+        //                     geometry.setCoordinates([newCoordinates]);
+        //                 }
+        //                 return geometry;
+        //             };
+        //         }
+        //         drawWithShift = new ol.interaction.Draw({
+        //             source: source,
+        //             type: value,
+        //             geometryFunction: geometryFunction,
+        //         });
+        //         map.addInteraction(drawWithShift);
+        //     }
+        // }
+
+        // /**
+        // * Handle change event.
+        // */
+        // typeSelect.onchange = function () {
+        //     map.removeInteraction(drawWithShift);
+        //     addInteraction();
+        // };
+
+        // document.getElementById('undo').addEventListener('click', function () {
+        //     drawWithShift.removeLastPoint();
+        // });
+
+        // addInteraction();
+        //#endregion
+
+        //#region Resize Polygon
+        function removeInteractions() {
+            map.removeInteraction(modify);
+            map.removeInteraction(select);
+            map.removeInteraction(draw);
+            map.removeInteraction(select);
+            map.removeInteraction(translate);
+        }
+
+        const mode = document.getElementById('mode');
+        function onChange() {
+            removeInteractions();
+            switch (mode.value) {
+                case 'draw': {
+                    map.addInteraction(draw);
+                    map.addInteraction(snap);
+                    break;
+                }
+                case 'modify': {
+                    map.addInteraction(select);
+                    map.addInteraction(modify);
+                    map.addInteraction(snap);
+                    map.addInteraction(translate);
+                    break;
+                }
+                default: {
+                    // pass
+                }
+            }
+            var GeoJSON = new ol.format.GeoJSON();
+            console.log(GeoJSON.writeFeatures(vectorSource.getFeatures()));
+        }
+        mode.addEventListener('change', onChange);
+        onChange();
+        //#endregion
+    </script>
+
+    @* <script type="module">
+        import Draw, { createBox, createRegularPolygon, } from '/lib/openlayers/interaction/Draw.js';
+        import ExtentInteraction from '/lib/openlayers/interaction/Extent.js';
+
+        import ImageLayer from '/lib/openlayers/layer/Image.js';
+        import Map from '/lib/openlayers/Map.js';
+        import Polygon from '/lib/openlayers/geom/Polygon.js';
+
+        import Projection from '/lib/openlayers/proj/Projection.js';
+        import Static from '/lib/openlayers/source/ImageStatic.js';
+        import TileLayer from '/lib/openlayers/layer/Tile.js';
+        import { Vector as VectorSource } from '/lib/openlayers/source.js';
+        import { Vector as VectorLayer } from '/lib/openlayers/layer.js';
+        import View from '/lib/openlayers/View.js';
+        import {getCenter} from '/lib/openlayers/extent.js';
+        import {shiftKeyOnly} from '/lib/openlayers/events/condition.js';
+
+        // Map views always need a projection.  Here we just want to map image
+        // coordinates directly to map coordinates, so we create a projection that uses
+        // the image extent in pixels.
+        const extent = [0, 0, 1807, 785];
+        const projection = new Projection({
+          code: 'xkcd-image',
+          units: 'pixels',
+          extent: extent,
+        });
+
+        const source = new VectorSource({wrapX: false});
+
+        const vector = new VectorLayer({
+          source: source,
+        });
+
+        const map = new Map({
+          layers: [
+            new ImageLayer({
+              source: new Static({
+                url: '/images/test-dataset-images/vardariste_1.png',
+                projection: projection,
+                imageExtent: extent,
+              }),
+            }),
+            vector
+          ],
+          target: 'map',
+          view: new View({
+            projection: projection,
+            center: getCenter(extent),
+            zoom: 2,
+            maxZoom: 8,
+          }),
+        });
+
+        const typeSelect = document.getElementById('type');
+
+        let draw; // global so we can remove it later
+        function addInteraction() {
+          let value = typeSelect.value;
+          if (value !== 'None') {
+            let geometryFunction;
+            if (value === 'Square') {
+              value = 'Circle';
+              geometryFunction = createRegularPolygon(4);
+            } else if (value === 'Box') {
+              value = 'Circle';
+              geometryFunction = createBox();
+            } else if (value === 'Star') {
+              value = 'Circle';
+              geometryFunction = function (coordinates, geometry) {
+                const center = coordinates[0];
+                const last = coordinates[coordinates.length - 1];
+                const dx = center[0] - last[0];
+                const dy = center[1] - last[1];
+                const radius = Math.sqrt(dx * dx + dy * dy);
+                const rotation = Math.atan2(dy, dx);
+                const newCoordinates = [];
+                const numPoints = 12;
+                for (let i = 0; i < numPoints; ++i) {
+                  const angle = rotation + (i * 2 * Math.PI) / numPoints;
+                  const fraction = i % 2 === 0 ? 1 : 0.5;
+                  const offsetX = radius * fraction * Math.cos(angle);
+                  const offsetY = radius * fraction * Math.sin(angle);
+                  newCoordinates.push([center[0] + offsetX, center[1] + offsetY]);
+                }
+                newCoordinates.push(newCoordinates[0].slice());
+                if (!geometry) {
+                  geometry = new Polygon([newCoordinates]);
+                } else {
+                  geometry.setCoordinates([newCoordinates]);
+                }
+                return geometry;
+              };
+            }
+            draw = new Draw({
+              source: source,
+              type: value,
+              geometryFunction: geometryFunction,
+            });
+            map.addInteraction(draw);
+          }
+        }
+
+        /**
+         * Handle change event.
+         */
+        typeSelect.onchange = function () {
+          map.removeInteraction(draw);
+          addInteraction();
+        };
+
+        document.getElementById('undo').addEventListener('click', function () {
+          draw.removeLastPoint();
+        });
+
+        addInteraction();
+
+        const extentInteraction = new ExtentInteraction({condition: shiftKeyOnly});
+        map.addInteraction(extentInteraction);
+    </Script> *@
+}

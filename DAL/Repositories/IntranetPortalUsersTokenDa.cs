@@ -1,12 +1,10 @@
-﻿using Dal.ApplicationStorage;
+﻿using DAL.ApplicationStorage;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Entities;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using DAL.Interfaces.Repositories;
 
@@ -49,7 +47,7 @@ namespace DAL.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                throw ex;
+                throw;
             }
         }
         public async Task<int> UpdateAndHashUserPassword(ApplicationUser user, string password)
@@ -65,7 +63,7 @@ namespace DAL.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                throw ex;
+                throw;
             }
         }
 
@@ -74,7 +72,10 @@ namespace DAL.Repositories
         {
             try
             {
-                var intranetPortalUserToken = await _db.IntranetPortalUsersTokens.Where(x => x.Token == token && x.ApplicationUserId == userId && x.isTokenUsed == false).FirstOrDefaultAsync();
+                var intranetPortalUserToken = 
+                    await _db.IntranetPortalUsersTokens.FirstOrDefaultAsync(x => x.Token == token 
+                                                                            && x.ApplicationUserId == userId 
+                                                                            && x.isTokenUsed == false);
                 intranetPortalUserToken.isTokenUsed = true;
                 _db.IntranetPortalUsersTokens.Update(intranetPortalUserToken);
                 return await _db.SaveChangesAsync();
@@ -82,55 +83,39 @@ namespace DAL.Repositories
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                throw ex;
+                throw;
             }
         }
 
-        // TODO: Change to Nullable
-        public async Task<ApplicationUser> GetUser(string userId)
+        public async Task<ApplicationUser?> GetUser(string userId)
         {
             try
             {
-                return await _db.Users.Where(z => z.Id == userId)
-                                        .FirstOrDefaultAsync();
-                //return await _db.Users.SingleOrDefaultAsync(z => z.Id == userId);
+                return await _db.Users.SingleOrDefaultAsync(z => z.Id == userId);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                throw ex;
+                throw;
             }
         }
         public async Task<bool> IsTokenNotUsed(string token, string userId)
         {
             try
             {
-                var intranetPortalUsersToken = await _db.IntranetPortalUsersTokens.Where(x => x.Token == token && x.ApplicationUserId == userId && x.isTokenUsed == false).FirstOrDefaultAsync();
+                var intranetPortalUsersToken = 
+                    await _db.IntranetPortalUsersTokens.FirstOrDefaultAsync(x => x.Token == token 
+                                                                            && x.ApplicationUserId == userId 
+                                                                            && x.isTokenUsed == false);
                 if (intranetPortalUsersToken != null)
-                {
                     return true;
-                }
                 else
-                {
                     return false;
-                }
-
-                //var intranetPortalUsersToken =
-                //    await _db.IntranetPortalUsersTokens
-                //                .Where(x => x.Token == token
-                //                        && x.ApplicationUserId == userId
-                //                        && x.isTokenUsed == false)
-                //                .FirstOrDefaultAsync();
-
-                //if (intranetPortalUsersToken != null)
-                //    return true;
-
-                //return false;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
-                throw ex;
+                throw;
             }
         }
     }

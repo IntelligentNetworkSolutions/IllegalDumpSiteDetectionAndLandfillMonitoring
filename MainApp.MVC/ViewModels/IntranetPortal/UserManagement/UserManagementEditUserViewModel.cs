@@ -1,6 +1,4 @@
-﻿using DTOs.MainApp.MVC;
-using Entities;
-using Microsoft.AspNetCore.Identity;
+﻿using DTOs.MainApp.BL;
 using SD;
 using System.ComponentModel.DataAnnotations;
 

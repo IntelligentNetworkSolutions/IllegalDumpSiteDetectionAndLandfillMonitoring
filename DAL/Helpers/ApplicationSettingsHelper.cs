@@ -1,18 +1,12 @@
-﻿using Dal.Repositories;
+﻿using DAL.Repositories;
 using Entities;
-//using Services.Interfaces.Repositories;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Dal.Helpers
+namespace DAL.Helpers
 {
     public class ApplicationSettingsHelper
     {
-
         private readonly ApplicationSettingsDa _applicationSettingsDa;
         private readonly ConcurrentDictionary<string, ApplicationSettings> _cache;
         public ApplicationSettingsHelper(ApplicationSettingsDa applicationSettingsDa)
