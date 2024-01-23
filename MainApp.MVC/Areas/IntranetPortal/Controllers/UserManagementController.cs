@@ -369,12 +369,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var roleClaims = _userManagementService.GetRoleClaims(roleId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList() ?? throw new Exception("Role claims not found");
             var listOfRoleAuthClaims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => roleClaims.Contains(z.Value)).ToList();
             return _mapper.Map<List<RoleClaimDTO>>(listOfRoleAuthClaims);
-            //return _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => roleClaims.Contains(z.Value))
-            //.Select(z => new RoleClaimDTO
-            //{
-            //    ClaimType = z.Value,
-            //    ClaimValue = z.Description
-            //}).ToList();
         }
 
         [HttpPost]
@@ -383,12 +377,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var userClaims = _userManagementService.GetUserClaims(userId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList() ?? throw new Exception("User claims not found");
             var listOfAuthClaims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => userClaims.Contains(z.Value)).ToList();
             return _mapper.Map<List<UserClaimDTO>>(listOfAuthClaims);
-            //return _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => userClaims.Contains(z.Value))
-            //.Select(z => new UserClaimDTO
-            //{
-            //    ClaimType = z.Value,
-            //    ClaimValue = z.Description
-            //}).ToList();
         }
 
         [HttpPost]

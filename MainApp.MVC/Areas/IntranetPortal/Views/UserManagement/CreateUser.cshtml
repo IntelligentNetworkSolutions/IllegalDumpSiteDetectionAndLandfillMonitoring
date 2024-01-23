@@ -6,6 +6,7 @@
 
 @{
     ViewData["Title"] = @DbResHtml.T("Add user", "Resources");
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
 }
 <div class="content-header bg-gradient-white border-bottom mb-4">
     <div class="container-fluid">
@@ -36,41 +37,42 @@
                             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                             <div class="form-group">
                                 <label asp-for="FirstName" class="form-label">@DbResHtml.T("First name", "Resources")</label>
-                                <input asp-for="FirstName" type="text" class="form-control" required>
+                                <input asp-for="FirstName" type="text" class="form-control">
                                 <span asp-validation-for="FirstName" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="LastName" class="form-label">@DbResHtml.T("Last name", "Resources")</label>
-                                <input asp-for="LastName" type="text" class="form-control" required>
+                                <input asp-for="LastName" type="text" class="form-control">
                                 <span asp-validation-for="LastName" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="UserName" class="form-label">@DbResHtml.T("Username", "Resources")</label>
-                                <input asp-for="UserName" id="insertedUsername" type="text" class="form-control" required>
+                                <input asp-for="UserName" id="insertedUsername" type="text" class="form-control">
                                 <span asp-validation-for="UserName" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="Email" class="form-label">@DbResHtml.T("Email", "Resources")</label>
-                                <input asp-for="Email" id="insertedEmailAddress" type="email" class="form-control" required>
+                                <input asp-for="Email" id="insertedEmailAddress" type="email" class="form-control">
                                 <span asp-validation-for="Email" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="PhoneNumber" class="form-label">@DbResHtml.T("Phone Number", "Resources")</label>
-                                <input asp-for="PhoneNumber" type="number" class="form-control" required>
+                                <input asp-for="PhoneNumber" type="number" class="form-control">
                                 <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="RolesInsert" class="form-label">@DbResHtml.T("Multiple roles", "Resources")</label>
                                 @Html.DropDownListFor(x => x.RolesInsert, new SelectList(Model.Roles, "Id", "Name"), "", new { @class = "form-control select2", id = "rolesInsert", multiple = "multiple", @onchange = "checkRoleClaims()", style = "width: 100%;" })
+                                <span asp-validation-for="RolesInsert" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="Password" class="form-label">@DbResHtml.T("Password", "Resources")</label>
-                                <input asp-for="Password" type="password" class="form-control" id="password" autocomplete="new-password" onkeyup='check();' required>
+                                <input asp-for="Password" type="password" class="form-control" id="password" autocomplete="new-password" onkeyup='check();'>
                                 <span asp-validation-for="Password" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="ConfirmPassword" class="control-label">@DbResHtml.T("Confirm Password", "Resources")</label>
-                                <input asp-for="ConfirmPassword" type="password" id="confirmPassword" class="form-control" autocomplete="new-password" onkeyup='check();' required />
+                                <input asp-for="ConfirmPassword" type="password" id="confirmPassword" class="form-control" autocomplete="new-password" onkeyup='check();' />
                                 <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                                 <span id='message'></span>
                             </div>

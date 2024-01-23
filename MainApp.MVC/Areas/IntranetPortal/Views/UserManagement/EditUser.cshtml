@@ -6,6 +6,7 @@
 
 @{
     ViewData["Title"] = @DbResHtml.T("Edit User", "Resources");
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
 }
 <div class="content-header bg-gradient-white border-bottom mb-4">
     <div class="container-fluid">
@@ -36,27 +37,27 @@
                             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
                             <div class="form-group">
                                 <label asp-for="FirstName" class="form-label">@DbResHtml.T("First name", "Resources")</label>
-                                <input asp-for="FirstName" type="text" class="form-control" required>
+                                <input asp-for="FirstName" type="text" class="form-control">
                                 <span asp-validation-for="FirstName" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="LastName" class="form-label">@DbResHtml.T("Last name", "Resources")</label>
-                                <input asp-for="LastName" type="text" class="form-control" required>
+                                <input asp-for="LastName" type="text" class="form-control">
                                 <span asp-validation-for="LastName" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="UserName" class="form-label">@DbResHtml.T("Username", "Resources")</label>
-                                <input asp-for="UserName" id="insertedUsername" type="text" class="form-control" required>
+                                <input asp-for="UserName" id="insertedUsername" type="text" class="form-control">
                                 <span asp-validation-for="UserName" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="Email" class="form-label">Email</label>
-                                <input asp-for="Email" id="insertedEmailAddress" type="email" class="form-control" required>
+                                <input asp-for="Email" id="insertedEmailAddress" type="email" class="form-control">
                                 <span asp-validation-for="Email" class="text-danger"></span>
                             </div>
                             <div class="form-group">
                                 <label asp-for="PhoneNumber" class="form-label">@DbResHtml.T("Phone number", "Resources")</label>
-                                <input asp-for="PhoneNumber" type="number" class="form-control" required>
+                                <input asp-for="PhoneNumber" type="number" class="form-control">
                                 <span asp-validation-for="PhoneNumber" class="text-danger"></span>
                             </div>
                             <div class="form-group">
