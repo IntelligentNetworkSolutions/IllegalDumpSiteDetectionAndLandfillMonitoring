@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+	<CodeSnippet Format="1.0.0">
+		<Header>
+			<Title>
+				Create a ResultDTO Fail Object
+			</Title>
+			<Description>
+				A code snippet for creating a Fail ResultDto Object with an ErrorMessage i.e. ResultDTO.Fail("ErrMessage")
+			</Description>
+			<Author>
+				Bodan Gjozinski
+			</Author>
+			<Shortcut>
+				resfail
+			</Shortcut>
+		</Header>
+		<Snippet>
+			<Declarations>
+				<Literal>
+					<ID>
+						errorMessage
+					</ID>
+					<ToolTip>
+						The error message for the exception.
+					</ToolTip>
+					<Default>
+						"Error while Executing"
+					</Default>
+				</Literal>
+			</Declarations>
+			<Code Language="CSharp">
+				<![CDATA[ResultDTO.Fail("$errorMessage$")]]>
+			</Code>
+		</Snippet>
+	</CodeSnippet>
+</CodeSnippets>

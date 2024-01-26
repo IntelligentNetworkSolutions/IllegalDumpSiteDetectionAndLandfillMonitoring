@@ -1,11 +1,12 @@
 ﻿@using DAL.Helpers;
 @using MainApp.MVC.Helpers;
 @using SD.Helpers;
-@inject ApplicationSettingsHelper applicationSettingsHelper;
+@inject AppSettingsAccessor appSettingAccessor;
 @{
-    // TODO: Maybe Unconmment
-    // var mainAppResetTranslationCacheUrl = applicationSettingsHelper.GetApplicationSettingString("TranslationClearCacheMainApp");
-    // var publicPortalResetTranslationCacheUrl = applicationSettingsHelper.GetApplicationSettingString("TranslationClearCachePublicPortal");
+    var resCacheMain = await appSettingAccessor.GetApplicationSettingValueByKey<string>("TranslationClearCacheMainApp");
+    var resCachePublic = await appSettingAccessor.GetApplicationSettingValueByKey<string>("TranslationClearCachePublicPortal");
+    var mainAppResetTranslationCacheUrl = resCacheMain.IsSuccess ? resCacheMain.Data : null;
+    var publicPortalResetTranslationCacheUrl = resCachePublic.IsSuccess ? resCachePublic.Data : null;
     ViewData["Title"] = @DbResHtml.T("Special actions", "Resources");
 }
 <div class="content-header bg-gradient-white border-bottom mb-4">
@@ -51,7 +52,6 @@
         function resetTranslationCache(event) {
             var errors = [];
             // TODO: Maybe Dont Promise :D
-
             Promise.allSettled([promiseMainApp, promisePublicPortal])
                 .then((results) => {
                     var hasErrors = results.some(result => result.status === 'rejected');

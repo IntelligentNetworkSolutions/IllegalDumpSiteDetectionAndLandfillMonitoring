@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Entities;
-using DAL.Repositories;
 using MainApp.MVC.ViewModels.IntranetPortal.ApplicationSettings;
-using DAL.Interfaces.Repositories;
 using DAL.Interfaces.Helpers;
 using MainApp.BL.Interfaces.Services;
 using SD;
+using DTOs.MainApp.BL;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -14,9 +12,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     public class ApplicationSettingsController : Controller
     {
         private IApplicationSettingsService _applicationSettingsService;
-        //private IApplicationSettingsRepo _applicationSettingsRepo;
         private IAppSettingsAccessor _appSettingsAccessor;
-        //private ApplicationSettingsDa _applicationSettingsDa;
         private readonly IConfiguration _configuration;
 
         public ApplicationSettingsController(IApplicationSettingsService applicationSettingsService, IConfiguration configuration, IAppSettingsAccessor appSettingsAccessor)
@@ -84,7 +80,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             };
 
             var resultAdd = await _applicationSettingsService.CreateApplicationSetting(dto);
-            if (!resultAdd.IsSuccess)
+            if (!resultAdd.IsSuccess && ResultDTO.HandleError(resultAdd))
             {
                 model.Modules = SD.Modules.GetAll().ToList();
                 model.AllApplicationSettingsKeys = allKeys;

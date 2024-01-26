@@ -5,7 +5,7 @@ namespace MainApp.MVC.Infrastructure.Register
 {
     public static class RegisterMVC
     {
-        public static void RegisterMvc(this IServiceCollection services)
+        public static void RegisterMvcBuilder(this IServiceCollection services)
         {
             services.AddMvc()
                     .AddNewtonsoftJson(options =>
