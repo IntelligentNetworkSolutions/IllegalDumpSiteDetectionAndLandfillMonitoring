@@ -1,6 +1,15 @@
 # Waste Detection Licensing
 
-## Used Licenses
+## Proposed License
+
+- [Mozilla Public License Version 2.0](https://www.mozilla.org/en-US/MPL/2.0/)  
+
+> ### Will need to change current project licence to be the Proposed Licence  
+>
+> </br>
+>
+
+## Dependency Licenses
 
 - DataBase
   - [PostgreSQL](https://licenses.nuget.org/PostgreSQL)  
@@ -15,7 +24,3 @@
 - [Open Source Licenses: Types and Comparison](https://snyk.io/learn/open-source-licenses/)
 
 - [Comparison of free and open-source software licenses](https://en.wikipedia.org/wiki/Comparison_of_free_and_open-source_software_licenses)  
-
-## Proposed License
-
-- [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.html)  

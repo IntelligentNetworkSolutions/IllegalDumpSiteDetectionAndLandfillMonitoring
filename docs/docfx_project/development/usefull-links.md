@@ -214,6 +214,17 @@ UNICEF: AI Mentorship:
 - [](https://blog.opensource.org/dpga-members-engage-in-open-source-ai-definition-workshop/)  
 - [](https://docs.astral.sh/ruff/)  
 - pytest --coverage  
+- [Open Street Map Attribution for Use](https://osmfoundation.org/wiki/Licence/Attribution_Guidelines)
+- about.codecov.io
 
+What is being tested in JS ?  
+Pure function ?
+DOM changes ?
 
-about.codecov.io
+If endpoints return HTML is the HTML generation tested ?  
+
+How are .NET Components and Partial Views supposed to be tested ?
+
+How is code coverage coputed for integration tests ?
+
+Does code coverage have to be automatic ?
