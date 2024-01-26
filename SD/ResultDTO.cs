@@ -17,10 +17,20 @@
         }
     }
 
-    public record ResultDTO<DataType>(bool IsSuccess, DataType? Data, string? ErrMsg)
+    public record ResultDTO<DataType>(bool IsSuccess, DataType? Data, string? ErrMsg, object? ExObj)
     {
-        public static ResultDTO<DataType> Ok(DataType Data) => new ResultDTO<DataType>(true, Data, null);
+        public static ResultDTO<DataType> Ok(DataType Data) => new ResultDTO<DataType>(true, Data, null, null);
 
-        public static ResultDTO<DataType> Fail(string errorMessage) => new ResultDTO<DataType>(false, default(DataType?), errorMessage);
+        public static ResultDTO<DataType> Fail(string errorMessage) => new ResultDTO<DataType>(false, default(DataType?), errorMessage, null);
+
+        public static ResultDTO<DataType> ExceptionFail(string errorMessage, object? exceptionObj) => new ResultDTO<DataType>(false, default(DataType?), errorMessage, exceptionObj);
+
+        public static bool HandleError(ResultDTO<DataType> resultDTO)
+        {
+            if (resultDTO.ExObj is not null)
+                throw (Exception)resultDTO.ExObj;
+
+            return true;
+        }
     }
 }

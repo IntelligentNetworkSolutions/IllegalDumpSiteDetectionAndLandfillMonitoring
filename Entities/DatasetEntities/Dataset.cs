@@ -1,19 +1,18 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Entities.Intefaces;
+﻿using Entities.Intefaces;
 
 namespace Entities.DatasetEntities
 {
     public class Dataset : BaseEntity<Guid>, ICreatedByUser, IUpdatedByUser
     {
-        public required string Name { get; set; }
-        public required string Description { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
 
         public bool IsPublished { get; set; } = false;
 
         public Guid? ParentDatasetId { get; set; }
         public virtual Dataset? ParentDataset { get; set; }
 
-        public required string CreatedById { get; set; }
+        public string CreatedById { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public ApplicationUser? CreatedBy { get; set; }
 

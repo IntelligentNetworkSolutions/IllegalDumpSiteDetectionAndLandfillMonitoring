@@ -9,12 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace DAL.Repositories
 {
-    public class ApplicationSettingsRepo : IApplicationSettingsRepo
+    public class ApplicationSettingsRepository : IApplicationSettingsRepo
     {
         private readonly ApplicationDbContext _db;
-        private readonly ILogger<ApplicationSettingsRepo> _logger;
+        private readonly ILogger<ApplicationSettingsRepository> _logger;
 
-        public ApplicationSettingsRepo(ApplicationDbContext db, ILogger<ApplicationSettingsRepo> logger)
+        public ApplicationSettingsRepository(ApplicationDbContext db, ILogger<ApplicationSettingsRepository> logger)
         {
             _db = db;
             _logger = logger;

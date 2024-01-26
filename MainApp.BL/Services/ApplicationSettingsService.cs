@@ -1,4 +1,6 @@
-﻿using DAL.Interfaces.Repositories;
+﻿using AutoMapper;
+using DAL.Interfaces.Repositories;
+using DTOs.MainApp.BL;
 using Entities;
 using MainApp.BL.Interfaces.Services;
 using Microsoft.Extensions.Logging;
@@ -9,15 +11,15 @@ namespace MainApp.BL.Services
     public class ApplicationSettingsService : IApplicationSettingsService
     {
         private readonly IApplicationSettingsRepo _applicationSettingsRepo;
+        private readonly IMapper _mapper;
         private readonly ILogger<ApplicationSettingsService> _logger;
 
-        public ApplicationSettingsService(IApplicationSettingsRepo applicationSettingsRepo, ILogger<ApplicationSettingsService> logger)
+        public ApplicationSettingsService(IApplicationSettingsRepo applicationSettingsRepo, ILogger<ApplicationSettingsService> logger, IMapper mapper)
         {
             _applicationSettingsRepo = applicationSettingsRepo;
             _logger = logger;
+            _mapper = mapper;
         }
-
-        //public async Task<>
 
         #region Create
         public async Task<ResultDTO> CreateApplicationSetting(AppSettingDTO appSettingDTO)
@@ -32,17 +34,12 @@ namespace MainApp.BL.Services
 
                 // TODO: Check Cast to DataType
 
-                // TODO: Use Mapper
-                ApplicationSettings applicationSettingEntity = new ApplicationSettings()
-                {
-                    Key = appSettingDTO.Key,
-                    Value = appSettingDTO.Value,
-                    Description = string.IsNullOrWhiteSpace(appSettingDTO.Description) ? appSettingDTO.Key : appSettingDTO.Description,
-                    DataType = appSettingDTO.DataType,
-                    Module = appSettingDTO.Module
-                };
+                if (string.IsNullOrEmpty(appSettingDTO.Description))
+                    appSettingDTO.Description = appSettingDTO.Key;
 
-                bool resCreate = await _applicationSettingsRepo.CreateApplicationSetting(applicationSettingEntity);
+                ApplicationSettings appSettingEnt = _mapper.Map<ApplicationSettings>(appSettingDTO);
+
+                bool resCreate = await _applicationSettingsRepo.CreateApplicationSetting(appSettingEnt);
                 if (!resCreate)
                     return ResultDTO.Fail($"Database Error while Creating App Setting with Key: {appSettingDTO.Key} and Value: {appSettingDTO.Value}");
 
@@ -51,7 +48,7 @@ namespace MainApp.BL.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
-                return ResultDTO.Fail(ex.Message);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
         #endregion
@@ -75,13 +72,10 @@ namespace MainApp.BL.Services
 
                 // TODO: Check Cast to DataType
 
-                // TODO: Use Mapper
-                applicationSettingEntity.Value = appSettingDTO.Value;
-                applicationSettingEntity.Description = string.IsNullOrWhiteSpace(appSettingDTO.Description)
-                                                        ? appSettingDTO.Key
-                                                        : appSettingDTO.Description;
-                applicationSettingEntity.DataType = appSettingDTO.DataType;
-                applicationSettingEntity.Module = appSettingDTO.Module;
+                if (string.IsNullOrEmpty(appSettingDTO.Description))
+                    appSettingDTO.Description = appSettingDTO.Key;
+
+                applicationSettingEntity = _mapper.Map<ApplicationSettings>(appSettingDTO);
 
                 bool resUpdate = await _applicationSettingsRepo.UpdateApplicationSetting(applicationSettingEntity);
                 if (!resUpdate)
@@ -128,17 +122,8 @@ namespace MainApp.BL.Services
         {
             try
             {
-                var appSettings = await _applicationSettingsRepo.GetAllApplicationSettingsAsList();
-
-                List<AppSettingDTO> appSettingDTOs = appSettings.Select(x => new AppSettingDTO()
-                {
-                    Key = x.Key,
-                    Value = x.Value,
-                    Description = x.Description,
-                    DataType = x.DataType,
-                    Module = x.Module
-                }).ToList();
-
+                List<ApplicationSettings> appSettings = await _applicationSettingsRepo.GetAllApplicationSettingsAsList();
+                List<AppSettingDTO> appSettingDTOs = _mapper.Map<List<AppSettingDTO>>(appSettings);
                 return appSettingDTOs;
             }
             catch(Exception ex)
@@ -158,14 +143,17 @@ namespace MainApp.BL.Services
                 if(appSettingsAsQuery is null)
                     return null;
 
-                IQueryable<AppSettingDTO> appSettingsAsDtosAsQuery = appSettingsAsQuery.Select(x => new AppSettingDTO()
-                {
-                    Key = x.Key,
-                    Value = x.Value,
-                    Description = x.Description,
-                    DataType = x.DataType,
-                    Module = x.Module
-                });
+                IQueryable<AppSettingDTO> appSettingsAsDtosAsQuery = _mapper.ProjectTo<AppSettingDTO>(appSettingsAsQuery);
+
+                // TODO : Test and Remove
+                //IQueryable <AppSettingDTO> appSettingsAsDtosAsQuery = appSettingsAsQuery.Select(x => new AppSettingDTO()
+                //{
+                //    Key = x.Key,
+                //    Value = x.Value,
+                //    Description = x.Description,
+                //    DataType = x.DataType,
+                //    Module = x.Module
+                //});
 
                 return appSettingsAsDtosAsQuery;
             }
@@ -198,15 +186,7 @@ namespace MainApp.BL.Services
                 if (appSetting == null) 
                     return null;
 
-                AppSettingDTO appSettingAsDto = new AppSettingDTO()
-                {
-                    Key = appSetting.Key,
-                    Value = appSetting.Value,
-                    Description = appSetting.Description,
-                    DataType = appSetting.DataType,
-                    Module = appSetting.Module
-                };
-
+                AppSettingDTO appSettingAsDto = _mapper.Map<AppSettingDTO>(appSetting);
                 return appSettingAsDto;
             }
             catch (Exception ex)

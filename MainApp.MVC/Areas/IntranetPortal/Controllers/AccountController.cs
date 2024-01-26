@@ -7,14 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 using Entities;
 using System.Security.Claims;
 using Services.Interfaces;
-using DAL.Helpers;
 using Microsoft.AspNetCore.Localization;
 using MainApp.MVC.ViewModels.IntranetPortal.Account;
 using DAL.Repositories;
 using Services.Interfaces.Services;
 using DAL.Interfaces.Helpers;
 using SD;
-using DTOs.MainApp.BL;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -367,7 +365,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new { passwordMissmatch = true });
             
             ResultDTO result = await _userManagementService.UpdateUserPassword(userId, currentPassword, password);
-            if(!result.IsSuccess && ResultDTO.HandleError(result))
+            if(!result.IsSuccess && ResultDTO.HandleError(result)) 
                 return Json(new { currentPasswordFailed = true });
 
             return Json(new { passwordUpdatedSuccessfully = true });

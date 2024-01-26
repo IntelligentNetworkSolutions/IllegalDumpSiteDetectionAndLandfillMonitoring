@@ -20,6 +20,9 @@ namespace DAL.ApplicationStorage
 
             string connectionString = args[0];
 
+            // Add this and comment out line above for code generation to work
+            //string connectionString = "YourConnectionString";
+
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
             
             optionsBuilder.UseNpgsql(connectionString, db => db.UseNetTopologySuite());

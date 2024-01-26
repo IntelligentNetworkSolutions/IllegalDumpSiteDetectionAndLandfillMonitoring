@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Entities;
 using System.Reflection;
+using Entities.DatasetEntities;
 
 namespace DAL.ApplicationStorage
 {
@@ -21,8 +22,15 @@ namespace DAL.ApplicationStorage
 
         public virtual DbSet<ApplicationSettings> ApplicationSettings { get; set; }
         public virtual DbSet<IntranetPortalUsersToken> IntranetPortalUsersTokens { get; set; }
-
         public virtual DbSet<AuditLog> AuditLog { get; set; }
+
+        #region Dataset Management
+		public virtual DbSet<Dataset> Datasets { get; set; }
+		public virtual DbSet<DatasetClass> DatasetClasses { get; set; }
+		public virtual DbSet<DatasetImage> DatasetImages { get; set; }
+		public virtual DbSet<ImageAnnotation> ImageAnnotations { get; set; }
+        #endregion
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
 			if (!optionsBuilder.IsConfigured)
@@ -40,16 +48,19 @@ namespace DAL.ApplicationStorage
 		{
 			base.OnModelCreating(builder);
 
-			// builder.HasPostgresExtension("postgis");
+			builder.HasPostgresExtension("uuid-ossp");
+            builder.HasPostgresExtension("postgis");
 
-			//Custom Entity DB Naming object naming convention for PostgreSQL
-			builder.SetEntityNamingConvention();
+            //Custom Entity DB Naming object naming convention for PostgreSQL
+            builder.SetEntityNamingConvention();
 
-			//todo: definicija na indeksi za geom i drugi indeksirani koloni posto ne moze preku data anotoacii
-			//primer:
-			//entity.HasIndex(e => e.Geom)
-			//    .HasName("admin_granica_oc_geom_idx")
-			//    .HasMethod("gist"); //ova e biten metod na indeksiranje za geom
-		}
+            builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+            //todo: definicija na indeksi za geom i drugi indeksirani koloni posto ne moze preku data anotoacii
+            //primer:
+            //entity.HasIndex(e => e.Geom)
+            //    .HasName("admin_granica_oc_geom_idx")
+            //    .HasMethod("gist"); //ova e biten metod na indeksiranje za geom
+        }
 	}
 }

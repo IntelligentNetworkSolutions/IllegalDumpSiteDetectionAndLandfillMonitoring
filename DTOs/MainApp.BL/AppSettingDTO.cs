@@ -1,6 +1,6 @@
 ﻿using SD.Enums;
 
-namespace SD
+namespace DTOs.MainApp.BL
 {
     public class AppSettingDTO
     {

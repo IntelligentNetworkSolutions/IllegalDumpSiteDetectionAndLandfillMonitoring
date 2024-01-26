@@ -1,25 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Entities.Intefaces;
 
 namespace Entities.DatasetEntities
 {
-    public class DatasetClass : IBaseEntity<Guid>, ICreatedByUser
+    public class DatasetClass : BaseEntity<Guid>, ICreatedByUser
     {
-        [Key]
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public int ClassId { get; set; }
+        public string ClassName { get; set; }
 
-        public required int ClassId { get; set; }
-        public required string ClassName { get; set; }
-
-        public required Guid DatasetId { get; set; }
+        public Guid DatasetId { get; set; }
         public virtual Dataset? Dataset { get; set; }
 
-        public required string CreatedById { get; set; }
+        public string CreatedById { get; set; }
         public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
         public ApplicationUser? CreatedBy { get; set; }
     }
