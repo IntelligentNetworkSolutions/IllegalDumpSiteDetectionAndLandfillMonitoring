@@ -1,6 +1,7 @@
-
 - name: Home
   homepage: index.md
+- name: About
+  href: about/intro.md
 - name: Development
   href: development/intro.md
 - name: Diagrams
