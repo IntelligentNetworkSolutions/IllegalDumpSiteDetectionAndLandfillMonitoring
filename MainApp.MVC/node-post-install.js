@@ -28,7 +28,7 @@ vendors.forEach((filePath) => {
     let destPath = filePath.replace(paths.nodeModulesBase, paths.destinationBase)
     destPath = path.join(userPath, destPath)
     console.log('Copy:' + filePath + ' to ' + destPath)
-    fs.cpSync(filePath, destPath)
+    fs.cpSync(filePath, destPath, { recursive: true })
 })
 
 process.exit()
