@@ -361,4 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Scripts downloaded from npm, moved to this folder by node-post-install.js (list of files in vendor.json)
+/MainApp.MVC/wwwroot/vendor
+
 /MainApp/appsettings.Development.json

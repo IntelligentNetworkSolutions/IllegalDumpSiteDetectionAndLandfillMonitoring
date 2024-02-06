@@ -1,0 +1,7 @@
+﻿[
+  "node_modules/ol/dist/ol.js",
+  "node_modules/ol/dist/ol.js.map",
+  "node_modules/ol/ol.css",
+  "node_modules/admin-lte/dist",
+  "node_modules/admin-lte/plugins"
+]
