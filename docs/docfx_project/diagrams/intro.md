@@ -18,7 +18,7 @@
 
 ## Dataset Image Creation Process  
 
-- [Dataset Image Creation Diagram](dataset-image-creation-process/dataset-creation-process-diagram.md)  
+- [Dataset Image Creation Diagram](dataset-image-creation-process/dataset-image-creation-process-diagram.md)  
 
 ## Add Image and Annotations Process and Screen  
   
