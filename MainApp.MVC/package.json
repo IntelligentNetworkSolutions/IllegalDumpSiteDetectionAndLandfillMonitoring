@@ -36,8 +36,13 @@
   },
   "dependencies": {
     "ol": "^8.2.0",
-    "admin-lte": "3.2.0"  
+    "admin-lte": "3.2.0",
+    "font-gis": "1.0.5",
+    "jquery": "3.7.1",
+    "jquery-validation": "1.19.5",
+    "jquery-validation-unobtrusive": "4.0.0"
   },
-  "devDependencies": {   
+  "devDependencies": {
+    "eslint": "8.56.0"
   }
 }

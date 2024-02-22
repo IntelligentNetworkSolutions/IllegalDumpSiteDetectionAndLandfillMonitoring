@@ -4,7 +4,7 @@
 }
 
 @section Styles {
-    <link type="text/css" href="../node_modules/ol/ol.css" />
+    <link type="text/css" href="~/vendor/ol/ol.css" />
 }
 
 <div class="content-header bg-gradient-white border-bottom mb-4">
@@ -104,9 +104,8 @@
     </div>
 </div>
 
-@section Scripts {
-    @* <script src="../node_modules/ol/dist/ol.js"></script> *@
-    <script src="/lib/ol/ol.js"></script>
+@section Scripts {    
+    <script src="~/vendor/ol/dist/ol.js"></script>
 
     <script>
         ol.proj.useGeographic();
