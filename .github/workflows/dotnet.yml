@@ -39,13 +39,13 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: coverage-report
-        path: ./TestResults/*/coverage.cobertura.xml
+        path: /home/runner/work/IllegalDumpSiteDetectionAndLandfillMonitoring/IllegalDumpSiteDetectionAndLandfillMonitoring/Tests/TestResults/*/coverage.cobertura.xml
 
     - name: Install ReportGenerator
       run: dotnet tool install -g dotnet-reportgenerator-globaltool
       
     - name: Generate HTML report
-      run: reportgenerator "-reports:./TestResults/*/coverage.cobertura.xml" "-targetdir:./coverage-report" "-reporttypes:Html"
+      run: reportgenerator "-reports:/home/runner/work/IllegalDumpSiteDetectionAndLandfillMonitoring/IllegalDumpSiteDetectionAndLandfillMonitoring/Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:./coverage-report" "-reporttypes:Html"
 
     - name: Upload HTML report
       uses: actions/upload-artifact@v2
