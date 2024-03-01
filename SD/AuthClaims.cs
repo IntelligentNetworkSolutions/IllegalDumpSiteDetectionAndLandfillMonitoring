@@ -128,7 +128,6 @@ namespace SD
             FromModule = Modules.SpecialActions,
             Description = "SpecialActions: Reset translation cache"
         };
-
     } 
 }
 

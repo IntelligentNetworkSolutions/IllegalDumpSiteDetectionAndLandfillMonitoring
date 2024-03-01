@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data.SqlTypes;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using SD.Helpers;
 
 namespace SD
 {
@@ -42,13 +44,19 @@ namespace SD
             return modules;
         }
 
-        public static void CheckModuleValuesForDuplicates()
+        public static void CheckModuleValuesForDuplicates(ICollection<Module>? modules = null)
         {
-            var valuesList = GetAll().Select(s => s.Value);
-            if (valuesList.Count() != valuesList.Distinct().Count())
+            if (modules is null)
             {
-                throw new Exception("SD.Modules have value duplicates. Rename the duplicated values!");
+                IEnumerable<string> valuesList = Modules.GetAll().Select(s => s.Value);
+                if (CommonHelper.EnumerableHasDuplicatesByProperty(valuesList))
+                    throw new Exception("SD.Modules have value duplicates. Rename the duplicated values!");
+
+                return;
             }
+
+            if (CommonHelper.EnumerableHasDuplicatesByProperty(modules, x => x.Value))
+                throw new Exception($"{nameof(modules)} has value duplicates. Rename the duplicated values!");
         }
 
         public static readonly Module UserManagement = new Module { Value = "UserManagement", Description = "Management of users" };
