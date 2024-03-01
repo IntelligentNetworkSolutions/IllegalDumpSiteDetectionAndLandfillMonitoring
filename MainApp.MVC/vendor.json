@@ -3,5 +3,10 @@
   "node_modules/ol/dist/ol.js.map",
   "node_modules/ol/ol.css",
   "node_modules/admin-lte/dist",
-  "node_modules/admin-lte/plugins"
+  "node_modules/admin-lte/plugins",
+  "node_modules/font-gis/fonts",
+  "node_modules/font-gis/css/font-gis.css",
+  "node_modules/jquery/dist",
+  "node_modules/jquery-validation/dist",
+  "node_modules/jquery-validation-unobtrusive/dist"  
 ]
