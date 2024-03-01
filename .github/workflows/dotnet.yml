@@ -33,7 +33,7 @@ jobs:
       run: dotnet build --configuration Release
       
     - name: Test
-      run: dotnet test --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura
+      run: dotnet test --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --collect:"XPlat Code Coverage"
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v2
