@@ -18,6 +18,10 @@ jobs:
       matrix:
         os: [windows-2019, ubuntu-latest]
 
+    defaults:
+      run: 
+        working-directory: waste
+
     steps:
     - uses: actions/checkout@v3
     
@@ -39,13 +43,13 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: coverage-report
-        path: /home/runner/work/IllegalDumpSiteDetectionAndLandfillMonitoring/IllegalDumpSiteDetectionAndLandfillMonitoring/Tests/TestResults/*/coverage.cobertura.xml
+        path: waste/Tests/TestResults/*/coverage.cobertura.xml
 
     - name: Install ReportGenerator
       run: dotnet tool install -g dotnet-reportgenerator-globaltool
       
     - name: Generate HTML report
-      run: reportgenerator "-reports:/home/runner/work/IllegalDumpSiteDetectionAndLandfillMonitoring/IllegalDumpSiteDetectionAndLandfillMonitoring/Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:./coverage-report" "-reporttypes:Html"
+      run: reportgenerator "-reports:/Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:./coverage-report" "-reporttypes:Html"
 
     - name: Upload HTML report
       uses: actions/upload-artifact@v2
