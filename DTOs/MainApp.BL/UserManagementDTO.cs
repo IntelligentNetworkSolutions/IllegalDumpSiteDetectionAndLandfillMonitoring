@@ -9,11 +9,8 @@
         public IEnumerable<UserDTO> AllUsers { get; set; }
         public List<RoleClaimDTO> RoleClaims { get; set; }
         public int PasswordMinLength { get; set; }
-
         public bool PasswordMustHaveNumbers { get; set; }
-
         public bool PasswordMustHaveLetters { get; set; }
-
 
         public UserManagementDTO()
         {
@@ -23,7 +20,6 @@
             AllUsersExceptCurrent = new List<UserDTO>();
             RoleClaims = new List<RoleClaimDTO>();
             AllUsers = new List<UserDTO>();
-
         }
     }
 }

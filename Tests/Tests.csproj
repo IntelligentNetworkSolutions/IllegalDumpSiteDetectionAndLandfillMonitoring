@@ -26,9 +26,8 @@
   <ItemGroup>
     <Folder Include="MailSend.Tests\" />
     <Folder Include="Entities.Tests\" />
-    <Folder Include="MainApp.BL.Tests\" />
     <Folder Include="DTOs.Tests\" />
-    <Folder Include="SD.Tests\" />
+    <Folder Include="MainApp.MVC.Tests\" />
   </ItemGroup>
 
   <ItemGroup>
