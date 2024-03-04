@@ -63,6 +63,7 @@ namespace SD
         public static readonly Module AuditLog = new Module { Value = "AuditLog", Description = "Audit Log" };
         public static readonly Module Admin = new Module { Value = "Admin", Description = "Admin" };
         public static readonly Module SpecialActions = new Module { Value = "SpecialActions", Description = "Special Actions" };
+        public static readonly Module Datasets = new Module { Value = "Datasets", Description = "Datasets" };
 
     }
 }

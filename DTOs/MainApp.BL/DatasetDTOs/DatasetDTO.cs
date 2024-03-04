@@ -1,4 +1,6 @@
-﻿namespace DTOs.MainApp.BL.DatasetDTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace DTOs.MainApp.BL.DatasetDTOs
 {
     public record DatasetDTO
     {
@@ -18,5 +20,6 @@
         public string? UpdatedById { get; init; }
         public DateTime? UpdatedOn { get; init; }
         public UserDTO? UpdatedBy { get; init; }
+        public bool? AnnotationsPerSubclass { get; set; }
     }
 }

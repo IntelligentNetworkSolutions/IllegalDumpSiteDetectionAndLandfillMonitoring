@@ -26,13 +26,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         // GET: IntranetPortal/ImageAnnotations
-        public async Task<IActionResult> Index()
-        {
-            //var applicationDbContext = _context.ImageAnnotations.Include(i => i.CreatedBy).Include(i => i.DatasetImage).Include(i => i.UpdatedBy);
-            var all = await _imageAnnotationsRepository.GetAll(includeProperties: "CreatedBy,DatasetImage, UpdatedBy");
+        //public async Task<IActionResult> Index()
+        //{
+        //    //var applicationDbContext = _context.ImageAnnotations.Include(i => i.CreatedBy).Include(i => i.DatasetImage).Include(i => i.UpdatedBy);
+        //    var all = await _imageAnnotationsRepository.GetAll(includeProperties: "CreatedBy,DatasetImage, UpdatedBy");
             
-            return View(all.Data);
-        }
+        //    return View(all.Data);
+        //}
 
         //// GET: IntranetPortal/ImageAnnotations/Details/5
         //public async Task<IActionResult> Details(Guid? id)
@@ -56,34 +56,34 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         //}
 
         // GET: IntranetPortal/ImageAnnotations/Create
-        public async Task<IActionResult> CreateAsync()
-        {
-            var users = await _userManagementService.GetAllIntanetPortalUsers();
-            ViewData["CreatedById"] = new SelectList(users, "Id", "Id");
-            ViewData["DatasetImageId"] = new SelectList(new List<DatasetImage>(), "Id", "CreatedById");
-            ViewData["UpdatedById"] = new SelectList(users, "Id", "Id");
-            return View();
-        }
+        //public async Task<IActionResult> CreateAsync()
+        //{
+        //    var users = await _userManagementService.GetAllIntanetPortalUsers();
+        //    ViewData["CreatedById"] = new SelectList(users, "Id", "Id");
+        //    ViewData["DatasetImageId"] = new SelectList(new List<DatasetImage>(), "Id", "CreatedById");
+        //    ViewData["UpdatedById"] = new SelectList(users, "Id", "Id");
+        //    return View();
+        //}
 
         // POST: IntranetPortal/ImageAnnotations/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("AnnotationsGeoJson,Geom,IsEnabled,DatasetImageId,CreatedById,CreatedOn,UpdatedById,UpdatedOn,Id")] ImageAnnotation imageAnnotation)
-        {
-            if (ModelState.IsValid)
-            {
-                imageAnnotation.Id = Guid.NewGuid();
-                ResultDTO resCreate = await _imageAnnotationsRepository.Create(imageAnnotation);
-                return RedirectToAction(nameof(Index));
-            }
-            var users = await _userManagementService.GetAllIntanetPortalUsers();
-            ViewData["CreatedById"] = new SelectList(users, "Id", "Id");
-            ViewData["DatasetImageId"] = new SelectList(new List<DatasetImage>(), "Id", "CreatedById");
-            ViewData["UpdatedById"] = new SelectList(users, "Id", "Id");
-            return View(imageAnnotation);
-        }
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Create([Bind("AnnotationsGeoJson,Geom,IsEnabled,DatasetImageId,CreatedById,CreatedOn,UpdatedById,UpdatedOn,Id")] ImageAnnotation imageAnnotation)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        imageAnnotation.Id = Guid.NewGuid();
+        //        ResultDTO resCreate = await _imageAnnotationsRepository.Create(imageAnnotation);
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    var users = await _userManagementService.GetAllIntanetPortalUsers();
+        //    ViewData["CreatedById"] = new SelectList(users, "Id", "Id");
+        //    ViewData["DatasetImageId"] = new SelectList(new List<DatasetImage>(), "Id", "CreatedById");
+        //    ViewData["UpdatedById"] = new SelectList(users, "Id", "Id");
+        //    return View(imageAnnotation);
+        //}
 
         //// GET: IntranetPortal/ImageAnnotations/Edit/5
         //public async Task<IActionResult> Edit(Guid? id)

@@ -27,6 +27,7 @@ namespace DAL.ApplicationStorage
         #region Dataset Management
 		public virtual DbSet<Dataset> Datasets { get; set; }
 		public virtual DbSet<DatasetClass> DatasetClasses { get; set; }
+		public virtual DbSet<Dataset_DatasetClass> Datasets_DatasetClasses { get; set; }
 		public virtual DbSet<DatasetImage> DatasetImages { get; set; }
 		public virtual DbSet<ImageAnnotation> ImageAnnotations { get; set; }
         #endregion

@@ -33,6 +33,9 @@ using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using DAL.Repositories.DatasetRepositories;
 using DAL.Interfaces.Repositories.DatasetRepositories;
+using MainApp.BL.Interfaces.Services.DatasetServices;
+using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
+using MainApp.BL.Services.DatasetServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -156,9 +159,19 @@ builder.Services.TryAddScoped<IForgotResetPasswordService, ForgotResetPasswordSe
 builder.Services.TryAddScoped<IMailService, MailService>();
 builder.Services.TryAddScoped<IDatasetsRepository, DatasetsRepository>();
 builder.Services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
+builder.Services.TryAddScoped<IDatasetService, DatasetService>(); 
+builder.Services.TryAddScoped<IDatasetClassesRepository, DatasetClassesRepository>(); 
+builder.Services.TryAddScoped<IDataset_DatasetClassRepository, Dataset_DatasetClassRepository>(); 
+builder.Services.TryAddScoped<IDatasetClassesService, DatasetClassesService>(); 
+builder.Services.TryAddScoped<IDatasetImagesRepository, DatasetImagesRepository>(); 
+builder.Services.TryAddScoped<IDatasetImagesService, DatasetImagesService>(); 
+builder.Services.TryAddScoped<IDataset_DatasetClassService, Dataset_DatasetClassService>(); 
+
 
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfile).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfileBL).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfile).Assembly);
 
 //services.RegisterAuditNet();
 Audit.Core.Configuration.Setup()

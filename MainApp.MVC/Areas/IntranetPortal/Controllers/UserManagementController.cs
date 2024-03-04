@@ -39,7 +39,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         public async Task<IActionResult> Index()
-        {
+        {            
             // TODO: 🧹 Middleware Attribute -> AuthorizeClaim 🧹🧹🧹
             /*
             if (!User.HasAuthClaim(SD.AuthClaims.UserManagement) || !_modulesAndAuthClaimsHelper.HasModule(SD.Modules.UserManagement))

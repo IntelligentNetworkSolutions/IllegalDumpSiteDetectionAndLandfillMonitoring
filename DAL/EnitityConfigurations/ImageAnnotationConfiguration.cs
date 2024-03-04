@@ -28,12 +28,12 @@ namespace DAL.EnitityConfigurations
             builder.Property(ia => ia.UpdatedOn);
 
             builder.HasOne(ia => ia.CreatedBy)
-                .WithOne()
-                .HasForeignKey<ImageAnnotation>(ia => ia.CreatedById);
+                .WithMany()
+                .HasForeignKey(ia => ia.CreatedById);
 
             builder.HasOne(ia => ia.UpdatedBy)
-                .WithOne()
-                .HasForeignKey<ImageAnnotation>(ia => ia.UpdatedById);
+                .WithMany()
+                .HasForeignKey(ia => ia.UpdatedById);
         }
     }
 }

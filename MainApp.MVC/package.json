@@ -35,6 +35,10 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@kanety/jquery-simple-tree-table": "^0.5.1",
+    "admin-lte": "3.2.0",
+    "cropperjs": "^1.6.1",
+    "jstree": "^3.3.16",
     "ol": "^8.2.0",
     "admin-lte": "3.2.0",
     "font-gis": "1.0.5",
@@ -44,5 +48,6 @@
   },
   "devDependencies": {
     "eslint": "8.56.0"
+    "paginationjs": "^2.6.0"
   }
 }

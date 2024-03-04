@@ -27,16 +27,17 @@ namespace DAL.EnitityConfigurations
             builder.Property(d => d.UpdatedOn);
 
             builder.HasOne<Dataset>(d => d.ParentDataset)
-                    .WithOne()
-                    .HasForeignKey<Dataset>(d => d.ParentDatasetId);
+                    .WithMany()
+                    .HasForeignKey(d => d.ParentDatasetId);
 
             builder.HasOne<ApplicationUser>(d => d.CreatedBy)
-                    .WithOne()
-                    .HasForeignKey<Dataset>(d => d.CreatedById);
+                    .WithMany()
+                    .HasForeignKey(d => d.CreatedById);
 
             builder.HasOne<ApplicationUser>(d => d.UpdatedBy)
-                    .WithOne()
-                    .HasForeignKey<Dataset>(d => d.UpdatedById);
+                    .WithMany()
+                    .HasForeignKey(d => d.UpdatedById);
+            
         }
     }
 }
