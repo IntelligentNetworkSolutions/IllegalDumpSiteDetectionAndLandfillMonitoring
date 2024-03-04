@@ -28,6 +28,10 @@ jobs:
         
     - name: Restore dependencies
       run: dotnet restore
+
+    # Clean the previous build outputs
+    - name: Clean
+      run: dotnet clean --configuration Release
       
     - name: Build
       run: dotnet build --configuration Release
