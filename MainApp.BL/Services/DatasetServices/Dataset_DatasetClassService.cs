@@ -2,25 +2,16 @@
 using DAL.Interfaces.Repositories.DatasetRepositories;
 using DTOs.MainApp.BL.DatasetDTOs;
 using MainApp.BL.Interfaces.Services.DatasetServices;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MainApp.BL.Services.DatasetServices
 {
     public class Dataset_DatasetClassService : IDataset_DatasetClassService
     {
-        private readonly IDatasetsRepository _datasetsRepository;
-        private readonly IDatasetClassesRepository _datasetClassesRepository;
         private readonly IDataset_DatasetClassRepository _datasetDatasetClassRepository;
         private readonly IMapper _mapper;
 
-        public Dataset_DatasetClassService(IDatasetsRepository datasetsRepository, IDatasetClassesRepository datasetClassesRepository, IDataset_DatasetClassRepository datasetDatasetClassRepository, IMapper mapper)
+        public Dataset_DatasetClassService(IDataset_DatasetClassRepository datasetDatasetClassRepository, IMapper mapper)
         {
-            _datasetsRepository = datasetsRepository;
-            _datasetClassesRepository = datasetClassesRepository;
             _datasetDatasetClassRepository = datasetDatasetClassRepository;
             _mapper = mapper;
         }
