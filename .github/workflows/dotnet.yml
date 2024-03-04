@@ -20,15 +20,38 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 8.0.x
+        
     - name: Restore dependencies
       run: dotnet restore
+      
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --configuration Release
+      
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --collect:"XPlat Code Coverage"
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-report
+        path: Tests/TestResults/*/coverage.cobertura.xml
+
+    - name: Install ReportGenerator
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      
+    - name: Generate HTML report
+      run: reportgenerator "-reports:Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:./coverage-report" "-reporttypes:Html"
+
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage-html-report
+        path: ./coverage-report
+          
     - name: Display OS version
       run: echo "Running on ${{ matrix.os }}"

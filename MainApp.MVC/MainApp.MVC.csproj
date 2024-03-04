@@ -39,7 +39,6 @@
 		<Folder Include="ViewModels\Common\" />
 		<Folder Include="wwwroot\i18n\" />
 		<Folder Include="wwwroot\images\test-dataset-images\" />
-		<Folder Include="wwwroot\lib\ol\" />
 	</ItemGroup>
 
 	<ItemGroup>

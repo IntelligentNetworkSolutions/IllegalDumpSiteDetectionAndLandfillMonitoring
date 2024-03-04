@@ -53,5 +53,19 @@ namespace SD.Helpers
 
             return inputValue;
         }
+
+        public static bool EnumerableHasDuplicatesByProperty<T>(IEnumerable<T> collection, Func<T, object>? property = null)
+        {
+            if (collection is null)
+                throw new ArgumentNullException(nameof(collection));
+
+            if (collection.Count() < 2)
+                return false;
+
+            if (property is null)
+                return collection.Count() != collection.Distinct().Count();
+
+            return collection.GroupBy(property).Any(g => g.Count() > 1);
+        }
     }
 }
