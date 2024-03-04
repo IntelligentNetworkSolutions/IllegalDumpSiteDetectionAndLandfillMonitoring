@@ -1,15 +1,9 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.DatasetRepositories;
-using DocumentFormat.OpenXml.VariantTypes;
 using DTOs.MainApp.BL.DatasetDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MainApp.BL.Services.DatasetServices
 {
@@ -50,7 +44,7 @@ namespace MainApp.BL.Services.DatasetServices
         {
             if(dto.ParentClassId != null)
             {
-                var parentClassDb = await _datasetClassesRepository.GetDatasetClassById(dto.ParentClassId.Value) ?? throw new Exception("Object not found");
+                DatasetClass? parentClassDb = await _datasetClassesRepository.GetDatasetClassById(dto.ParentClassId.Value) ?? throw new Exception("Object not found");
                 if (parentClassDb.ParentClassId != null)
                 {
                     return 2;

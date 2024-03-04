@@ -1,25 +1,11 @@
 ﻿using AutoMapper;
-using DAL.Helpers;
 using DAL.Interfaces.Helpers;
-using DAL.Interfaces.Repositories;
 using DAL.Interfaces.Repositories.DatasetRepositories;
-using DAL.Repositories;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using Entities;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using NetTopologySuite.Triangulate.Tri;
-using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MainApp.BL.Services.DatasetServices
 {
