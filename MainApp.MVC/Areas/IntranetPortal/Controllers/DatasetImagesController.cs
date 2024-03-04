@@ -7,172 +7,209 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DAL.ApplicationStorage;
 using Entities.DatasetEntities;
+using AutoMapper;
+using MainApp.BL.Interfaces.Services.DatasetServices;
+using DTOs.MainApp.BL.DatasetDTOs;
+using MainApp.MVC.Helpers;
+using Humanizer;
+using System.Drawing;
+using System.Drawing.Imaging;
+using ImageMagick;
+using DAL.Interfaces.Helpers;
+using System.Data;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
     [Area("IntranetPortal")]
     public class DatasetImagesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly IMapper _mapper;
+        private readonly IDatasetService _datasetService;
+        private readonly IDatasetImagesService _datasetImagesService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IAppSettingsAccessor _appSettingsAccessor;
 
-        public DatasetImagesController(ApplicationDbContext context)
+        public DatasetImagesController(IConfiguration configuration, 
+                                       IMapper mapper, 
+                                       IDatasetService datasetService, 
+                                       IDatasetImagesService datasetImagesService, 
+                                       IWebHostEnvironment webHostEnvironment,
+                                       IAppSettingsAccessor appSettingsAccessor)
         {
-            _context = context;
+            _configuration = configuration;
+            _mapper = mapper;
+            _datasetService = datasetService;
+            _datasetImagesService = datasetImagesService;
+            _webHostEnvironment = webHostEnvironment;
+            _appSettingsAccessor = appSettingsAccessor;
         }
 
-        // GET: IntranetPortal/DatasetImages
-        public async Task<IActionResult> Index()
-        {
-            var applicationDbContext = _context.DatasetImages.Include(d => d.CreatedBy).Include(d => d.Dataset).Include(d => d.UpdatedBy);
-            return View(await applicationDbContext.ToListAsync());
-        }
-
-        // GET: IntranetPortal/DatasetImages/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var datasetImage = await _context.DatasetImages
-                .Include(d => d.CreatedBy)
-                .Include(d => d.Dataset)
-                .Include(d => d.UpdatedBy)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (datasetImage == null)
-            {
-                return NotFound();
-            }
-
-            return View(datasetImage);
-        }
-
-        // GET: IntranetPortal/DatasetImages/Create
-        public IActionResult Create()
-        {
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "Id");
-            ViewData["DatasetId"] = new SelectList(_context.Datasets, "Id", "CreatedById");
-            ViewData["UpdatedById"] = new SelectList(_context.Users, "Id", "Id");
-            return View();
-        }
-
-        // POST: IntranetPortal/DatasetImages/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("FileName,ImagePath,IsEnabled,DatasetId,CreatedById,CreatedOn,UpdatedById,UpdatedOn,Id")] DatasetImage datasetImage)
+        public async Task<IActionResult> DeleteDatasetImage(Guid datasetImageId, Guid datasetId)
         {
-            if (ModelState.IsValid)
+            if (datasetId == Guid.Empty)
             {
-                datasetImage.Id = Guid.NewGuid();
-                _context.Add(datasetImage);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
             }
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "Id", datasetImage.CreatedById);
-            ViewData["DatasetId"] = new SelectList(_context.Datasets, "Id", "CreatedById", datasetImage.DatasetId);
-            ViewData["UpdatedById"] = new SelectList(_context.Users, "Id", "Id", datasetImage.UpdatedById);
-            return View(datasetImage);
+            if (datasetId == Guid.Empty)
+            {
+                return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
+            }
+
+            var datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Dataset not found");
+            if (datasetDb.IsPublished == true)
+            {
+                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
+            }
+
+            var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
+            var datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+
+            var currentImageFileName = string.Format("{0}.jpg", datasetImageId);
+            var currentThumbnailFileName = string.Format("{0}.jpg", datasetImageId);
+
+            var currentImagePath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetId.ToString(), currentImageFileName);
+            var currentThumbnailPath = Path.Combine(_webHostEnvironment.WebRootPath, datasetThumbnailsFolder.Data, datasetId.ToString(), currentThumbnailFileName);
+
+            var isImageDeleted = await _datasetImagesService.DeleteDatasetImage(datasetImageId);
+            if (isImageDeleted == 1)
+            {
+                if (System.IO.File.Exists(currentImagePath))
+                {
+                    System.IO.File.Delete(currentImagePath);
+                }
+                if (System.IO.File.Exists(currentThumbnailPath))
+                {
+                    System.IO.File.Delete(currentThumbnailPath);
+                }
+                return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset image", "Resources") });
+            }
+            else
+            {
+                return Json(new { responseError = DbResHtml.T("Dataset image was not deleted", "Resources") });
+            }
+
         }
 
-        // GET: IntranetPortal/DatasetImages/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var datasetImage = await _context.DatasetImages.FindAsync(id);
-            if (datasetImage == null)
-            {
-                return NotFound();
-            }
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "Id", datasetImage.CreatedById);
-            ViewData["DatasetId"] = new SelectList(_context.Datasets, "Id", "CreatedById", datasetImage.DatasetId);
-            ViewData["UpdatedById"] = new SelectList(_context.Users, "Id", "Id", datasetImage.UpdatedById);
-            return View(datasetImage);
-        }
-
-        // POST: IntranetPortal/DatasetImages/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("FileName,ImagePath,IsEnabled,DatasetId,CreatedById,CreatedOn,UpdatedById,UpdatedOn,Id")] DatasetImage datasetImage)
+        public async Task<IActionResult> EditDatasetImage(EditDatasetImageDTO model)
         {
-            if (id != datasetImage.Id)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return Json(new { responseError = DbResHtml.T("Entered model is not valid", "Resources") });
             }
 
-            if (ModelState.IsValid)
+            var datasetDb = await _datasetService.GetDatasetById(model.DatasetId) ?? throw new Exception("Dataset not found");
+            if (datasetDb.IsPublished == true)
             {
-                try
+                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
+            }
+
+            model.FileName = string.Format("{0}.jpg", model.Name);
+            var isImageUpdated = await _datasetImagesService.EditDatasetImage(model);
+            if (isImageUpdated == 1)
+            {
+                return Json(new { responseSuccess = DbResHtml.T("Successfully updated dataset image", "Resources") });
+            }
+            else if (isImageUpdated == 2)
+            {
+                return Json(new { responseError = DbResHtml.T("You can not enable this image because there are not annotations!", "Resources") });
+            }
+            else
+            {
+                return Json(new { responseError = DbResHtml.T("Dataset image was not updated", "Resources") });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UploadDatasetImage(Guid datasetId, string imageCropped, string imageName)
+        {
+            if (datasetId == Guid.Empty)
+            {
+                return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
+            }
+            if (string.IsNullOrEmpty(imageCropped))
+            {
+                return Json(new { responseError = DbResHtml.T("Invalid image", "Resources") });
+            }
+            if (string.IsNullOrEmpty(imageName))
+            {
+                return Json(new { responseError = DbResHtml.T("Invalid image name", "Resources") });
+            }
+
+            var datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Dataset not found");
+            if (datasetDb.IsPublished == true)
+            {
+                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
+            }
+
+            var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
+            var datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Id.ToString());
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            DatasetImageDTO dto = new()
+            {
+                FileName = $"{imageName}.jpg",
+                Name = imageName,
+                DatasetId = datasetId,
+                IsEnabled = false,
+                CreatedOn = DateTime.UtcNow,
+                CreatedById = "3ae81c64-f69f-4245-9c78-c315ca706a0b",
+                ImagePath = string.Format("\\{0}\\{1}\\", datasetImagesFolder.Data, datasetDb.Id.ToString()),
+                ThumbnailPath = string.Format("\\{0}\\{1}\\", datasetThumbnailsFolder.Data, datasetDb.Id.ToString()),
+            };
+
+            var isImageAdded = await _datasetImagesService.AddDatasetImage(dto);
+            if (isImageAdded != Guid.Empty)
+            {
+                var imageFileName = string.Format("{0}.jpg", isImageAdded);
+                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Id.ToString(), imageFileName);
+                string base64Datas = imageCropped.Split(',')[1];
+                byte[] imageBytes = Convert.FromBase64String(base64Datas);
+
+                using (MemoryStream ms = new(imageBytes))
                 {
-                    _context.Update(datasetImage);
-                    await _context.SaveChangesAsync();
+                    using (MagickImage image = new(ms))
+                    {
+                        image.Quality = 95;
+                        image.Write(imagePath);
+                    }
                 }
-                catch (DbUpdateConcurrencyException)
+                SaveTumbnailImage(datasetId, isImageAdded, imageCropped, datasetThumbnailsFolder.Data);
+                return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset image", "Resources") });
+            }
+            else
+            {
+                return Json(new { responseError = DbResHtml.T("Dataset image was not added", "Resources") });
+            }
+        }
+
+        private void SaveTumbnailImage(Guid datasetId, Guid addedImageId, string originalImage, string thumbnailsFolderData)
+        {
+            string thumbnailsFolder = Path.Combine(_webHostEnvironment.WebRootPath, thumbnailsFolderData, datasetId.ToString());
+            if (!Directory.Exists(thumbnailsFolder))
+            {
+                Directory.CreateDirectory(thumbnailsFolder);
+            }
+
+            var thumbnailFileName = string.Format("{0}.jpg", addedImageId);
+            var thumbnailPath = Path.Combine(_webHostEnvironment.WebRootPath, thumbnailsFolder, thumbnailFileName);
+            string base64DatasThumbnail = originalImage.Split(',')[1];
+            byte[] thumbnailBytes = Convert.FromBase64String(base64DatasThumbnail);
+            using (MemoryStream msThumbnail = new(thumbnailBytes))
+            {
+                using (MagickImage imageThumbnail = new(msThumbnail))
                 {
-                    if (!DatasetImageExists(datasetImage.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    imageThumbnail.Resize(192, 192);
+                    imageThumbnail.Quality = 95;
+                    imageThumbnail.Write(thumbnailPath);
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "Id", datasetImage.CreatedById);
-            ViewData["DatasetId"] = new SelectList(_context.Datasets, "Id", "CreatedById", datasetImage.DatasetId);
-            ViewData["UpdatedById"] = new SelectList(_context.Users, "Id", "Id", datasetImage.UpdatedById);
-            return View(datasetImage);
-        }
-
-        // GET: IntranetPortal/DatasetImages/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var datasetImage = await _context.DatasetImages
-                .Include(d => d.CreatedBy)
-                .Include(d => d.Dataset)
-                .Include(d => d.UpdatedBy)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (datasetImage == null)
-            {
-                return NotFound();
-            }
-
-            return View(datasetImage);
-        }
-
-        // POST: IntranetPortal/DatasetImages/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var datasetImage = await _context.DatasetImages.FindAsync(id);
-            if (datasetImage != null)
-            {
-                _context.DatasetImages.Remove(datasetImage);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool DatasetImageExists(Guid id)
-        {
-            return _context.DatasetImages.Any(e => e.Id == id);
         }
     }
 }

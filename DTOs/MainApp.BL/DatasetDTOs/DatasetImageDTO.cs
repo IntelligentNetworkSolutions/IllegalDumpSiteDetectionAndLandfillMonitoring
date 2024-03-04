@@ -3,10 +3,12 @@
     public record DatasetImageDTO
     {
         public Guid Id { get; init; }
-        public string FileName { get; init; }
+        public string FileName { get; set; }
+        public string Name { get; set; }
         public string ImagePath { get; init; }
+        public string? ThumbnailPath { get; init; }
 
-        public bool IsEnabled { get; init; } = false;
+        public bool IsEnabled { get; set; } = false;
 
         public Guid? DatasetId { get; init; }
         public virtual DatasetDTO? Dataset { get; init; }

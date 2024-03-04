@@ -19,5 +19,7 @@ namespace Entities.DatasetEntities
         public string? UpdatedById { get; set; }
         public DateTime? UpdatedOn { get; set; }
         public ApplicationUser? UpdatedBy { get; set; }
+        public bool? AnnotationsPerSubclass { get; set; }
+        public virtual ICollection<Dataset_DatasetClass> DatasetClasses { get; set; }
     }
 }

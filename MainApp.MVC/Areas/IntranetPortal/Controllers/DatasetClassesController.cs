@@ -7,166 +7,149 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DAL.ApplicationStorage;
 using Entities.DatasetEntities;
+using AutoMapper;
+using MainApp.BL.Interfaces.Services.DatasetServices;
+using MainApp.MVC.ViewModels.IntranetPortal.Dataset;
+using DTOs.MainApp.BL.DatasetDTOs;
+using MainApp.BL.Services.DatasetServices;
+using MainApp.MVC.Helpers;
+using DocumentFormat.OpenXml.VariantTypes;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
     [Area("IntranetPortal")]
     public class DatasetClassesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly IMapper _mapper;
+        private readonly IDatasetClassesService _datasetClassesService;
+        private readonly IDataset_DatasetClassService _datasetDatasetClassService;
+        private readonly IDatasetService _datasetSerivce;
 
-        public DatasetClassesController(ApplicationDbContext context)
+        public DatasetClassesController(IConfiguration configuration,
+                                        IMapper mapper, 
+                                        IDatasetClassesService datasetClassesService, 
+                                        IDataset_DatasetClassService datasetDatasetClassService,
+                                        IDatasetService datasetService)
         {
-            _context = context;
+            _configuration = configuration;
+            _mapper = mapper;
+            _datasetClassesService = datasetClassesService;
+            _datasetDatasetClassService = datasetDatasetClassService;
+            _datasetSerivce = datasetService;
         }
 
-        // GET: IntranetPortal/DatasetClasses
+
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.DatasetClasses.Include(d => d.CreatedBy).Include(d => d.Dataset);
-            return View(await applicationDbContext.ToListAsync());
+            var allClassesList = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found");
+            var model = _mapper.Map<List<DatasetClassViewModel>>(allClassesList);
+            return View(model);
         }
 
-        // GET: IntranetPortal/DatasetClasses/Details/5
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var datasetClass = await _context.DatasetClasses
-                .Include(d => d.CreatedBy)
-                .Include(d => d.Dataset)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (datasetClass == null)
-            {
-                return NotFound();
-            }
-
-            return View(datasetClass);
-        }
-
-        // GET: IntranetPortal/DatasetClasses/Create
-        public IActionResult Create()
-        {
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "Id");
-            ViewData["DatasetId"] = new SelectList(_context.Datasets, "Id", "CreatedById");
-            return View();
-        }
-
-        // POST: IntranetPortal/DatasetClasses/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClassId,ClassName,DatasetId,CreatedById,CreatedOn,Id")] DatasetClass datasetClass)
+        public async Task<IActionResult> CreateClass(CreateDatasetClassDTO model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                datasetClass.Id = Guid.NewGuid();
-                _context.Add(datasetClass);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return Json(new { responseError = DbResHtml.T("Model is not valid", "Resources") });
             }
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "Id", datasetClass.CreatedById);
-            ViewData["DatasetId"] = new SelectList(_context.Datasets, "Id", "CreatedById", datasetClass.DatasetId);
-            return View(datasetClass);
+
+            var isAdded = await _datasetClassesService.AddDatasetClass(model);
+            if (isAdded == 1)
+            {
+                return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset class", "Resources") });
+            }
+            else if(isAdded == 2)
+            {
+                return Json(new { responseError = DbResHtml.T("You can not add this class as a subclass becuse the selected parent class is already set as subclass!", "Resources")});
+            }
+            else
+            {
+                return Json(new { responseError = DbResHtml.T("Dataset class was not added", "Resources") });
+            }
         }
 
-        // GET: IntranetPortal/DatasetClasses/Edit/5
-        public async Task<IActionResult> Edit(Guid? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var datasetClass = await _context.DatasetClasses.FindAsync(id);
-            if (datasetClass == null)
-            {
-                return NotFound();
-            }
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "Id", datasetClass.CreatedById);
-            ViewData["DatasetId"] = new SelectList(_context.Datasets, "Id", "CreatedById", datasetClass.DatasetId);
-            return View(datasetClass);
-        }
-
-        // POST: IntranetPortal/DatasetClasses/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, [Bind("ClassId,ClassName,DatasetId,CreatedById,CreatedOn,Id")] DatasetClass datasetClass)
+        public async Task<IActionResult> EditClass(EditDatasetClassDTO model)
         {
-            if (id != datasetClass.Id)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                return Json(new { responseError = DbResHtml.T("Model is not valid", "Resources") });
             }
 
-            if (ModelState.IsValid)
+            var isUpdated = await _datasetClassesService.EditDatasetClass(model);
+            var allClasses = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found"); 
+            var childrenClassesList = allClasses.Where(x => x.ParentClassId == model.Id).ToList() ?? throw new Exception("Object not found"); 
+
+            var all_dataset_datasetClasses_for_class = await _datasetDatasetClassService.GetDataset_DatasetClassByClassId(model.Id) ?? throw new Exception("Object not found");
+            var selectDatasetsId = all_dataset_datasetClasses_for_class.Select(x => x.DatasetId).ToList() ?? throw new Exception("Object not found");
+            var datasets = await _datasetSerivce.GetAllDatasets() ?? throw new Exception("Object not found");
+            var datasetsWhereClassIsUsed = datasets.Where(x => selectDatasetsId.Contains(x.Id)).ToList() ?? throw new Exception("Object not found");
+
+            if (isUpdated == 1)
             {
-                try
-                {
-                    _context.Update(datasetClass);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DatasetClassExists(datasetClass.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return Json(new { responseSuccess = DbResHtml.T("Successfully updated dataset class", "Resources") });
             }
-            ViewData["CreatedById"] = new SelectList(_context.Users, "Id", "Id", datasetClass.CreatedById);
-            ViewData["DatasetId"] = new SelectList(_context.Datasets, "Id", "CreatedById", datasetClass.DatasetId);
-            return View(datasetClass);
+            else if(isUpdated == 2)
+            {
+                return Json(new { responseError = DbResHtml.T("This dataset class has subclasses and can not be set as a subclass too!", "Resources"), childrenClassesList = childrenClassesList });
+            }
+            else if (isUpdated == 3)
+            {
+                return Json(new { responseError = DbResHtml.T("This dataset is already in use in dataset/s, you can only change the class name!", "Resources"), datasetsWhereClassIsUsed = datasetsWhereClassIsUsed });
+            }
+            else if (isUpdated == 4)
+            {
+                return Json(new { responseError = DbResHtml.T("You can not add this class as a subclass becuse the selected parent class is already set as subclass!", "Resources") });
+            }
+            else
+            {
+                return Json(new { responseError = DbResHtml.T("Dataset class was not updated", "Resources") });
+            }
         }
 
-        // GET: IntranetPortal/DatasetClasses/Delete/5
-        public async Task<IActionResult> Delete(Guid? id)
+        [HttpPost]
+        public async Task<DatasetClassDTO> GetClassById(Guid classId)
         {
-            if (id == null)
+            if(classId == Guid.Empty)
             {
-                return NotFound();
+                DatasetClassDTO datasetClassDto = new();
+                return datasetClassDto;
             }
-
-            var datasetClass = await _context.DatasetClasses
-                .Include(d => d.CreatedBy)
-                .Include(d => d.Dataset)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (datasetClass == null)
-            {
-                return NotFound();
-            }
-
-            return View(datasetClass);
+            var datasetClass = await _datasetClassesService.GetDatasetClassById(classId) ?? throw new Exception("Object not found");
+            return datasetClass;
         }
 
-        // POST: IntranetPortal/DatasetClasses/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
-        {
-            var datasetClass = await _context.DatasetClasses.FindAsync(id);
-            if (datasetClass != null)
+        [HttpPost]
+        public async Task<IActionResult> DeleteClass(Guid classId)
+        {            
+            var isDeleted = await _datasetClassesService.DeleteDatasetClass(classId);
+            var allClasses = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found");
+            var childrenClassesList = allClasses.Where(x => x.ParentClassId == classId).ToList() ?? throw new Exception("Object not found");
+
+            var all_dataset_datasetClasses_for_class = await _datasetDatasetClassService.GetDataset_DatasetClassByClassId(classId) ?? throw new Exception("Object not found");
+            var selectDatasetsId = all_dataset_datasetClasses_for_class.Select(x => x.DatasetId).ToList() ?? throw new Exception("Object not found");
+            var datasets = await _datasetSerivce.GetAllDatasets() ?? throw new Exception("Object not found");
+            var datasetsWhereClassIsUsed = datasets.Where(x => selectDatasetsId.Contains(x.Id)).ToList() ?? throw new Exception("Object not found");
+            if (isDeleted == 1)
             {
-                _context.DatasetClasses.Remove(datasetClass);
+                return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset class", "Resources") });
             }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            else if (isDeleted == 2)
+            {
+                return Json(new { responseError = DbResHtml.T("This dataset class can not be deleted because there are subclasses. Delete first the subclasses!", "Resources"), childrenClassesList = childrenClassesList });
+            }
+            else if(isDeleted == 3)
+            {
+                return Json(new { responseError = DbResHtml.T("This dataset class can not be deleted because this class is already in use in dataset/s!", "Resources"), datasetsWhereClassIsUsed = datasetsWhereClassIsUsed });
+            }
+            else
+            {
+                return Json(new { responseError = DbResHtml.T("Dataset class was not deleted", "Resources") });
+            }
         }
 
-        private bool DatasetClassExists(Guid id)
-        {
-            return _context.DatasetClasses.Any(e => e.Id == id);
-        }
     }
 }

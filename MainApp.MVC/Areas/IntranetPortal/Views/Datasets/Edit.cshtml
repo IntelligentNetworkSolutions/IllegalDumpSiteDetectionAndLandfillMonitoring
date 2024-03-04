@@ -1,70 +1,1137 @@
-﻿@model Entities.DatasetEntities.Dataset
-
+﻿@using DTOs.MainApp.BL
+@using DTOs.MainApp.BL.DatasetDTOs
+@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.Dataset
+@using Newtonsoft.Json
+@using X.PagedList.Mvc.Core
+@using X.PagedList.Web.Common
+@model EditDatasetViewModel
 @{
-    ViewData["Title"] = "Edit";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Edit dataset";
 }
+@section Styles {
+    <link rel="stylesheet" href="~/css/Datasets/editDataset.css">
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Edit dataset", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="card card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">Dataset statistics</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body box-profile">
+                        <ul class="list-group list-group-unbordered mb-3">
+                            <li class="list-group-item">
+                                <b>Number of images</b> <a class="float-right text-info">@Model.NumberOfDatasetImages</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Number of enabled images</b>
+                                <a class="float-right text-info">
+                                    @Model.NumberOfEnabledImages
+                                </a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Number of annotated images</b>
+                                <a class="float-right text-info">
+                                    @Model.NumberOfAnnotatedImages
+                                </a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Number of classes</b> <a class="float-right text-info">@Model.NumberOfDatasetClasses</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Parent dataset</b> <a class="float-right text-info">@(Model.CurrentDataset.ParentDataset != null ? Model.CurrentDataset.ParentDataset.Name : "N/A")</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Is Published</b> <a class="float-right text-info">@Model.CurrentDataset.IsPublished</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Created by</b> <a class="float-right text-info">@(Model.CurrentDataset.CreatedBy != null ? Model.CurrentDataset.CreatedBy.UserName : "N/A")</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Last updated by</b> <a class="float-right text-info">@(Model.CurrentDataset.UpdatedBy != null ? Model.CurrentDataset.UpdatedBy.UserName : "N/A")</a>
+                            </li>
+                            <li class="list-group-item">
+                                <b>Number of children datasets</b> <a class="float-right text-info">@Model.NumberOfChildrenDatasets</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Dataset classes</h3>
 
-<h1>Edit</h1>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    @if (Model.CurrentDataset.ParentDatasetId != null)
+                    {
+                        <div class="card-body p-0">
 
-<h4>Dataset</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>@DbResHtml.T("Inherited Class", "Resources")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.ClassesByDatasetId)
+                                    {
+                                        <tr>
+                                            <td>@item.ClassName</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card-body p-0">
+                            @if (Model.CurrentDataset.AnnotationsPerSubclass == null)
+                            {
+                                <button class="mt-3 mr-3 float-right btn btn-sm bg-gradient-primary" data-toggle="modal" data-target="#chooseDatasetClassTypeModal">@DbResHtml.T("Choose Class Type", "Resources")</button>
+                            }
+                            else
+                            {
+                                <button class="mt-3 mr-3 float-right btn btn-sm bg-gradient-primary" data-toggle="modal" data-target="#addNewDatasetClassModal">@DbResHtml.T("Add Class", "Resources")</button>
+                            }
+                            @if (Model.ClassesByDatasetId.Count < 1)
+                            {
+                                <div class="text-center mt-5 mb-2">
+                                    <small>@DbResHtml.T("No classes yet.", "Resources")</small>
+                                </div>
+                            }
+                            else
+                            {
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>@DbResHtml.T("Class Name", "Resources")</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.ClassesByDatasetId)
+                                        {
+                                            <tr>
+                                                <td>@item.ClassName</td>
+                                                <td class="text-right py-0 align-middle">
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a class="btn bg-gradient-danger" data-toggle="modal" data-target="#deleteDatasetClassModal_@item.Id" title="@DbResHtml.T("Delete Class", "Resources")"><i class="fas fa-trash"></i></a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+                <button class="btn bg-gradient-lightblue btn-block" data-toggle="modal" data-target="#publishDatasetModal">
+                    @DbResHtml.T("Publish Dataset", "Resources")
+                    <i class=" mx-1 fas fa-upload"></i>
+                </button>
+                <button type="submit" class="btn bg-gradient-teal btn-block" data-toggle="modal" data-target="#addNewDatasetImageModal">
+                    <span>@DbResHtml.T("Add new dataset image", "Resources")</span>
+                    <i class="fas fa-image ml-1"></i>
+                </button>
+                <a asp-action="Index" asp-controller="Datasets" asp-area="IntranetPortal" class="btn bg-gradient-dark btn-block">
+                    <span>@DbResHtml.T("Back To Dataset List", "Resources")</span>
+                    <i class="fas fa-backward ml-1"></i>
+                </a>
             </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
+            <div class="col-md-9">
+@*                 <div class="row mb-3" id="filterDataRow" hidden>
+                    <div class="col-3">
+                        <div class="form-group">
+                            <select id="selectImageNameFilter" class="select2" style="width: 100%;">
+                                <option></option>
+                                @foreach (var item in Model.ListOfDatasetImages.OrderBy(x => x.Name))
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="form-group">
+                            <select id="selectIsEnabledImageFilter" class="select2" style="width: 100%;">
+                                <option></option>
+                                <option>True</option>
+                                <option>False</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="form-group">
+                            <select id="selectIsAnnotatedImageFilter" class="select2" style="width: 100%;">
+                                <option></option>
+                                <option>True</option>
+                                <option>False</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-3 d-flex align-items-start">
+                        <button id="submitFilter" onclick="filterPagination()" class="btn bg-gradient-secondary">
+                            <i class="fa fa-search text-white"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="row" id="data-container" hidden> </div>
+                <div class="row text-center" hidden>
+                    <div id="pagination" class="mx-auto my-2" hidden></div>
+                </div> *@
+                <form asp-action="Edit" asp-controller="Datasets" class="row mb-3" method="get">
+                    <input name="datasetId" value="@Model.CurrentDataset.Id" hidden />
+                    <div class="col-2">
+                        <div class="form-group">
+                            <select class="select2" asp-for="@Model.SearchByShowNumberOfImages" style="width: 100%;">
+                                <option></option>
+                                <option value="4">4</option>
+                                <option value="20">20</option>
+                                <option value="40">40</option>
+                                <option value="60">60</option>
+                                <option value="80">80</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="form-group">
+                            <select class="select2" asp-for="@Model.SearchByImageName" style="width: 100%;">
+                                <option></option>
+                                @foreach (var item in Model.ListOfAllDatasetImagesUnFiltered.OrderBy(x => x.Name))
+                                {
+                                    <option value="@item.Name">@item.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="form-group">
+                            <select class="select2" asp-for="@Model.SearchByIsEnabledImage" style="width: 100%;">
+                                <option></option>
+                                <option value="true">@DbResHtml.T("Is enabled", "Resources")</option>
+                                <option value="false">@DbResHtml.T("Is not enabled", "Resources")</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="form-group">
+                            <select class="select2" asp-for="@Model.SearchByIsAnnotatedImage" style="width: 100%;">
+                                <option></option>
+                                <option value="true">@DbResHtml.T("Is annotated", "Resources")</option>
+                                <option value="false">@DbResHtml.T("Is not annotated", "Resources")</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="form-group">
+                            <select class="select2" asp-for="@Model.OrderByImages" style="width: 100%;">
+                                <option></option>
+                                <option value="ascName">@DbResHtml.T("A-Z", "Resources")</option>
+                                <option value="descName">@DbResHtml.T("Z-A", "Resources")</option>
+                                <option value="ascCreatedOn">@DbResHtml.T("Newest", "Resources")</option>
+                                <option value="descCreatedOn">@DbResHtml.T("Oldest", "Resources")</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-1 pl-0 d-flex align-items-start">
+                        <button type="submit" class="btn bg-gradient-success" title="@DbResHtml.T("Search","Resources")">
+                            <i class="fas fa-search text-white"></i>
+                        </button>
+                        <a asp-action="Edit" asp-controller="Datasets" asp-route-datasetId="@Model.CurrentDataset.Id" class="btn bg-gradient-orange ml-1" title="@DbResHtml.T("Refresh filters","Resources")">
+                            <i class="fas fa-sync text-white"></i>
+                        </a>
+                    </div>
+                </form>
+                <div class="row">
+                    @if (Model.PagedImagesList?.Count < 1)
+                    {
+                        <div class="col-md-6 offset-md-3 text-center mb-3">
+                            <p class="lead d-block">@DbResHtml.T("No dataset images found","Resources")</p>
+                            <i class="fas fa-2x fa-ban text-secondary"></i>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.PagedImagesList)
+                        {
+                            bool isAnnotated = Model.AllImageAnnotations.Select(x => x.DatasetImageId).Contains(@item.Id);
+                            <div class="col-md-3">
+                                <div class="card shadow">
+                                    @{
+                                        string cardHeaderClass = (item.IsEnabled && isAnnotated) ? "bg-gradient-olive" :
+                                        (item.IsEnabled || isAnnotated) ? "bg-gradient-gray-dark" :
+                                        "bg-gradient-danger";
+                                        string cardBodyClass = (item.IsEnabled && isAnnotated) ? "border-success" :
+                                        (item.IsEnabled || isAnnotated) ? "border-dark" :
+                                        "border-danger";
+                                    }
+                                    <div class="card-header text-center p-1 @cardHeaderClass">
+                                        <h5 class="text-center text-white d-inline pl-3">@item.Name</h5>
+                                        <button onclick="deleteDatasetImage('@item.Id','@item.FileName')" type="button" class="close text-white float-right" aria-label="Close">
+                                            <span aria-hidden="true" class="pr-1">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="card-body border border-top-0 d-flex flex-column align-items-center @cardBodyClass">
+                                        <div class="show-image position-relative">
+                                            <img id="@item.Id" class="rounded" src="@($"{item.ThumbnailPath}{item.Id}{item.FileName.Substring(item.FileName.LastIndexOf('.'))}")"  />
+                                            <input id="@($"{item.Id}_editImage")" class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" data-toggle="modal" data-target="#editDatasetImageModal_@item.Id" />
+                                            <input id="@($"{item.Id}_editImageAnnotation")" class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" />
+                                            @Html.Raw((item.IsEnabled ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Enabled\"><i class=\"fas fa-check-circle\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Disabled\"><i class=\"fas fa-times-circle\"></i></span>"))
+                                            @Html.Raw((isAnnotated ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Annotated\"><i class=\"fas fa-map-marked-alt\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Not Annotated\"><i class=\"fas fa-map-marked\"></i></span>"))
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        @Html.PagedListPager(Model.PagedImagesList, page => Url.Action("Edit", "Datasets", new { page, datasetId = Model.CurrentDataset.Id, SearchByImageName = Model.SearchByImageName, SearchByIsAnnotatedImage = Model.SearchByIsAnnotatedImage, SearchByIsEnabledImage = Model.SearchByIsEnabledImage, SearchByShowNumberOfImages = Model.SearchByShowNumberOfImages, OrderByImages = Model.OrderByImages }), new PagedListRenderOptions
+                   {
+                       LiElementClasses = new string[] { "page-item" },
+                       PageClasses = new string[] { "page-link" }
+                   })
+                    </div>
+                </div>
             </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsPublished" /> @Html.DisplayNameFor(model => model.IsPublished)
-                </label>
-            </div>
-            <div class="form-group">
-                <label asp-for="ParentDatasetId" class="control-label"></label>
-                <select asp-for="ParentDatasetId" class="form-control" asp-items="ViewBag.ParentDatasetId"></select>
-                <span asp-validation-for="ParentDatasetId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedById" class="control-label"></label>
-                <select asp-for="CreatedById" class="form-control" asp-items="ViewBag.CreatedById"></select>
-                <span asp-validation-for="CreatedById" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CreatedOn" class="control-label"></label>
-                <input asp-for="CreatedOn" class="form-control" />
-                <span asp-validation-for="CreatedOn" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UpdatedById" class="control-label"></label>
-                <select asp-for="UpdatedById" class="form-control" asp-items="ViewBag.UpdatedById"></select>
-                <span asp-validation-for="UpdatedById" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UpdatedOn" class="control-label"></label>
-                <input asp-for="UpdatedOn" class="form-control" />
-                <span asp-validation-for="UpdatedOn" class="text-danger"></span>
-            </div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(function () {
+            $(".PagedList-skipToNext a").html('<i class="fas fa-step-forward"></i>');
+            $(".PagedList-skipToPrevious a").html('<i class="fas fa-step-backward"></i>');
+            $('#classInsert').select2({
+                width: '100%',
+                placeholder: "@DbResHtml.T("Select Dataset Class", "Resources")",
+                theme: 'bootstrap4'
+            })
+            // $('#selectImageNameFilter').select2({
+            //     width: '100%',
+            //     theme: 'bootstrap4',
+            //     placeholder: "DbResHtml.T("Select Image Name", "Resources")",
+            //     allowClear: true
+            // })
+            // $('#selectIsEnabledImageFilter').select2({
+            //     width: '100%',
+            //     theme: 'bootstrap4',
+            //     placeholder: "DbResHtml.T("Is Image Enabled?", "Resources")",
+            //     allowClear: true
+            // })
+            // $('#selectIsAnnotatedImageFilter').select2({
+            //     width: '100%',
+            //     theme: 'bootstrap4',
+            //     placeholder: "DbResHtml.T("Is Image Annotated?", "Resources")",
+            //     allowClear: true
+            // })
+
+            $('#SearchByImageName').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Select Image Name", "Resources")",
+                allowClear: true
+            })
+            $('#SearchByIsEnabledImage').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Is Enabled?", "Resources")",
+                allowClear: true
+            })
+            $('#SearchByIsAnnotatedImage').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Is Annotated? ", "Resources")",
+                allowClear: true
+            })
+            $('#SearchByShowNumberOfImages').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Images to show ", "Resources")",
+                allowClear: true
+            })
+            $('#OrderByImages').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Sorting", "Resources")",
+                allowClear: true
+            })
+            let container = $('#pagination');
+            container.empty();
+            $("#data-container").empty();
+            // let dataList = Html.Raw(JsonConvert.SerializeObject(Model.ListOfDatasetImages.OrderBy(x => x.Name)));
+            // populatePagination(dataList);
+
+            $('#inputImage').on('change', function (e) {
+                $("#showInputImage").empty();
+                var file = e.target.files[0];
+                var reader = new FileReader();
+                var img = new Image();
+                img.style.maxWidth = "100%";
+                img.style.display = "block";
+
+                var cropper;
+                reader.onload = function (event) {
+                    img.onload = function () {
+                        if (this.width < 1280 || this.height < 1280) {
+                            Swal.fire({
+                                text: "@DbResHtml.T("Minimum image resolution: 1280 x 1280 pixels", "Resources")",
+                                icon: 'error'
+                            });
+                            return;
+                        }
+                        $("#showInputImage").empty();
+                        $("#showInputImage").append(this);
+
+                        cropper = new Cropper(this, {
+                            aspectRatio: 1,
+                            cropBoxResizable: false,
+                            dragMode: 'none',
+                            viewMode: 2,
+                            responsive: false,
+                            ready() {
+                                cropper.setCropBoxData({ width: 320, height: 320 });
+                            }
+                        });
+
+                        this.addEventListener('cropmove', () => {
+                            cropper.setCropBoxData({ width: 320, height: 320 });
+                        });
+
+
+
+                        $('#btnCrop').off('click').on('click', function () {
+                            const croppedCanvas = cropper.getCroppedCanvas({ width: 1280, height: 1280 });
+                            const imageCropped = croppedCanvas.toDataURL("image/png");
+                            const originalFileNameWithExtension = $('#inputImage').prop('files')[0].name;
+                            const originalFileNameWithoutExtension = originalFileNameWithExtension.substring(0, originalFileNameWithExtension.lastIndexOf('.'));
+                            const datasetId = '@Model.CurrentDataset.Id';
+                            croppedCanvas.toBlob(function (blob) {
+                                const formData = new FormData();
+                                formData.append('imageName', originalFileNameWithoutExtension);
+                                formData.append('datasetId', datasetId);
+                                formData.append('imageCropped', imageCropped);
+
+                                $.ajax({
+                                    type: 'POST',
+                                    url: '@Url.Action("UploadDatasetImage", "DatasetImages", new { area = "IntranetPortal" })',
+                                    data: formData,
+                                    processData: false,
+                                    contentType: false,
+                                    success: function (data) {
+                                        if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                                            Swal.fire({
+                                                text: `${data.responseSuccess.value}`,
+                                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                                allowOutsideClick: false,
+                                                icon: "success"
+                                            }).then((result) => {
+                                                if (result.isConfirmed) {
+                                                    location.reload();
+                                                }
+                                            });
+                                        } else {
+                                            if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
+                                                Swal.fire({
+                                                    text: `${data.responseErrorAlreadyPublished.value}`,
+                                                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                                    allowOutsideClick: false,
+                                                    icon: "error"
+                                                }).then((result) => {
+                                                    if (result.isConfirmed) {
+                                                        location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
+                                                    }
+                                                });
+                                            } else {
+                                                Swal.fire({
+                                                    text: `${data.responseError.value}`,
+                                                    icon: "error"
+                                                })
+                                            }
+                                        }
+                                    },
+                                    error: function (xhr, status, error) {
+                                        Swal.fire({
+                                            text: "Error occured",
+                                            icon: "error"
+                                        });
+                                    }
+                                });
+                            }, 'image/png');
+
+                        });
+
+                    };
+                    img.src = event.target.result;
+
+                };
+                reader.readAsDataURL(file);
+
+
+            });
+        });
+
+
+        function deleteDatasetImage(datasetImageId, datasetImageFileName) {
+            var datasetId = '@Model.CurrentDataset.Id'
+            Swal.fire({
+                text: '@DbResHtml.T("Are you sure you want to delete this image?", "Resources")',
+                confirmButtonText: '@DbResHtml.T("Delete", "Resources")',
+                showCloseButton: true,
+                icon: "warning",
+                confirmButtonColor: "#DE4150"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("DeleteDatasetImage", "DatasetImages", new { area = "IntranetPortal" })',
+                        data: {
+                            datasetImageId: datasetImageId,
+                            datasetId: datasetId
+                        },
+                        success: function (data) {
+                            if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                                Swal.fire({
+                                    text: `${data.responseSuccess.value}`,
+                                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                    allowOutsideClick: false,
+                                    icon: "success"
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        location.reload();
+                                    }
+                                });
+                            } else {
+                                if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
+                                    Swal.fire({
+                                        text: `${data.responseErrorAlreadyPublished.value}`,
+                                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                        allowOutsideClick: false,
+                                        icon: "error"
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
+                                        }
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        text: `${data.responseError.value}`,
+                                        icon: "error"
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            location.reload();
+                                        }
+                                    });
+                                }
+                            }
+                        },
+                        error: function (req, status, error) {
+                            Swal.fire({
+                                text: "Error occured",
+                                icon: "error"
+                            });
+                        }
+                    });
+                }
+            });
+
+
+        }
+        // function populatePagination(dataList) {
+        //     let allImageAnnotationsList = Html.Raw(JsonConvert.SerializeObject(Model.AllImageAnnotations));
+        //     $('#pagination').pagination({
+        //         dataSource: dataList,
+        //         pageSize: 4,
+        //         callback: function (data, pagination) {
+        //             var dataHtml = '';
+        //             if (dataList == null || dataList == undefined || dataList == '') {
+        //                 dataHtml += `<div class="col-12 text-center"><cite>DbResHtml.T("No dataset images to be shown!", "Resources")</cite></div`;
+        //             } else {
+        //                 $.each(data, function (index, item) {
+        //                     var isAnnotated = allImageAnnotationsList.includes(item.Id);
+        //                     dataHtml += `<div class="col-md-3">
+        //                                                             <div class="card shadow">
+        //                                                                   ${(item.IsEnabled && isAnnotated) ? `<div class="card-header bg-gradient-olive text-center p-1">` : (item.IsEnabled || isAnnotated) ? `<div class="card-header bg-gradient-gray-dark text-center p-1">` : `<div class="card-header bg-gradient-danger text-center p-1">`}
+        //                                                                         <h5 class="text-center text-white d-inline pl-3">${item.Name}</h5>
+        //                                                                         <button onclick="deleteDatasetImage('${item.Id}','${item.FileName}')" type="button" class="close text-white float-right" aria-label="Close">
+        //                                                                               <span aria-hidden="true" class="pr-1">&times;</span>
+        //                                                                         </button>
+        //                                                                     </div>
+        //                                                                   ${(item.IsEnabled && isAnnotated) ? `<div class= "card-body border border-success border-top-0 d-flex flex-column align-items-center">` : (item.IsEnabled || isAnnotated) ? `<div class= "card-body border border-dark border-top-0 d-flex flex-column align-items-center">` : `<div class= "card-body border border-danger border-top-0 d-flex flex-column align-items-center">`}
+        //                                                                     <div class="show-image position-relative">
+        //                                                                          <img id="${item.Id}_datasetImage" class="rounded" src='${item.ImagePath}${item.Id}${item.FileName.substring(item.FileName.lastIndexOf('.'))}' width="192" height="192">
+        //                                                                          <input id="${item.Id}_editImage" class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" data-toggle="modal" data-target="#editDatasetImageModal_${item.Id}"  />
+        //                                                                          <input id="${item.Id}_editImageAnnotation" class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" />
+        //                                                                          ${item.IsEnabled ? `<span class="badge bg-gradient-olive p-2" style="position: absolute; bottom: 0; left: 0;" title="Enabled"><i class="fas fa-check-circle"></i></span>` : `<span class="badge bg-gradient-danger p-2" style="position: absolute; bottom: 0; left: 0;" title="Disabled"><i class="fas fa-times-circle"></i></span>`}
+        //                                                                          ${isAnnotated ? `<span class="badge bg-gradient-oilve p-2" style="position: absolute; bottom: 0; right: 0;" title="Annotated"><i class="fas fa-map-marked-alt"></i></span>` : `<span class="badge bg-gradient-danger p-2" style="position: absolute; bottom: 0; right: 0;" title="Not Annotated"><i class="fas fa-map-marked"></i></span>`}
+        //                                                                      </div>
+        //                                                                    </div>
+        //                                                               </div>
+        //                                                          </div>`;
+        //                 });
+        //             }
+
+        //             $("#data-container").html(dataHtml);
+        //         }
+        //     });
+        // }
+        // function filterPagination() {
+        //     var selectedImageName = $("#selectImageNameFilter").val();
+        //     var selectedIsImageEnabledString = $("#selectIsEnabledImageFilter").val();
+        //     var selectedIsImageEnabled = (selectedIsImageEnabledString === 'True' ? true : (selectedIsImageEnabledString === 'False' ? false : null));
+
+        //     var selectedIsImageAnnotatedString = $("#selectIsAnnotatedImageFilter").val();
+        //     var selectedIsImageAnnotated = (selectedIsImageAnnotatedString === 'True' ? true : (selectedIsImageAnnotatedString === 'False' ? false : null));
+
+
+
+        //     let container = $('#pagination');
+        //     container.empty();
+        //     $("#data-container").empty();
+        //     let allDataList = Html.Raw(JsonConvert.SerializeObject(Model.ListOfDatasetImages.OrderBy(x => x.Name)));
+        //     if (selectedImageName == '' && selectedIsImageEnabled === null && selectedIsImageAnnotated === null) {
+        //         populatePagination(allDataList);
+        //     } else {
+        //         var filteredDataList = allDataList.filter(function (item) {
+        //             let allImageAnnotationsList = Html.Raw(JsonConvert.SerializeObject(Model.AllImageAnnotations));
+        //             var isAnnotated = allImageAnnotationsList.includes(item.Id);
+        //             if (selectedImageName && item.Id !== selectedImageName) {
+        //                 return false;
+        //             }
+        //             if (selectedIsImageEnabled !== null && item.IsEnabled !== selectedIsImageEnabled) {
+        //                 return false;
+        //             }
+        //             if (selectedIsImageAnnotated !== null && isAnnotated !== selectedIsImageAnnotated) {
+        //                 return false;
+        //             }
+        //             return true;
+        //         });
+        //         populatePagination(filteredDataList);
+        //     }
+
+        // }
+
+        function convertToBoolean(value) {
+            return value === "subClasses";
+        }
+        function chooseDatasetClassTypeConfirmed(datasetId) {
+            const choosedClassType = $('input[name="chooseClassType"]:checked').val();
+            const annotationsPerSubclass = convertToBoolean(choosedClassType);
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("ChooseDatasetClassType", "Datasets", new { area = "IntranetPortal" })',
+                data: {
+                    datasetId: datasetId,
+                    annotationsPerSubclass: annotationsPerSubclass
+                },
+                success: function (data) {
+                    $('#chooseDatasetClassTypeModal').modal('hide');
+                    if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                        Swal.fire({
+                            text: `${data.responseSuccess.value}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            text: `${data.responseError.value}`,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: "Error occured",
+                        icon: "error"
+                    });
+                }
+            });
+        }        
+        function publishDatasetConfirmed(datasetId) {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("PublishDataset", "Datasets", new { area = "IntranetPortal" })',
+                data: {
+                    datasetId: datasetId
+                },
+                success: function (data) {
+                    $('#publishDatasetModal').modal('hide');
+                    if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                        Swal.fire({
+                            text: `${data.responseSuccess.value}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
+                            Swal.fire({
+                                text: `${data.responseErrorAlreadyPublished.value}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                text: `${data.responseError.value}`,
+                                icon: "error"
+                            })
+                        }
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: "Error occured",
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function addNewDatasetClassConfirmed(datasetId) {
+            var selectedClassId = $("#classInsert").val();
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("AddDatasetClass", "Datasets", new { area = "IntranetPortal" })',
+                data: {
+                    selectedClassId: selectedClassId,
+                    datasetId: datasetId
+                },
+                success: function (data) {
+                    $('#addNewDatasetClassModal').modal('hide');
+                    if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                        Swal.fire({
+                            text: `${data.responseSuccess.value}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
+                            Swal.fire({
+                                text: `${data.responseErrorAlreadyPublished.value}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                text: `${data.responseError.value}`,
+                                icon: "error"
+                            })
+                        }
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: "Error occured",
+                        icon: "error"
+                    });
+                }
+            });
+
+        }
+        function deleteDatasetClassConfirmed(datasetId, datasetClassId) {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("DeleteDatasetClass", "Datasets", new { area = "IntranetPortal" })',
+                data: {
+                    datasetClassId: datasetClassId,
+                    datasetId: datasetId
+                },
+                success: function (data) {
+                    $(`#deleteDatasetClassModal_${datasetClassId}`).modal('hide');
+                    if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                        Swal.fire({
+                            text: `${data.responseSuccess.value}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
+                            Swal.fire({
+                                text: `${data.responseErrorAlreadyPublished.value}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                text: `${data.responseError.value}`,
+                                icon: "error"
+                            })
+                        }
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: "Error occured",
+                        icon: "error"
+                    });
+                }
+            });
+
+        }
+        function editDatasetImageConfirmed(datasetImageId, datasetId) {
+            var isEnabled = $(`#editDatasetImageEnabledInput_${datasetImageId}`).is(":checked");
+            var imageName = $(`#editDatasetImageNameInput_${datasetImageId}`).val();
+            var model = {
+                Id: datasetImageId,
+                DatasetId: datasetId,
+                IsEnabled: isEnabled,
+                Name: imageName
+            }
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("EditDatasetImage", "DatasetImages", new { area = "IntranetPortal" })',
+                data: {
+                    model: model
+                },
+                success: function (data) {
+                    $(`#editDatasetImageModal_${datasetImageId}`).modal('hide');
+                    if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                        Swal.fire({
+                            text: `${data.responseSuccess.value}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
+                            Swal.fire({
+                                text: `${data.responseErrorAlreadyPublished.value}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                text: `${data.responseError.value}`,
+                                icon: "error"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: "Error occured",
+                        icon: "error"
+                    });
+                }
+            });
+
+        }
+    </script>
+}
+
+@section BodyArea {
+    <div class="modal" id="addNewDatasetClassModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("New Dataset Class", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="addNewDatasetClassModalBody" class="modal-body">
+                    @if (Model.CurrentDataset.AnnotationsPerSubclass == true)
+                    {
+                        @if (Model.UninsertedDatasetSubclasses.Count < 1)
+                        {
+                            <div class="alert text-center">
+                                <h5><i class="icon fas fa-info"></i>@DbResHtml.T("Info", "Resources")</h5>
+                                @DbResHtml.T("All classes are inserted", "Resources")
+                            </div>
+                        }
+                        else
+                        {
+                            <label class="form-control-label" asp-for="InsertedDatasetClass">@DbResHtml.T("Dataset Class:", "Resources")</label>
+                            @Html.DropDownListFor(x => x.InsertedDatasetClass, new SelectList(Model.UninsertedDatasetSubclasses, "Id", "ClassName"), "", new { @class = "form-control", id = "classInsert" })
+                        }
+                    }
+                    else
+                    {
+                        @if (Model.UninsertedDatasetRootClasses.Count < 1)
+                        {
+                            <div class="alert text-center">
+                                <h5><i class="icon fas fa-info"></i>@DbResHtml.T("Info", "Resources")</h5>
+                                @DbResHtml.T("All classes are inserted", "Resources")
+                            </div>
+                        }
+                        else
+                        {
+                            <label class="form-control-label" asp-for="InsertedDatasetClass">@DbResHtml.T("Dataset Class:", "Resources")</label>
+                            @Html.DropDownListFor(x => x.InsertedDatasetClass, new SelectList(Model.UninsertedDatasetRootClasses, "Id", "ClassName"), "", new { @class = "form-control", id = "classInsert" })
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    @if (Model.UninsertedDatasetRootClasses.Count > 0 && Model.UninsertedDatasetSubclasses.Count > 0)
+                    {
+                        <button type="button" class="mb-1 btn bg-gradient-primary" onclick="addNewDatasetClassConfirmed('@Model.CurrentDataset.Id')" data-dismiss="modal" aria-label="Add">
+                            <span aria-hidden="true"> @DbResHtml.T("Add", "Resources")</span>
+                        </button>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="publishDatasetModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-lightblue">
+                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to publish this dataset?", "Resources") </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped my-4 w-100" id="publishDatasetTable">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Dataset name", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Dataset description", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="publishDatasetTBody">
+                                <tr>
+                                    <td>@Model.CurrentDataset.Name</td>
+                                    <td>@Model.CurrentDataset.Description</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="modal-footer">
+                            <button onclick="publishDatasetConfirmed('@Model.CurrentDataset.Id')" type="button" class="mb-1 btn bg-gradient-lightblue" data-dismiss="modal" aria-label="Publish">
+                                <span aria-hidden="true">@DbResHtml.T("Publish", "Resources")</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @foreach (var item in Model.ClassesByDatasetId)
+    {
+        <div class="modal" id="deleteDatasetClassModal_@item.Id" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-danger">
+                        <h4 class="modal-title">@DbResHtml.T("Are you sure you want to delete this class?", "Resources") </h4>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped my-4 w-100" id="deleteDatasetClassTable">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            @DbResHtml.T("Class Name", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Created On", "Resources")
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deleteDatasetClassTBody">
+                                    <tr>
+                                        <td>@item.ClassName</td>
+                                        <td>@item.CreatedOn</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="modal-footer">
+                                <button onclick="deleteDatasetClassConfirmed('@Model.CurrentDataset.Id','@item.Id')" type="button" class="mb-1 btn bg-gradient-danger" data-dismiss="modal" aria-label="Delete">
+                                    <span aria-hidden="true">@DbResHtml.T("Delete", "Resources")</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="modal" id="addNewDatasetImageModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-teal">
+                    <h4 class="modal-title">@DbResHtml.T("Add new dataset image", "Resources") </h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="file" id="inputImage" accept="image/*">
+                    <div class="mt-3" id="showInputImage"></div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btnCrop" type="button" class="mb-1 btn bg-gradient-teal" data-dismiss="modal" aria-label="Upload">
+                        <span aria-hidden="true">@DbResHtml.T("Upload", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @foreach (var item in Model.ListOfDatasetImages)
+    {
+        <div class="modal" id="editDatasetImageModal_@item.Id" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-warning text-white">
+                        <h4 class="modal-title">@DbResHtml.T("Edit Image", "Resources")</h4>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div id="editDatasetImageModalBody_@item.Id" class="modal-body">
+                        <div class="form-group">
+                            <label class="form-control-label mt-3" for="#editDatasetImageNameInput_@item.Id">@DbResHtml.T("Image Name:", "Resources")</label>
+                            <input type="text" name="editDatasetImageNameInput_@item.Id" class="form-control" id="editDatasetImageNameInput_@item.Id" value="@item.Name" required />
+                        </div>
+                        @if (Model.AllImageAnnotations.Select(x => x.DatasetImageId).Contains(item.Id))
+                        {
+                            <div class="form-group clearfix">
+                                <div class="icheck-warning mt-3 text-bold">
+                                    <input type="checkbox" id="editDatasetImageEnabledInput_@item.Id" name="editDatasetImageEnabledInput_@item.Id" @(item.IsEnabled ? "checked" : "")>
+                                    <label for="editDatasetImageEnabledInput_@item.Id">
+                                        @DbResHtml.T("Enable Image", "Resources")
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center"><small><cite class="text-info">@DbResHtml.T("This image can not be enabled because there are no annotations added!", "Resource")</cite></small></div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="editDatasetImageConfirmed('@item.Id', '@Model.CurrentDataset.Id')" data-dismiss="modal" aria-label="Edit">
+                            <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="modal" id="chooseDatasetClassTypeModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("Choose Class Type", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="chooseDatasetClassTypeModalBody" class="modal-body">
+                    <div class="form-group clearfix">
+                        <div class="icheck-primary font-italic">
+                            <input type="radio" id="subclassChoosed" name="chooseClassType" value="subClasses">
+                            <label for="subclassChoosed">
+                                @DbResHtml.T("Annotate per subclasses?", "Resources")
+                            </label>
+                        </div>
+                        <div class="icheck-primary font-italic mt-4">
+                            <input type="radio" id="rootClassChoosed" name="chooseClassType" value="rootClasses">
+                            <label for="rootClassChoosed">
+                                @DbResHtml.T("Annotate per root classes?", "Resources")
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-primary" onclick="chooseDatasetClassTypeConfirmed('@Model.CurrentDataset.Id')" data-dismiss="modal" aria-label="Ok">
+                        <span aria-hidden="true"> @DbResHtml.T("Ok", "Resources")</span>
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
 }

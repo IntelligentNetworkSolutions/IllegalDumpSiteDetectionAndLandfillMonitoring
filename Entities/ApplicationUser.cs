@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Entities.DatasetEntities;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -13,5 +14,5 @@ namespace Entities
 		public string? FirstName { get; set; }
 		public string? LastName { get; set; }
 		public bool? IsActive { get; set; }
-	}
+    }
 }

@@ -198,6 +198,10 @@ namespace DAL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<bool?>("AnnotationsPerSubclass")
+                        .HasColumnType("boolean")
+                        .HasColumnName("annotations_per_subclass");
+
                     b.Property<string>("CreatedById")
                         .IsRequired()
                         .HasColumnType("text")
@@ -240,14 +244,11 @@ namespace DAL.Migrations
                     b.HasKey("Id")
                         .HasName("pk_datasets");
 
-                    b.HasIndex("CreatedById")
-                        .IsUnique();
+                    b.HasIndex("CreatedById");
 
-                    b.HasIndex("ParentDatasetId")
-                        .IsUnique();
+                    b.HasIndex("ParentDatasetId");
 
-                    b.HasIndex("UpdatedById")
-                        .IsUnique();
+                    b.HasIndex("UpdatedById");
 
                     b.ToTable("datasets");
                 });
@@ -258,10 +259,6 @@ namespace DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
-
-                    b.Property<int>("ClassId")
-                        .HasColumnType("integer")
-                        .HasColumnName("class_id");
 
                     b.Property<string>("ClassName")
                         .IsRequired()
@@ -279,18 +276,16 @@ namespace DAL.Migrations
                         .HasColumnName("created_on")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
 
-                    b.Property<Guid>("DatasetId")
+                    b.Property<Guid?>("ParentClassId")
                         .HasColumnType("uuid")
-                        .HasColumnName("dataset_id");
+                        .HasColumnName("parent_class_id");
 
                     b.HasKey("Id")
                         .HasName("pk_dataset_classes");
 
-                    b.HasIndex("CreatedById")
-                        .IsUnique();
+                    b.HasIndex("CreatedById");
 
-                    b.HasIndex("DatasetId")
-                        .IsUnique();
+                    b.HasIndex("ParentClassId");
 
                     b.ToTable("dataset_classes");
                 });
@@ -333,6 +328,15 @@ namespace DAL.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_enabled");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("ThumbnailPath")
+                        .HasColumnType("text")
+                        .HasColumnName("thumbnail_path");
+
                     b.Property<string>("UpdatedById")
                         .HasColumnType("text")
                         .HasColumnName("updated_by_id");
@@ -344,16 +348,38 @@ namespace DAL.Migrations
                     b.HasKey("Id")
                         .HasName("pk_dataset_images");
 
-                    b.HasIndex("CreatedById")
-                        .IsUnique();
+                    b.HasIndex("CreatedById");
 
-                    b.HasIndex("DatasetId")
-                        .IsUnique();
+                    b.HasIndex("DatasetId");
 
-                    b.HasIndex("UpdatedById")
-                        .IsUnique();
+                    b.HasIndex("UpdatedById");
 
                     b.ToTable("dataset_images");
+                });
+
+            modelBuilder.Entity("Entities.DatasetEntities.Dataset_DatasetClass", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("DatasetClassId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("dataset_class_id");
+
+                    b.Property<Guid>("DatasetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("dataset_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_datasets_dataset_classes");
+
+                    b.HasIndex("DatasetClassId");
+
+                    b.HasIndex("DatasetId");
+
+                    b.ToTable("datasets_dataset_classes");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.ImageAnnotation", b =>
@@ -405,14 +431,12 @@ namespace DAL.Migrations
                     b.HasKey("Id")
                         .HasName("pk_image_annotations");
 
-                    b.HasIndex("CreatedById")
-                        .IsUnique();
+                    b.HasIndex("CreatedById");
 
                     b.HasIndex("DatasetImageId")
                         .IsUnique();
 
-                    b.HasIndex("UpdatedById")
-                        .IsUnique();
+                    b.HasIndex("UpdatedById");
 
                     b.ToTable("image_annotations");
                 });
@@ -611,20 +635,20 @@ namespace DAL.Migrations
             modelBuilder.Entity("Entities.DatasetEntities.Dataset", b =>
                 {
                     b.HasOne("Entities.ApplicationUser", "CreatedBy")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.Dataset", "CreatedById")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_datasets_asp_net_users_created_by_id");
 
                     b.HasOne("Entities.DatasetEntities.Dataset", "ParentDataset")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.Dataset", "ParentDatasetId")
+                        .WithMany()
+                        .HasForeignKey("ParentDatasetId")
                         .HasConstraintName("fk_datasets_datasets_parent_dataset_id");
 
                     b.HasOne("Entities.ApplicationUser", "UpdatedBy")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.Dataset", "UpdatedById")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
                         .HasConstraintName("fk_datasets_asp_net_users_updated_by_id");
 
                     b.Navigation("CreatedBy");
@@ -637,41 +661,39 @@ namespace DAL.Migrations
             modelBuilder.Entity("Entities.DatasetEntities.DatasetClass", b =>
                 {
                     b.HasOne("Entities.ApplicationUser", "CreatedBy")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.DatasetClass", "CreatedById")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_dataset_classes_asp_net_users_created_by_id");
 
-                    b.HasOne("Entities.DatasetEntities.Dataset", "Dataset")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.DatasetClass", "DatasetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_dataset_classes_datasets_dataset_id");
+                    b.HasOne("Entities.DatasetEntities.DatasetClass", "ParentClass")
+                        .WithMany()
+                        .HasForeignKey("ParentClassId")
+                        .HasConstraintName("fk_dataset_classes_dataset_classes_parent_class_id");
 
                     b.Navigation("CreatedBy");
 
-                    b.Navigation("Dataset");
+                    b.Navigation("ParentClass");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetImage", b =>
                 {
                     b.HasOne("Entities.ApplicationUser", "CreatedBy")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.DatasetImage", "CreatedById")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_dataset_images_asp_net_users_created_by_id");
 
                     b.HasOne("Entities.DatasetEntities.Dataset", "Dataset")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.DatasetImage", "DatasetId")
+                        .WithMany()
+                        .HasForeignKey("DatasetId")
                         .HasConstraintName("fk_dataset_images_datasets_dataset_id");
 
                     b.HasOne("Entities.ApplicationUser", "UpdatedBy")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.DatasetImage", "UpdatedById")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
                         .HasConstraintName("fk_dataset_images_asp_net_users_updated_by_id");
 
                     b.Navigation("CreatedBy");
@@ -681,11 +703,32 @@ namespace DAL.Migrations
                     b.Navigation("UpdatedBy");
                 });
 
+            modelBuilder.Entity("Entities.DatasetEntities.Dataset_DatasetClass", b =>
+                {
+                    b.HasOne("Entities.DatasetEntities.DatasetClass", "DatasetClass")
+                        .WithMany("Datasets")
+                        .HasForeignKey("DatasetClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_datasets_dataset_classes_dataset_classes_dataset_class_id");
+
+                    b.HasOne("Entities.DatasetEntities.Dataset", "Dataset")
+                        .WithMany("DatasetClasses")
+                        .HasForeignKey("DatasetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_datasets_dataset_classes_datasets_dataset_id");
+
+                    b.Navigation("Dataset");
+
+                    b.Navigation("DatasetClass");
+                });
+
             modelBuilder.Entity("Entities.DatasetEntities.ImageAnnotation", b =>
                 {
                     b.HasOne("Entities.ApplicationUser", "CreatedBy")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.ImageAnnotation", "CreatedById")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_image_annotations_asp_net_users_created_by_id");
@@ -696,8 +739,8 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_image_annotations_dataset_images_dataset_image_id");
 
                     b.HasOne("Entities.ApplicationUser", "UpdatedBy")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.ImageAnnotation", "UpdatedById")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
                         .HasConstraintName("fk_image_annotations_asp_net_users_updated_by_id");
 
                     b.Navigation("CreatedBy");
@@ -774,6 +817,16 @@ namespace DAL.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_asp_net_user_tokens_asp_net_users_user_id");
+                });
+
+            modelBuilder.Entity("Entities.DatasetEntities.Dataset", b =>
+                {
+                    b.Navigation("DatasetClasses");
+                });
+
+            modelBuilder.Entity("Entities.DatasetEntities.DatasetClass", b =>
+                {
+                    b.Navigation("Datasets");
                 });
 #pragma warning restore 612, 618
         }

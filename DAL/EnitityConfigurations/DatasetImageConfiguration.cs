@@ -13,8 +13,8 @@ namespace DAL.EnitityConfigurations
             builder.Property(di => di.IsEnabled).HasDefaultValue(false);
 
             builder.HasOne(di => di.Dataset)
-                .WithOne()
-                .HasForeignKey<DatasetImage>(di => di.DatasetId);
+                .WithMany()
+                .HasForeignKey(di => di.DatasetId);
 
             builder.Property(di => di.CreatedById).IsRequired();
             builder.Property(di => di.CreatedOn).HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
@@ -23,12 +23,12 @@ namespace DAL.EnitityConfigurations
             builder.Property(di => di.UpdatedOn);
 
             builder.HasOne(di => di.CreatedBy)
-                .WithOne()
-                .HasForeignKey<DatasetImage>(di => di.CreatedById);
+                .WithMany()
+                .HasForeignKey(di => di.CreatedById);
 
             builder.HasOne(di => di.UpdatedBy)
-                .WithOne()
-                .HasForeignKey<DatasetImage>(di => di.UpdatedById);
+                .WithMany()
+                .HasForeignKey(di => di.UpdatedById);
         }
     }
 }

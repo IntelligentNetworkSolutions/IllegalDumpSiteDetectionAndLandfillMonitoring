@@ -3,5 +3,8 @@
   "node_modules/ol/dist/ol.js.map",
   "node_modules/ol/ol.css",
   "node_modules/admin-lte/dist",
-  "node_modules/admin-lte/plugins"
+  "node_modules/admin-lte/plugins",
+  "node_modules/cropperjs/dist",
+  "node_modules/cropperjs/src",
+  "node_modules/paginationjs/dist"
 ]

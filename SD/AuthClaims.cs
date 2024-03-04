@@ -128,6 +128,42 @@ namespace SD
             FromModule = Modules.SpecialActions,
             Description = "SpecialActions: Reset translation cache"
         };
+        public static readonly AuthClaim AddDataset = new AuthClaim
+        {
+            Value = "5:1",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Add dataset"
+        };
+        public static readonly AuthClaim ManageDataset = new AuthClaim
+        {
+            Value = "5:2",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Manage dataset"
+        };
+        public static readonly AuthClaim DeleteDataset = new AuthClaim
+        {
+            Value = "5:3",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Delete dataset"
+        };
+        public static readonly AuthClaim DeleteDatasetClass = new AuthClaim
+        {
+            Value = "5:4",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Delete dataset class"
+        };
+        public static readonly AuthClaim EditDatasetClass = new AuthClaim
+        {
+            Value = "5:5",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Edit dataset class"
+        };
+        public static readonly AuthClaim AddDatasetClass = new AuthClaim
+        {
+            Value = "5:6",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Add dataset class"
+        };
 
     } 
 }

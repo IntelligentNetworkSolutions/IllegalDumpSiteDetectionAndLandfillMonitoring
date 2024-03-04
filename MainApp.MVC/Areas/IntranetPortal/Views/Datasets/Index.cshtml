@@ -1,78 +1,556 @@
-﻿@model IEnumerable<Entities.DatasetEntities.Dataset>
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.Dataset
+@using Microsoft.AspNetCore.Localization
+@using Newtonsoft.Json
+@using SD.Helpers
+@model IEnumerable<DatasetViewModel>
 
 @{
-    ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = @DbResHtml.T("Datasets list", "Resources");
 }
 
-<h1>Index</h1>
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Add, manange and view all datasets", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title">@DbResHtml.T("Datasets", "Resources")</h3>
+                    </div>
+                    <div class="card-body">
+                        @if (User.HasAuthClaim(SD.AuthClaims.AddDataset))
+                        {
+                            <div class="text-sm mb-3">
+                                <button class="mb-1 btn bg-gradient-primary" data-toggle="modal" data-target="#addNewDatasetModal">
+                                    @DbResHtml.T("Add Dataset", "Resources")
+                                </button>
+                            </div>
+                        }
+                        <table id="datasetsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Name", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Description", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Is Published?", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Parent Dataset", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Created By", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Created On", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Updated By", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Updated On", "Resources")
+                                    </th>
+                                    <th class="notexport">
+                                        @DbResHtml.T("Action", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td>@item.Description</td>
+                                        <td>@item.IsPublished</td>
+                                        <td>@item.ParentDataset?.Name</td>
+                                        <td>@item.CreatedBy?.UserName</td>
+                                        <td>@item.CreatedOn.ToString("dd.MM.yyyy")</td>
+                                        <td>@item.UpdatedBy?.UserName</td>
+                                        <td>@item.UpdatedOn?.ToString("dd.MM.yyyy")</td>
+                                        <td>
+                                            @if (User.HasAuthClaim(SD.AuthClaims.ManageDataset) && item.IsPublished == false)
+                                            {
+                                                <a asp-controller="Datasets" asp-action="Edit" asp-route-datasetId="@item.Id" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Manage dataset", "Resources")">
+                                                    <i class="far fa-edit"></i>
+                                                </a>
+                                            }
+                                            @if (User.HasAuthClaim(SD.AuthClaims.DeleteDataset))
+                                            {
+                                                @if (User.HasAuthClaim(SD.AuthClaims.ManageDataset) && item.IsPublished == true)
+                                                {
+                                                    <button class="ml-5 mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteDatasetModal_@item.Id" title="@DbResHtml.T("Delete dataset", "Resources")">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button class="mx-1 mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteDatasetModal_@item.Id" title="@DbResHtml.T("Delete dataset", "Resources")">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsPublished)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ParentDataset)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedOn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedBy)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedOn)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.UpdatedBy)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsPublished)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ParentDataset.CreatedById)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedOn)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedBy.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedOn)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.UpdatedBy.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+            $(document).ready(function () {
+                $('#datasetsTable').DataTable({
+                    paging: true,
+                    pageLength: 100,
+                    "columnDefs": [
+                        { "width": "10%", "targets": 8 }
+                    ],
+                    "language": {
+                        "url": "@langPath"
+                    },
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            className: 'btn bg-gradient-success border-0',
+                            text: '<i class="fas fa-file-alt"></i>',
+                            titleAttr: "Export to excel",
+                            filename: "Datasets - @DateTime.Now.ToString("dd.MM.yyyy")",
+                            exportOptions: {
+                                columns: ':not(.notexport)'
+                            }
+                        }
+                    ]
+                });
+                $("#ddlParentDataset").select2({
+                    templateResult: setFormat
+                });
+
+                $(document).on("mouseover", "button.btn.btn-xs.btn-outline-dark", function (event) {
+                    event.stopPropagation();                    
+                    var buttonDatasetId = $(this).data("dataset-id");
+                    if (buttonDatasetId !== null) {
+                        setTimeout(function () {
+                            showParentChildrenDatasetsModal(buttonDatasetId);
+                            setTimeout(function () {
+                                $("#ddlParentDataset").select2("close");
+                            }, 110);
+                        }, 500); 
+                    }
+                });
+
+            });
+        
+        function closeViewParentChildrenDatasetsModal() {
+            $("#viewParentChildrenDatasetModal").hide();
+        }
+        function setFormat(state) {
+            if (!state.id) {
+                return state.text;
+            }
+            var $state = $(
+                `<span class="mr-2">${state.text}</span><button type="button" class="btn btn-xs btn-outline-dark float-right" data-dataset-id="${state.element.value}">@DbResHtml.T("Hover to view parent/children datasets", "Resources")</button>`
+            );
+            return $state;
+        }
+        function showParentChildrenDatasetsModal(currenctDatasetId) {            
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetParentAndChildrenDatasets", "Datasets", new { Area = "IntranetPortal" })",
+                data: {
+                    currenctDatasetId: currenctDatasetId
+                },
+                success: function (data) {
+                    if (data.responseError != null || data.responseError != undefined) {
+                        Swal.fire({
+                            text: `${data.responseError.value}`,
+                            icon: "error"
+                        });
+                    } else {
+                        $("#viewParentDatasetModalTableTBody").empty();
+                        $("#viewChildrenDatasetsModalTableTBody").empty();
+
+                        $("#currentDatasetNameHeader").empty();
+                        $("#currentDatasetPropertiesCardBody").empty();
+
+                        var currentDatasetHeaderHtml = "";
+                        var currentDatasetPropertiesHtml = "";
+                        if (data.currentDataset && data.currentDataset != null) {
+                            var createdOn = new Date(data.currentDataset.createdOn);
+
+                            // Get the day, month, and year components
+                            var day = createdOn.getDate();
+                            var month = createdOn.getMonth() + 1; // January is 0, so we add 1
+                            var year = createdOn.getFullYear();
+
+                            // Format the components into "dd.mm.yyyy" format
+                            var formattedDate = ('0' + day).slice(-2) + '.' + ('0' + month).slice(-2) + '.' + year;
+
+                            currentDatasetHeaderHtml += `<h3 class="card-title">@DbResHtml.T("Selected Dataset: ","Resources")</h3>`;
+
+                            currentDatasetPropertiesHtml += `
+                             <strong><i class="fas fa-file-signature mr-1"></i>@DbResHtml.T("Name", "Resources")</strong>
+                             <p class="text-muted">${data.currentDataset.name}</p>
+                             <hr>
+                             <strong><i class="fas fa-book mr-1"></i>@DbResHtml.T("Descripiton", "Resources")</strong>
+                             <p class="text-muted">${data.currentDataset.description}</p>
+                             <hr>
+                             <strong><i class="fas fa-calendar-alt mr-1"></i>@DbResHtml.T("Created On", "Resources")</strong>
+                                     <p class="text-muted">${formattedDate}</p>
+                             <hr>
+                             <strong><i class="fas fa-user-edit mr-1"></i>@DbResHtml.T("Created By", "Resources")</strong>
+                             <p class="text-muted">${data.currentDataset.createdBy.userName}</p>
+                             <hr>
+                             <strong><i class="fas fa-file-upload mr-1"></i>@DbResHtml.T("Is Published", "Resources")</strong>
+                             <p class="text-muted">${data.currentDataset.isPublished}</p>
+                            `;
+                        }
+                                                
+                        var dataHtmlParent = "";
+                        if (data.parent && data.parent.name != null) {
+                            dataHtmlParent += `<tr><td>${data.parent.name}</td><td>${data.parent.description}</td></tr>`;
+                        } else {
+                            dataHtmlParent += `<tr><td class="text-center" colspan="2">@DbResHtml.T("No parent dataset", "Resources")</td></tr>`;
+                        }
+                        
+                        var dataHtmlChildren = "";
+                        if (data.childrenList && data.childrenList.length > 0) {
+                            data.childrenList.forEach(function (child) {
+                                dataHtmlChildren += `<tr><td>${child.name}</td><td>${child.description}</td></tr>`;
+                            });
+                        } else {
+                            dataHtmlChildren += `<tr><td class="text-center" colspan="2">@DbResHtml.T("No children datasets", "Resources")</td></tr>`;
+                        }
+                        
+                        $("#viewParentDatasetModalTableTBody").append(dataHtmlParent);
+                        $("#viewChildrenDatasetsModalTableTBody").append(dataHtmlChildren);
+                        $("#currentDatasetNameHeader").append(currentDatasetHeaderHtml);
+                        $("#currentDatasetPropertiesCardBody").append(currentDatasetPropertiesHtml);
+                        $("#viewParentChildrenDatasetModal").show();
+                    }
+
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+        function addNewDatasetConfirmed() {
+            if ($("#addDatasetNameInput").val() == '' || $("#addDatasetDescriptionInput").val() == '') {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Name and descripiton are required properties", "Resources")"
+                });
+                return;
+            }
+
+            var datasetViewModel = {
+                Name: $("#addDatasetNameInput").val(),
+                Description: $("#addDatasetDescriptionInput").val(),
+                ParentDatasetId: $("#ddlParentDataset").val()
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("CreateConfirmed", "Datasets", new { Area = "IntranetPortal" })",
+                data: {
+                    datasetViewModel: datasetViewModel
+                },
+                success: function (data) {
+                    if (data.responseError != null || data.responseError != undefined) {
+                        Swal.fire({
+                            text: `${data.responseError.value}`,
+                            icon: "error"
+                        });
+                    } else {
+                        $('#addNewDatasetModal').modal('hide');
+                        window.location.href = '@Url.Action("Edit", "Datasets", new { area = "IntranetPortal" })' + '?datasetId=' + data.id;
+                    }
+
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+
+
+        }
+        function deleteDatasetConfirmed(datasetId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteDatasetConfirmed", "Datasets", new { Area = "IntranetPortal" })",
+                data: {
+                    datasetId: datasetId
+                },
+                success: function (data) {
+                    $(`#deleteDatasetModal_${datasetId}`).modal('hide');
+                    if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                        Swal.fire({
+                            text: `${data.responseSuccess.value}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        if (data.childrenDatasetsList != null || data.childrenDatasetsList != undefined) {
+                            $('#deleteDatasetModal_' + datasetId).modal('hide');
+                            $("#childrenDatasetsModal").modal('show');
+                            $("#childrenDatasetsModalBody").empty();
+                            $("#childrenDatasetsModalHeader").empty();
+
+                            let tableHtml = '<table class="table table-striped my-4 w-100"><thead><tr><th>Subdataset name</th><th>Created By</th><th>Created On</th></tr></thead><tbody>';
+                            data.childrenDatasetsList.forEach(function (subdataset) {
+                                let createdOn = subdataset.createdOn.split("T")[0];
+                                tableHtml += `<tr><td>${subdataset.name}</td>`;
+                                tableHtml += `<td>${subdataset.createdBy.userName}</td>`;
+                                tableHtml += `<td>${createdOn}</td>`;
+                                tableHtml += `</tr>`
+                            });
+
+                            tableHtml += '</tbody></table>';
+
+                            let headerModal = `<h5 class="modal-title">${data.responseError.value}</h5>`
+                            $('#childrenDatasetsModalHeader').append(headerModal);
+                            $('#childrenDatasetsModalBody').append(tableHtml);
+                        } else {
+                            Swal.fire({
+                                text: `${data.responseError.value}`,
+                                icon: "error"
+                            });
+                        }
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+
+
+        }
+    </script>
+    @if (TempData["ErrorDatasetIsPublished"] != null)
+    {
+        <script>
+            Swal.fire({
+                title: 'Error',
+                text: '@TempData["ErrorDatasetIsPublished"]',
+                icon: 'error',
+                showCancelButton: true,
+                showConfirmButton: false,
+                cancelButtonText: '@DbResHtml.T("Ok", "Resources")'
+            });
+        </script>
+    }
+
 }
-    </tbody>
-</table>
+
+@section BodyArea {
+    <div class="modal" id="addNewDatasetModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("New Dataset", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="addNewDatasetModalBody" class="modal-body">
+                    <div class="form-group">
+                        <label class="form-control-label mt-3" for="#addDatasetNameInput">@DbResHtml.T("Dataset Name:", "Resources")</label>
+                        <input type="text" name="Name" class="form-control" id="addDatasetNameInput" required />
+
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label mt-3" for="#addDatasetDescriptionInput">@DbResHtml.T("Dataset Description:", "Resources")</label>
+                        <input type="text" name="Description" class="form-control" id="addDatasetDescriptionInput" required />
+                    </div>
+                    <div class="form-group">
+                         @*  <label class="form-control-label mt-3" for="#ddlParentDataset">@DbResHtml.T("Parent Dataset:", "Resources")</label>
+                          <select class="form-control" name="ddlParentDataset" id="ddlParentDataset">
+                              <option></option>                  
+                             @Html.Raw(ViewBag.OptionsHtml)
+                          </select> *@
+                        <label class="form-control-label mt-3">@DbResHtml.T("Parent Dataset:", "Resources")</label>
+                        <select id="ddlParentDataset" name="ddlParentDataset" class="form-control mt-3">
+                            <option></option>
+                            @foreach (var item in Model.Where(x => x.IsPublished == true))
+                            {
+                                <option value="@item.Id">@item.Name</option>
+                            }
+                        </select>
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-primary" onclick="addNewDatasetConfirmed()" data-dismiss="modal" aria-label="Add">
+                        <span aria-hidden="true"> @DbResHtml.T("Add", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @foreach (var item in Model)
+    {
+        <div class="modal" id="deleteDatasetModal_@item.Id" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-danger">
+                        <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this dataset?", "Resources")</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped my-4 w-100" id="deleteDatasetTable_@item.Id">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            @DbResHtml.T("Dataset name", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Dataset description", "Resources")
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deleteDatasetTBody_@item.Id">
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td>@item.Description</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="modal-footer">
+                                <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteDatasetConfirmed('@item.Id')" data-dismiss="modal" aria-label="Delete">
+                                    <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="modal" id="childrenDatasetsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-navy">
+                    <div id="childrenDatasetsModalHeader"></div>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="childrenDatasetsModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-navy" data-dismiss="modal" aria-label="Ok">
+                        <span aria-hidden="true"> @DbResHtml.T("Ok", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal" id="viewParentChildrenDatasetModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-dark">
+                    <h4 class="modal-title">@DbResHtml.T("Parent/Children datasets", "Resources") </h4>
+                </div>
+                <div class="modal-body row">
+                    <div class="col-md-6">
+                        <div class="card card-success bg-light">
+                            <div class="card-header" id="currentDatasetNameHeader">
+                               
+                            </div>
+                            <div class="card-body" id="currentDatasetPropertiesCardBody">
+                               
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 table-responsive">
+                        <table class="table table-bordered table-striped mb-4 w-100" id="viewParentDatasetModalTable">
+                            <thead class="bg-gradient-gray">
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Parent dataset", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Description", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="viewParentDatasetModalTableTBody">
+                            </tbody>
+                        </table>
+                        <table class="table table-bordered table-striped mb-4 w-100" id="viewChildrenDatasetsModalTable">
+                            <thead class="bg-gradient-gray-dark">
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Child dataset", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Description", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="viewChildrenDatasetsModalTableTBody">
+                            </tbody>
+                        </table>
+                    </div>                  
+                </div>
+                <div class="modal-footer">
+                    <button onclick="closeViewParentChildrenDatasetsModal()" type="button" class="mb-1 btn bg-gradient-dark" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">@DbResHtml.T("Close", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+}

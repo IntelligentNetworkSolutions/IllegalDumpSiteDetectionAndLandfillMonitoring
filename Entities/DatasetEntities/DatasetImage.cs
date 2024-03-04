@@ -6,7 +6,9 @@ namespace Entities.DatasetEntities
     public class DatasetImage : BaseEntity<Guid>, ICreatedByUser, IUpdatedByUser
     {
         public string FileName { get; set; }
+        public string Name { get; set; }
         public string ImagePath { get; set; }
+        public string? ThumbnailPath { get; set; }
 
         public bool IsEnabled { get; set; } = false;
 

@@ -1,0 +1,38 @@
+﻿#showInputImage {
+    max-width: 150vh;
+    max-height: 150vh;
+    overflow: auto;
+    text-align: center;
+}
+
+div.show-image {
+    position: relative;
+    float: left;
+    margin: 5px;
+}
+
+    div.show-image:hover img {
+        opacity: 0.5;
+    }
+
+    div.show-image:hover input {
+        display: block;
+    }
+
+    div.show-image input {
+        position: absolute;
+        display: none;
+    }
+
+        div.show-image input.editImage {
+            top: 3px;
+            left: 4px;
+        }
+
+        div.show-image input.editAnnotation {
+            top: 3px;
+            left: 50%;
+        }
+.pagination-container ul{
+   justify-content:center;
+}
