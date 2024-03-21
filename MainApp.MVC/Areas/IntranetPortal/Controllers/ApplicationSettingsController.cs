@@ -24,6 +24,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
+            // TODO: add check claim
+            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var genSet = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("Generic", "hehe");
             var genSetBool = await _appSettingsAccessor.GetApplicationSettingValueByKey<bool?>("GenericBool", false);
             // Missing
@@ -44,6 +57,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Create()
         {
+            // TODO: add check claim
+            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var allKeys = await _applicationSettingsService.GetAllApplicationSettingsKeysAsList();
 
             ApplicationSettingsCreateViewModel model = new ApplicationSettingsCreateViewModel()
@@ -61,6 +87,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ApplicationSettingsCreateViewModel model)
         {
+            // TODO: add check claim
+            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var allKeys = await _applicationSettingsService.GetAllApplicationSettingsKeysAsList();
 
             if (!ModelState.IsValid)
@@ -92,6 +131,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Edit(string settingKey)
         {
+            // TODO: add check claim
+            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var appSettingDb = await _applicationSettingsService.GetApplicationSettingByKey(settingKey);
             if (appSettingDb == null)
             {
@@ -117,6 +169,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ApplicationSettingsEditViewModel model)
         {
+            // TODO: add check claim
+            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             if (!ModelState.IsValid)
             {
                 model.Modules = SD.Modules.GetAll().ToList();
@@ -144,6 +209,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Delete(string? key)
         {
+            // TODO: add check claim
+            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             if (key == null)
             {
                 var errorPath = _configuration["ErrorViewsPath:Error404"];
@@ -178,6 +256,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string key)
         {
+            // TODO: add check claim
+            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var resDelete = await _applicationSettingsService.DeleteApplicationSetting(key);
 
             if (!resDelete.IsSuccess)

@@ -43,6 +43,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var allClassesList = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found");
             var model = _mapper.Map<List<DatasetClassViewModel>>(allClassesList);
             return View(model);
@@ -51,6 +64,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateClass(CreateDatasetClassDTO model)
         {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.AddDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             if (!ModelState.IsValid)
             {
                 return Json(new { responseError = DbResHtml.T("Model is not valid", "Resources") });
@@ -74,6 +100,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public async Task<IActionResult> EditClass(EditDatasetClassDTO model)
         {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.EditDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             if (!ModelState.IsValid)
             {
                 return Json(new { responseError = DbResHtml.T("Model is not valid", "Resources") });
@@ -124,7 +163,20 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         [HttpPost]
         public async Task<IActionResult> DeleteClass(Guid classId)
-        {            
+        {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.DeleteDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var isDeleted = await _datasetClassesService.DeleteDatasetClass(classId);
             var allClasses = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found");
             var childrenClassesList = allClasses.Where(x => x.ParentClassId == classId).ToList() ?? throw new Exception("Object not found");

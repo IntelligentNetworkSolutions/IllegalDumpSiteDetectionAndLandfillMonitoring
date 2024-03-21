@@ -152,7 +152,7 @@ builder.Services.TryAddScoped<ModulesAndAuthClaimsHelper>();
 builder.Services.TryAddScoped<IUserManagementDa, UserManagementDa>();
 builder.Services.TryAddScoped<IntranetPortalUsersTokenDa>();
 builder.Services.TryAddScoped<IUserManagementService, UserManagementService>();
-builder.Services.TryAddScoped<AuditLogsDa>();
+builder.Services.TryAddScoped<IAuditLogsDa, AuditLogsDa>();
 builder.Services.TryAddScoped<AuditLogBl>();
 builder.Services.TryAddScoped<ILayoutService, LayoutService>();
 builder.Services.TryAddScoped<IForgotResetPasswordService, ForgotResetPasswordService>();

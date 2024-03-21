@@ -11,9 +11,31 @@
     <div class="sidebar">
         <nav class="mt-2">
 
-            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">              
-               @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasets))
                 {
+                    <li class="nav-item">
+                        <a asp-action="Index" asp-controller="Datasets" asp-area="IntranetPortal" class="nav-link" title="@DbResHtml.T("Datasets", "Resources")">
+                            <i class="fas fa-cubes"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Datasets", "Resources")
+                            </p>
+                        </a>
+                    </li>
+                }
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
+                {
+                    <li class="nav-item">
+                        <a asp-action="Index" asp-controller="DatasetClasses" asp-area="IntranetPortal" class="nav-link" title="@DbResHtml.T("Dataset Classes", "Resources")">
+                            <i class="fas fa-tasks"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Dataset Classes", "Resources")
+                            </p>
+                        </a>
+                    </li>
+                }     
+               @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+               {
                     <li class="nav-item">
                         <a href="#" class="nav-link" title="@DbResHtml.T("Super admin", "Resources")">
                             <i class="fas fa-cog"></i> &nbsp;&nbsp;
@@ -37,7 +59,7 @@
                             </li>
                         </ul>
                     </li>
-                }
+               }
                 @if (User.HasAuthClaim(SD.AuthClaims.Admin))
                 {
                     <li class="nav-item">

@@ -109,7 +109,7 @@ namespace SD
             Value = "2:1",
             FromModule = Modules.AuditLog,
             Description = "Audit Log: View Audit Log"
-        };
+        };      
         public static readonly AuthClaim Admin = new AuthClaim
         {
             Value = "3:1",
@@ -164,7 +164,54 @@ namespace SD
             FromModule = Modules.Datasets,
             Description = "Datasets: Add dataset class"
         };
-
+        public static readonly AuthClaim ViewDatasetClasses = new AuthClaim
+        {
+            Value = "5:7",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: View dataset classes"
+        };
+        public static readonly AuthClaim ViewDatasets = new AuthClaim
+        {
+            Value = "5:8",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: View datasets"
+        };
+        public static readonly AuthClaim ChooseDatasetClassType = new AuthClaim
+        {
+            Value = "5:9",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Choose dataset class type"
+        };
+        public static readonly AuthClaim PublishDataset = new AuthClaim
+        {
+            Value = "5:10",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Publish dataset"
+        };
+        public static readonly AuthClaim AddDatasetImage = new AuthClaim
+        {
+            Value = "5:11",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Add dataset image"
+        };
+        public static readonly AuthClaim DeleteDatasetImage = new AuthClaim
+        {
+            Value = "5:12",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Delete dataset image"
+        };
+        public static readonly AuthClaim EditDatasetImage = new AuthClaim
+        {
+            Value = "5:13",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Edit dataset image"
+        };
+        public static readonly AuthClaim EditDatasetImageAnnotations = new AuthClaim
+        {
+            Value = "5:14",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: Edit dataset image annotations"
+        };
     } 
 }
 
