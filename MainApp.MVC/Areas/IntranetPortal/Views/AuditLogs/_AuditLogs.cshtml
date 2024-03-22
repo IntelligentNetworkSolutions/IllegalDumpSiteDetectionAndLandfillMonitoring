@@ -1,5 +1,6 @@
 ﻿@using MainApp.MVC.Helpers;
 @using Microsoft.AspNetCore.Localization;
+@using SD.Helpers
 @model IEnumerable<MainApp.MVC.ViewModels.IntranetPortal.AuditLog.AuditLogListViewModel>
 
 <div class="table-responsive">
@@ -28,7 +29,10 @@
             {
                 <tr>
                     <td>
-                        <a asp-area="IntranetPortal" asp-controller="AuditLogs" asp-action="RedirectToUserManagement" asp-route-username="@item.AuditInternalUser" target="_blank"> @item.AuditInternalUser</a>
+                        @if (User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
+                        {
+                            <a asp-area="IntranetPortal" asp-controller="AuditLogs" asp-action="RedirectToUserManagement" asp-route-username="@item.AuditInternalUser" target="_blank"> @item.AuditInternalUser</a>
+                        }                        
                     </td>
                     
                     <td>
@@ -41,7 +45,10 @@
                         @Convert.ToDateTime(item.AuditDate).ToString("dd.MM.yyyy HH:mm:ss")
                     </td>
                     <td>
-                        <button onclick="viewAuditData('@item.AuditLogId')" class="mb-1 btn bg-gradient-success far fa-eye" data-toggle="modal" data-target="#auditDataModal" title=" @DbResHtml.T("Audit data", "Resources")"></button>
+                        @if (User.HasAuthClaim(SD.AuthClaims.AuditLog))
+                        {
+                            <button onclick="viewAuditData('@item.AuditLogId')" class="mb-1 btn bg-gradient-success far fa-eye" data-toggle="modal" data-target="#auditDataModal" title=" @DbResHtml.T("Audit data", "Resources")"></button>
+                        }
                     </td>
                 </tr>
             }

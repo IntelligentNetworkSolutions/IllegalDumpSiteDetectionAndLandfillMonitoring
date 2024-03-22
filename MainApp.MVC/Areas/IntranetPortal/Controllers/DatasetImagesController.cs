@@ -48,6 +48,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteDatasetImage(Guid datasetImageId, Guid datasetId)
         {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.DeleteDatasetImage) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
@@ -95,6 +108,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public async Task<IActionResult> EditDatasetImage(EditDatasetImageDTO model)
         {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.EditDatasetImage) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             if (!ModelState.IsValid)
             {
                 return Json(new { responseError = DbResHtml.T("Entered model is not valid", "Resources") });
@@ -125,6 +151,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public async Task<IActionResult> UploadDatasetImage(Guid datasetId, string imageCropped, string imageName)
         {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.AddDatasetImage) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });

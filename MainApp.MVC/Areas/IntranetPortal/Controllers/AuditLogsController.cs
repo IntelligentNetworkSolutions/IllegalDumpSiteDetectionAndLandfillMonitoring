@@ -4,18 +4,19 @@ using Entities;
 using Services;
 using MainApp.MVC.ViewModels.IntranetPortal.AuditLog;
 using DAL.Repositories;
+using DAL.Interfaces.Repositories;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
     [Area("IntranetPortal")]
     public class AuditLogsController : Controller
     {
-        private AuditLogsDa _auditLogsDa;
+        private IAuditLogsDa _auditLogsDa;
         private AuditLogBl _auditLogBl;
-        private UserManagementDa _userManagementDa;
-        public AuditLogsController(AuditLogsDa auditLogsDa,
+        private IUserManagementDa _userManagementDa;
+        public AuditLogsController(IAuditLogsDa auditLogsDa,
             AuditLogBl auditLogBl,
-            UserManagementDa userManagementDa)
+            IUserManagementDa userManagementDa)
         {
             _auditLogsDa = auditLogsDa;
             _auditLogBl = auditLogBl;
@@ -23,7 +24,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
         public async Task<IActionResult> Index()
         {
-
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.AuditLog) || !_modulesAndAuthClaims.HasModule(SD.Modules.AuditLog))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var internalUsers = await _userManagementDa.GetAllIntanetPortalUsers();
             var auditActions = new List<string> { DbResHtml.T("Insert", "Resources").ToString(), DbResHtml.T("Update", "Resources").ToString(), DbResHtml.T("Delete", "Resources").ToString() };
 
@@ -62,6 +75,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public async Task<AuditLog> GetAuditData(int id)
         {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.AuditLog) || !_modulesAndAuthClaims.HasModule(SD.Modules.AuditLog))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var role = await _auditLogsDa.GetAuditData(id);
             return role;
         }
@@ -94,6 +120,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> RedirectToUserManagement(string username)
         {
+            // TODO: add check claim
+            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
+            //{
+            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
+            //    if (!string.IsNullOrEmpty(errorPath))
+            //    {
+            //        return Redirect(errorPath);
+            //    }
+            //    else
+            //    {
+            //        return StatusCode(403);
+            //    }
+            //}
             var user = await _userManagementDa.GetUserByUsername(username);
             return RedirectToAction("EditUser", "UserManagement", new { id = user.Id, area = "IntranetPortal" });
         }

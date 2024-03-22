@@ -30,9 +30,12 @@
                         <h3 class="card-title">@DbResHtml.T("Application settings", "Resources")</h3>
                     </div>
                     <div class="card-body">
-                        <div class="text-sm mb-3">
-                            <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Create" class="mb-1 btn bg-gradient-primary">@DbResHtml.T("Add setting", "Resources")</a>
-                        </div>
+                        @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+                        {
+                            <div class="text-sm mb-3">
+                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Create" class="mb-1 btn bg-gradient-primary">@DbResHtml.T("Add setting", "Resources")</a>
+                            </div>
+                        }
                         <table id="applicationSettingsTable" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
@@ -66,12 +69,15 @@
                                         <td>@item.Module</td>
                                         <td>@item.DataType</td>
                                         <td>
-                                            <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Edit" asp-route-settingKey="@item.Key" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Edit", "Resources")">
-                                                <i class="far fa-edit"></i>
-                                            </a>
-                                            <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Delete" asp-route-key="@item.Key" class="mb-1 btn bg-gradient-danger" title="@DbResHtml.T("Delete", "Resources")">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </a>
+                                            @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+                                            {
+                                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Edit" asp-route-settingKey="@item.Key" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Edit", "Resources")">
+                                                    <i class="far fa-edit"></i>
+                                                </a>
+                                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Delete" asp-route-key="@item.Key" class="mb-1 btn bg-gradient-danger" title="@DbResHtml.T("Delete", "Resources")">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                            }
                                         </td>
                                     </tr>
 
