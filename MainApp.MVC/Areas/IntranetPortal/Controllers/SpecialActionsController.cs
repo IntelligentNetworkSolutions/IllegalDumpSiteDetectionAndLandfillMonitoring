@@ -1,4 +1,5 @@
 ﻿using DAL.Interfaces.Helpers;
+using MainApp.MVC.Filters;
 using MainApp.MVC.Helpers;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _appSettingsAccessor = appSettingsAccessor;
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.SpecialActions))]
         public async Task<IActionResult> Index()
         {
             // TODO

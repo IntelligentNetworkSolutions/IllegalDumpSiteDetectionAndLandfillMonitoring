@@ -12,12 +12,10 @@ namespace DAL.Repositories
     public class ApplicationSettingsRepository : IApplicationSettingsRepo
     {
         private readonly ApplicationDbContext _db;
-        private readonly ILogger<ApplicationSettingsRepository> _logger;
 
-        public ApplicationSettingsRepository(ApplicationDbContext db, ILogger<ApplicationSettingsRepository> logger)
+        public ApplicationSettingsRepository(ApplicationDbContext db)
         {
             _db = db;
-            _logger = logger;
         }
 
         #region Create
@@ -38,13 +36,9 @@ namespace DAL.Repositories
             return await DeleteApplicationSetting(applicationSetting);
         }
 
-        private async Task<bool> DeleteApplicationSetting(ApplicationSettings? appSetting)
+        private async Task<bool> DeleteApplicationSetting(ApplicationSettings appSetting)
         {
-            if (appSetting is null)
-                return false;
-
             _db.ApplicationSettings.Remove(appSetting);
-
             int deleteResult = await _db.SaveChangesAsync();
             return deleteResult > 0;
         }

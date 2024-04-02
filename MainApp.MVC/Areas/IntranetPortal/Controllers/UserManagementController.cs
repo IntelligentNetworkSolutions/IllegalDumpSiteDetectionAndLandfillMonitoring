@@ -11,10 +11,14 @@ using MainApp.MVC.ViewModels.IntranetPortal.UserManagement;
 using AutoMapper;
 using DTOs.MainApp.BL;
 using DAL.Interfaces.Helpers;
+using SD.Helpers;
+using MainApp.MVC.Filters;
+using SD;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
     [Area("IntranetPortal")]
+    [HasAppModule(nameof(Modules.UserManagement))]
     public class UserManagementController : Controller
     {
         private readonly IUserManagementService _userManagementService;
@@ -38,23 +42,10 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _mapper = mapper;
         }
 
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
         public async Task<IActionResult> Index()
-        {            
-            // TODO: 🧹 Middleware Attribute -> AuthorizeClaim 🧹🧹🧹
-            /*
-            if (!User.HasAuthClaim(SD.AuthClaims.UserManagement) || !_modulesAndAuthClaimsHelper.HasModule(SD.Modules.UserManagement))
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
-            }
-            */
+        {
             UserManagementViewModel model = new UserManagementViewModel();
             var users = await _userManagementService.GetAllIntanetPortalUsers() ?? throw new Exception("Users not found");
             var roles = await _userManagementService.GetAllRoles() ?? throw new Exception("Roles not found");
@@ -72,24 +63,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementAddUsersAndRoles))]
         public async Task<IActionResult> CreateUser()
         {
-            // TODO: 🧹 Middleware Attribute -> AuthorizeClaim 🧹🧹🧹
-            /*
-            if (!User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles) || !_modulesAndAuthClaimsHelper.HasModule(SD.Modules.UserManagement))
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
-            }
-            */
-
             // TODO: 🧹 Create Seed for initial load 🧹🧹🧹
             //#region Get Pass App Settings
             //int passwordMinLength;
@@ -119,23 +95,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementAddUsersAndRoles))]
         public async Task<IActionResult> CreateUser(UserManagementCreateUserViewModel viewModel)
         {
-            // TODO: 🧹 Middleware Attribute -> AuthorizeClaim 🧹🧹🧹
-            /*
-            if (!User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles) || !_modulesAndAuthClaimsHelper.HasModule(SD.Modules.UserManagement))
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error403"];
-                if (!string.IsNullOrEmpty(errorPath))
-                {
-                    return Redirect(errorPath);
-                }
-                else
-                {
-                    return StatusCode(403);
-                }
-            }
-            */
             // TODO: ⚠️ !!! Password validation is only front end ⚠️⚠️⚠️
             if (!ModelState.IsValid)
             {
@@ -152,10 +114,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> EditUser(string id)
         {
             if (id is null)
             {
+                // TODO
                 //var errorPath = _configuration["ErrorViewsPath:Error404"];
                 //if (!string.IsNullOrEmpty(errorPath))
                 //{
@@ -179,29 +143,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> EditUser(UserManagementEditUserViewModel viewModel)
         {
-            //var id = User.FindFirstValue("UserId");
-            //var appUser = _userManagementDa.GetUser(id).Result;
-            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles)
-            //    || (user.UserName == "insadmin" && appUser.UserName != "insadmin"))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid == false)
             {
-                UserManagementDTO dto = new()
-                {
-                    Id = viewModel.Id
-                };
+                UserManagementDTO dto = new() { Id = viewModel.Id };
                 dto = await _userManagementService.FillUserManagementDto(dto);
                 viewModel = _mapper.Map<UserManagementEditUserViewModel>(dto);
                 viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
@@ -214,33 +161,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return RedirectToAction(nameof(Index));                      
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementAddUsersAndRoles))]
         public async Task<IActionResult> CreateRole()
         {
-            var model = new UserManagementCreateRoleViewModel
-            {
-                Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims()
-            };
+            var model = new UserManagementCreateRoleViewModel { Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims() };
             return View(model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementAddUsersAndRoles))]
         public async Task<IActionResult> CreateRole(UserManagementCreateRoleViewModel viewModel)
         {
-            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid == false)
             {
                 viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
                 return View(viewModel);
@@ -252,6 +185,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return RedirectToAction(nameof(Index));           
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> EditRole(string id)
         {
             if (id is null)
@@ -267,10 +201,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 //    return NotFound();
                 //}
             }
-            RoleManagementDTO dto = new()
-            { 
-                Id = id!
-            };
+            RoleManagementDTO dto = new() { Id = id! };
             dto = await _userManagementService.FillRoleManagementDto(dto);
             var viewModel = _mapper.Map<UserManagementEditRoleViewModel>(dto) ?? throw new Exception("Model not found");
             viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();          
@@ -280,26 +211,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> EditRole(UserManagementEditRoleViewModel viewModel)
         {
-            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid == false)
             {               
-                RoleManagementDTO dto = new()
-                {
-                    Id = viewModel.Id
-                };
+                RoleManagementDTO dto = new() { Id = viewModel.Id };
                 dto = await _userManagementService.FillRoleManagementDto(dto);
                 viewModel = _mapper.Map<UserManagementEditRoleViewModel>(dto);
                 viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
@@ -312,58 +229,37 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
-        public async Task<RoleDTO> DeleteRole(string id)
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
+        public async Task<RoleDTO?> DeleteRole(string id)
         {
             return await _userManagementService.GetRoleById(id);
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
         public async Task<IActionResult> DeleteRoleConfirmed(string id)
         {
-            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-
             await _userManagementService.DeleteRole(id);
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
-        public async Task<UserDTO> DeleteUser(string id)
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
+        public async Task<UserDTO?> DeleteUser(string id)
         {
             return await _userManagementService.GetUserById(id);
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
         public async Task<IActionResult> DeleteUserConfirmed(string id)
         {
-            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-
             await _userManagementService.DeleteUser(id);
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
         public List<RoleClaimDTO> GetRoleClaims(string roleId)
         {
             var roleClaims = _userManagementService.GetRoleClaims(roleId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList() ?? throw new Exception("Role claims not found");
@@ -372,6 +268,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
         public List<UserClaimDTO> GetUserClaims(string userId)
         {
             var userClaims = _userManagementService.GetUserClaims(userId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList() ?? throw new Exception("User claims not found");
@@ -380,75 +277,81 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
         public async Task<List<RoleDTO>> GetUserRoles(string userId)
         {
             return await _userManagementService.GetRolesForUser(userId);
         }
 
-        [HttpGet]
-        public async Task<List<IdentityRole>?> GetQueryBuiltRoles()
-        {
-            IQueryable<IdentityRole> wholeDbSetQuery = _userManagementService.GetRolesAsQueriable();
+        // POC:
+        // TODO: maybe Clean up
+        //[HttpGet]
+        //[HasAuthorizeClaim(nameof(SD.AuthClaims.UserManagement))]
+        //public async Task<List<IdentityRole>?> GetQueryBuiltRoles()
+        //{
+        //    IQueryable<IdentityRole> wholeDbSetQuery = _userManagementService.GetRolesAsQueriable();
 
-            int numRows = 5;
-            int pageNumber = 1;
-            string orderByProp = "Name";
-            bool orderIsAscending = true;
+        //    int numRows = 5;
+        //    int pageNumber = 1;
+        //    string orderByProp = "Name";
+        //    bool orderIsAscending = true;
 
-            var rolesNameAsc = await wholeDbSetQuery.OrderBy(x => x.Name).ToListAsync();
-            var rolesNameDesc = await wholeDbSetQuery.OrderByDescending(x => x.Name).ToListAsync();
+        //    var rolesNameAsc = await wholeDbSetQuery.OrderBy(x => x.Name).ToListAsync();
+        //    var rolesNameDesc = await wholeDbSetQuery.OrderByDescending(x => x.Name).ToListAsync();
 
-            var constructedQuery =
-                ConstructPagedEFQuery<IdentityRole>(wholeDbSetQuery, numRows, pageNumber, orderByProp, orderIsAscending);
+        //    var constructedQuery =
+        //        ConstructPagedEFQuery<IdentityRole>(wholeDbSetQuery, numRows, pageNumber, orderByProp, orderIsAscending);
 
-            List<IdentityRole> pagedRoles = await constructedQuery.ToListAsync();
+        //    List<IdentityRole> pagedRoles = await constructedQuery.ToListAsync();
 
-            return null;
-        }
+        //    return null;
+        //}
 
-        private IQueryable<DbSetType> ConstructPagedEFQuery<DbSetType>(IQueryable<DbSetType> queriableSet,
-                                                        int numRows = 5,
-                                                        int pageNumber = 0,
-                                                        string? orderByPropertyName = null,
-                                                        bool orderIsAscending = true)
-        {
-            Type actualDbSetType = typeof(DbSetType);
+        // POC:
+        // TODO: maybe Clean up
+        //private IQueryable<DbSetType> ConstructPagedEFQuery<DbSetType>(IQueryable<DbSetType> queriableSet,
+        //                                                int numRows = 5,
+        //                                                int pageNumber = 0,
+        //                                                string? orderByPropertyName = null,
+        //                                                bool orderIsAscending = true)
+        //{
+        //    Type actualDbSetType = typeof(DbSetType);
 
-            IQueryable<DbSetType> constructedQuery = queriableSet;
+        //    IQueryable<DbSetType> constructedQuery = queriableSet;
 
-            if (!string.IsNullOrEmpty(orderByPropertyName))
-            {
-                PropertyInfo? actualOrderByPropertyName = actualDbSetType.GetProperty(orderByPropertyName);
+        //    if (!string.IsNullOrEmpty(orderByPropertyName))
+        //    {
+        //        PropertyInfo? actualOrderByPropertyName = actualDbSetType.GetProperty(orderByPropertyName);
 
-                if (actualOrderByPropertyName is null)
-                    throw new Exception("orderByPropertyName Does Not Exist");
+        //        if (actualOrderByPropertyName is null)
+        //            throw new Exception("orderByPropertyName Does Not Exist");
 
-                // Create an expression representing the property access
-                ParameterExpression parameter = Expression.Parameter(actualDbSetType, "x");
-                Expression propertyAccess = Expression.Property(parameter, actualOrderByPropertyName);
+        //        // Create an expression representing the property access
+        //        ParameterExpression parameter = Expression.Parameter(actualDbSetType, "x");
+        //        Expression propertyAccess = Expression.Property(parameter, actualOrderByPropertyName);
 
-                // Create an expression representing the lambda function: x => x.PropertyName
-                LambdaExpression orderByExpression = Expression.Lambda(propertyAccess, parameter);
+        //        // Create an expression representing the lambda function: x => x.PropertyName
+        //        LambdaExpression orderByExpression = Expression.Lambda(propertyAccess, parameter);
 
-                // Determine if we should use OrderBy or OrderByDescending
-                string methodName = !orderIsAscending ? "OrderByDescending" : "OrderBy";
+        //        // Determine if we should use OrderBy or OrderByDescending
+        //        string methodName = !orderIsAscending ? "OrderByDescending" : "OrderBy";
 
-                // Use reflection to call the appropriate OrderBy method
-                MethodCallExpression methodCallExpression = Expression.Call(
-                    typeof(Queryable),
-                    methodName,
-                    new[] { actualDbSetType, actualOrderByPropertyName.PropertyType },
-                    constructedQuery.Expression,
-                    Expression.Quote(orderByExpression)
-                );
+        //        // Use reflection to call the appropriate OrderBy method
+        //        MethodCallExpression methodCallExpression = Expression.Call(
+        //            typeof(Queryable),
+        //            methodName,
+        //            new[] { actualDbSetType, actualOrderByPropertyName.PropertyType },
+        //            constructedQuery.Expression,
+        //            Expression.Quote(orderByExpression)
+        //        );
 
-                // Update the query with the new ordering
-                constructedQuery = constructedQuery.Provider.CreateQuery<DbSetType>(methodCallExpression);
-            }
+        //        // Update the query with the new ordering
+        //        constructedQuery = constructedQuery.Provider.CreateQuery<DbSetType>(methodCallExpression);
+        //    }
 
-            constructedQuery = constructedQuery.Skip(pageNumber * numRows).Take(numRows);
+        //    constructedQuery = constructedQuery.Skip(pageNumber * numRows).Take(numRows);
 
-            return constructedQuery;
-        }
+        //    return constructedQuery;
+        //}
     }
 }

@@ -13,6 +13,7 @@ using DAL.Repositories;
 using Services.Interfaces.Services;
 using DAL.Interfaces.Helpers;
 using SD;
+using Westwind.Globalization;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -63,23 +64,23 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return View();
         }
 
-        /*
+
         //TODO
         [HttpPost]
-        [AllowAnonymous]	
-		public async Task<IActionResult> Login(string username, string password, bool remember, string returnUrl)
-		{
-			var user = await _userManager.FindByNameAsync(username);
-			if(user == null)
-			{
-				ViewData["MessageError"] = DbResHtml.T("Wrong username", "Resources");
-				ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
-				return View();
-			}			
+        [AllowAnonymous]
+        public async Task<IActionResult> Login(string username, string password, bool remember, string returnUrl)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                ViewData["MessageError"] = DbResHtml.T("Wrong username", "Resources");
+                ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
+                return View();
+            }
 
             var passwordCheck = await _userManager.CheckPasswordAsync(user, password);
             if (passwordCheck)
-			{
+            {
                 if (user.IsActive == false)
                 {
                     ViewData["MessageError"] = DbRes.T("Unable to log in because this user account is currently disabled!", "Resources");
@@ -87,61 +88,51 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     return View();
                 }
                 var claims = new List<Claim>();
-				_addClaimsForIntranetPortalUserHelper.AddClaims(claims, user);
-				var userClaimsDb = await _userManagementDa.GetIntranetUserClaimsDb(user.Id);
+                _addClaimsForIntranetPortalUserHelper.AddClaims(claims, user);
+                var userClaimsDb = await _userManagementService.GetUserClaims(user.Id);
                 foreach (var item in userClaimsDb)
-                {
                     claims.Add(new Claim(item.ClaimType, item.ClaimValue));
 
-                }
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    //AllowRefresh = <bool>,
+                    // Refreshing the authentication session should be allowed.
 
-                var claimsIdentity = new ClaimsIdentity(
-			   claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14),
+                    // The time at which the authentication ticket expires.
+                    // A value set here overrides the ExpireTimeSpan option of CookieAuthenticationOptions set with AddCookie.
 
-				var authProperties = new AuthenticationProperties
-				{
-					//AllowRefresh = <bool>,
-					// Refreshing the authentication session should be allowed.
+                    IsPersistent = remember,
+                    // Whether the authentication session is persisted across multiple requests.
+                    // When used with cookies, controls whether the cookie's lifetime is absolute
+                    // (matching the lifetime of the authentication ticket) or session-based.
 
-					ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14),
-					// The time at which the authentication ticket expires. A 
-					// value set here overrides the ExpireTimeSpan option of 
-					// CookieAuthenticationOptions set with AddCookie.
+                    IssuedUtc = DateTimeOffset.UtcNow
+                    // The time at which the authentication ticket was issued.
 
-					IsPersistent = remember,
-					// Whether the authentication session is persisted across 
-					// multiple requests. When used with cookies, controls
-					// whether the cookie's lifetime is absolute (matching the
-					// lifetime of the authentication ticket) or session-based.
+                    //RedirectUri = <string>
+                    // The full path or absolute URI to be used as an http 
+                    // redirect response value.
+                };
 
-					IssuedUtc = DateTimeOffset.UtcNow
-					// The time at which the authentication ticket was issued.
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
 
-					//RedirectUri = <string>
-					// The full path or absolute URI to be used as an http 
-					// redirect response value.
-				};
-
-				await HttpContext.SignInAsync(
-					CookieAuthenticationDefaults.AuthenticationScheme,
-					new ClaimsPrincipal(claimsIdentity),
-					authProperties);
-
-               if(!string.IsNullOrEmpty(returnUrl))
-			   {
+                if (!string.IsNullOrEmpty(returnUrl))
                     return Redirect(returnUrl);
-               }
-			   return RedirectToAction("Index", "Home", new {area="Common"});
 
+                return RedirectToAction("Index", "Home", new { area = "Common" });
             }
             else
             {
                 ViewData["MessageError"] = DbResHtml.T("Wrong password", "Resources");
                 ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
                 return View();
-            }			
-		}
-        */
+            }
+        }
 
         [AllowAnonymous]
         public async Task<IActionResult> ForgotPassword()
