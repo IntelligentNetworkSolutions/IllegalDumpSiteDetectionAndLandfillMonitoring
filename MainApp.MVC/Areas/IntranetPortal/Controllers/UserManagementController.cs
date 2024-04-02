@@ -1,17 +1,11 @@
-﻿using DAL.Helpers;
-using MainApp.MVC.Helpers;
-using Microsoft.AspNetCore.Identity;
+﻿using MainApp.MVC.Helpers;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Services.Interfaces.Services;
 using System.Data;
-using System.Linq.Expressions;
-using System.Reflection;
 using MainApp.MVC.ViewModels.IntranetPortal.UserManagement;
 using AutoMapper;
 using DTOs.MainApp.BL;
 using DAL.Interfaces.Helpers;
-using SD.Helpers;
 using MainApp.MVC.Filters;
 using SD;
 

@@ -28,7 +28,6 @@
     <Folder Include="MailSend.Tests\" />
     <Folder Include="Entities.Tests\" />
     <Folder Include="DTOs.Tests\" />
-    <Folder Include="MainApp.MVC.Tests\" />
   </ItemGroup>
 
   <ItemGroup>

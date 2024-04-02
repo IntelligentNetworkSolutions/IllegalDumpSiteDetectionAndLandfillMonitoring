@@ -1,6 +1,4 @@
 ﻿using SD;
-using SD.Helpers;
-using System.Reflection;
 
 namespace MainApp.MVC.Helpers
 {
@@ -51,6 +49,7 @@ namespace MainApp.MVC.Helpers
 
         public bool HasModule(string module)
         {
+            //TODO: Review add null check is used once inside try catch
             var activeModules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
             return activeModules.Contains(module);
         }
