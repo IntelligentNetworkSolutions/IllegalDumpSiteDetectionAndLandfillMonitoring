@@ -317,7 +317,7 @@ if (applicationStartMode == ApplicationStartModes.IntranetPortal)
     {
         endpoints.MapControllerRoute(name: "default",
                                         pattern: "{area=Common}/{controller=Home}/{action=Index}/{id?}")
-                //.RequireAuthorization()
+                .RequireAuthorization()
                 ;
     });
 }

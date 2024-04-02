@@ -5,6 +5,7 @@ using SD;
 
 namespace MainApp.MVC.Helpers
 {
+	// TODO: Delete this, unnecessary !!! Move functionality to where it is used or ModulesAndAuthHelper as Initial Claims
 	public class AddClaimsForIntranetPortalUserHelper
 	{
 		public void AddClaims(List<Claim> claims, ApplicationUser user)

@@ -1,6 +1,4 @@
 ﻿using SD;
-using SD.Helpers;
-using System.Reflection;
 
 namespace MainApp.MVC.Helpers
 {
@@ -20,8 +18,8 @@ namespace MainApp.MVC.Helpers
         public async Task<ICollection<AuthClaim>> GetAuthClaims()
         {
             var modules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
-
-            var result = SD.AuthClaims.GetAll().Where(x => modules.Any(y => y == x.FromModule.Value)).ToList();
+            var allClaims = SD.AuthClaims.GetAll();
+            var result = allClaims.Where(x => modules.Any(y => y == x.FromModule.Value)).ToList();
 
             return result;
         }
@@ -32,26 +30,28 @@ namespace MainApp.MVC.Helpers
         /// <returns></returns>
         public async Task<ICollection<SD.Module>> GetModules()
         {
-            var modules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
+            var activeModules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
+            var allModules = SD.Modules.GetAll();
 
-            var result = SD.Modules.GetAll().Where(x => modules.Any(y => y == x.Value)).ToList();
+            var result = allModules.Where(x => activeModules.Any(y => y == x.Value)).ToList();
 
-            return null;
+            return result;
         }
-
 
         public bool HasModule(SD.Module module)
         {
-            // TODO: Return Real Value
-            return true;
-            var modules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
-            return modules.Contains(module.Value);
+            var activeModules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
+            if(activeModules is null || activeModules.Length == 0)
+                return false;
+            
+            return activeModules.Contains(module.Value);
         }
 
         public bool HasModule(string module)
         {
-            var modules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
-            return modules.Contains(module);
+            //TODO: Review add null check is used once inside try catch
+            var activeModules = _configuration.GetSection("AppSettings:Modules").Get<string[]>();
+            return activeModules.Contains(module);
         }
     }
 }
