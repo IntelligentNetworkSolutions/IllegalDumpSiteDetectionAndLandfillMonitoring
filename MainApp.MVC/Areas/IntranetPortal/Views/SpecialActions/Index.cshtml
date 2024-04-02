@@ -1,7 +1,8 @@
 ﻿@using DAL.Helpers;
+@using DAL.Interfaces.Helpers
 @using MainApp.MVC.Helpers;
 @using SD.Helpers;
-@inject AppSettingsAccessor appSettingAccessor;
+@inject IAppSettingsAccessor appSettingAccessor;
 @{
     var resCacheMain = await appSettingAccessor.GetApplicationSettingValueByKey<string>("TranslationClearCacheMainApp");
     var resCachePublic = await appSettingAccessor.GetApplicationSettingValueByKey<string>("TranslationClearCachePublicPortal");
@@ -36,7 +37,7 @@
                         <div class="info-box-content text-center">
                             <span class="info-box-text">@DbResHtml.T("Reset translation cache", "Resources")</span>
                             <span class="info-box-number">
-                                <button class="mb-1 btn bg-gradient-olive" onclick="resetTranslationCache(event)" title=@DbResHtml.T("Reset translation cache", "Resources")>@DbResHtml.T("Reset", "Resources")</button>
+                                <button class="mb-1 btn bg-gradient-olive" onclick="resetTranslationCache()" title=@DbResHtml.T("Reset translation cache", "Resources")>@DbResHtml.T("Reset", "Resources")</button>
                             </span>
                         </div>
                     </div>
@@ -49,30 +50,47 @@
 
 @section Scripts{
     <script>
-        function resetTranslationCache(event) {
-            var errors = [];
-            // TODO: Maybe Dont Promise :D
-            Promise.allSettled([promiseMainApp, promisePublicPortal])
-                .then((results) => {
-                    var hasErrors = results.some(result => result.status === 'rejected');
-                    if (hasErrors) {
-                        var mappedErrors = errors.join('\n');
-                        swal.fire({
-                            title: "@DbResHtml.T("The following requests failed:", "Resources")",
-                            text: mappedErrors,
+        function resetTranslationCache() {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("ResetTranslationCache", "SpecialActions", new { Area = "IntranetPortal" })",
+                data: {},
+                success: function (data) {
+                    if (data.generalError != undefined) {
+                        Swal.fire({
+                            text: `${data.generalError}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                             icon: "error"
-                        });
-                    } else {
-                        swal.fire({
-                            icon: "success",
-                            text: "@DbResHtml.T("Translation cache cleared successfully", "Resources")"
                         }).then((result) => {
                             if (result.isConfirmed) {
-                               location.reload();
+                                location.reload();
                             }
                         });
                     }
-                });
+                    else{
+                        Swal.fire({
+                            text: `${data.stringBuilderSuccess} ${data.stringBuilderError}`,
+                            icon: "info",
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                        
+                    }
+                   
+
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+            
         }
     </script>
 }

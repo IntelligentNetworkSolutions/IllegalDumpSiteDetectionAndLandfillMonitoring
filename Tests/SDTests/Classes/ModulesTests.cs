@@ -13,11 +13,12 @@ namespace Tests.SDTests.Classes
 
             // Assert
             Assert.NotEmpty(modules);
-            Assert.Equal(4, modules.Count());
+            Assert.Equal(5, modules.Count());
             Assert.Contains(modules, m => m.Value == "UserManagement");
             Assert.Contains(modules, m => m.Value == "AuditLog");
             Assert.Contains(modules, m => m.Value == "Admin");
             Assert.Contains(modules, m => m.Value == "SpecialActions");
+            Assert.Contains(modules, m => m.Value == "Datasets");
         }
 
         [Fact]
