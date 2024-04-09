@@ -32,6 +32,8 @@ using System.Text;
 using X.PagedList;
 using System.Runtime.InteropServices;
 using DocumentFormat.OpenXml.Wordprocessing;
+using MainApp.MVC.Filters;
+using System.Security.Claims;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -60,21 +62,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _appSettingsAccessor = appSettingsAccessor;
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.ViewDatasets))]
         public async Task<IActionResult> Index()
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.ViewDatasets) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
             var datasetsList = await _datasetService.GetAllDatasets();
             var model = _mapper.Map<List<DatasetViewModel>>(datasetsList) ?? throw new Exception("Model not found");
 
@@ -111,27 +101,20 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new {parent = datasetDTO, childrenList = childrenDatasets, currentDataset = currentDatasetDb});
             }
 
-            
             return Json(new { parent = parentDataset, childrenList = childrenDatasets, currentDataset = currentDatasetDb });
         }
 
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.AddDataset))]
         public async Task<IActionResult> CreateConfirmed(CreateDatasetViewModel datasetViewModel)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.AddDataset) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            }
+
             if (!ModelState.IsValid)
             {
                 return Json(new { responseError = DbResHtml.T("Dataset model is not valid", "Resources") });
@@ -145,7 +128,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     return Json(new { responseError = DbResHtml.T("Selected parent dataset is not published. You can not add subdataset for unpublished datasets!", "Resources") });
                 }
             }
-            DatasetDTO dataSetDto = _mapper.Map<DatasetDTO>(datasetViewModel) ?? throw new Exception("Model not found");
+
+            datasetViewModel.CreatedById = userId;
+            DatasetDTO dataSetDto = _mapper.Map<DatasetDTO>(datasetViewModel) ?? throw new Exception("Model not found");            
             var insertedDatasetDTO = await _datasetService.CreateDataset(dataSetDto) ?? throw new Exception("Model not found");
             if(datasetViewModel.ParentDatasetId != null)
             {
@@ -155,21 +140,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return Json(new { id = insertedDatasetDTO.Id });
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.ManageDataset))]
         public async Task<IActionResult> Edit(Guid datasetId, int? page, string? SearchByImageName, bool? SearchByIsAnnotatedImage, bool? SearchByIsEnabledImage, int? SearchByShowNumberOfImages, string? OrderByImages)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.ManageDataset) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
             if (datasetId == Guid.Empty)
             {
                 return NotFound();
@@ -198,21 +171,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
         public async Task<IActionResult> PublishDataset(Guid datasetId)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.PublishDataset) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            }
+
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Incorect dataset id", "Resources") });
@@ -225,12 +192,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
             }
 
-            var isPublished = await _datasetService.PublishDataset(datasetId);
-            if(isPublished == 1)
+            var isPublished = await _datasetService.PublishDataset(datasetId, userId);
+            if(isPublished.IsSuccess == true && isPublished.Data == 1 && string.IsNullOrEmpty(isPublished.ErrMsg))
             {
                 return Json(new {responseSuccess = DbResHtml.T("Successfully published dataset","Resources")});
             }
-            else if(isPublished == 2)
+
+            if(isPublished.IsSuccess == false && isPublished.Data == 2)
             {
                 return Json(new { responseError = DbResHtml.T($"Insert at least {nubmerOfImagesNeededToPublishDataset.Data} images, {nubmerOfClassesNeededToPublishDataset.Data} class/es and annotate all enabled images to publish the dataset", "Resources") });
             }
@@ -241,21 +209,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.AddDatasetClass))]
         public async Task<IActionResult> AddDatasetClass(Guid selectedClassId, Guid datasetId)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.AddDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            }
+
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
@@ -271,33 +233,35 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
             }
 
-            var isClassAdded = await _datasetService.AddDatasetClassForDataset(selectedClassId,datasetId);
-            if (isClassAdded == 1)
+            var isClassAdded = await _datasetService.AddDatasetClassForDataset(selectedClassId,datasetId, userId);
+            if (isClassAdded.IsSuccess == true && isClassAdded.Data == 1 && string.IsNullOrEmpty(isClassAdded.ErrMsg))
             {
                 return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset class", "Resources") });
             }
             else
             {
-                return Json(new { responseError = DbResHtml.T("Dataset class was not added", "Resources") });
+                if (!string.IsNullOrEmpty(isClassAdded.ErrMsg))
+                {
+                    return Json(new { responseError = DbResHtml.T(isClassAdded.ErrMsg, "Resources") });
+                }
+                else
+                {
+                    return Json(new { responseError = DbResHtml.T("Dataset class was not added", "Resources") });
+                }
+               
             }
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetClass))]
         public async Task<IActionResult> DeleteDatasetClass(Guid datasetClassId, Guid datasetId)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.DeleteDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            }
+
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
@@ -313,33 +277,29 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
             }
 
-            var isClassDeleted = await _datasetService.DeleteDatasetClassForDataset(datasetClassId, datasetId);
-            if (isClassDeleted == 1)
+            var isClassDeleted = await _datasetService.DeleteDatasetClassForDataset(datasetClassId, datasetId, userId);
+            if (isClassDeleted.IsSuccess == true && isClassDeleted.Data == 1 && string.IsNullOrEmpty(isClassDeleted.ErrMsg))
             {
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset class", "Resources") });
             }
             else
             {
-                return Json(new { responseError = DbResHtml.T("Dataset class was not deleted", "Resources") });
+                if (!string.IsNullOrEmpty(isClassDeleted.ErrMsg))
+                {
+                    return Json(new { responseError = DbResHtml.T(isClassDeleted.ErrMsg, "Resources") });
+                }
+                else
+                {
+                    return Json(new { responseError = DbResHtml.T("Some error occured", "Resources") });
+                }
+                
             }
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetClass))]
         public async Task<IActionResult> DeleteDatasetConfirmed(Guid datasetId)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.DeleteDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
@@ -348,7 +308,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var isDatasetDeleted = await _datasetService.DeleteDataset(datasetId);
             var listOfAllDatasets = await _datasetService.GetAllDatasets() ?? throw new Exception("Datasets not found");
             var childrenDatasetsList = listOfAllDatasets.Where(x => x.ParentDatasetId == datasetId).ToList() ?? throw new Exception("Object not found");
-            if (isDatasetDeleted == 1)
+            if (isDatasetDeleted.IsSuccess ==  true && isDatasetDeleted.Data == 1 && string.IsNullOrEmpty(isDatasetDeleted.ErrMsg))
             {
                 var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
                 string folderPath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetId.ToString());
@@ -358,45 +318,50 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset", "Resources") });
             }
-            else if(isDatasetDeleted == 2)
-            {                
-                return Json(new { responseError = DbResHtml.T("This dataset can not be deleted because there are subdatasets. Delete first the subdatasets!", "Resources"), childrenDatasetsList = childrenDatasetsList });
-            }
             else
             {
-                return Json(new { responseError = DbResHtml.T("Dataset was not deleted", "Resources") });
+                if (!string.IsNullOrEmpty(isDatasetDeleted.ErrMsg))
+                {
+                    return Json(new { responseError = DbResHtml.T(isDatasetDeleted.ErrMsg, "Resources") });
+                }
+                else
+                {
+                    return Json(new { responseError = DbResHtml.T("Some error occured", "Resources") });
+                }
             }
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.ChooseDatasetClassType))]
         public async Task<IActionResult> ChooseDatasetClassType(Guid datasetId, bool annotationsPerSubclass)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.ChooseDatasetClassType) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            }
+
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
             }
 
-            var isSetAnnontationsPerSubclass = await _datasetService.SetAnnotationsPerSubclass(datasetId, annotationsPerSubclass);
-            if (isSetAnnontationsPerSubclass == 1)
+            var isSetAnnontationsPerSubclass = await _datasetService.SetAnnotationsPerSubclass(datasetId, annotationsPerSubclass, userId);
+            if (isSetAnnontationsPerSubclass.IsSuccess == true && isSetAnnontationsPerSubclass.Data == 1 && string.IsNullOrEmpty(isSetAnnontationsPerSubclass.ErrMsg))
             {
                 return Json(new { responseSuccess = DbResHtml.T("Now you can add classes for this dataset", "Resources") });
             }           
             else
             {
-                return Json(new { responseError = DbResHtml.T("Choosed option was not saved", "Resources") });
+                if (!string.IsNullOrEmpty(isSetAnnontationsPerSubclass.ErrMsg))
+                {
+                    return Json(new { responseError = DbResHtml.T(isSetAnnontationsPerSubclass.ErrMsg, "Resources") });
+                }
+                else
+                {
+                    return Json(new { responseError = DbResHtml.T("Choosed option was not saved", "Resources") });
+                }
+                
             }
         }
 

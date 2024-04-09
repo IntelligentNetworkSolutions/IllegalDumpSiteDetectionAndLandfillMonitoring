@@ -17,7 +17,7 @@ namespace MainApp.MVC.ViewModels.IntranetPortal.Dataset
         public Guid? ParentDatasetId { get; init; }
         public virtual DatasetDTO? ParentDataset { get; init; }
 
-        public string? CreatedById { get; init; }
+        public string? CreatedById { get; set; }
         public DateTime CreatedOn { get; init; } = DateTime.UtcNow;
         public UserDTO? CreatedBy { get; init; }
 

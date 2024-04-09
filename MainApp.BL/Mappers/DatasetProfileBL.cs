@@ -18,12 +18,10 @@ namespace MainApp.BL.Mappers
             CreateMap<DatasetDTO, Dataset>().ReverseMap();
             CreateMap<DatasetClassDTO, DatasetClass>().ReverseMap();
             CreateMap<CreateDatasetClassDTO, DatasetClass>()
-                .ForMember(dest => dest.CreatedById, opt => opt.MapFrom(src => "3ae81c64-f69f-4245-9c78-c315ca706a0b"))
                 .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => DateTime.UtcNow));
             CreateMap<EditDatasetClassDTO, DatasetClass>().ReverseMap();
             CreateMap<DatasetImageDTO, DatasetImage>().ReverseMap();
             CreateMap<EditDatasetImageDTO, DatasetImage>()
-                .ForMember(dest => dest.UpdatedById, opt => opt.MapFrom(src => "3ae81c64-f69f-4245-9c78-c315ca706a0b"))
                 .ForMember(dest => dest.UpdatedOn, opt => opt.MapFrom(src => DateTime.UtcNow));
             CreateMap<ImageAnnotationDTO, ImageAnnotation>().ReverseMap();
             CreateMap<Dataset_DatasetClassDTO, Dataset_DatasetClass>().ReverseMap();

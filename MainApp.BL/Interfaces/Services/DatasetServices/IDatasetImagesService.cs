@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using SD;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
 {
@@ -19,15 +20,15 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #endregion
 
         #region Create
-        Task<Guid> AddDatasetImage(DatasetImageDTO datasetImageDto);
+        Task<ResultDTO<Guid>> AddDatasetImage(DatasetImageDTO datasetImageDto);
         #endregion
 
         #region Update
-        Task<int> EditDatasetImage(EditDatasetImageDTO editDatasetImageDTO);
+        Task<ResultDTO<int>> EditDatasetImage(EditDatasetImageDTO editDatasetImageDTO);
         #endregion
 
         #region Delete
-        Task<int> DeleteDatasetImage(Guid datasetImageId);
+        Task<ResultDTO<int>> DeleteDatasetImage(Guid datasetImageId);
         #endregion
     }
 }

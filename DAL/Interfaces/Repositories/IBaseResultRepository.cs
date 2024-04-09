@@ -23,6 +23,7 @@ namespace DAL.Interfaces.Repositories
                                              bool track = false, string? includeProperties = null, int? limit = null);
 
         Task<ResultDTO> Create(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);
+        Task<ResultDTO<TEntity>> CreateAndReturnEntity(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);
         Task<ResultDTO> CreateRange(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default);
 
         Task<ResultDTO> Update(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);

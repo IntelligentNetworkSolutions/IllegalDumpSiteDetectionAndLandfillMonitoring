@@ -93,6 +93,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 foreach (var item in userClaimsDb)
                     claims.Add(new Claim(item.ClaimType, item.ClaimValue));
 
+                if (user.UserName == "insadmin")
+                    claims.Add(new Claim("SpecialAuthClaim", "insadmin"));
+
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 var authProperties = new AuthenticationProperties
                 {

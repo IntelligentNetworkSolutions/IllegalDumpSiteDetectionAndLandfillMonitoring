@@ -17,6 +17,8 @@ using System.Drawing.Imaging;
 using ImageMagick;
 using DAL.Interfaces.Helpers;
 using System.Data;
+using MainApp.MVC.Filters;
+using System.Security.Claims;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -46,28 +48,16 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetImage))]
         public async Task<IActionResult> DeleteDatasetImage(Guid datasetImageId, Guid datasetId)
-        {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.DeleteDatasetImage) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+        {           
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
             }
-            if (datasetId == Guid.Empty)
+            if (datasetImageId == Guid.Empty)
             {
-                return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
+                return Json(new { responseError = DbResHtml.T("Invalid dataset image id", "Resources") });
             }
 
             var datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Dataset not found");
@@ -86,7 +76,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var currentThumbnailPath = Path.Combine(_webHostEnvironment.WebRootPath, datasetThumbnailsFolder.Data, datasetId.ToString(), currentThumbnailFileName);
 
             var isImageDeleted = await _datasetImagesService.DeleteDatasetImage(datasetImageId);
-            if (isImageDeleted == 1)
+            if (isImageDeleted.IsSuccess == true && isImageDeleted.Data == 1 && string.IsNullOrEmpty(isImageDeleted.ErrMsg))
             {
                 if (System.IO.File.Exists(currentImagePath))
                 {
@@ -98,29 +88,23 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset image", "Resources") });
             }
-            else
+            if (!string.IsNullOrEmpty(isImageDeleted.ErrMsg))
             {
-                return Json(new { responseError = DbResHtml.T("Dataset image was not deleted", "Resources") });
+                return Json(new { responseError = DbResHtml.T(isImageDeleted.ErrMsg, "Resources") });
             }
-
+            return Json(new { responseError = DbResHtml.T("Error occured while deleting the image", "Resources") });
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.EditDatasetImage))]
         public async Task<IActionResult> EditDatasetImage(EditDatasetImageDTO model)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.EditDatasetImage) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            }
+
             if (!ModelState.IsValid)
             {
                 return Json(new { responseError = DbResHtml.T("Entered model is not valid", "Resources") });
@@ -133,37 +117,30 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             model.FileName = string.Format("{0}.jpg", model.Name);
+            model.UpdatedById = userId;
             var isImageUpdated = await _datasetImagesService.EditDatasetImage(model);
-            if (isImageUpdated == 1)
+            if (isImageUpdated.IsSuccess == true && isImageUpdated.Data == 1 && string.IsNullOrEmpty(isImageUpdated.ErrMsg))
             {
                 return Json(new { responseSuccess = DbResHtml.T("Successfully updated dataset image", "Resources") });
             }
-            else if (isImageUpdated == 2)
+            if (!string.IsNullOrEmpty(isImageUpdated.ErrMsg))
             {
-                return Json(new { responseError = DbResHtml.T("You can not enable this image because there are not annotations!", "Resources") });
+               return Json(new { responseError = DbResHtml.T(isImageUpdated.ErrMsg, "Resources") });                               
             }
-            else
-            {
-                return Json(new { responseError = DbResHtml.T("Dataset image was not updated", "Resources") });
-            }
+
+            return Json(new { responseError = DbResHtml.T("Dataset image was not updated", "Resources") });
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.AddDatasetImage))]
         public async Task<IActionResult> UploadDatasetImage(Guid datasetId, string imageCropped, string imageName)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.AddDatasetImage) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            }
+
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
@@ -198,15 +175,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 DatasetId = datasetId,
                 IsEnabled = false,
                 CreatedOn = DateTime.UtcNow,
-                CreatedById = "3ae81c64-f69f-4245-9c78-c315ca706a0b",
+                CreatedById = userId,
                 ImagePath = string.Format("\\{0}\\{1}\\", datasetImagesFolder.Data, datasetDb.Id.ToString()),
                 ThumbnailPath = string.Format("\\{0}\\{1}\\", datasetThumbnailsFolder.Data, datasetDb.Id.ToString()),
             };
 
             var isImageAdded = await _datasetImagesService.AddDatasetImage(dto);
-            if (isImageAdded != Guid.Empty)
+            if (isImageAdded.Data != Guid.Empty)
             {
-                var imageFileName = string.Format("{0}.jpg", isImageAdded);
+                var imageFileName = string.Format("{0}.jpg", isImageAdded.Data);
                 var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Id.ToString(), imageFileName);
                 string base64Datas = imageCropped.Split(',')[1];
                 byte[] imageBytes = Convert.FromBase64String(base64Datas);
@@ -219,12 +196,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                         image.Write(imagePath);
                     }
                 }
-                SaveTumbnailImage(datasetId, isImageAdded, imageCropped, datasetThumbnailsFolder.Data);
+                SaveTumbnailImage(datasetId, isImageAdded.Data, imageCropped, datasetThumbnailsFolder.Data);
                 return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset image", "Resources") });
             }
             else
             {
-                return Json(new { responseError = DbResHtml.T("Dataset image was not added", "Resources") });
+                return Json(new { responseError = DbResHtml.T(isImageAdded.ErrMsg, "Resources") });
             }
         }
 

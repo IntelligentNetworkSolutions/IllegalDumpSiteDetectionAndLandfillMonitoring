@@ -1,5 +1,6 @@
 ﻿using DTOs.MainApp.BL.DatasetDTOs;
 using Entities.DatasetEntities;
+using SD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,15 +19,15 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #endregion
 
         #region Create
-        Task<int> AddDatasetClass(CreateDatasetClassDTO dto);
+        Task<ResultDTO<int>> AddDatasetClass(CreateDatasetClassDTO dto);
         #endregion
 
         #region Update
-        Task<int> EditDatasetClass(EditDatasetClassDTO dto);
+        Task<ResultDTO<int>> EditDatasetClass(EditDatasetClassDTO dto);
         #endregion
 
         #region Delete
-        Task<int> DeleteDatasetClass(Guid classId);
+        Task<ResultDTO<int>> DeleteDatasetClass(Guid classId);
         
         #endregion
     }
