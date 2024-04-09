@@ -18,8 +18,9 @@ namespace MainApp.BL.Services.DatasetServices
 
         public async Task<List<Dataset_DatasetClassDTO>> GetDataset_DatasetClassByClassId(Guid classId)
         {
-            var dataset_datasetClass = await _datasetDatasetClassRepository.GetListByDatasetClassId(classId) ?? throw new Exception("Object not found");
-            return _mapper.Map<List<Dataset_DatasetClassDTO>>(dataset_datasetClass);
+            var dataset_datasetClass = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetClassId == classId) ?? throw new Exception("Object not found");
+            var data = dataset_datasetClass.Data ?? throw new Exception("Object not found");
+            return _mapper.Map<List<Dataset_DatasetClassDTO>>(data);
         }
     }
 }

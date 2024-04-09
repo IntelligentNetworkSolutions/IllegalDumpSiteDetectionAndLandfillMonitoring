@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.DatasetRepositories;
+using DocumentFormat.OpenXml.EMMA;
 using DTOs.MainApp.BL.DatasetDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using Microsoft.AspNetCore.Mvc;
+using SD;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -41,65 +43,92 @@ namespace MainApp.BL.Services.DatasetServices
         #region Get DatasetImage/es
         public async Task<DatasetImageDTO> GetDatasetImageById(Guid datasetImageId)
         {
-            var datasetImageDb =  await _datasetImagesRepository.GetDatasetImageById(datasetImageId) ?? throw new Exception("Object is null");
-            return _mapper.Map<DatasetImageDTO>(datasetImageDb);
+            var datasetImageDb = await _datasetImagesRepository.GetById(datasetImageId) ?? throw new Exception("Object not found");
+            return _mapper.Map<DatasetImageDTO>(datasetImageDb.Data);
         }
         public async Task<List<DatasetImageDTO>> GetImagesForDataset(Guid datasetId)
         {
-            var datasetImages = await _datasetImagesRepository.GetImagesForDataset(datasetId) ?? throw new Exception("Dataset id is null"); 
+            var datasetImages = await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetId) ?? throw new Exception("Object not found");
             return _mapper.Map<List<DatasetImageDTO>>(datasetImages);
         }
         #endregion
         #endregion
 
         #region Create
-        public async Task<Guid> AddDatasetImage(DatasetImageDTO datasetImageDto)
+        public async Task<ResultDTO<Guid>> AddDatasetImage(DatasetImageDTO datasetImageDto)
         {
-            var datasetId = datasetImageDto.DatasetId ?? throw new Exception("Dataset id is null"); 
-            var datasetDb = await _datasetsRepository.GetDatasetById(datasetId) ?? throw new Exception("Object not found");
+            var datasetId = datasetImageDto.DatasetId ?? throw new Exception("Dataset id is null");
+            var datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
+            var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
 
             DatasetImage datasetImage = _mapper.Map<DatasetImage>(datasetImageDto);
-            var isImageAdded = await _datasetImagesRepository.CreateDatasetImage(datasetImage);
+            var imageAddedResult = await _datasetImagesRepository.CreateAndReturnEntity(datasetImage) ?? throw new Exception("Object not found");
+            var imageAddedData = imageAddedResult.Data ?? throw new Exception("Object not found");
 
-            datasetDb.UpdatedOn = DateTime.UtcNow;
-            //TODO: updatedBy 
-            var isDatasetUpdated = await _datasetsRepository.UpdateDataset(datasetDb);
-            return isImageAdded;
+            datasetDbData.UpdatedOn = DateTime.UtcNow;
+            datasetDbData.UpdatedById = datasetImageDto.UpdatedById; 
+            await _datasetsRepository.Update(datasetDbData);
+            if(imageAddedData.Id == Guid.Empty)
+            {
+                return new ResultDTO<Guid>(IsSuccess: false, Guid.Empty,"Dataset image was not added", null);
+            }
+            else
+            {
+                return new ResultDTO<Guid>(IsSuccess: true, imageAddedData.Id, null, null);
+            }
         }
         #endregion
 
         #region Update
-        public async Task<int> EditDatasetImage(EditDatasetImageDTO editDatasetImageDTO)
+        public async Task<ResultDTO<int>> EditDatasetImage(EditDatasetImageDTO editDatasetImageDTO)
         {
-            var datasetDb = await _datasetsRepository.GetDatasetById(editDatasetImageDTO.DatasetId) ?? throw new Exception("Object not found");
-            var datasetImageDb = await _datasetImagesRepository.GetDatasetImageById(editDatasetImageDTO.Id) ?? throw new Exception("Object not found");
+            var datasetDb = await _datasetsRepository.GetById(editDatasetImageDTO.DatasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
+            var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
+            var datasetImageDb = await _datasetImagesRepository.GetById(editDatasetImageDTO.Id) ?? throw new Exception("Object not found");
+            var data = datasetImageDb.Data ?? throw new Exception("Object not found");
 
             if (editDatasetImageDTO.IsEnabled == true)
             {
-                var imageAnnotations = await _imageAnnotationsRepository.GetAllImageAnnotations() ?? throw new Exception("Object not found");
-                var imageAnnotationsByImgId = imageAnnotations.Where(x => x.DatasetImageId == editDatasetImageDTO.Id).ToList();
-                if (imageAnnotationsByImgId.Count < 1)
+                var imageAnnotations = await _imageAnnotationsRepository.GetAll() ?? throw new Exception("Object not found");
+                var imageAnnotationsByImgId = imageAnnotations.Data?.Where(x => x.DatasetImageId == editDatasetImageDTO.Id).ToList();
+                if (imageAnnotationsByImgId?.Count < 1)
                 {
-                    return 2;
+                    return new ResultDTO<int>(IsSuccess: false, 2, "You can not enable this image because there are not annotations!", null);
                 }
             }
            
-            DatasetImage datasetImage = _mapper.Map(editDatasetImageDTO, datasetImageDb);
-            var isImageUpdated = await _datasetImagesRepository.EditDatasetImage(datasetImage);
+            DatasetImage datasetImage = _mapper.Map(editDatasetImageDTO, data);
+            var isImageUpdated = await _datasetImagesRepository.Update(datasetImage);
+            datasetDbData.UpdatedOn = DateTime.UtcNow;
+            datasetDbData.UpdatedById = editDatasetImageDTO.UpdatedById;
+            
+            var isDatasetUpdated = await _datasetsRepository.Update(datasetDbData);
 
-            datasetDb.UpdatedOn = DateTime.UtcNow;
-            //TODO: updatedBy 
-            var isDatasetUpdated = await _datasetsRepository.UpdateDataset(datasetDb);
-            return isImageUpdated;
+            if (isImageUpdated.IsSuccess == true)
+            {
+                return new ResultDTO<int>(IsSuccess: true, 1, null, null);
+            }
+            else
+            {
+                return new ResultDTO<int>(IsSuccess: false, 3, isImageUpdated.ErrMsg, null);
+            }
         }
         #endregion
 
         #region Delete
-        public async Task<int> DeleteDatasetImage(Guid datasetImageId)
+        public async Task<ResultDTO<int>> DeleteDatasetImage(Guid datasetImageId)
         {
-            var datasetImageDb = await _datasetImagesRepository.GetDatasetImageById(datasetImageId) ?? throw new Exception("Image not found");             
-            var isImageDeleted = await _datasetImagesRepository.DeleteImage(datasetImageDb);
-            return isImageDeleted;
+            var datasetImageDb = await _datasetImagesRepository.GetById(datasetImageId) ?? throw new Exception("Object not found");
+            var data = datasetImageDb.Data ?? throw new Exception("Object not found");            
+            var isImageDeleted = await _datasetImagesRepository.Delete(data);
+            if (isImageDeleted.IsSuccess == true)
+            {
+                return new ResultDTO<int>(IsSuccess: true, 1, null, null);
+            }
+            else
+            {
+                return new ResultDTO<int>(IsSuccess: false, 2, "Dataset image was not deleted", null);
+            }
         }
         #endregion
     }

@@ -56,6 +56,21 @@ namespace DAL.Repositories
             return ResultDTO.Ok();
         }
 
+        public virtual async Task<ResultDTO<TEntity>> CreateAndReturnEntity(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)
+        {
+            await _dbContext.Set<TEntity>().AddAsync(entity);
+            if (saveChanges)
+            {
+                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                if (!resSave.IsSuccess)
+                    return ResultDTO<TEntity>.Fail(resSave.ErrMsg);
+
+                return ResultDTO<TEntity>.Ok(entity);
+            }
+
+            return ResultDTO<TEntity>.Ok(entity);
+        }
+
         public virtual async Task<ResultDTO> CreateRange(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
             await _dbContext.Set<TEntity>().AddRangeAsync(entities);
