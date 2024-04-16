@@ -5,6 +5,7 @@ using MainApp.MVC.Filters;
 using MainApp.MVC.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SD;
 using System.Security.Policy;
 using System.Text;
 using Westwind.Globalization;
@@ -12,7 +13,7 @@ using Westwind.Globalization;
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
     [Area("IntranetPortal")]
-
+    [HasAppModule(nameof(Modules.SpecialActions))]
     public class SpecialActionsController : Controller
     {
         private readonly ModulesAndAuthClaimsHelper _modulesAndAuthClaims;
@@ -29,22 +30,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.SpecialActions))]
         public async Task<IActionResult> Index()
         {
-            // TODO
-            //if (!User.HasAuthClaim(SD.AuthClaims.SpecialActions) || !_modulesAndAuthClaims.HasModule(SD.Modules.SpecialActions))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            return View();
+            return await Task.FromResult(View());
         }
+
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.SpecialActions))]
         public async Task<IActionResult> ResetTranslationCache()
         {
             var translationClearCacheIntranetPortalUrl = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("TranslationClearCacheIntranetPortal", "TranslationClearCacheIntranetPortal");
@@ -89,6 +79,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.SpecialActions))]
         private StringBuilderResultDTO StringBuilderAppend(HttpResponseMessage response, string portalName)
         {
             StringBuilderResultDTO result = new StringBuilderResultDTO();

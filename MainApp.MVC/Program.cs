@@ -146,7 +146,6 @@ services.AddHttpContextAccessor();
 builder.Services.TryAddScoped<IApplicationSettingsRepo, ApplicationSettingsRepository>();
 builder.Services.TryAddScoped<IAppSettingsAccessor, AppSettingsAccessor>();
 builder.Services.TryAddScoped<IApplicationSettingsService, ApplicationSettingsService>();
-builder.Services.TryAddScoped<AddClaimsForIntranetPortalUserHelper>();
 builder.Services.TryAddScoped<PasswordValidationHelper>();
 builder.Services.TryAddScoped<ModulesAndAuthClaimsHelper>();
 builder.Services.TryAddScoped<IUserManagementDa, UserManagementDa>();
@@ -165,9 +164,9 @@ builder.Services.TryAddScoped<IDataset_DatasetClassRepository, Dataset_DatasetCl
 builder.Services.TryAddScoped<IDatasetClassesService, DatasetClassesService>(); 
 builder.Services.TryAddScoped<IDatasetImagesRepository, DatasetImagesRepository>(); 
 builder.Services.TryAddScoped<IDatasetImagesService, DatasetImagesService>(); 
-builder.Services.TryAddScoped<IDataset_DatasetClassService, Dataset_DatasetClassService>(); 
+builder.Services.TryAddScoped<IDataset_DatasetClassService, Dataset_DatasetClassService>();
 
-
+// TODO: look over
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfile).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfileBL).Assembly);

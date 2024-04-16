@@ -367,3 +367,4 @@ FodyWeavers.xsd
 
 /MainApp/appsettings.Development.json
 /Tests/coveragereport
+/coveragereport

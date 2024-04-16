@@ -21,7 +21,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly AddClaimsForIntranetPortalUserHelper _addClaimsForIntranetPortalUserHelper;
         private readonly IntranetPortalUsersTokenDa _intranetPortalUsersTokenDa;
         private readonly IForgotResetPasswordService _forgotResetPasswordService;
         private readonly IAppSettingsAccessor _appSettingsAccessor;
@@ -30,7 +29,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly IUserManagementService _userManagementService;
 
         public AccountController(UserManager<ApplicationUser> userManager,
-            AddClaimsForIntranetPortalUserHelper addClaimsForIntranetPortalUserHelper,
             IntranetPortalUsersTokenDa intranetPortalUsersTokenDa,
             IForgotResetPasswordService forgotResetPasswordService,
             IConfiguration configuration,
@@ -40,7 +38,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         {
             _userManager = userManager;
-            _addClaimsForIntranetPortalUserHelper = addClaimsForIntranetPortalUserHelper;
             _intranetPortalUsersTokenDa = intranetPortalUsersTokenDa;
             _forgotResetPasswordService = forgotResetPasswordService;
             _configuration = configuration;
@@ -68,73 +65,93 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         //TODO
         [HttpPost]
         [AllowAnonymous]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password, bool remember, string returnUrl)
         {
-            var user = await _userManager.FindByNameAsync(username);
-            if (user == null)
+            if(string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                ViewData["MessageError"] = DbResHtml.T("All fields are required", "Resources");
+                ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
+                return View();
+            }
+
+            ApplicationUser user = await _userManager.FindByNameAsync(username);
+            if (user is null)
             {
                 ViewData["MessageError"] = DbResHtml.T("Wrong username", "Resources");
                 ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
                 return View();
             }
 
-            var passwordCheck = await _userManager.CheckPasswordAsync(user, password);
-            if (passwordCheck)
-            {
-                if (user.IsActive == false)
-                {
-                    ViewData["MessageError"] = DbRes.T("Unable to log in because this user account is currently disabled!", "Resources");
-                    ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
-                    return View();
-                }
-                var claims = new List<Claim>();
-                _addClaimsForIntranetPortalUserHelper.AddClaims(claims, user);
-                var userClaimsDb = await _userManagementService.GetUserClaims(user.Id);
-                foreach (var item in userClaimsDb)
-                    claims.Add(new Claim(item.ClaimType, item.ClaimValue));
-
-                if (user.UserName == "insadmin")
-                    claims.Add(new Claim("SpecialAuthClaim", "insadmin"));
-
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new AuthenticationProperties
-                {
-                    //AllowRefresh = <bool>,
-                    // Refreshing the authentication session should be allowed.
-
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14),
-                    // The time at which the authentication ticket expires.
-                    // A value set here overrides the ExpireTimeSpan option of CookieAuthenticationOptions set with AddCookie.
-
-                    IsPersistent = remember,
-                    // Whether the authentication session is persisted across multiple requests.
-                    // When used with cookies, controls whether the cookie's lifetime is absolute
-                    // (matching the lifetime of the authentication ticket) or session-based.
-
-                    IssuedUtc = DateTimeOffset.UtcNow
-                    // The time at which the authentication ticket was issued.
-
-                    //RedirectUri = <string>
-                    // The full path or absolute URI to be used as an http 
-                    // redirect response value.
-                };
-
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties);
-
-                if (!string.IsNullOrEmpty(returnUrl))
-                    return Redirect(returnUrl);
-
-                return RedirectToAction("Index", "Home", new { area = "Common" });
-            }
-            else
+            bool passwordCheck = await _userManager.CheckPasswordAsync(user, password);
+            if (passwordCheck == false)
             {
                 ViewData["MessageError"] = DbResHtml.T("Wrong password", "Resources");
                 ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
                 return View();
             }
+
+            if (user.IsActive == false)
+            {
+                ViewData["MessageError"] = DbRes.T("Unable to log in because this user account is currently disabled!", "Resources");
+                ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
+                return View();
+            }
+
+            var claims = new List<Claim>();
+            List<Claim> userIdentityClaims = GetUserIdentityClaims(user);
+            claims.AddRange(userIdentityClaims);
+
+            var userClaimsDb = await _userManagementService.GetUserClaims(user.Id);
+            foreach (var item in userClaimsDb)
+                claims.Add(new Claim(item.ClaimType, item.ClaimValue));
+
+            // TODO: look over
+            if (user.UserName == "insadmin")
+                claims.Add(new Claim("SpecialAuthClaim", "insadmin"));
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                //AllowRefresh = <bool>, Refreshing the authentication session should be allowed.
+                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14), // The time at which the authentication ticket expires.
+                                                                // A value set here overrides the ExpireTimeSpan option of CookieAuthenticationOptions set with AddCookie.
+
+                IsPersistent = remember, // Whether the authentication session is persisted across multiple requests.
+                                         // When used with cookies, controls whether the cookie's lifetime is absolute
+                                         // (matching the lifetime of the authentication ticket) or session-based.
+
+                IssuedUtc = DateTimeOffset.UtcNow // The time at which the authentication ticket was issued.
+
+                //RedirectUri = <string> The full path or absolute URI to be used as an http redirect response value.
+            };
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
+
+            if (!string.IsNullOrEmpty(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction("Index", "Home", new { area = "Common" });
+        }
+
+        // TODO: In BL
+        public List<Claim> GetUserIdentityClaims(ApplicationUser user)
+        {
+            List<Claim> claimsIdentity = new List<Claim>();
+
+            if (user is null)
+                return claimsIdentity;
+
+            claimsIdentity.Add(new Claim(ClaimTypes.Name, user.Email));
+            claimsIdentity.Add(new Claim("FirsName", user.FirstName));
+            claimsIdentity.Add(new Claim("Username", user.UserName));
+            claimsIdentity.Add(new Claim("UserId", user.Id));
+            claimsIdentity.Add(new Claim("LastName", user.LastName));
+
+            return claimsIdentity;
         }
 
         [AllowAnonymous]
@@ -357,9 +374,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             if (!password.Equals(confirmNewPassword))
                 return Json(new { passwordMissmatch = true });
-            
+
             ResultDTO result = await _userManagementService.UpdateUserPassword(userId, currentPassword, password);
-            if(!result.IsSuccess && ResultDTO.HandleError(result)) 
+            if (!result.IsSuccess && ResultDTO.HandleError(result))
                 return Json(new { currentPasswordFailed = true });
 
             return Json(new { passwordUpdatedSuccessfully = true });

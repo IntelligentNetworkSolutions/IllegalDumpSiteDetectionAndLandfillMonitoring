@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 
-namespace Tests.MainApp.MVC.Tests.Filters
+namespace Tests.MainAppMVCTests.Filters
 {
     public class AuthClaimFilterTests
     {

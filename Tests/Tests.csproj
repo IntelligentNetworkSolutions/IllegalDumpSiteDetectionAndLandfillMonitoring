@@ -24,10 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DalTests\Repositories\" />
-    <Folder Include="MailSend.Tests\" />
-    <Folder Include="Entities.Tests\" />
-    <Folder Include="DTOs.Tests\" />
+    <Folder Include="TestResults\" />
   </ItemGroup>
 
   <ItemGroup>

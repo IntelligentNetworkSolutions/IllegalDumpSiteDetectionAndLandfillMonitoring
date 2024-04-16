@@ -22,12 +22,15 @@ namespace MainApp.BL.Services
         }
 
         #region Create
-        public async Task<ResultDTO> CreateApplicationSetting(AppSettingDTO appSettingDTO)
+        public async Task<ResultDTO> CreateApplicationSetting(AppSettingDTO? appSettingDTO)
         {
             try
             {
                 if (appSettingDTO is null)
                     return ResultDTO.Fail("Missing App Setting Object");
+
+                if (string.IsNullOrWhiteSpace(appSettingDTO.Key))
+                    return ResultDTO.Fail("Missing App Setting Key");
 
                 if (string.IsNullOrWhiteSpace(appSettingDTO.Value))
                     return ResultDTO.Fail("Missing App Setting Value");
@@ -38,6 +41,8 @@ namespace MainApp.BL.Services
                     appSettingDTO.Description = appSettingDTO.Key;
 
                 ApplicationSettings appSettingEnt = _mapper.Map<ApplicationSettings>(appSettingDTO);
+                if (appSettingEnt is null)
+                    return ResultDTO.Fail("Mapping Failed");
 
                 bool resCreate = await _applicationSettingsRepo.CreateApplicationSetting(appSettingEnt);
                 if (!resCreate)
@@ -61,6 +66,9 @@ namespace MainApp.BL.Services
                 if (appSettingDTO is null)
                     return ResultDTO.Fail("Missing App Setting Object");
 
+                if (string.IsNullOrWhiteSpace(appSettingDTO.Key))
+                    return ResultDTO.Fail("Missing App Setting Key");
+
                 if (string.IsNullOrWhiteSpace(appSettingDTO.Value))
                     return ResultDTO.Fail("Missing App Setting Value");
 
@@ -76,6 +84,8 @@ namespace MainApp.BL.Services
                     appSettingDTO.Description = appSettingDTO.Key;
 
                 applicationSettingEntity = _mapper.Map<ApplicationSettings>(appSettingDTO);
+                if (applicationSettingEntity is null)
+                    return ResultDTO.Fail("Mapping Failed");
 
                 bool resUpdate = await _applicationSettingsRepo.UpdateApplicationSetting(applicationSettingEntity);
                 if (!resUpdate)
@@ -112,7 +122,7 @@ namespace MainApp.BL.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
-                return ResultDTO.Fail(ex.Message);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
         #endregion
@@ -125,37 +135,6 @@ namespace MainApp.BL.Services
                 List<ApplicationSettings> appSettings = await _applicationSettingsRepo.GetAllApplicationSettingsAsList();
                 List<AppSettingDTO> appSettingDTOs = _mapper.Map<List<AppSettingDTO>>(appSettings);
                 return appSettingDTOs;
-            }
-            catch(Exception ex)
-            {
-                _logger.LogError(ex.Message, ex);
-                return null;
-            }
-        }
-
-        public async Task<IQueryable<AppSettingDTO>?> GetAllApplicationSettingsAsQueryable()
-        {
-            try
-            {
-                IQueryable<ApplicationSettings>? appSettingsAsQuery = 
-                    await _applicationSettingsRepo.GetAllApplicationSettingsAsQueryable();
-
-                if(appSettingsAsQuery is null)
-                    return null;
-
-                IQueryable<AppSettingDTO> appSettingsAsDtosAsQuery = _mapper.ProjectTo<AppSettingDTO>(appSettingsAsQuery);
-
-                // TODO : Test and Remove
-                //IQueryable <AppSettingDTO> appSettingsAsDtosAsQuery = appSettingsAsQuery.Select(x => new AppSettingDTO()
-                //{
-                //    Key = x.Key,
-                //    Value = x.Value,
-                //    Description = x.Description,
-                //    DataType = x.DataType,
-                //    Module = x.Module
-                //});
-
-                return appSettingsAsDtosAsQuery;
             }
             catch(Exception ex)
             {

@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
+using Moq;
 
-namespace Tests.MainApp.MVC.Tests.Filters
+namespace Tests.MainAppMVCTests.Filters
 {
     public class TenantModuleFilterTests
     {
@@ -29,14 +30,15 @@ namespace Tests.MainApp.MVC.Tests.Filters
             configBuilder.AddInMemoryCollection(configDict);
             var config = configBuilder.Build();
 
-            var modulesAndClaimsHelper = new ModulesAndAuthClaimsHelper(config);
+            var modulesAndClaimsHelperMock = new Mock<ModulesAndAuthClaimsHelper>(config);
+            //modulesAndClaimsHelperMock.Setup(m => m.HasModule(moduleName));
 
             var httpContext = new DefaultHttpContext();
 
             var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
             var context = new AuthorizationFilterContext(actionContext, new List<IFilterMetadata>());
 
-            var filter = new TenantModuleAuthorizationFilter(modulesAndClaimsHelper, moduleName);
+            var filter = new TenantModuleAuthorizationFilter(modulesAndClaimsHelperMock.Object, moduleName);
 
             // Act
             filter.OnAuthorization(context);
@@ -63,14 +65,14 @@ namespace Tests.MainApp.MVC.Tests.Filters
             configBuilder.AddInMemoryCollection(configDict);
             var config = configBuilder.Build();
 
-            var modulesAndClaimsHelper = new ModulesAndAuthClaimsHelper(config);
+            var modulesAndClaimsHelperMock = new Mock<ModulesAndAuthClaimsHelper>(config);
 
             var httpContext = new DefaultHttpContext();
 
             var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
             var context = new AuthorizationFilterContext(actionContext, new List<IFilterMetadata>());
 
-            var filter = new TenantModuleAuthorizationFilter(modulesAndClaimsHelper, moduleName);
+            var filter = new TenantModuleAuthorizationFilter(modulesAndClaimsHelperMock.Object, moduleName);
 
             // Act
             filter.OnAuthorization(context);
@@ -98,14 +100,14 @@ namespace Tests.MainApp.MVC.Tests.Filters
             configBuilder.AddInMemoryCollection(configDict);
             var config = configBuilder.Build();
 
-            var modulesAndClaimsHelper = new ModulesAndAuthClaimsHelper(config);
+            var modulesAndClaimsHelperMock = new Mock<ModulesAndAuthClaimsHelper>(config);
 
             var httpContext = new DefaultHttpContext();
 
             var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
             var context = new AuthorizationFilterContext(actionContext, new List<IFilterMetadata>());
 
-            var filter = new TenantModuleAuthorizationFilter(modulesAndClaimsHelper, moduleName);
+            var filter = new TenantModuleAuthorizationFilter(modulesAndClaimsHelperMock.Object, moduleName);
 
             // Act
             filter.OnAuthorization(context);

@@ -5,15 +5,13 @@ namespace MainApp.BL.Interfaces.Services
 {
     public interface IApplicationSettingsService
     {
-        Task<ResultDTO> CreateApplicationSetting(AppSettingDTO appSettingDTO);
+        Task<ResultDTO> CreateApplicationSetting(AppSettingDTO? appSettingDTO);
 
         Task<ResultDTO> UpdateApplicationSetting(AppSettingDTO appSettingDTO);
 
         Task<ResultDTO> DeleteApplicationSetting(string appSettingKey);
 
         Task<List<AppSettingDTO>?> GetAllApplicationSettingsAsList();
-
-        Task<IQueryable<AppSettingDTO>?> GetAllApplicationSettingsAsQueryable();
 
         Task<List<string>?> GetAllApplicationSettingsKeysAsList();
 
