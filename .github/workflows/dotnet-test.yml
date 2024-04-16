@@ -47,18 +47,24 @@ jobs:
         name: coverage-html-report
         path: ./coverage-report
 
-    - name: Upload test results
+    - name: Install trx2junit
+      run: dotnet tool install -g trx2junit --tool-path ./dotnet-global-tools
+
+    - name: Convert TRX to JUnit
+      run: |
+        mkdir junit-results
+        ./dotnet-global-tools/trx2junit ./Tests/TestResults/**/*.trx --output junit-results
+
+    - name: Upload JUnit Test Results
       uses: actions/upload-artifact@v3
-      if: always()
       with:
-        name: test-results
-        path: |
-          **/*.trx
+        name: junit-test-results
+        path: junit-results/*.xml
 
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: 'Unit Tests'
-        path: '**/*.trx'
-        reporter: 'trx'
+        path: junit-results/*.xml
+        reporter: 'junit'
