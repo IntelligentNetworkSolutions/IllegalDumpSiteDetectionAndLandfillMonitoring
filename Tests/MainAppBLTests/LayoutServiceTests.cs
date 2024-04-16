@@ -1,7 +1,7 @@
 ﻿using Services;
 using Tests.Fixtures;
 
-namespace Tests.MainApp.BL.Tests
+namespace Tests.MainAppBLTests
 {
     public class LayoutServiceTests : IClassFixture<LayoutServiceFixture>
     {

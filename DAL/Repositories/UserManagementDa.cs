@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DAL.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DAL.Repositories
 {
@@ -24,7 +25,7 @@ namespace DAL.Repositories
         #region Read
         
         #region Get User/s
-        public async Task<ICollection<ApplicationUser>> GetAllIntanetPortalUsers()
+        public async Task<List<ApplicationUser>> GetAllIntanetPortalUsers()
         {
             try
             {
@@ -37,7 +38,7 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task<ICollection<ApplicationUser>> GetAllIntanetPortalUsersExcludingCurrent(string id)
+        public async Task<List<ApplicationUser>> GetAllIntanetPortalUsersExcludingCurrent(string id)
         {
             try
             {
@@ -54,7 +55,7 @@ namespace DAL.Repositories
         {
             try
             {
-                return await _db.Users.SingleOrDefaultAsync(z => z.Id == userId);
+                return await _db.Users.FirstOrDefaultAsync(z => z.Id == userId);
             }
             catch (Exception ex)
             {
@@ -88,11 +89,10 @@ namespace DAL.Repositories
                 throw;
             }
         }
-
         #endregion
 
         #region Roles and Claims
-        public async Task<ICollection<IdentityRole>> GetRoles()
+        public async Task<List<IdentityRole>> GetAllRoles()
         {
             try
             {
@@ -157,7 +157,7 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task<ICollection<IdentityUserRole<string>>> GetUserRoles()
+        public async Task<List<IdentityUserRole<string>>> GetUserRoles()
         {
             try
             {
@@ -170,7 +170,7 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task<ICollection<IdentityUserRole<string>>> GetUserRolesByUserId(string userId)
+        public async Task<List<IdentityUserRole<string>>> GetUserRolesByUserId(string userId)
         {
             try
             {
@@ -335,7 +335,7 @@ namespace DAL.Repositories
             {
                 _db.Update(role);
                 int resUpdate = await _db.SaveChangesAsync();
-                return resUpdate > 0;
+                return resUpdate >= 0;
             }
             catch (Exception ex)
             {
@@ -393,10 +393,13 @@ namespace DAL.Repositories
         }
 
         public async Task DeleteClaimsRolesForUser(List<IdentityUserClaim<string>> userClaims, 
-                                                    ICollection<IdentityUserRole<string>> userRoles)
+                                                    List<IdentityUserRole<string>> userRoles)
         {
+            IDbContextTransaction? transaction = null;
             try
             {
+                transaction = await _db.Database.BeginTransactionAsync();
+
                 foreach (var claim in userClaims)
                     _db.Remove(claim);
                 
@@ -404,9 +407,14 @@ namespace DAL.Repositories
                     _db.Remove(role);
                 
                 await _db.SaveChangesAsync();
+
+                await transaction.CommitAsync();
             }
             catch (Exception ex)
             {
+                if (transaction is not null)
+                    await transaction.RollbackAsync();
+
                 _logger.LogError(ex.Message);
                 throw;
             }
@@ -414,15 +422,23 @@ namespace DAL.Repositories
 
         public async Task DeleteClaimsForRole(List<IdentityRoleClaim<string>> roleClaims)
         {
+            IDbContextTransaction? transaction = null;
             try
             {
+                transaction = await _db.Database.BeginTransactionAsync();
+
                 foreach (var claim in roleClaims)
                     _db.Remove(claim);
 
                 await _db.SaveChangesAsync();
+
+                await transaction.CommitAsync();
             }
             catch (Exception ex)
             {
+                if (transaction is not null)
+                    await transaction.RollbackAsync();
+
                 _logger.LogError(ex.Message);
                 throw;
             }

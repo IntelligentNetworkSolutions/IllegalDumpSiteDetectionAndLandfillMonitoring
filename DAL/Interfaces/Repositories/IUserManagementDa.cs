@@ -17,13 +17,13 @@ namespace DAL.Interfaces.Repositories
 
         Task<ApplicationUser?> GetUserByEmail(string email);
 
-        Task<ICollection<ApplicationUser>> GetAllIntanetPortalUsers();
+        Task<List<ApplicationUser>> GetAllIntanetPortalUsers();
 
-        Task<ICollection<ApplicationUser>> GetAllIntanetPortalUsersExcludingCurrent(string id);
+        Task<List<ApplicationUser>> GetAllIntanetPortalUsersExcludingCurrent(string id);
         #endregion
 
         #region Roles and Claims
-        Task<ICollection<IdentityRole>> GetRoles();
+        Task<List<IdentityRole>> GetAllRoles();
 
         Task<IdentityRole?> GetRole(string roleId);
 
@@ -31,9 +31,9 @@ namespace DAL.Interfaces.Repositories
 
         Task<List<IdentityRoleClaim<string>>> GetAllRoleClaims();
 
-        Task<ICollection<IdentityUserRole<string>>> GetUserRoles();
+        Task<List<IdentityUserRole<string>>> GetUserRoles();
 
-        Task<ICollection<IdentityUserRole<string>>> GetUserRolesByUserId(string userId);
+        Task<List<IdentityUserRole<string>>> GetUserRolesByUserId(string userId);
 
         Task<List<IdentityUserClaim<string>>> GetClaimsForUserByUserIdAndClaimType(string userId, string claimType);
         
@@ -79,7 +79,7 @@ namespace DAL.Interfaces.Repositories
 
         Task DeleteClaimsForRole(List<IdentityRoleClaim<string>> roleClaims);
 
-        Task DeleteClaimsRolesForUser(List<IdentityUserClaim<string>> userClaims, ICollection<IdentityUserRole<string>> userRoles);
+        Task DeleteClaimsRolesForUser(List<IdentityUserClaim<string>> userClaims, List<IdentityUserRole<string>> userRoles);
         #endregion
     }
 }

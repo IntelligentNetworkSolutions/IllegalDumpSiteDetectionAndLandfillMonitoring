@@ -1,4 +1,5 @@
 ﻿using DTOs.MainApp.BL;
+using Entities;
 using Microsoft.AspNetCore.Identity;
 using SD;
 
@@ -6,21 +7,26 @@ namespace Services.Interfaces.Services
 {
     public interface IUserManagementService
     {
-        Task AddUser(UserManagementDTO dto);
-        Task AddRole(RoleManagementDTO dto);
-        Task AddLanguageClaimForUser(string userId, string culture);
+        Task<(int passMinLenght, bool passHasLetters, bool passHasNumbers)> GetPasswordRequirements();
+        Task<(bool hasMinLength, bool hasLetters, bool hasNumbers)> CheckPasswordRequirements(string password);
+        Task<ResultDTO<string>> GetPasswordHashForAppUser(ApplicationUser appUser, string passwordNew);
 
-        Task UpdateUser(UserManagementDTO dto);
+
+        Task<ResultDTO> AddUser(UserManagementDTO dto);
+        Task<ResultDTO> AddUserRoles(string appUserId, List<string> rolesInsert);
+        Task<ResultDTO> AddUserClaims(string appUserId, List<string> claimsInsert, string claimsType);
+        Task<ResultDTO> AddRole(RoleManagementDTO dto);
+        Task<ResultDTO> AddLanguageClaimForUser(string userId, string culture);
+
+        Task<ResultDTO> UpdateUser(UserManagementDTO dto);
         Task<ResultDTO> UpdateUserPassword(string userId, string currentPassword, string password);
-        Task UpdateRole(RoleManagementDTO dto);
+        Task<ResultDTO> UpdateRole(RoleManagementDTO dto);
 
-        Task DeleteUser(string userId);
-        Task DeleteRole(string roleId);
+        Task<ResultDTO> DeleteUser(string userId);
+        Task<ResultDTO> DeleteRole(string roleId);
         
-        Task<UserManagementDTO> FillUserManagementDto(UserManagementDTO dto);
-        Task<RoleManagementDTO> FillRoleManagementDto(RoleManagementDTO dto);
-
-        IQueryable<IdentityRole> GetRolesAsQueriable();
+        Task<ResultDTO<UserManagementDTO>> FillUserManagementDto(UserManagementDTO? dto = null);
+        Task<ResultDTO<RoleManagementDTO>> FillRoleManagementDto(RoleManagementDTO? dto = null);
 
         Task<ICollection<UserDTO>> GetAllIntanetPortalUsers();
         Task<ICollection<RoleDTO>> GetAllRoles();

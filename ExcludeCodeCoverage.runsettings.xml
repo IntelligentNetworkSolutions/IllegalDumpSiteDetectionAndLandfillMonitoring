@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+	<!-- Parameters used by tests at runtime -->
+	<TestRunParameters>
+		<Parameter name="environment" value="Dev" />
+	</TestRunParameters>
+
+	<!-- Configuration for data collectors -->
+	<DataCollectionRunSettings>
+		<DataCollectors>
+			<DataCollector friendlyName="XPlat code coverage">
+				<Configuration>
+
+					<!-- This works -->
+					<ExcludeByFile>**/*.cshtml,**/DAL/Migrations/*,**/MainApp.MVC/Infrastructure/**/*.cs</ExcludeByFile>
+					
+					<!-- Works now, for specific views folders -->
+					<!--<ExcludeByFile>**/DAL/Migrations/*,**/MainApp.MVC/Infrastructure/**/*.cs,**/MainApp.MVC/Views/*.cshtml,**/MainApp.MVC/Views/**/*.cshtml,**/MainApp.MVC/Areas/Common/Views/*.cshtml,**/MainApp.MVC/Areas/Common/Views/**/*.cshtml,**/MainApp.MVC/Areas/IntranetPortal/Views/*.cshtml,**/MainApp.MVC/Areas/IntranetPortal/Views/**/*.cshtml,**/MainApp.MVC/Areas/PublicPortal/Views/*.cshtml,**/MainApp.MVC/Areas/PublicPortal/Views/**/*.cshtml</ExcludeByFile>-->
+					
+				</Configuration>
+			</DataCollector>
+		</DataCollectors>
+	</DataCollectionRunSettings>
+</RunSettings>
