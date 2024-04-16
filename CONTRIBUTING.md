@@ -1,10 +1,11 @@
-# How to Contribute 🤝🍴  
+# How to Contribute  
 
 Thank you for your interest in contributing to the **IllegalDumpSiteDetectionAndLandfillMonitoring** project!  
 
 We welcome contributions from all community members.  
 
 Here’s how you can help:  
+📌✅🍴👨‍💻🔃🔍👀🤝👥  
 
 ## Step 1: Open an Issue  
 
