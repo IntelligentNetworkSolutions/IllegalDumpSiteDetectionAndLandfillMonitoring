@@ -17,7 +17,6 @@ namespace MainApp.MVC.Mappers
             CreateMap<EditDatasetDTO, EditDatasetViewModel>().ReverseMap();
             CreateMap<DatasetClassDTO, DatasetClassViewModel>().ReverseMap();
             CreateMap<CreateDatasetViewModel, DatasetDTO>()
-                .ForMember(dest => dest.CreatedById, opt => opt.MapFrom(src => "2b5b61a3-295b-4771-87fe-3bdc326ce79e"))
                 .ForMember(dest => dest.CreatedOn, opt => opt.MapFrom(src => DateTime.Now));
             CreateMap<Dataset_DatasetClassDTO, Dataset_DatasetClassViewModel>().ReverseMap();
 

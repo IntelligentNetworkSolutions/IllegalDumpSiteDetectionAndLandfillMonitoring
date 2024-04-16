@@ -5,11 +5,10 @@ using Entities.DatasetEntities;
 
 namespace DAL.Interfaces.Repositories.DatasetRepositories
 {
-    public interface IImageAnnotationsRepository
+    public interface IImageAnnotationsRepository : IBaseResultRepository<ImageAnnotation, Guid>
     {
         #region Read
         #region Get Annotation/s
-        Task<List<ImageAnnotation>> GetAllImageAnnotations();
         #endregion
         #endregion
 

@@ -15,6 +15,8 @@ using MainApp.BL.Services.DatasetServices;
 using MainApp.MVC.Helpers;
 using DocumentFormat.OpenXml.VariantTypes;
 using DocumentFormat.OpenXml.Wordprocessing;
+using MainApp.MVC.Filters;
+using System.Security.Claims;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -40,113 +42,86 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _datasetSerivce = datasetService;
         }
 
-
+        [HasAuthClaim(nameof(SD.AuthClaims.ViewDatasetClasses))]
         public async Task<IActionResult> Index()
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
             var allClassesList = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found");
             var model = _mapper.Map<List<DatasetClassViewModel>>(allClassesList);
             return View(model);
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.AddDatasetClass))]
         public async Task<IActionResult> CreateClass(CreateDatasetClassDTO model)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.AddDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
+            string? userId = User.FindFirstValue("UserId");
+            if(string.IsNullOrEmpty(userId))
+            {
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            }            
+
             if (!ModelState.IsValid)
             {
                 return Json(new { responseError = DbResHtml.T("Model is not valid", "Resources") });
             }
 
+            model.CreatedById = userId;
             var isAdded = await _datasetClassesService.AddDatasetClass(model);
-            if (isAdded == 1)
+            if (isAdded.IsSuccess == true && isAdded.Data == 1 && string.IsNullOrEmpty(isAdded.ErrMsg))
             {
                 return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset class", "Resources") });
             }
-            else if(isAdded == 2)
+            if(!string.IsNullOrEmpty(isAdded.ErrMsg))
             {
-                return Json(new { responseError = DbResHtml.T("You can not add this class as a subclass becuse the selected parent class is already set as subclass!", "Resources")});
+                return Json(new { responseError = DbResHtml.T(isAdded.ErrMsg, "Resources") });
             }
-            else
-            {
-                return Json(new { responseError = DbResHtml.T("Dataset class was not added", "Resources") });
-            }
+
+            return Json(new { responseError = DbResHtml.T("Dataset class was not added", "Resources") });            
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.EditDatasetClass))]
         public async Task<IActionResult> EditClass(EditDatasetClassDTO model)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.EditDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
             if (!ModelState.IsValid)
             {
                 return Json(new { responseError = DbResHtml.T("Model is not valid", "Resources") });
             }
 
             var isUpdated = await _datasetClassesService.EditDatasetClass(model);
-            var allClasses = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found"); 
-            var childrenClassesList = allClasses.Where(x => x.ParentClassId == model.Id).ToList() ?? throw new Exception("Object not found"); 
+            var allClasses = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found");
+            var childrenClassesList = allClasses.Where(x => x.ParentClassId == model.Id).ToList() ?? throw new Exception("Object not found");
 
             var all_dataset_datasetClasses_for_class = await _datasetDatasetClassService.GetDataset_DatasetClassByClassId(model.Id) ?? throw new Exception("Object not found");
             var selectDatasetsId = all_dataset_datasetClasses_for_class.Select(x => x.DatasetId).ToList() ?? throw new Exception("Object not found");
             var datasets = await _datasetSerivce.GetAllDatasets() ?? throw new Exception("Object not found");
             var datasetsWhereClassIsUsed = datasets.Where(x => selectDatasetsId.Contains(x.Id)).ToList() ?? throw new Exception("Object not found");
 
-            if (isUpdated == 1)
+
+            if(isUpdated.IsSuccess == true && isUpdated.Data == 1 && string.IsNullOrEmpty(isUpdated.ErrMsg))
             {
                 return Json(new { responseSuccess = DbResHtml.T("Successfully updated dataset class", "Resources") });
             }
-            else if(isUpdated == 2)
+            if(!string.IsNullOrEmpty(isUpdated.ErrMsg))
             {
-                return Json(new { responseError = DbResHtml.T("This dataset class has subclasses and can not be set as a subclass too!", "Resources"), childrenClassesList = childrenClassesList });
+                if (isUpdated.Data == 2)
+                {
+                    return Json(new { responseError = DbResHtml.T(isUpdated.ErrMsg, "Resources"), childrenClassesList = childrenClassesList });
+                }
+                if (isUpdated.Data == 3)
+                {
+                    return Json(new { responseError = DbResHtml.T(isUpdated.ErrMsg, "Resources"), datasetsWhereClassIsUsed = datasetsWhereClassIsUsed });
+                }
+                if (isUpdated.Data == 4)
+                {
+                    return Json(new { responseError = DbResHtml.T(isUpdated.ErrMsg, "Resources") });
+                }
+                if (isUpdated.Data == 5)
+                {
+                    return Json(new { responseError = DbResHtml.T(isUpdated.ErrMsg, "Resources") });
+                }
             }
-            else if (isUpdated == 3)
-            {
-                return Json(new { responseError = DbResHtml.T("This dataset is already in use in dataset/s, you can only change the class name!", "Resources"), datasetsWhereClassIsUsed = datasetsWhereClassIsUsed });
-            }
-            else if (isUpdated == 4)
-            {
-                return Json(new { responseError = DbResHtml.T("You can not add this class as a subclass becuse the selected parent class is already set as subclass!", "Resources") });
-            }
-            else
-            {
-                return Json(new { responseError = DbResHtml.T("Dataset class was not updated", "Resources") });
-            }
+            return Json(new { responseError = DbResHtml.T("Dataset class was not updated", "Resources") });   
         }
 
         [HttpPost]
@@ -162,21 +137,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetClass))]
         public async Task<IActionResult> DeleteClass(Guid classId)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.DeleteDatasetClass) || !_modulesAndAuthClaims.HasModule(SD.Modules.Datasets))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
             var isDeleted = await _datasetClassesService.DeleteDatasetClass(classId);
             var allClasses = await _datasetClassesService.GetAllDatasetClasses() ?? throw new Exception("Object not found");
             var childrenClassesList = allClasses.Where(x => x.ParentClassId == classId).ToList() ?? throw new Exception("Object not found");
@@ -185,22 +148,27 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var selectDatasetsId = all_dataset_datasetClasses_for_class.Select(x => x.DatasetId).ToList() ?? throw new Exception("Object not found");
             var datasets = await _datasetSerivce.GetAllDatasets() ?? throw new Exception("Object not found");
             var datasetsWhereClassIsUsed = datasets.Where(x => selectDatasetsId.Contains(x.Id)).ToList() ?? throw new Exception("Object not found");
-            if (isDeleted == 1)
+
+            if (isDeleted.IsSuccess == true && isDeleted.Data == 1 && string.IsNullOrEmpty(isDeleted.ErrMsg))
             {
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset class", "Resources") });
             }
-            else if (isDeleted == 2)
+            if (!string.IsNullOrEmpty(isDeleted.ErrMsg))
             {
-                return Json(new { responseError = DbResHtml.T("This dataset class can not be deleted because there are subclasses. Delete first the subclasses!", "Resources"), childrenClassesList = childrenClassesList });
+                if (isDeleted.Data == 2)
+                {
+                    return Json(new { responseError = DbResHtml.T(isDeleted.ErrMsg, "Resources"), childrenClassesList = childrenClassesList });
+                }
+                if (isDeleted.Data == 3)
+                {
+                    return Json(new { responseError = DbResHtml.T(isDeleted.ErrMsg, "Resources"), datasetsWhereClassIsUsed = datasetsWhereClassIsUsed });
+                }
+                if (isDeleted.Data == 4)
+                {
+                    return Json(new { responseError = DbResHtml.T(isDeleted.ErrMsg, "Resources") });
+                }
             }
-            else if(isDeleted == 3)
-            {
-                return Json(new { responseError = DbResHtml.T("This dataset class can not be deleted because this class is already in use in dataset/s!", "Resources"), datasetsWhereClassIsUsed = datasetsWhereClassIsUsed });
-            }
-            else
-            {
-                return Json(new { responseError = DbResHtml.T("Dataset class was not deleted", "Resources") });
-            }
+            return Json(new { responseError = DbResHtml.T("Dataset class was not deleted", "Resources") });
         }
 
     }
