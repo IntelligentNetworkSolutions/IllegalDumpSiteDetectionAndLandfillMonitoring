@@ -53,7 +53,10 @@ jobs:
     - name: Convert TRX to JUnit
       run: |
         mkdir junit-results
-        trx2junit ./Tests/TestResults/**/*.trx --output junit-results
+        Get-ChildItem -Path Tests/TestResults -Recurse -Filter *.trx | ForEach-Object {
+        trx2junit $_.FullName --output junit-results
+        }
+      shell: pwsh
 
     - name: Upload JUnit Test Results
       uses: actions/upload-artifact@v3
