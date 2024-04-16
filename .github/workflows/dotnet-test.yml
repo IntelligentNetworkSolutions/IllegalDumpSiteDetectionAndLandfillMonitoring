@@ -27,7 +27,7 @@ jobs:
       run: dotnet restore
       
     - name: Run Tests
-      run: dotnet test --settings ExcludeCodeCoverage.runsettings.xml --collect:"XPlat Code Coverage" --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      run: dotnet test --settings ExcludeCodeCoverage.runsettings.xml --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v2
@@ -48,12 +48,12 @@ jobs:
         path: ./coverage-report
 
     - name: Install trx2junit
-      run: dotnet tool install -g trx2junit --tool-path ./dotnet-global-tools
+      run: dotnet tool install -g trx2junit
 
     - name: Convert TRX to JUnit
       run: |
         mkdir junit-results
-        ./dotnet-global-tools/trx2junit ./Tests/TestResults/**/*.trx --output junit-results
+        trx2junit ./Tests/TestResults/**/*.trx --output junit-results
 
     - name: Upload JUnit Test Results
       uses: actions/upload-artifact@v3
