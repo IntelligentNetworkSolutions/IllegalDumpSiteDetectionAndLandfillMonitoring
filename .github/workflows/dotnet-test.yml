@@ -30,7 +30,7 @@ jobs:
       run: dotnet test --settings ExcludeCodeCoverage.runsettings.xml --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
 
     - name: Upload coverage report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: coverage-report
         path: Tests/TestResults/*/coverage.cobertura.xml
@@ -42,32 +42,21 @@ jobs:
       run: reportgenerator "-reports:Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:./coverage-report" "-reporttypes:Html"
 
     - name: Upload HTML report
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: coverage-html-report
         path: ./coverage-report
 
-    - name: Install trx2junit
-      run: dotnet tool install -g trx2junit
-
-    - name: Convert TRX to JUnit
-      run: |
-        mkdir junit-results
-        Get-ChildItem -Path Tests/TestResults -Recurse -Filter *.trx | ForEach-Object {
-        trx2junit $_.FullName --output junit-results
-        }
-      shell: pwsh
-
-    - name: Upload JUnit Test Results
+    - name: Upload TRX report
       uses: actions/upload-artifact@v3
       with:
-        name: junit-test-results
-        path: junit-results/*.xml
+        name: trx-report
+        path: Tests/TestResults/**/*.trx
 
     - name: Test Report
       uses: dorny/test-reporter@v1
       if: always()
       with:
         name: 'Unit Tests'
-        path: junit-results/*.xml
-        reporter: 'junit'
+        path: Tests/TestResults/**/*.trx
+        reporter: dotnet-trx
