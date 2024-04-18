@@ -1,19 +1,6 @@
-<!-- # Illegal Dump Site Detection And Landfill Monitoring -->
-
-<table align="center" border="0" frame="void">
-    <tr>
-        <td align="center">
-            <h3> Welcome to the </h3>
-            <h1> Illegal Dump Site Detection and Landfill Monitoring </h1>
-            <span> Repository</span>
-        </td>
-        <td align="center">
-            <img align="center" width="250" src="./docs/images/logo-robot-formal.png" alt="">
-            <!-- <br />
-            <font size="1" align="center">AI Generated Logo</font> -->
-        </td>
-    </tr>
-</table>
+<h1 align="center">
+    Illegal Dump Site Detection and Landfill Monitoring <img align="center" width="250" src="./docs/images/logo-robot-formal.png" alt="">  
+</h1>
 
 ## 🌐 Overview  
 
@@ -66,100 +53,9 @@ Join us in leveraging these capabilities to maintain ecological integrity and pr
             <i><font size="2" align="center">Object Detection Raw Output</font></i>
         </td>
     </tr>
-</table>
-
-<table>
-    <tr>
-        <td></td>
-        <td></td>
-        <td></td>
-        <td align="left">    
-            <h2>📝Table of Contents</h2>
-            <table cellspacing="0" cellpadding="12" frame="below" rules="rows">
-                <tbody>
-                <tr>
-                    <td>
-                        <a href="#🌐-overview"><h3>1. Overview</h3></a>
-                        <ul>
-                            <li>
-                                <a href="#🗝️key-features">Key Features</a>
-                            </li>
-                        </ul>
-                    </td>
-                    <td>
-                        <a href="#⚖️-licensing"><h3>5. Licensing</h3></a>
-                        <ul>
-                            <li>
-                                <span>Apache 2.0</span>
-                            </li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="#🖇️-main-dependencies"><h3>2. Dependencies</h3></a>
-                        <ul>
-                            <li>
-                                <span>MVC ↕️ Object-Detection</span>
-                            </li>
-                        </ul>            
-                    </td>
-                    <td>
-                        <a href="#👏-acknowledgments"><h3>6. Acknowledgments</h3></a>
-                        <ul>
-                            <li>
-                                <span>UNICEF Venture Fund</span>
-                            </li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="#⛺-set-up"><h3>3. Set-up</h3></a>
-                        <ul>
-                            <li>
-                                <span>Installation</span>
-                            </li>
-                        </ul>
-                    </td>
-                    <td>
-                        <a href="#🤝-code-of-conduct"><h3>7. Code of Conduct</h3></a>
-                        <ul>
-                            <li>
-                                <span>Contributor Covenant</span>
-                            </li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <a href="#👨‍💻development"><h3>4. Development</h3></a>
-                        <ul>
-                            <li>
-                                <a href="#🔒secrets">Secrets</a> ↕️ <a href="#📈-development-diagrams">Diagrams</a> ↕️ <a href="#🔬-testing">Testing</a>
-                            </li>
-                        </ul>
-                    </td>
-                    <td>
-                        <a href="#📌✅🍴-contributing"><h3>8. Contributing</h3></a>
-                        <ul>
-                            <li>
-                                <span>Issue ↕️ Fork ↕️ Pull Request</span>
-                            </li>
-                        </ul>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </td>
-        <td> </td>
-        <td> </td>
-        <td align="center">
-            <br />
-            <br />
-            <br />
-            <br />
-            <img width="500" height="350" src="./docs/images/illegal-dumpsite-large-image-detection.jpg" alt="">
+    <tr align="center">
+        <td colspan="2" align="center">
+            <img align="center" width="500" height="350" src="./docs/images/illegal-dumpsite-large-image-detection.jpg" alt="">
             <br />
             <i><font size="2" align="center">Object Detection on Large Image Raw Output</font></i>
             <br />
@@ -168,15 +64,54 @@ Join us in leveraging these capabilities to maintain ecological integrity and pr
     </tr>
 </table>
 
+## 📝Table of Contents
+
+1. [Overview](#🌐-overview)  
+     - [🗝️ Key Features](#🗝️key-features)  
+2. [Main Dependencies](#🖇️-main-dependencies)  
+3. [Set-up](#⛺-set-up)  
+4. [Development](#👨‍💻development)  
+    - [🔒 Secrets](#🔒secrets) | [📈Diagrams](#📈-development-diagrams) | [🔬 Testing](#🔬-testing)  
+5. [Licensing](#⚖️-licensing)  
+    - Apache 2.0  
+6. [Acknowledgments](#👏-acknowledgments)  
+    - UNICEF Venture Fund  
+7. [Code of Conduct](#🤝-code-of-conduct)  
+    - Contributor Covenant  
+8. [Contributing](#📌✅🍴-contributing)  
+    - 📌✅ Issue | 🍴 Fork | 🪢 Pull  
+</table>
+
 ### 🖇️ Main Dependencies  
 
-| **MVC App** ||||||||||  
-|-------------|------------------|-------------|------------------|---------------|---------|-------------|-----|-----------|-----|  
-| .NET 8      | Entity Framework | Open Layers | NetTopologySuite | PostgreSQL 16 | PostGIS | Point-Cloud | IIS | Geoserver | npm |  
+<table cellpadding="12" frame="above">
+<tr>
+<td>
 
-| **Object Detection Scripts** ||||||  
-|------------------------------|-------------|---------|------------|--------|--------|
-| MMDetection                  | Miniconda 3 | Pytorch | Python 3.8 | C++ 14 | _CUDA_ |
+| **MVC App Components**  | **Technology / Tool**    |
+|-------------------------|--------------------------|  
+| Web Framework           | .NET 8                   |  
+| ORM                     | Entity Framework         |  
+| Package Manager         | npm                      |  
+| Frontend Library        | Open Layers              |  
+| Geographic Library      | NetTopologySuite         |  
+| Database                | PostgreSQL 16            |  
+| Database Extension      | PostGIS                  |  
+| GIS Server              | Geoserver                | 
+
+</td>
+<td>
+
+| **Object Detection Scripts** | **Environment/Requirements** | **Version** | **Optional** |  
+|------------------------------|------------------------------|-------------|--------------|  
+| MMDetection                  | Miniconda                    | 3           |              |  
+|                              | Python                       | 3.8         |              |  
+|                              | C++                          | 14          |              |  
+|                              | Pytorch                      | _depends_   | _CUDA_       |  
+
+</td>
+</tr>
+</table>
 
 ## ⛺ Set-up
 
