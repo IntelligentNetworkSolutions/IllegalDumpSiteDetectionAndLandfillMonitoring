@@ -368,3 +368,5 @@ FodyWeavers.xsd
 /MainApp/appsettings.Development.json
 /Tests/coveragereport
 /coveragereport
+/MainApp.MVC/wwwroot/DatasetImages/
+/MainApp.MVC/wwwroot/DatasetThumbnails/

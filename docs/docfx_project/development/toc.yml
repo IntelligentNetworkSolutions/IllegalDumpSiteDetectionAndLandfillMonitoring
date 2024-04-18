@@ -1,9 +1,13 @@
 - name: Development
   href: intro.md
-- name: Usefull Links
-  href: usefull-links.md
+- name: Set-up
+  href: set-up.md
 - name: Secrets
   href: shhh_secrets.md
+- name: Testing
+  href: testing.md
+- name: Usefull Links
+  href: usefull-links.md
 - name: Think Licensing
   href: think-licensing.md
 
