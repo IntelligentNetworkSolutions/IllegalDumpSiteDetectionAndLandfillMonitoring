@@ -4,6 +4,8 @@
   href: solution-architecture/solution-architecture-diagram.md
 - name: Entity Relationship
   href: entity-relationship/entity-relationship-vertical-diagram.md
+- name: Roadmap
+  href: roadmap/roadmap.md
 - name: Dataset Creation Process
   href: dataset-creation-process/dataset-creation-process-diagram.md
 - name: Manage Dataset Screen

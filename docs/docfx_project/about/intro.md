@@ -2,16 +2,16 @@
 
 ## Project Charter  
 
-1. Mission  
-2. Vision  
-3. Community Statement  
-4. Licensing Strategy  
-5. Deliverables  
-6. Main components  
-7. Project team  
-
 - [Full Project Charter](project-charter.md)  
+
+## Licensing
+
+- [License File](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/LICENSE)  
 
 ## Code of Conduct  
 
-- [Code of Conduct](code_of_conduct.md)  
+- [Contributor Covenant Code of Conduct](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/CODE_OF_CONDUCT.md)  
+
+## Contribution Guidelines  
+
+- [How to Contribute](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/CONTRIBUTING.md)  
