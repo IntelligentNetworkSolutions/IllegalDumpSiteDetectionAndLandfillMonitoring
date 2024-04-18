@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240418114101_MapLayerConfigurationDuplicatePropertiesDeleted")]
+    partial class MapLayerConfigurationDuplicatePropertiesDeleted
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -670,6 +673,9 @@ namespace DAL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("map_configuration_id");
 
+                    b.Property<Guid?>("MapConfigurationId1")
+                        .HasColumnType("uuid");
+
                     b.Property<double>("Opacity")
                         .HasColumnType("double precision")
                         .HasColumnName("opacity");
@@ -692,6 +698,8 @@ namespace DAL.Migrations
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("MapConfigurationId");
+
+                    b.HasIndex("MapConfigurationId1");
 
                     b.HasIndex("UpdatedById");
 
@@ -1050,9 +1058,13 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_map_layer_group_configurations_asp_net_users_created_by_id");
 
                     b.HasOne("Entities.MapConfigurationEntities.MapConfiguration", "MapConfiguration")
-                        .WithMany("MapLayerGroupConfigurations")
+                        .WithMany()
                         .HasForeignKey("MapConfigurationId")
                         .HasConstraintName("fk_map_layer_group_configurations_map_configurations_map_confi~");
+
+                    b.HasOne("Entities.MapConfigurationEntities.MapConfiguration", null)
+                        .WithMany("MapLayerGroupConfigurations")
+                        .HasForeignKey("MapConfigurationId1");
 
                     b.HasOne("Entities.ApplicationUser", "UpdatedBy")
                         .WithMany()

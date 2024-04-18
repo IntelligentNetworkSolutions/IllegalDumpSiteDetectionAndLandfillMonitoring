@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Entities;
 using System.Reflection;
 using Entities.DatasetEntities;
+using Entities.MapConfigurationEntities;
 
 namespace DAL.ApplicationStorage
 {
@@ -30,6 +31,12 @@ namespace DAL.ApplicationStorage
 		public virtual DbSet<Dataset_DatasetClass> Datasets_DatasetClasses { get; set; }
 		public virtual DbSet<DatasetImage> DatasetImages { get; set; }
 		public virtual DbSet<ImageAnnotation> ImageAnnotations { get; set; }
+        #endregion
+
+        #region Map Configuration
+        public virtual DbSet<MapConfiguration> MapConfigurations { get; set; }
+        public virtual DbSet<MapLayerConfiguration> MapLayerConfigurations { get; set; }
+        public virtual DbSet<MapLayerGroupConfiguration> MapLayerGroupConfigurations { get; set; }
         #endregion
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
