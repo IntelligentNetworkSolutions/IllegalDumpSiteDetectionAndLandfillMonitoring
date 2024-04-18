@@ -13,12 +13,8 @@ namespace DAL.Repositories.DatasetRepositories
 {
     public class DatasetsRepository : BaseResultRepository<Dataset, Guid>, IDatasetsRepository
     {
-        private readonly ApplicationDbContext _db;
-        private static ILogger<DatasetsRepository> _logger;
-        public DatasetsRepository(ApplicationDbContext db, ILogger<DatasetsRepository> logger) : base(db)
+        public DatasetsRepository(ApplicationDbContext db) : base(db)
         {
-            _db = db;
-            _logger = logger;
         }
         #region Read
         #region Get Dataset/s    
@@ -26,7 +22,7 @@ namespace DAL.Repositories.DatasetRepositories
         #endregion
 
         #region Create
-       
+
         #endregion
 
         #region Update

@@ -36,6 +36,10 @@ using DAL.Interfaces.Repositories.DatasetRepositories;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
 using MainApp.BL.Services.DatasetServices;
+using DAL.Interfaces.Repositories.MapConfigurationRepositories;
+using DAL.Repositories.MapConfigurationRepositories;
+using MainApp.BL.Interfaces.Services.MapConfigurationServices;
+using MainApp.BL.Services.MapConfigurationServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -165,12 +169,20 @@ builder.Services.TryAddScoped<IDatasetClassesService, DatasetClassesService>();
 builder.Services.TryAddScoped<IDatasetImagesRepository, DatasetImagesRepository>(); 
 builder.Services.TryAddScoped<IDatasetImagesService, DatasetImagesService>(); 
 builder.Services.TryAddScoped<IDataset_DatasetClassService, Dataset_DatasetClassService>();
+builder.Services.TryAddScoped<IMapConfigurationRepository, MapConfigurationRepository>();
+builder.Services.TryAddScoped<IMapConfigurationService, MapConfigurationService>();
+builder.Services.TryAddScoped<IMapLayersConfigurationRepository, MapLayersConfigurationRepository>();
+builder.Services.TryAddScoped<IMapLayersConfigurationService, MapLayersConfigurationService>();
+builder.Services.TryAddScoped<IMapLayerGroupsConfigurationRepository, MapLayerGroupsConfigurationRepository>();
+builder.Services.TryAddScoped<IMapLayerGroupsConfigurationService, MapLayerGroupsConfigurationService>();
+
 
 // TODO: look over
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfile).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfileBL).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfile).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(MapConfigurationProfileBL).Assembly);
 
 //services.RegisterAuditNet();
 Audit.Core.Configuration.Setup()
