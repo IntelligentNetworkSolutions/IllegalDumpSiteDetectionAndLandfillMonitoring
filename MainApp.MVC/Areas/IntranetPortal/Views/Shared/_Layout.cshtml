@@ -31,20 +31,6 @@
     }
 </head>
 <body class="hold-transition sidebar-mini">
-    <div class="wrapper">
-         <partial name="_HorizontalNavbar"/>
-         <partial name="_Sidebar"/>       
-        <div class="content-wrapper">       
-             @RenderBody()
-
-            @if (IsSectionDefined("BodyArea"))
-            {
-                @RenderSection("BodyArea", required: false)
-            }
-        </div>
-        <aside class="control-sidebar control-sidebar-dark">
-        </aside>
-    </div>
 
     <script src="~/vendor/admin-lte/plugins/jquery/jquery.min.js"></script>
     <script src="~/vendor/admin-lte/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -69,10 +55,27 @@
     <script src="~/vendor/admin-lte/dist/js/adminlte.min.js"></script>
     <script src="~/vendor/cropperjs/dist/cropper.min.js"></script>
     <script src="~/vendor/paginationjs/dist/pagination.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <div class="wrapper">
+         <partial name="_HorizontalNavbar"/>
+         <partial name="_Sidebar"/>       
+        <div class="content-wrapper">       
+             @RenderBody()
+
+            @if (IsSectionDefined("BodyArea"))
+            {
+                @RenderSection("BodyArea", required: false)
+            }
+        </div>
+        <aside class="control-sidebar control-sidebar-dark">
+        </aside>
+    </div>
+    
     <script>
         $('[data-widget="pushmenu"]').PushMenu('toggle');
-    </script>
-    @await RenderSectionAsync("Scripts", required: false)
+    </script>    
 </body>
 </html>
 

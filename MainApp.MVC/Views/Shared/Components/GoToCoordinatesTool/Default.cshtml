@@ -1,0 +1,91 @@
+﻿@using MainApp.MVC.Helpers;
+@using Westwind.Globalization
+@using Westwind.Globalization.AspNetCore.Extensions
+@using Westwind.Globalization.AspNetCore
+<!--Go To Coordinates Tool BEGIN-->
+<script type="text/javascript">
+    $(function () {
+
+        function activateGoToCoordinatesTool() {
+            mapVars.deactivateTools();
+
+            $("#map-sidebar-gotocoordinatestool-pane").addClass("active");
+        }
+
+        function deactivateGoToCoordinatesTool() {
+            this.isActive = false;
+            $("#map-sidebar-gotocoordinatestool-pane").removeClass("active");
+            return true;
+        }
+         
+        var goToCoordinatesTool = new MapToolBaseClass("GoToCoordinatesTool");
+        goToCoordinatesTool.activateTool = activateGoToCoordinatesTool;
+        goToCoordinatesTool.deactivateTool = deactivateGoToCoordinatesTool;
+        goToCoordinatesTool.defaultFitPadding = [30, 580, 30, 30]; // top,right,bottom,left fit options padding screen pixels
+
+        mapVars.mapTools.push(goToCoordinatesTool);
+
+        var tabHtml = `<li>
+                            <a href="#map-sidebar-gotocoordinatestool-pane" id="map-sidebar-gotocoordinatestool-btn" role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="" data-original-title="@DbResHtml.T("Go to coordinates", "Resources")"><i class="fa fa-location-arrow"></i></a>
+                        </li>`;
+
+        var paneHtml = `<div class="turbosidebar-pane" id="map-sidebar-gotocoordinatestool-pane">
+                            <h1 class="turbosidebar-header text-center">
+                                @DbResHtml.T("Go to coordinates", "Resources")
+                                <span class="turbosidebar-close"><i class="fa fa-times"></i></span>
+                            </h1>
+                            <form >
+                                <div class="pt-4">
+                                <div class="row form-group mt-3">
+                                    <label class="col-md-3 col-form-label" id="gotocoordinatestool-latitude-inputlabel">@DbResHtml.T("Latitude", "Resources")</label>
+                                <div class="col-md-9">
+                                    <input class="form-control" type="text" id="gotocoordinatestool-latitude-input">
+                                </div>
+                                </div>
+                                <div class="row form-group mt-3">
+                                    <label class="col-md-3 col-form-label" id="gotocoordinatestool-longitude-inputlabel">@DbResHtml.T("Longitude", "Resources")</label>
+                                <div class="col-md-9">
+                                    <input class="form-control" type="text" id="gotocoordinatestool-longitude-input">
+                                </div>
+                                </div><hr>
+                                <div class="col text-center">
+                                    <input type="button" id="gotocoordinatestool-button" class="btn btn-primary" value="Go to coordinates">
+                                </div>
+                                </div>
+                            </form>
+                        </div>`;
+
+        $("#map-sidebar-upper-tabs-list").append(tabHtml);
+        $("#map-sidebar-content").append(paneHtml);
+        $('#map-sidebar-gotocoordinatestool-btn').tooltip();
+
+        @* On change activate / deactivate tab panes *@
+        $("#map-sidebar-gotocoordinatestool-pane-selector").on("change", function () {
+            $("#map-sidebar-gotocoordinatestool-tab-container .tab-pane").removeClass("active");
+            $("#" + this.value).addClass("active");
+        });
+
+        @* Deactivate other tools *@
+        $("#map-sidebar-gotocoordinatestool-btn").on("click", function () {
+            if ($(this).parent().hasClass("active")) {
+                goToCoordinatesTool.deactivateTool();
+            }
+            else {
+                goToCoordinatesTool.activateTool();
+            }
+        });
+
+        $("#gotocoordinatestool-button").on("click", function(e) {
+            var lat = $("#gotocoordinatestool-latitude-input").val();
+            var long = $("#gotocoordinatestool-longitude-input").val();
+            if (isNaN(parseFloat(lat)) || isNaN(parseFloat(long))) {
+               notifyAlerts("danger", "@DbResHtml.T("Please enter decimal values!", "Resources")");
+            }
+            else {
+                var point = new ol.geom.Point([parseFloat(long), parseFloat(lat)]);
+                mapVars.map.getView().fit(point, {duration:1500});
+                e.preventDefault();
+            }
+        });
+    });
+</script>

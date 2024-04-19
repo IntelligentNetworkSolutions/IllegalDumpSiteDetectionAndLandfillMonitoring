@@ -12,6 +12,14 @@
         <nav class="mt-2">
 
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-item">
+                    <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="nav-link" title="@DbResHtml.T("Map", "Resources")">
+                        <i class="fas fa-map"></i> &nbsp;&nbsp;
+                        <p>
+                            @DbResHtml.T("Map", "Resources")
+                        </p>
+                    </a>
+                </li>
                 @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasets))
                 {
                     <li class="nav-item">

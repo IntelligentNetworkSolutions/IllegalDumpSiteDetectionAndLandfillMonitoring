@@ -212,6 +212,36 @@ namespace SD
             FromModule = Modules.Datasets,
             Description = "Datasets: Edit dataset image annotations"
         };
+        public static readonly AuthClaim MapToolMeasureLength = new AuthClaim
+        {
+            Value = "6:1",
+            FromModule = Modules.MapToolMeasureLength,
+            Description = "Map Tools: Measure length map tool"
+        };
+        public static readonly AuthClaim MapToolMeasureArea = new AuthClaim
+        {
+            Value = "7:1",
+            FromModule = Modules.MapToolMeasureArea,
+            Description = "Map Tools: Measure area map tool"
+        };
+        public static readonly AuthClaim MapToolLastExtent = new AuthClaim
+        {
+            Value = "8:1",
+            FromModule = Modules.MapToolLastExtent,
+            Description = "Map Tools: Last extent map tool"
+        };
+        public static readonly AuthClaim MapToolZoomToExtent = new AuthClaim
+        {
+            Value = "9:1",
+            FromModule = Modules.MapToolZoomToExtent,
+            Description = "Map Tools: Zoom to extent"
+        };
+        public static readonly AuthClaim GoToCoordinatesTool = new AuthClaim
+        {
+            Value = "10:1",
+            FromModule = Modules.GoToCoordinatesTool,
+            Description = "Go To Coordinates Tool"
+        };
     } 
 }
 

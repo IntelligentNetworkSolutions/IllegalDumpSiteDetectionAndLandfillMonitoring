@@ -1,0 +1,37 @@
+﻿/* As we've given the element we're displaying the layer tree within a class of
+     * layer-switcher (so we can benefit from the default layer-switcher styles) we
+     * need to override the position to avoid it being absolutely positioned */
+.layer-switcher {
+    position: initial;
+}
+
+.map-control-mouse-position {
+    position: absolute;
+    bottom: 0.5em;
+    right: 5em;
+    text-shadow: -1px -1px 0 rgba(255,255,255,0.8), 1px -1px 0 rgba(255,255,255,0.8), -1px 1px 0 rgba(255,255,255,0.8), 1px 1px 0 rgba(255,255,255,0.8);    
+    font-weight:bold;
+    font-size: 12px;
+}
+
+.ol-overviewmap {
+    bottom: 2.5em;
+}
+
+.ol-scale-line{
+    bottom: 0.5em;
+    left: 0.6em;
+}
+
+#map .ol-print {
+    display: none;
+}
+
+#map .ol-wmscapabilities {
+    display: none;
+}
+
+.ol-go-to-start-view-pos-map-control {
+    top: 65px;
+    left: .5em;
+}

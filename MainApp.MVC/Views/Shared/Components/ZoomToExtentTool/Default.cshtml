@@ -1,0 +1,75 @@
+﻿@using MainApp.MVC.Helpers;
+@using Westwind.Globalization
+@using Westwind.Globalization.AspNetCore.Extensions
+@using Westwind.Globalization.AspNetCore
+<!--Zoom Tool BEGIN-->
+<script type="text/javascript">
+
+    $(function () {
+
+        function activateZoomTool() {
+            mapVars.deactivateTools();
+            var zoomToExtentSource = new ol.source.Vector({ wrapX: false });
+            //var zoomToExtentVector = new ol.layer.Vector({
+            //    source: zoomToExtentSource,
+            //});
+
+            this.drawInteraction = new ol.interaction.Draw({
+                source: zoomToExtentSource,
+                type: 'Circle',
+                geometryFunction: ol.interaction.Draw.createBox(),
+            });
+            this.drawInteraction.on('drawend', function (e) {
+                var extent = e.feature.getGeometry().getExtent();
+                mapVars.map.getView().fit(extent,
+                    {
+                        size: mapVars.map.getSize(),
+                        duration: 500
+                    });
+            });
+
+            //mapVars.map.addLayer(zoomToExtentVector);
+            mapVars.map.addInteraction(this.drawInteraction);
+            this.isActive = true;
+            //this.zoomToExtentVector = zoomToExtentVector;
+
+            //$("#map-sidebar-zoomtoextent-tool-btn").find('[data-toggle="tooltip"]').tooltip('show');
+            $("#map-sidebar-zoomtoextent-tool-btn").addClass("active");
+        }
+
+        function deactivateZoomTool() {
+            mapVars.map.removeInteraction(this.drawInteraction);
+            this.isActive = false;
+            //mapVars.map.removeLayer(this.zoomToExtentVector);
+            //$("#map-sidebar-zoomtoextent-tool-btn").find('[data-toggle="tooltip"]').tooltip('hide');
+            $("#map-sidebar-zoomtoextent-tool-btn").removeClass("active");
+            return true;
+        }
+
+        var zoomTool = new MapToolBaseClass("ZoomToExtentTool");
+        zoomTool.activateTool = activateZoomTool;
+        zoomTool.deactivateTool = deactivateZoomTool;
+
+        mapVars.mapTools.push(zoomTool);
+
+        var tabHtml = `<li id="map-sidebar-zoomtoextent-tool-btn">
+                            <a role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="" data-original-title="@DbResHtml.T("Zoom to area", "Resources")">
+                                <i class="fa fa-expand"></i>
+                            </a>
+                    </li>`;
+
+        var tab = $(tabHtml).appendTo("#map-sidebar-upper-tabs-list")[0];
+        $("#map-sidebar-zoomtoextent-tool-btn a").tooltip();
+
+        $(tab).on("click", function (evt) {
+            if ($(this).hasClass("active")) {
+                zoomTool.deactivateTool();
+            }
+            else {
+                zoomTool.activateTool();
+            }
+        });
+
+    });
+</script>
+<!--Zoom Tool END-->
