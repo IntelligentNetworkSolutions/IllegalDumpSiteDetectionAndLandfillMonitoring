@@ -64,6 +64,12 @@ namespace SD
         public static readonly Module Admin = new Module { Value = "Admin", Description = "Admin" };
         public static readonly Module SpecialActions = new Module { Value = "SpecialActions", Description = "Special Actions" };
         public static readonly Module Datasets = new Module { Value = "Datasets", Description = "Datasets" };
+        public static readonly Module MapToolMeasureLength = new Module { Value = "MapToolMeasureLength", Title = "Measure Length", Description = "Measure length map tool" };
+        public static readonly Module MapToolMeasureArea = new Module { Value = "MapToolMeasureArea", Title = "Measure Area", Description = "Measure area map tool" };
+        public static readonly Module MapToolLastExtent = new Module { Value = "MapToolLastExtent", Title = "Last Extent", Description = "Last extent map tool" };
+        public static readonly Module MapToolZoomToExtent = new Module { Value = "MapToolZoomToExtent", Title = "Zoom To Area", Description = "ZoomToExtent map tool" };
+        public static readonly Module GoToCoordinatesTool = new Module { Value = "GoToCoordinatesTool", Title = "Go To Coordinates", Description = "Go To Coordinates Tool" };
+
 
     }
 }

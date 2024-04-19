@@ -1,0 +1,47 @@
+﻿@using MainApp.MVC.Helpers;
+@using Westwind.Globalization
+@using Westwind.Globalization.AspNetCore.Extensions
+@using Westwind.Globalization.AspNetCore
+<!--Last Extent Tool BEGIN-->
+<script type="text/javascript">
+
+    $(function () {
+
+        var newExtent;
+        var lastExtent;
+        mapVars.map.on('moveend', lastExtentOnMoveEnd);
+
+        function lastExtentOnMoveEnd(evt) {
+            var map = evt.map;
+            lastExtent = newExtent;
+            newExtent = map.getView().calculateExtent(map.getSize());
+        }
+
+        function activateLastExtentTool() {
+            mapVars.deactivateTools();
+            if (typeof lastExtent !== 'undefined') {
+                mapVars.map.getView().fit(lastExtent, { nearest: true, size: mapVars.map.getSize(), duration: 500 });
+            }
+        }
+
+        var lastExtentTool = new MapToolBaseClass("LastExtentTool");
+        lastExtentTool.activateTool = activateLastExtentTool;
+        mapVars.mapTools.push(lastExtentTool);
+
+        var tabHtml = `<li>
+                            <a id="map-sidebar-lastextenttool-tool-btn" role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="" data-original-title="@DbResHtml.T("Go to Last Extent", "Resources")" >
+                                <i class="fa fa-sort"></i>
+                            </a>
+                    </li>`;
+
+        var tab = $(tabHtml).appendTo("#map-sidebar-upper-tabs-list")[0];
+
+        $('#map-sidebar-lastextenttool-tool-btn').tooltip();
+
+        $(tab).on("click", function (evt) {
+            lastExtentTool.activateTool();
+        });
+
+    });
+</script>
+<!--Last Extent Tool END-->

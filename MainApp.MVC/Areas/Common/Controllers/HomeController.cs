@@ -26,11 +26,11 @@ namespace MainApp.MVC.Areas.Common.Controllers
 
             if (appStartMode == SD.ApplicationStartModes.IntranetPortal)
             {
-                defaultRoute = "~/IntranetPortal/UserManagement/Index";
+                defaultRoute = "~/IntranetPortal/Map/Index";
             }
             else
             {
-                defaultRoute = "~/PublicPortal/PublicPortalHome/Index";
+                defaultRoute = "~/PublicPortal/Map/Index";
             }
 
             return Redirect(defaultRoute);

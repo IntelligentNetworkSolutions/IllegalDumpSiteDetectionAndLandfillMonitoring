@@ -44,7 +44,8 @@
     "jquery": "3.7.1",
     "jquery-validation": "1.19.5",
     "jquery-validation-unobtrusive": "4.0.0",
-    "paginationjs": "^2.6.0"
+    "paginationjs": "^2.6.0",
+    "proj4": "2.11.0"
   },
   "devDependencies": {
     "eslint": "8.56.0"    

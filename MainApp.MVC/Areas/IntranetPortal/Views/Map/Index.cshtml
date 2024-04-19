@@ -1,14 +1,51 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
-
-@section Styles{
+﻿@section Styles{
     <link rel="stylesheet" href="~/vendor/ol/ol.css">
+    <link rel="stylesheet" href="~/css/Map/ol-overrides.css">
+    <link rel="stylesheet" href="~/master/custom-layerswitcher/custom-layerswitcher.css">
+    <link rel="stylesheet" href="~/master/map-sidebar/map-sidebar.css">
+    <link rel="stylesheet" href="~/css/Views/map.css">
+    <link rel="stylesheet" href="~/css/ViewComponents/map-view-component.css">
 }
+<div class="container-fluid p-0">
+    <div class="row m-0">
+        <div class="col-xl-12 p-0">
+            <div id="map" class="map turbosidebar-map" style="height:700px; width:100%; position:relative;">
+                @await Component.InvokeAsync("Map", new { mapDivId = "map", mapToLoad = "general" })                
+                @await Component.InvokeAsync("LastExtentTool")
+                @await Component.InvokeAsync("ZoomToExtentTool")
+                @await Component.InvokeAsync("MeasureLengthTool")
+                @await Component.InvokeAsync("MeasureAreaTool")
+                @await Component.InvokeAsync("GoToCoordinatesTool")
+
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts{
+    <script src="~/vendor/proj4/dist/proj4-src.js"></script>
     <script src="~/vendor/ol/dist/ol.js"></script>
+    <script src="~/js/proj4_defs.js"></script>
+    <script src="~/master/map-sidebar/map-sidebar.js"></script>
+    <script src="~/master/custom-layerswitcher/custom-layerswitcher-dependancies.js"></script>
+    <script src="~/master/custom-layerswitcher/custom-layerswitcher.js"></script>    
+    <script src="~/js/ol-layerswitcher-mapvars-registration.js"></script>
+
+    <script type="text/javascript">
+
+        function setMapHeight() {
+            var topnavbarHeight = $(".main-header").outerHeight();
+            var viewportHeight = $(window).height();
+            $("#map").css("height", viewportHeight - topnavbarHeight);
+            if (typeof mapVars.map.updateSize === "function") {
+                mapVars.map.updateSize();
+            }
+        }
+
+        window.onresize = function () {
+            setTimeout(function () { setMapHeight(); }, 200);
+        }
+
+    </script>
 }
 

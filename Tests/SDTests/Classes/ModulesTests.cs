@@ -13,12 +13,18 @@ namespace Tests.SDTests.Classes
 
             // Assert
             Assert.NotEmpty(modules);
-            Assert.Equal(5, modules.Count());
+            Assert.Equal(10, modules.Count());
             Assert.Contains(modules, m => m.Value == "UserManagement");
             Assert.Contains(modules, m => m.Value == "AuditLog");
             Assert.Contains(modules, m => m.Value == "Admin");
             Assert.Contains(modules, m => m.Value == "SpecialActions");
             Assert.Contains(modules, m => m.Value == "Datasets");
+            Assert.Contains(modules, m => m.Value == "MapToolMeasureLength");
+            Assert.Contains(modules, m => m.Value == "MapToolMeasureArea");
+            Assert.Contains(modules, m => m.Value == "MapToolLastExtent");
+            Assert.Contains(modules, m => m.Value == "MapToolZoomToExtent");
+            Assert.Contains(modules, m => m.Value == "GoToCoordinatesTool");
+
         }
 
         [Fact]

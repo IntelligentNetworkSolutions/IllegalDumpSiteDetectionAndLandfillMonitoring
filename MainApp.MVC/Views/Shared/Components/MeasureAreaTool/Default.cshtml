@@ -1,0 +1,243 @@
+﻿@using MainApp.MVC.Helpers;
+@using Westwind.Globalization
+@using Westwind.Globalization.AspNetCore.Extensions
+@using Westwind.Globalization.AspNetCore
+<!--Measure Area Tool BEGIN-->
+<script type="text/javascript">
+
+
+    $(function () {
+
+        function activateMeasureAreaTool() {
+
+            mapVars.deactivateTools();
+
+            var measureAreaSource = new ol.source.Vector();
+
+            this.measureAreaLayer = new ol.layer.Vector({
+                source: measureAreaSource,
+                style: new ol.style.Style({
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 255, 255, 0.2)',
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: '#ffcc33',
+                        width: 2,
+                    }),
+                    image: new ol.style.Circle({
+                        radius: 7,
+                        fill: new ol.style.Fill({
+                            color: '#ffcc33',
+                        }),
+                    }),
+                }),
+            });
+
+            /**
+             * Currently drawn feature.
+             * type {import("../src/ol/Feature.js").default}
+             */
+            var sketch;
+
+            /**
+             * The help tooltip element.
+             * type {HTMLElement}
+             */
+            var helpTooltipElement;
+
+            /**
+             * Overlay to show the help messages.
+             * type {Overlay}
+             */
+            this.helpTooltip = {};
+
+            /**
+             * The measure tooltip element.
+             * type {HTMLElement}
+             */
+            this.measureTooltipElement;
+
+            /**
+             * Overlay to show the measurement.
+             * type {Overlay}
+             */
+            this.measureTooltip;
+
+            this.mapOverlays = [];
+
+            mapVars.map.addLayer(this.measureAreaLayer);
+
+            //mapVars.map.on('pointermove', this.pointerMoveHandler);
+
+            mapVars.map.getViewport().addEventListener('mouseout', function () {
+                helpTooltipElement.classList.add('hidden');
+            });
+
+
+            /**
+             * Format area output.
+             * param {Polygon} polygon The polygon.
+             * return {string} Formatted area.
+             */
+            var formatArea = function (polygon) {
+                var area = ol.sphere.getArea(polygon, { projection: mapVars.projection });
+                var output;
+                if (area > 10000) {
+                    output = Math.round((area / 1000000) * 100) / 100 + ' ' + 'km<sup>2</sup>';
+                } else {
+                    output = Math.round(area * 100) / 100 + ' ' + 'm<sup>2</sup>';
+                }
+                return output;
+            };
+
+            /**
+             * Creates a new help tooltip
+             */
+            function createHelpTooltip(objRef) {
+                if (helpTooltipElement) {
+                    helpTooltipElement.parentNode.removeChild(helpTooltipElement);
+                }
+                helpTooltipElement = document.createElement('div');
+                helpTooltipElement.className = 'ol-tooltip hidden';
+                objRef.helpTooltip = new ol.Overlay({
+                    element: helpTooltipElement,
+                    offset: [15, 0],
+                    positioning: 'center-left',
+                });
+                mapVars.map.addOverlay(objRef.helpTooltip);
+            }
+
+            /**
+             * Creates a new measure tooltip
+             */
+            function createMeasureTooltip(objRef) {
+                if (objRef.measureTooltipElement) {
+                    objRef.measureTooltipElement.parentNode.removeChild(objRef.measureTooltipElement);
+                }
+                objRef.measureTooltipElement = document.createElement('div');
+                objRef.measureTooltipElement.className = 'ol-tooltip ol-tooltip-measure';
+                objRef.measureTooltip = new ol.Overlay({
+                    element: objRef.measureTooltipElement,
+                    offset: [0, -15],
+                    positioning: 'bottom-center',
+                    stopEvent: false
+                });
+                mapVars.map.addOverlay(objRef.measureTooltip);
+                objRef.mapOverlays.push(objRef.measureTooltip);
+            }
+
+
+            var type = 'Polygon';
+            this.drawInteraction = new ol.interaction.Draw({
+                source: measureAreaSource,
+                type: type,
+                style: new ol.style.Style({
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 255, 255, 0.2)',
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(0, 0, 0, 0.5)',
+                        lineDash: [10, 10],
+                        width: 2,
+                    }),
+                    image: new ol.style.Circle({
+                        radius: 5,
+                        stroke: new ol.style.Stroke({
+                            color: 'rgba(0, 0, 0, 0.7)',
+                        }),
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 255, 255, 0.2)',
+                        }),
+                    }),
+                }),
+            });
+
+            mapVars.map.addInteraction(this.drawInteraction);
+
+            createMeasureTooltip(this);
+            createHelpTooltip(this);
+
+            var listener;
+            this.drawInteraction.on('drawstart', function (evt) {
+                // set sketch
+                sketch = evt.feature;
+
+                /** type {import("../src/ol/coordinate.js").Coordinate|undefined} */
+                var tooltipCoord = evt.coordinate;
+
+                listener = sketch.getGeometry().on('change', function (evt) {
+                    var geom = evt.target;
+                    var output;
+                    if (geom instanceof ol.geom.Polygon) {
+                        output = formatArea(geom);
+                        tooltipCoord = geom.getInteriorPoint().getCoordinates();
+                    }
+                    objRef = mapVars.findTool("MeasureAreaTool");
+
+                    objRef.measureTooltipElement.innerHTML = output;
+                    objRef.measureTooltip.setPosition(tooltipCoord);
+                });
+            });
+
+            this.drawInteraction.on('drawend', function () {
+                objRef = mapVars.findTool("MeasureAreaTool");
+                objRef.measureTooltipElement.className = 'ol-tooltip ol-tooltip-static';
+                objRef.measureTooltip.setOffset([0, -7]);
+                // unset sketch
+                sketch = null;
+                // unset tooltip so that a new one can be created
+                objRef.measureTooltipElement = null;
+                createMeasureTooltip(objRef);
+                ol.Observable.unByKey(listener);
+            });
+
+            this.isActive = true;
+
+            //$("#map-sidebar-measurearea-tool-btn").find('[data-toggle="tooltip"]').tooltip('show');
+            $("#map-sidebar-measurearea-tool-btn").addClass("active");
+        }
+
+        function deactivateMeasureAreaTool() {
+            mapVars.map.removeInteraction(this.drawInteraction);
+            mapVars.map.removeLayer(this.measureAreaLayer);
+            mapVars.map.removeOverlay(this.helpTooltip);
+
+            this.mapOverlays.forEach(function (overlay) {
+                mapVars.map.removeOverlay(overlay);
+            });
+            this.mapOverlays = [];
+
+            this.isActive = false;
+
+            //$("#map-sidebar-measurearea-tool-btn").find('[data-toggle="tooltip"]').tooltip('hide');
+            $("#map-sidebar-measurearea-tool-btn").removeClass("active");
+            return true;
+        }
+
+        var measureAreaTool = new MapToolBaseClass("MeasureAreaTool");
+        measureAreaTool.activateTool = activateMeasureAreaTool;
+        measureAreaTool.deactivateTool = deactivateMeasureAreaTool;
+
+        mapVars.mapTools.push(measureAreaTool);
+
+        var tabHtml = `<li id="map-sidebar-measurearea-tool-btn">
+                            <a role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="" data-original-title="@DbResHtml.T("Measure area", "Resources")">
+                                <i class="far fa-square"></i>
+                            </a>
+                    </li>`;
+
+        var tab = $(tabHtml).appendTo("#map-sidebar-upper-tabs-list")[0];
+        $("#map-sidebar-measurearea-tool-btn a").tooltip();
+
+        $(tab).on("click", function (evt) {
+            if ($(this).hasClass("active")) {
+                measureAreaTool.deactivateTool();
+            }
+            else {
+                measureAreaTool.activateTool();
+            }
+        });
+
+    });
+</script>
+<!--Measure Area Tool END-->

@@ -6,8 +6,8 @@ if (window.ol && !window.ol.inherits) {
     };
 }
 
-function createNexusSidebar(opt_options) {
-    class NexusSidebar extends ol.control.Control {
+function createTurboSidebar(opt_options) {
+    class TurboSidebar extends ol.control.Control {
         /**
          * @param {Object} [opt_options] Control options.
          */
@@ -133,6 +133,6 @@ function createNexusSidebar(opt_options) {
         };
 
     }
-    const nexusSideBar = new NexusSidebar(opt_options);
-    return nexusSideBar;
+    const customSideBar = new TurboSidebar(opt_options);
+    return customSideBar;
 }

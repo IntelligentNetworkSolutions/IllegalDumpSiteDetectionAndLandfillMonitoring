@@ -1,0 +1,243 @@
+﻿@using MainApp.MVC.Helpers;
+@using Westwind.Globalization
+@using Westwind.Globalization.AspNetCore.Extensions
+@using Westwind.Globalization.AspNetCore
+<!--Measure Length Tool BEGIN-->
+<script type="text/javascript">
+
+
+    $(function () {
+
+        function activateMeasureLengthTool() {
+
+            mapVars.deactivateTools();
+
+            var measureLengthSource = new ol.source.Vector();
+
+            this.measureLengthLayer = new ol.layer.Vector({
+                source: measureLengthSource,
+                style: new ol.style.Style({
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 255, 255, 0.2)',
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: '#ffcc33',
+                        width: 2,
+                    }),
+                    image: new ol.style.Circle({
+                        radius: 7,
+                        fill: new ol.style.Fill({
+                            color: '#ffcc33',
+                        }),
+                    }),
+                }),
+            });
+
+            /**
+             * Currently drawn feature.
+             * type {import("../src/ol/Feature.js").default}
+             */
+            var sketch;
+
+            /**
+             * The help tooltip element.
+             * type {HTMLElement}
+             */
+            var helpTooltipElement;
+
+            /**
+             * Overlay to show the help messages.
+             * type {Overlay}
+             */
+            this.helpTooltip = {};
+
+            /**
+             * The measure tooltip element.
+             * type {HTMLElement}
+             */
+            this.measureTooltipElement;
+
+            /**
+             * Overlay to show the measurement.
+             * type {Overlay}
+             */
+            this.measureTooltip;
+
+            this.mapOverlays = [];
+
+            mapVars.map.addLayer(this.measureLengthLayer);
+
+            //mapVars.map.on('pointermove', this.pointerMoveHandler);
+
+            mapVars.map.getViewport().addEventListener('mouseout', function () {
+                helpTooltipElement.classList.add('hidden');
+            });
+
+
+            /**
+             * Format length output.
+             * param {LineString} line The line.
+             * return {string} The formatted length.
+             */
+            var formatLength = function (line) {
+                var length = ol.sphere.getLength(line, { projection: mapVars.projection});
+                var output;
+                if (length > 100) {
+                    output = Math.round((length / 1000) * 100) / 100 + ' ' + 'km';
+                } else {
+                    output = Math.round(length * 100) / 100 + ' ' + 'm';
+                }
+                return output;
+            };
+
+            /**
+             * Creates a new help tooltip
+             */
+            function createHelpTooltip(objRef) {
+                if (helpTooltipElement) {
+                    helpTooltipElement.parentNode.removeChild(helpTooltipElement);
+                }
+                helpTooltipElement = document.createElement('div');
+                helpTooltipElement.className = 'ol-tooltip hidden';
+                objRef.helpTooltip = new ol.Overlay({
+                    element: helpTooltipElement,
+                    offset: [15, 0],
+                    positioning: 'center-left',
+                });
+                mapVars.map.addOverlay(objRef.helpTooltip);
+            }
+
+            /**
+             * Creates a new measure tooltip
+             */
+            function createMeasureTooltip(objRef) {
+                if (objRef.measureTooltipElement) {
+                    objRef.measureTooltipElement.parentNode.removeChild(objRef.measureTooltipElement);
+                }
+                objRef.measureTooltipElement = document.createElement('div');
+                objRef.measureTooltipElement.className = 'ol-tooltip ol-tooltip-measure';
+                objRef.measureTooltip = new ol.Overlay({
+                    element: objRef.measureTooltipElement,
+                    offset: [0, -15],
+                    positioning: 'bottom-center',
+                });
+                mapVars.map.addOverlay(objRef.measureTooltip);
+                objRef.mapOverlays.push(objRef.measureTooltip);
+            }
+
+
+            var type = 'LineString';
+            this.drawInteraction = new ol.interaction.Draw({
+                source: measureLengthSource,
+                type: type,
+                style: new ol.style.Style({
+                    fill: new ol.style.Fill({
+                        color: 'rgba(255, 255, 255, 0.2)',
+                    }),
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(0, 0, 0, 0.5)',
+                        lineDash: [10, 10],
+                        width: 2,
+                    }),
+                    image: new ol.style.Circle({
+                        radius: 5,
+                        stroke: new ol.style.Stroke({
+                            color: 'rgba(0, 0, 0, 0.7)',
+                        }),
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 255, 255, 0.2)',
+                        }),
+                    }),
+                }),
+            });
+
+            mapVars.map.addInteraction(this.drawInteraction);
+
+            createMeasureTooltip(this);
+            createHelpTooltip(this);
+
+            var listener;
+            this.drawInteraction.on('drawstart', function (evt) {
+                // set sketch
+                sketch = evt.feature;
+
+                /** type {import("../src/ol/coordinate.js").Coordinate|undefined} */
+                var tooltipCoord = evt.coordinate;
+
+                listener = sketch.getGeometry().on('change', function (evt) {
+                    var geom = evt.target;
+                    var output;
+                    if (geom instanceof ol.geom.LineString) {
+                        output = formatLength(geom);
+                        tooltipCoord = geom.getLastCoordinate();
+                    }
+
+                    objRef = mapVars.findTool("MeasureLengthTool");
+
+                    objRef.measureTooltipElement.innerHTML = output;
+                    objRef.measureTooltip.setPosition(tooltipCoord);
+                });
+            });
+
+            this.drawInteraction.on('drawend', function () {
+                objRef = mapVars.findTool("MeasureLengthTool");
+                objRef.measureTooltipElement.className = 'ol-tooltip ol-tooltip-static';
+                objRef.measureTooltip.setOffset([0, -7]);
+                // unset sketch
+                sketch = null;
+                // unset tooltip so that a new one can be created
+                objRef.measureTooltipElement = null;
+                createMeasureTooltip(objRef);
+                ol.Observable.unByKey(listener);
+            });
+
+            this.isActive = true;
+
+            //$("#map-sidebar-measurelength-tool-btn").find('[data-toggle="tooltip"]').tooltip('show');
+            $("#map-sidebar-measurelength-tool-btn").addClass("active");
+        }
+
+        function deactivateMeasureLengthTool() {
+            mapVars.map.removeInteraction(this.drawInteraction);
+            mapVars.map.removeLayer(this.measureLengthLayer);
+            mapVars.map.removeOverlay(this.helpTooltip);
+
+            this.mapOverlays.forEach(function (overlay) {
+                mapVars.map.removeOverlay(overlay);
+            });
+            this.mapOverlays = [];
+
+            this.isActive = false;
+
+            //$("#map-sidebar-measurelength-tool-btn").find('[data-toggle="tooltip"]').tooltip('hide');
+            $("#map-sidebar-measurelength-tool-btn").removeClass("active");
+            return true;
+        }
+
+        var measureLengthTool = new MapToolBaseClass("MeasureLengthTool");
+        measureLengthTool.activateTool = activateMeasureLengthTool;
+        measureLengthTool.deactivateTool = deactivateMeasureLengthTool;
+
+        mapVars.mapTools.push(measureLengthTool);
+
+        var tabHtml = `<li id="map-sidebar-measurelength-tool-btn">
+                            <a role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="" data-original-title="@DbResHtml.T("Measure length", "Resources")">
+                                <i class="fa fa-ruler"></i>
+                            </a>
+                    </li>`;
+
+        var tab = $(tabHtml).appendTo("#map-sidebar-upper-tabs-list")[0];
+        $("#map-sidebar-measurelength-tool-btn a").tooltip();
+
+        $(tab).on("click", function (evt) {
+            if ($(this).hasClass("active")) {
+                measureLengthTool.deactivateTool();
+            }
+            else {
+                measureLengthTool.activateTool();
+            }
+        });
+
+    });
+</script>
+<!--Zoom Tool END-->

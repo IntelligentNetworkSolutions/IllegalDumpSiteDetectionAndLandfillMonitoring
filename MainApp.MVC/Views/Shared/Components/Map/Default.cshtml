@@ -1,0 +1,401 @@
+﻿@* @model MainApp.MVC.ViewComponents.Map.MapModel *@
+@using MainApp.MVC.Helpers;
+@using Westwind.Globalization
+@using Westwind.Globalization.AspNetCore.Extensions
+@using Westwind.Globalization.AspNetCore
+@{
+}
+<!--Map View Component BEGIN-->
+<!-- START OF SIDEBAR DIV -->
+<div id="map-sidebar" class="turbosidebar turbosidebar-right collapsed">
+    <!-- Nav tabs -->
+    <div class="turbosidebar-tabs">
+        <ul role="tablist" id="map-sidebar-upper-tabs-list">
+            <li>
+                <a id="map-sidebar-layers-tool-btn" href="#map-sidebar-layers-pane" role="tab" data-placement="left" title="" data-trigger="hover" data-toggle="tooltip" data-original-title="@DbResHtml.T("Layers", "Resources")"><i class="fa fa-bars"></i></a>
+            </li>
+        </ul>
+        @*<ul role="tablist" id="map-sidebar-lower-tabs-list">
+        <li>
+        <a id="map-sidebar-settings-tool-btn" href="#map-sidebar-settings-pane" role="tab"><i class="fa fa-cogs"></i></a>
+        </li>
+        </ul>*@
+    </div>
+
+    <!-- Tab panes -->
+    <div class="turbosidebar-content" id="map-sidebar-content">
+        <div class="turbosidebar-pane" id="map-sidebar-layers-pane">
+            <h1 class="turbosidebar-header text-center">
+                @DbResHtml.T("Layers", "Resources")
+                <span class="turbosidebar-close"><i class="fa fa-times"></i></span>
+            </h1>
+            <!-- !!! HERE WILL GO THE CONTENT OF LAYERSWITCHER !!! -->
+            <div id="sidebar-layers-container" class="mt-3 layer-switcher"></div>
+        </div>
+
+        @*<div class="turbosidebar-pane" id="profile">
+        <h1 class="turbosidebar-header">
+        Profile<span class="turbosidebar-close">
+        <i class="fa fa-caret-left"></i>
+        </span>
+        </h1>
+        </div>
+
+        <div class="turbosidebar-pane" id="messages">
+        <h1 class="turbosidebar-header">
+        Messages<span class="turbosidebar-close">
+        <i class="fa fa-caret-left"></i>
+        </span>
+        </h1>
+        </div>
+        *@
+
+        @*<div class="turbosidebar-pane" id="map-sidebar-settings-pane">
+        <h1 class="turbosidebar-header text-center">
+        @DbResHtml.T("Settings", "Resources")<span class="turbosidebar-close">
+        <i class="fa fa-times"></i>
+        </span>
+        </h1>
+        </div>*@
+    </div>
+</div>
+<!-- END OF SIDEBAR DIV -->
+
+<script type="text/javascript">
+
+    function MapToolBaseClass(name) {
+        this.name = name; //used for name checks
+        this.isActive = false; //always set to true when active
+        this.activateTool; //activate function
+        this.deactivateTool; //deactivate function
+    }
+
+    //recoursive function for retreiving all layers (not groups) from map
+    function FindAllLayers(layersArray, onlyVisible) {
+        var result = [];
+
+        layersArray.forEach(arrayItem => {
+            if (arrayItem instanceof ol.layer.Group && arrayItem.getLayers().getLength() > 0 && (onlyVisible === false || arrayItem.getVisible() === true)) {
+                var funcResult = FindAllLayers(arrayItem.getLayers().array_, onlyVisible);
+                result.push.apply(result, funcResult);
+            }
+            else {
+                if (!(arrayItem instanceof ol.layer.Group)) {
+                    result.push(arrayItem);
+                }
+            }
+        });
+
+        return result;
+    }
+
+    var mapVars = {};  //All map related global variables go here
+    mapVars.projection = {};  // default map proj4 projection
+    mapVars.map = {};  //OpenLayers map
+    mapVars.mapSidebar = {}; //map sidebar
+    mapVars.mapTools = [];  //Active tools on the map sidebar list of MapToolBaseClass
+    mapVars.accessToken = "@ViewData["access_token"]";
+    mapVars.refreshLayerSwitcher = function () { } //Dummu placeholder until is defined in ol-layerswitcher-mapvars-registration.js
+    mapVars.deactivateTools = function () {
+        this.mapSidebar.close();
+        this.mapTools.forEach(function (tool) {
+            if (tool.isActive) {
+                tool.deactivateTool();
+            }
+        });
+    };
+    mapVars.findTool = function (toolName) {
+        for (var toolIndex in mapVars.mapTools) {
+            if (toolName === mapVars.mapTools[toolIndex].name) {
+                return mapVars.mapTools[toolIndex];
+            }
+        }
+    };
+    mapVars.findLayerByName = function (layerName) {
+        var layers = mapVars.map.getLayers().array_;
+        for (var layerIndex in layers) {
+            if (layerName === layers[layerIndex].get("name")) {
+                return layers[layerIndex];
+            }
+        }
+    };
+
+    mapVars.showLegendForLayers = function () {
+        var layers = FindAllLayers(mapVars.map.getLayers().array_, true);
+        var result = [];
+        layers.forEach(layer => {
+            if ((layer.getSource() instanceof ol.source.TileWMS || layer.getSource() instanceof ol.source.ImageWMS) && layer.getVisible()) {
+                result.push(layer);
+            }
+        });
+        return result.reverse();
+    };
+
+    mapVars.mapLayersFromConfig = {};  //Layers on the map from tenant DB config
+
+    $(function () {
+
+        $("#map-sidebar-layers-tool-btn").on("click", function () {
+            if (!$(this).parent().hasClass("active")) {
+                mapVars.deactivateTools();
+            }
+        });
+
+        $("#map-sidebar-settings-tool-btn").on("click", function () {
+            if (!$(this).parent().hasClass("active")) {
+                mapVars.deactivateTools();
+            }
+        });
+
+        mapVars.projection = 'EPSG:6316'; // ol.proj.get('@@ Model.MapConfiguration.Projection');
+
+        //mapVars.mapLayersFromConfig = @@ Html.Raw(Model.LayersJavaScript);
+
+        mapVars.mapLayersFromConfig = [new ol.layer.Group({
+            title: 'Drone Imagery',
+            order: 1,
+            opacity: 1,
+            visible: true,
+            openInLayerSwitcher: true,
+            fold: 'open',
+            layers: new ol.Collection([
+                new ol.layer.Tile({
+                    name: 'layerVolkovoDrone',
+                    projection: 'EPSG:6316',
+                    title: 'Volkovo Drone',
+                    order: 9,
+                    visible: true,
+                    source: new ol.source.TileWMS({
+                        url: 'https://wastedetection.ins.com.mk/gserver/wms',
+                        params: {
+                            'FORMAT': 'image/png',
+                            'VERSION': '1.1.1',
+                            tiled: true,
+                            "STYLES": '',
+                            "LAYERS": 'Volkovo_Drone',
+                            "exceptions": 'application/vnd.ogc.se_inimage',
+                        }
+                    })
+                }),
+                new ol.layer.Tile({
+                    name: 'layerZlokukjaniDrone',
+                    projection: 'EPSG:6316',
+                    title: 'Zlokukjani Drone',
+                    order: 8,
+                    visible: true,
+                    source: new ol.source.TileWMS({
+                        url: 'https://wastedetection.ins.com.mk/gserver/wms',
+                        params: {
+                            'FORMAT': 'image/png',
+                            'VERSION': '1.1.1',
+                            tiled: true,
+                            "STYLES": '',
+                            "LAYERS": 'Zlokukjani_Drone',
+                            "exceptions": 'application/vnd.ogc.se_inimage',
+                        }
+                    })
+                }),
+                new ol.layer.Tile({
+                    name: 'layerSarajDrone',
+                    projection: 'EPSG:6316',
+                    title: 'Saraj Drone',
+                    order: 7,
+                    visible: true,
+                    source: new ol.source.TileWMS({
+                        url: 'https://wastedetection.ins.com.mk/gserver/wms',
+                        params: {
+                            'FORMAT': 'image/png',
+                            'VERSION': '1.1.1',
+                            tiled: true,
+                            "STYLES": '',
+                            "LAYERS": 'Saraj_Drone',
+                            "exceptions": 'application/vnd.ogc.se_inimage',
+                        }
+                    })
+                })
+            ])
+            }),
+            new ol.layer.Group({
+                title: 'Base Maps',
+                order: 2,
+                opacity: 1,
+                visible: true,
+                openInLayerSwitcher: true,
+                fold: 'open',
+                layers: new ol.Collection([
+                    new ol.layer.Tile({
+                        name: 'layerEsriTopo',
+                        title: 'ESRI Topo',
+                        order: 11,
+                        visible: false,
+                        baseLayer: true,
+                        source: new ol.source.XYZ({
+                            attributions:
+                                'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
+                                'rest/services/World_Topo_Map/MapServer">ArcGIS</a>',
+                            url:
+                                'https://server.arcgisonline.com/ArcGIS/rest/services/' +
+                                'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+                        })
+                    }),
+                    new ol.layer.Tile({
+                        name: 'layerEsriSatellite',
+                        title: 'ESRI Satellite',
+                        order: 12,
+                        visible: false,
+                        baseLayer: true,
+                        source: new ol.source.XYZ({
+                            attributions:
+                                'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
+                                'rest/services/World_Imagery/MapServer">ArcGIS</a>',
+                            url:
+                                'https://server.arcgisonline.com/ArcGIS/rest/services/' +
+                                'World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                        }),
+                    }),
+                    new ol.layer.Tile({
+                        name: 'layerMacedoniaSentinel',
+                        projection: 'EPSG:6316',
+                        title: 'Sentinel Macedonia',
+                        order: 13,
+                        visible: false,
+                        baseLayer: true,
+                        source: new ol.source.TileWMS({
+                            url: 'https://wastedetection.ins.com.mk/gserver/wms',
+                            params: {
+                                'FORMAT': 'image/png',
+                                'VERSION': '1.1.1',
+                                tiled: true,
+                                "STYLES": '',
+                                "LAYERS": 'MacedoniaSatellite',
+                                "exceptions": 'application/vnd.ogc.se_inimage',
+                            }
+                        })
+                    }),
+                    new ol.layer.Tile({
+                        name: 'layerOSMMacedonia',
+                        projection: 'EPSG:6316',
+                        title: 'OSM Macedonia',
+                        order: 16,
+                        visible: true,
+                        baseLayer: true,
+                        source: new ol.source.TileWMS({
+                            url: 'https://wastedetection.ins.com.mk/gserver/wms',
+                            params: {
+                                'FORMAT': 'image/png',
+                                'VERSION': '1.1.1',
+                                tiled: true,
+                                "STYLES": '',
+                                "LAYERS": 'OSMMacedonia',
+                                "exceptions": 'application/vnd.ogc.se_inimage',
+                            }
+                        })
+                    })
+                ])
+            })]; 
+
+        var mapLayers = [];
+
+        //sort by order
+        function compareOrder(a, b) {
+            if (a.get("order") < b.get("order")) {
+                return 1;
+            }
+            if (a.get("order") > b.get("order")) {
+                return -1;
+            }
+            return 0;
+        }
+        mapVars.mapLayersFromConfig.sort(compareOrder);
+
+        for (var layer in mapVars.mapLayersFromConfig) {
+            var theLayer = mapVars.mapLayersFromConfig[layer];
+
+            if (theLayer instanceof ol.layer.Group) {
+                theLayer.getLayers().array_.sort(compareOrder);
+            }
+
+            mapLayers.push(theLayer);
+        }
+
+        mapVars.map = new ol.Map({
+            layers: mapLayers,
+            target: '@Model.MapDivId',
+            controls: [new ol.control.Zoom()],
+            view: new ol.View({
+                projection: mapVars.projection,
+                constrainResolution: true,
+                center: [7535741.262, 4650202.906],
+                resolution: 13.999999999999998,
+                resolutions: [140, 70, 35, 13.999999999999998, 6.999999999999999, 2.8, 1.4, 0.7, 0.28, 0.14, 0.07, 0.035]
+                //center: [@@ Model.MapConfiguration.CenterX, @@ Model.MapConfiguration.CenterY],
+                //resolution: @@ Model.MapConfiguration.DefaultResolution,
+                //resolutions: [@@ Html.Raw(Model.MapConfiguration.Resolutions)]
+            }),
+        });
+
+        mapVars.map.once('postrender', function (event) {
+            setMapHeight();
+            var mySidebar = new createTurboSidebar({ element: 'map-sidebar', position: 'right' });
+            mySidebar.setMap(mapVars.map);
+            mySidebar.close();
+        });
+
+        var layersToCheckIfWMTSAndActivate = FindAllLayers(mapVars.mapLayersFromConfig, false);
+        layersToCheckIfWMTSAndActivate.forEach(layer => {
+            if (layer.get("delayedLayerInitialization") != undefined) {
+                layer.get("delayedLayerInitialization")(layer, mapVars.accessToken);
+            }
+        });
+
+        function scaleMapControl() {
+            var control = new ol.control.ScaleLine({
+                units: 'metric',
+                bar: true,
+                steps: 4,
+                text: true,
+                minWidth: 140,
+            });
+            return control;
+        }
+
+        //mousePositionControl
+        function mousePositionMapControl() {
+            var control = new ol.control.MousePosition({
+                coordinateFormat: ol.coordinate.createStringXY(4),
+                projection: mapVars.projection, //'EPSG:4326',
+                // comment the following two lines to have the mouse position
+                // be placed within the map.
+                className: 'map-control-mouse-position',
+                //target: document.getElementById('mouse-position'),
+                undefinedHTML: '&nbsp;',
+            });
+            return control;
+        }        
+
+        function overviewMapControl() {
+
+            var overviewSource = new ol.source.XYZ({
+                url: "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            });
+
+            if ('@Model.MapOverviewUrl' != '') {
+                overviewSource.url = "@Model.MapOverviewUrl";
+            }
+
+            var control = new ol.control.OverviewMap({
+                layers: [
+                    new ol.layer.Tile({
+                        source: overviewSource,
+                    })],
+            });
+            return control;
+        }
+
+        mapVars.map.addControl(scaleMapControl());
+        mapVars.map.addControl(mousePositionMapControl());
+        mapVars.map.addControl(overviewMapControl());
+    });
+</script>
+
+<!--Map View Component END-->

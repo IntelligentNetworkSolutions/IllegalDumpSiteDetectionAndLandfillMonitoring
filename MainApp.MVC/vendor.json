@@ -12,5 +12,7 @@
   "node_modules/font-gis/css/font-gis.css",
   "node_modules/jquery/dist",
   "node_modules/jquery-validation/dist",
-  "node_modules/jquery-validation-unobtrusive/dist"  
+  "node_modules/jquery-validation-unobtrusive/dist",
+  "node_modules/proj4/dist/proj4.js",
+  "node_modules/proj4/dist/proj4-src.js"
 ]
