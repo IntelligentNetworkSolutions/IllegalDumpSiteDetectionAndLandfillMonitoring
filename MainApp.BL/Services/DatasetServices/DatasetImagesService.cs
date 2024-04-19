@@ -58,7 +58,7 @@ namespace MainApp.BL.Services.DatasetServices
         public async Task<ResultDTO<Guid>> AddDatasetImage(DatasetImageDTO datasetImageDto)
         {
             var datasetId = datasetImageDto.DatasetId ?? throw new Exception("Dataset id is null");
-            var datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
+            var datasetDb = await _datasetsRepository.GetById(datasetId,track: true, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
             var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
 
             DatasetImage datasetImage = _mapper.Map<DatasetImage>(datasetImageDto);
