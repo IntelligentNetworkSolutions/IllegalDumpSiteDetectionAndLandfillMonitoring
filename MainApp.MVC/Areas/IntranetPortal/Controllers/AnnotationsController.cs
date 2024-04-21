@@ -26,22 +26,5 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             return View((imgToAnnotatePath));
         }
-
-        [HttpGet]
-        public async Task<IActionResult> VGGAnnotator(string? datasetImageId = null)
-        {
-            string imgToAnnotatePath = string.Empty;
-            if (string.IsNullOrEmpty(datasetImageId))
-            {
-                imgToAnnotatePath = "";
-            }
-
-            imgToAnnotatePath = datasetImageId;
-
-
-
-
-            return View((imgToAnnotatePath));
-        }
     }
 }
