@@ -450,12 +450,13 @@
                             viewMode: 2,
                             responsive: false,
                             ready() {
-                                cropper.setCropBoxData({ width: 320, height: 320 });
+                                cropper.setCropBoxData({ width: 1280, height: 1280 });
+                                
                             }
                         });
 
                         this.addEventListener('cropmove', () => {
-                            cropper.setCropBoxData({ width: 320, height: 320 });
+                            cropper.setCropBoxData({ width: 1280, height: 1280 });
                         });
 
 
@@ -967,15 +968,28 @@
                         }
                     }
                 </div>
-                <div class="modal-footer">
-                    @if (Model.UninsertedDatasetRootClasses.Count > 0 && Model.UninsertedDatasetSubclasses.Count > 0)
+                @if (Model.CurrentDataset.AnnotationsPerSubclass == true)
+                {
+                    @if (Model.UninsertedDatasetSubclasses.Count > 0)
                     {
-                        <button type="button" class="mb-1 btn bg-gradient-primary" onclick="addNewDatasetClassConfirmed('@Model.CurrentDataset.Id')" data-dismiss="modal" aria-label="Add">
-                            <span aria-hidden="true"> @DbResHtml.T("Add", "Resources")</span>
-                        </button>
+                        <div class="modal-footer">
+                            <button type="button" class="mb-1 btn bg-gradient-primary" onclick="addNewDatasetClassConfirmed('@Model.CurrentDataset.Id')" data-dismiss="modal" aria-label="Add">
+                                <span aria-hidden="true"> @DbResHtml.T("Add", "Resources")</span>
+                            </button>
+                        </div>
                     }
-
-                </div>
+                }
+                else
+                {
+                    @if (Model.UninsertedDatasetRootClasses.Count > 0)
+                    {
+                        <div class="modal-footer">
+                            <button type="button" class="mb-1 btn bg-gradient-primary" onclick="addNewDatasetClassConfirmed('@Model.CurrentDataset.Id')" data-dismiss="modal" aria-label="Add">
+                                <span aria-hidden="true"> @DbResHtml.T("Add", "Resources")</span>
+                            </button>
+                        </div>
+                    }
+                }
             </div>
         </div>
     </div>
