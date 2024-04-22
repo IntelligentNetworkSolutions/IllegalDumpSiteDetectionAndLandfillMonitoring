@@ -16,9 +16,4 @@
     <ProjectReference Include="..\SD\SD.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="DetectionEntities\" />
-    <Folder Include="TrainingEntities\" />
-  </ItemGroup>
-
 </Project>

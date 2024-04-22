@@ -13,5 +13,7 @@ namespace Entities.DatasetEntities
 
         public Guid DatasetClassId { get; set; }
         public DatasetClass DatasetClass { get; set; }
+
+        public int DatasetClassValue { get; set; }
     }
 }

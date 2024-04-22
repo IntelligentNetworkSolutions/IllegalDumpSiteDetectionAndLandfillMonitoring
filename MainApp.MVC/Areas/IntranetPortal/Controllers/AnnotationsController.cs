@@ -26,5 +26,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             return View((imgToAnnotatePath));
         }
+
+        [HttpGet]
+        public async Task<IActionResult> TestJsonToPolygon()
+        {
+            var result = await Helpers.JsonFileReader.ReceiveDeserializedDetectionRunResponseJson();
+
+            return View();
+        }
     }
 }
