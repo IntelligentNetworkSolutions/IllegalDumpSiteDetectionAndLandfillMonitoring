@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240422113100_AddDatasetDataseClassValueFixPrevious")]
+    partial class AddDatasetDataseClassValueFixPrevious
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,7 +55,7 @@ namespace DAL.Migrations
                     b.HasKey("Key")
                         .HasName("pk_application_settings");
 
-                    b.ToTable("application_settings", (string)null);
+                    b.ToTable("application_settings");
                 });
 
             modelBuilder.Entity("Entities.ApplicationUser", b =>
@@ -188,7 +191,7 @@ namespace DAL.Migrations
                     b.HasKey("AuditLogId")
                         .HasName("pk_audit_log");
 
-                    b.ToTable("audit_log", (string)null);
+                    b.ToTable("audit_log");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.Dataset", b =>
@@ -250,7 +253,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("datasets", (string)null);
+                    b.ToTable("datasets");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetClass", b =>
@@ -287,7 +290,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("ParentClassId");
 
-                    b.ToTable("dataset_classes", (string)null);
+                    b.ToTable("dataset_classes");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetImage", b =>
@@ -354,7 +357,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("dataset_images", (string)null);
+                    b.ToTable("dataset_images");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.Dataset_DatasetClass", b =>
@@ -383,7 +386,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DatasetId");
 
-                    b.ToTable("datasets_dataset_classes", (string)null);
+                    b.ToTable("datasets_dataset_classes");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.ImageAnnotation", b =>
@@ -442,7 +445,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("image_annotations", (string)null);
+                    b.ToTable("image_annotations");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectedDumpSite", b =>
@@ -477,7 +480,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DetectionRunId");
 
-                    b.ToTable("detected_dump_sites", (string)null);
+                    b.ToTable("detected_dump_sites");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectionIgnoreZone", b =>
@@ -517,7 +520,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("detection_ignore_zones", (string)null);
+                    b.ToTable("detection_ignore_zones");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
@@ -566,7 +569,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("detection_runs", (string)null);
+                    b.ToTable("detection_runs");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>
@@ -597,7 +600,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("intranet_portal_users_tokens", (string)null);
+                    b.ToTable("intranet_portal_users_tokens");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>
@@ -681,7 +684,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_configurations", (string)null);
+                    b.ToTable("map_configurations");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapLayerConfiguration", b =>
@@ -753,7 +756,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_layer_configurations", (string)null);
+                    b.ToTable("map_layer_configurations");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapLayerGroupConfiguration", b =>
@@ -823,7 +826,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_layer_group_configurations", (string)null);
+                    b.ToTable("map_layer_group_configurations");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainedModel", b =>
@@ -886,7 +889,7 @@ namespace DAL.Migrations
                     b.HasIndex("TrainingRunId")
                         .IsUnique();
 
-                    b.ToTable("trained_models", (string)null);
+                    b.ToTable("trained_models");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainedModelStatistics", b =>
@@ -930,7 +933,7 @@ namespace DAL.Migrations
                     b.HasIndex("TrainedModelId")
                         .IsUnique();
 
-                    b.ToTable("trained_model_statistics", (string)null);
+                    b.ToTable("trained_model_statistics");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainingRun", b =>
@@ -981,7 +984,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DatasetId");
 
-                    b.ToTable("training_runs", (string)null);
+                    b.ToTable("training_runs");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

@@ -28,20 +28,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> VGGAnnotator(string? datasetImageId = null)
+        public async Task<IActionResult> TestJsonToPolygon()
         {
-            string imgToAnnotatePath = string.Empty;
-            if (string.IsNullOrEmpty(datasetImageId))
-            {
-                imgToAnnotatePath = "";
-            }
+            var result = await Helpers.JsonFileReader.ReceiveDeserializedDetectionRunResponseJson();
 
-            imgToAnnotatePath = datasetImageId;
-
-
-
-
-            return View((imgToAnnotatePath));
+            return View();
         }
     }
 }

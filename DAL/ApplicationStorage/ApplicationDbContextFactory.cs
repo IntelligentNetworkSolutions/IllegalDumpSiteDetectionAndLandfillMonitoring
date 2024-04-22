@@ -20,7 +20,7 @@ namespace DAL.ApplicationStorage
 
             string connectionString = args[0];
 
-            // Add this and comment out line above for code generation to work
+            // Add this and comment out line above for code generation to work, wont work without update
             //string connectionString = "YourConnectionString";
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();

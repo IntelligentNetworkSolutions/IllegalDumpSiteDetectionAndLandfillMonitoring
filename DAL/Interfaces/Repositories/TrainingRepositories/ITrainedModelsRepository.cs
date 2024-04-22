@@ -1,0 +1,9 @@
+﻿using System;
+using Entities.TrainingEntities;
+
+namespace DAL.Interfaces.Repositories.TrainingRepositories
+{
+    public interface ITrainedModelsRepository : IBaseResultRepository<TrainedModel, Guid>
+    {
+    }
+}
