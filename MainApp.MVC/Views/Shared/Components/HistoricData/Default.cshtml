@@ -1,0 +1,193 @@
+﻿@model List<DetectionRunsDTO>
+@using DTOs.MainApp.BL.DetectionDTOs
+@using MainApp.MVC.Helpers;
+@using Westwind.Globalization
+@using Westwind.Globalization.AspNetCore.Extensions
+@using Westwind.Globalization.AspNetCore
+@using Newtonsoft.Json
+<!--Go To Coordinates Tool BEGIN-->
+<script type="text/javascript">
+   
+    $(function () {
+
+        function activateHistoricDataTool() {
+            mapVars.deactivateTools();
+
+            $("#map-sidebar-historicdata-pane").addClass("active");
+        }
+
+        function deactivateHistoricDataTool() {
+            this.isActive = false;
+            $("#map-sidebar-historicdata-pane").removeClass("active");
+            return true;
+        }
+
+        var historicData = new MapToolBaseClass("HistoricData");
+        historicData.activateTool = activateHistoricDataTool;
+        historicData.deactivateTool = deactivateHistoricDataTool;
+        historicData.defaultFitPadding = [30, 580, 30, 30]; // top,right,bottom,left fit options padding screen pixels
+
+        mapVars.mapTools.push(historicData);
+
+        var tabHtml = `<li>
+                           <a href="#map-sidebar-historicdata-pane" id="map-sidebar-historicdata-btn" role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="" data-original-title="@DbResHtml.T("Historic Data", "Resources")"><i class="fas fa-history"></i></a>
+                       </li>`;
+
+        var paneHtml = `<div class="turbosidebar-pane" id="map-sidebar-historicdata-pane">
+                                <h1 class="turbosidebar-header text-center">
+                                     @DbResHtml.T("Historic Data", "Resources")
+                                    <span class="turbosidebar-close"><i class="fa fa-times"></i></span>
+                                </h1>
+                                <div id="map-sidebar-historicdatatable-tab-container"></div>
+                            </div>`;
+        
+        $("#map-sidebar-upper-tabs-list").append(tabHtml);
+        $("#map-sidebar-content").append(paneHtml);
+        $('#map-sidebar-gotocoordinatestool-btn').tooltip();
+        
+        
+        generateDetectionRuns();
+
+             @* On change activate / deactivate tab panes *@
+            $("#map-sidebar-historicdata-pane-selector").on("change", function () {
+                $("#map-sidebar-historicdata-tab-container .tab-pane").removeClass("active");
+                $("#" + this.value).addClass("active");
+            });
+
+             @* Deactivate other tools *@
+            $("#map-sidebar-historicdata-btn").on("click", function () {
+                if ($(this).parent().hasClass("active")) {
+                    historicData.deactivateTool();
+                }
+                else {
+                    historicData.activateTool();
+                }
+            });
+       
+        function generateDetectionRuns() {
+            let detectionRunsList = @Html.Raw(@JsonConvert.SerializeObject(Model, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore }));
+            var detectionRunsTable = `
+                                                <table class='table table-striped table-bordered table-hover mt-4' id='historicDataDetectionRunsTable'>
+                                                    <thead>
+                                                        <tr>
+                                                             <th hidden></th>
+                                                             <th hidden></th>
+                                                             <th>@DbResHtml.T("Created By", "Resources")</th>
+                                                             <th>@DbResHtml.T("Created On", "Resources")</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                                ${detectionRunsList.map(el => `
+                                                                    <tr>
+                                                                         <td hidden> ${el.Id}</td>
+                                                                         <td hidden>${el.GeoJson}</td>
+                                                                         <td>${el.CreatedBy}</td>
+                                                                         <td>${new Date(el.CreatedOn).toLocaleDateString()}</td>
+                                                                         <td>
+                                                                             <div class="form-group clearfix">
+                                                                                <div class="icheck-dark mt-3 text-bold">
+                                                                                            <input type="checkbox" id="editDatasetImageEnabledInput_${el.Id}" name="editDatasetImageEnabledInput_${el.Id}">
+                                                                                        <label for="editDatasetImageEnabledInput_${el.Id}">
+                                                                                    </label>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                `).join('')}                                                           
+                                                    </tbody>
+                                                </table>
+                                                <div class="text-center">
+                                                               <a id="showOnMapBtn" class="mr-2 btn bg-gradient-success"  title="@DbResHtml.T("Show on map", "Resources")">@DbResHtml.T("Show on map", "Resources")</a>
+                                                                <div class="btn-group">
+                                                                        <button type="button" class="btn  bg-gradient-info">Reports</button>
+                                                                        <button type="button" class="btn  bg-gradient-info dropdown-toggle dropdown-icon" data-toggle="dropdown">
+                                                                      <span class="sr-only">Toggle Dropdown</span>
+                                                                    </button>
+                                                                    <div class="dropdown-menu" role="menu">
+                                                                      <a class="dropdown-item" href="#">Report 1</a>
+                                                                      <a class="dropdown-item" href="#">Report 2</a>
+                                                                      <a class="dropdown-item" href="#">Report 3</a>
+                                                                    </div>
+                                                               </div>
+                                                </div>`;
+
+            $("#map-sidebar-historicdatatable-tab-container").html(detectionRunsTable);
+        }
+      
+        $("#showOnMapBtn").on("click", function () {
+                
+            var selectedRows = [];
+
+            $("#historicDataDetectionRunsTable tbody tr").each(function () {
+                var row = $(this);
+                var checkbox = row.find("input[type='checkbox']");
+
+                if (checkbox.prop("checked")) {
+                    var detectionRunId = row.find("td:nth-child(1)").text();
+                    var runGeoJson = row.find("td:nth-child(2)").text();
+                    var createdBy = row.find("td:nth-child(3)").text();
+                    var createdOn = row.find("td:nth-child(4)").text();
+
+                    selectedRows.push({
+                        detectionRunId: detectionRunId,
+                        runGeoJson:runGeoJson,
+                        createdBy: createdBy,
+                        createdOn: createdOn
+                    });
+                }
+            });
+
+
+            mapVars.map.getLayers().forEach(function (layer) {
+                if (layer instanceof ol.layer.Group && layer.get('title') === 'Historic Data') {
+                    mapVars.map.removeLayer(layer);
+                }
+            });
+            
+
+            var historicDataLayerGroup  = new ol.layer.Group({
+                title: 'Historic Data',
+                order: 3,
+                opacity: 1,
+                visible: true,
+                openInLayerSwitcher: true,
+                fold: 'open',
+                layers: new ol.Collection([ ])
+            });
+
+            for (var i = 0; i < selectedRows.length; i++) {
+                var detectionRun = selectedRows[i];
+                var olGeoJson = new ol.format.GeoJSON();
+                var geoJsonObj = JSON.parse(detectionRun.runGeoJson);
+
+                var feature = olGeoJson.readFeature(geoJsonObj, {
+                    dataProjection: "EPSG:4326",
+                    featureProjection: "EPSG:6316" 
+                });
+
+                var vectorSource = new ol.source.Vector({
+                    features: [feature]
+                });
+
+                var vectorLayer = new ol.layer.Vector({
+                    source: vectorSource,
+                    title: detectionRun.createdBy,
+                    order: i + 1,
+                    visible: true,
+                    style: new ol.style.Style({
+                        fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' }),
+                        stroke: new ol.style.Stroke({
+                            color: 'red', width: 2
+                        })
+                    })
+                });
+
+                historicDataLayerGroup.getLayers().push(vectorLayer);
+            }
+           
+            mapVars.map.addLayer(historicDataLayerGroup);
+            console.log(historicDataLayerGroup.getLayers().getArray());
+        
+        });
+    });
+</script>
