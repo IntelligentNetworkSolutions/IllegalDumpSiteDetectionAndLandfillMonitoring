@@ -146,35 +146,8 @@ services.AddAuthorization(options => new AuthorizationOptions()
 });
 
 services.AddHttpContextAccessor();
-
-builder.Services.TryAddScoped<IApplicationSettingsRepo, ApplicationSettingsRepository>();
-builder.Services.TryAddScoped<IAppSettingsAccessor, AppSettingsAccessor>();
-builder.Services.TryAddScoped<IApplicationSettingsService, ApplicationSettingsService>();
-builder.Services.TryAddScoped<PasswordValidationHelper>();
-builder.Services.TryAddScoped<ModulesAndAuthClaimsHelper>();
-builder.Services.TryAddScoped<IUserManagementDa, UserManagementDa>();
-builder.Services.TryAddScoped<IntranetPortalUsersTokenDa>();
-builder.Services.TryAddScoped<IUserManagementService, UserManagementService>();
-builder.Services.TryAddScoped<IAuditLogsDa, AuditLogsDa>();
-builder.Services.TryAddScoped<AuditLogBl>();
-builder.Services.TryAddScoped<ILayoutService, LayoutService>();
-builder.Services.TryAddScoped<IForgotResetPasswordService, ForgotResetPasswordService>();
-builder.Services.TryAddScoped<IMailService, MailService>();
-builder.Services.TryAddScoped<IDatasetsRepository, DatasetsRepository>();
-builder.Services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
-builder.Services.TryAddScoped<IDatasetService, DatasetService>(); 
-builder.Services.TryAddScoped<IDatasetClassesRepository, DatasetClassesRepository>(); 
-builder.Services.TryAddScoped<IDataset_DatasetClassRepository, Dataset_DatasetClassRepository>(); 
-builder.Services.TryAddScoped<IDatasetClassesService, DatasetClassesService>(); 
-builder.Services.TryAddScoped<IDatasetImagesRepository, DatasetImagesRepository>(); 
-builder.Services.TryAddScoped<IDatasetImagesService, DatasetImagesService>(); 
-builder.Services.TryAddScoped<IDataset_DatasetClassService, Dataset_DatasetClassService>();
-builder.Services.TryAddScoped<IMapConfigurationRepository, MapConfigurationRepository>();
-builder.Services.TryAddScoped<IMapConfigurationService, MapConfigurationService>();
-builder.Services.TryAddScoped<IMapLayersConfigurationRepository, MapLayersConfigurationRepository>();
-builder.Services.TryAddScoped<IMapLayersConfigurationService, MapLayersConfigurationService>();
-builder.Services.TryAddScoped<IMapLayerGroupsConfigurationRepository, MapLayerGroupsConfigurationRepository>();
-builder.Services.TryAddScoped<IMapLayerGroupsConfigurationService, MapLayerGroupsConfigurationService>();
+services.AddApplicationServices();
+services.AddInfrastructureServices();
 
 
 // TODO: look over
