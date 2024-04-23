@@ -332,7 +332,8 @@
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.EditDatasetImageAnnotations))
                                             {
-                                                <input id="@($"{item.Id}_editImageAnnotation")" class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" />
+                                                @* <input id="@($"{item.Id}_editImageAnnotation")" class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" /> *@
+                                                <a id="@($"{item.Id}_editImageAnnotation")" href="@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = item.Id})" class="editAnnotation btn btn-xs bg-gradient-orange text-white">Edit annotations</a>
                                             }
                                             @Html.Raw((item.IsEnabled ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Enabled\"><i class=\"fas fa-check-circle\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Disabled\"><i class=\"fas fa-times-circle\"></i></span>"))
                                             @Html.Raw((isAnnotated ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Annotated\"><i class=\"fas fa-map-marked-alt\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Not Annotated\"><i class=\"fas fa-map-marked\"></i></span>"))

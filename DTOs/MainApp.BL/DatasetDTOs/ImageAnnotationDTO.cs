@@ -1,22 +1,35 @@
-﻿using System.Text.Json.Serialization;
+﻿using DTOs.Helpers;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json;
+
 
 namespace DTOs.MainApp.BL.DatasetDTOs
 {
     public record ImageAnnotationDTO
     {
-        public Guid Id { get; init; }
-        public string AnnotationsGeoJson { get; init; }
+        public Guid? Id { get; init; }
+        public string? AnnotationJson { get; init; }
 
         [JsonIgnore]
-        public Geometry Geom { get; init;  }
+        public Polygon Geom { get; init; }
+
+        public string GeoJson
+        {
+            get
+            {
+                return GeoJsonHelpers.GeometryToGeoJson(Geom);
+            }            
+        }
 
         public bool IsEnabled { get; init; } = false;
 
         public Guid? DatasetImageId { get; init; }
         public virtual DatasetImageDTO? DatasetImage { get; init; }
 
-        public string CreatedById { get; init; }
+        public Guid? DatasetClassId { get; set; }
+        public virtual DatasetClassDTO? DatasetClass { get; set; }
+
+        public string? CreatedById { get; init; }
         public DateTime CreatedOn { get; init; } = DateTime.UtcNow;
         public UserDTO? CreatedBy { get; init; }
 

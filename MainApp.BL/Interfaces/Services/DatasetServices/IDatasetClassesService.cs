@@ -15,6 +15,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #region Get Datasetclass/es
         Task<List<DatasetClassDTO>> GetAllDatasetClasses();
         Task<DatasetClassDTO> GetDatasetClassById(Guid classId);
+        Task<List<DatasetClassDTO>> GetAllDatasetClassesByDatasetId(Guid datasetId);
         #endregion
         #endregion
 

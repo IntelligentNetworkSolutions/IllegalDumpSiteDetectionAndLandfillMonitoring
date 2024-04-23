@@ -162,6 +162,7 @@ builder.Services.TryAddScoped<IForgotResetPasswordService, ForgotResetPasswordSe
 builder.Services.TryAddScoped<IMailService, MailService>();
 builder.Services.TryAddScoped<IDatasetsRepository, DatasetsRepository>();
 builder.Services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
+builder.Services.TryAddScoped<IImageAnnotationsService, ImageAnnotationsService>();
 builder.Services.TryAddScoped<IDatasetService, DatasetService>(); 
 builder.Services.TryAddScoped<IDatasetClassesRepository, DatasetClassesRepository>(); 
 builder.Services.TryAddScoped<IDataset_DatasetClassRepository, Dataset_DatasetClassRepository>(); 

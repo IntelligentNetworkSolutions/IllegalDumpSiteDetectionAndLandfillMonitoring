@@ -1,20 +1,22 @@
-﻿@using MainApp.MVC.Helpers
+﻿@model MainApp.MVC.ViewModels.IntranetPortal.Annotations.AnnotateViewModel
+@using MainApp.MVC.Helpers
 @{
     ViewData["Title"] = @DbResHtml.T("Annotate", "Resources");
 }
 
 @section Styles {
-    <link type="text/css" href="~/vendor/ol/ol.css" />
+    <link rel="stylesheet" href="~/vendor/ol/ol.css">
+    <link rel="stylesheet" href="~/css/Views/annotate.css">
 }
 
 <div class="content-header bg-gradient-white border-bottom mb-4">
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-6">
-                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">
+                <h5 class="text-muted mb-0"> @DbResHtml.T("Annotate dataset:", "Resources") <b>@Model.Dataset.Name</b></h5>
+                @* <small class="text-muted">
                     @DbResHtml.T("Add, edit, delete and view image annotations", "Resources")
-                </small>
+                </small> *@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -26,9 +28,6 @@
                     <li class="breadcrumb-item active">
                         @ViewData["Title"]
                     </li>
-                    <li>
-                        @ViewData["Title"]
-                    </li>
                 </ol>
             </div>
         </div>
@@ -37,66 +36,79 @@
 <div class="content">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-10">
-                <div class="card">
-                    <div class="card-header bg-dark text-white">
-                        <h3 class="card-title">
-                            @DbResHtml.T("Image Annotations", "Resources")
-                        </h3>
-                    </div>
-                    <div class="card-body">
-                        <small>
-                            @DbResHtml.T("The Image that is being annotated on", "Resources")
-                        </small>
-                        <div class="img-fluid">
-                            <div id="map" class="map" style="height: 500px;"></div>
-                            <div class="row">
-                                <select id="mode">
-                                    <option value="modify">select a feature to modify</option>
-                                    <option value="draw">draw new features</option>
-                                </select>
-                            </div>
-                            <div class="row">
-                                <div class="col-auto">
-                                    <span class="input-group">
-                                        <label class="input-group-text" for="type">Shape type:</label>
-                                        <select class="form-select" id="type">
-                                            <option value="Circle">Circle</option>
-                                            <option value="Square">Square</option>
-                                            <option value="Box">Box</option>
-                                            <option value="Star">Star</option>
-                                            <option value="None">None</option>
-                                        </select>
-                                        <input class="form-control" type="button" value="Undo" id="undo">
-                                    </span>
-                                </div>
-                            </div>
-
-                            @* <img class="img-fluid" src="~/images/test-dataset-images/vardariste_1.png"
-                            alt="@DbResHtml.T("The Image that is being annotated on", "Resources")" /> *@
-                        </div>
+            <div class="col-md-9">
+                <div id="annotator" class="annotator" style="height: 500px;">
+                    <div id="annotatorMainToolbar" class="annotator-control-main-toolbar ol-unselectable ol-control">
+                        <button id="selectToolBtn" class="annotator-main-toolbar-button" title="Select Tool (S)">
+                            <i class="fg-arrow-o"></i>
+                        </button>
+                        <button id="drawBboxToolBtn" class="annotator-main-toolbar-button" title="Draw BBox Tool (R)">
+                            <i class="fg-square-pt"></i>
+                        </button>
+                        <span class="ml-3 mr-3">|</span>
+                        <button id="undoToolBtn" class="annotator-main-toolbar-button" title="Undo (Ctrl + Z)">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button id="redoToolBtn" class="annotator-main-toolbar-button" title="Redo (Ctrl + Shift + Z)">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <span class="ml-3 mr-3">|</span>
+                        <button id="saveToolBtn" class="annotator-main-toolbar-button" title="Save (Ctrl + S)">
+                            <i class="far fa-save"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="card">
-                    <div class="card-header bg-dark text-white">
+                    <div class="card-header bg-light">
                         <h3 class="card-title">
-                            @DbResHtml.T("Annotation Toolbar", "Resources")
+                            @DbResHtml.T("Annotation Properties", "Resources")
                         </h3>
                     </div>
                     <div class="card-body">
-                        <ul>
-                            <li>
-                                @DbResHtml.T("Bounding Box", "Resources")
-                            </li>
-                            <li>
-                                @DbResHtml.T("Class Picker", "Resources")
-                            </li>
-                            <li>
-                                @DbResHtml.T("Show/Hide Annotations", "Resources")
-                            </li>
-                        </ul>
+                        <h5>Class</h5>
+                        <div class="form-group" id="annotatorToolbarClassesList">
+                            @foreach(var datasetClass in Model.DatasetClasses){
+                                <div class="custom-control custom-radio">
+                                    <input class="custom-control-input custom-control-input-dark" type="radio" id="input-@datasetClass.Id" name="datasetClasses" value="@datasetClass.Id">
+                                    <label for="input-@datasetClass.Id" class="custom-control-label">@datasetClass.ClassName</label>
+                                </div>
+                            }
+                        </div>
+                        <h5>@DbResHtml.T("Status", "Resources")</h5>
+                        <div class="form-group" id="annotatorToolbarStatus">
+                            <div class="custom-control custom-radio">
+                                <input class="custom-control-input custom-control-input-success" type="radio" id="inputStatusEnabled" name="annotationFeatureStatus" value="true">
+                                <label for="inputStatusEnabled" class="custom-control-label">Enabled</label>
+                            </div>
+                            <div class="custom-control custom-radio">                                
+                                <input class="custom-control-input custom-control-input-danger" type="radio" id="inputStatusDisabled" name="annotationFeatureStatus" value="false">
+                                <label for="inputStatusDisabled" class="custom-control-label">Disabled</label>
+                            </div>
+                        </div>
+                        <div class="form-group mb-0 mt-4 pl-5 pr-5">
+                            <div id="btnDeleteAnnotation" type="button" class="form-control btn btn-danger disabled" title="Delete"><i class="fas fa-trash-alt"></i></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col text-center">
+                                <a class="btn btn-default">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </div>
+                            <div class="col text-center align-middle" style="line-height:36px">
+                                1 / 2
+                            </div>
+                            <div class="col text-center">
+                                <a class="btn btn-default">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -104,285 +116,586 @@
     </div>
 </div>
 
-@section Scripts {    
+@section Scripts {
     <script src="~/vendor/ol/dist/ol.js"></script>
+}
 
-    <script>
-        ol.proj.useGeographic();
+<script>
+    $(function () {
 
+        //TODO: Shout separate in helper function
+        var Toast = Swal.mixin({
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 2000
+        });
+
+
+        //regisrer a global object that will hold all annotator configuration
+        window.annotatorVars = {
+            selectedFeature: undefined,
+            lastUsedClass: undefined,
+            datasetClasses: [],
+            undoList: [],
+            redoList: []
+        };
+
+        @if (@Model.DatasetClasses!=null){
+        <text>
+        annotatorVars.datasetClasses = @Html.Raw(Json.Serialize(@Model.DatasetClasses));
+        </text>
+        }
+
+        function getAnnotationsGeoJsonFromLayer() {
+            var geoJSONFormat = new ol.format.GeoJSON();
+            return geoJSONFormat.writeFeatures(annotationsVectorSource.getFeatures(), { dataProjection: annotationsProjection, featureProjection: imageProjection })
+        }
+
+        
         // Map views always need a projection.  Here we just want to map image coordinates directly to map coordinates,
         // so we create a projection that uses the image extent in pixels.
-        const extent = [0, 0, 1807, 785];
-        const projection = new ol.proj.Projection({
-            code: 'xkcd-image',
+        // the image is also moved on the Y axis by 1280 towards the bottom so it is aligned with the positive side of the inverted coordinate system
+        const extent = [0, -1280, 1280, 0];
+        const worldExtent = [0, -1280, 1280, 0];
+
+        const imageProjection = new ol.proj.Projection({
+            code: 'static-image-projection',
             units: 'pixels',
             extent: extent,
+            worldExtent: worldExtent
         });
 
-        const vectorSource = new ol.source.Vector({ wrapX: false, format: new ol.format.GeoJSON() });
-        const vectorLayer = new ol.layer.Vector({ source: vectorSource });
-
-        const select = new ol.interaction.Select();
-
-        const modify = new ol.interaction.Modify({
-            features: select.getFeatures(),
+        const annotationsProjection = new ol.proj.Projection({
+            code: 'annotations-projection',
+            units: 'pixels',
+            extent: extent,
+            worldExtent: worldExtent
         });
 
-        const draw = new ol.interaction.Draw({
-            type: 'Polygon',
-            source: vectorSource,
+        ol.proj.addCoordinateTransforms(imageProjection, annotationsProjection,
+            function (coordinate) {
+                return [coordinate[0], -1 * coordinate[1]];
+            },
+            function (coordinate) {
+                return [coordinate[0], -1 * coordinate[1]];
+            }
+        );
+
+        const annotationSelectStyles = [
+            /* We are using two different styles for the polygons:
+             *  - The first style is for the polygons themselves.
+             *  - The second style is to draw the vertices of the polygons.
+             *    In a custom `geometry` function the vertices of a polygon are
+             *    returned as `MultiPoint` geometry, which will be used to render
+             *    the style.
+             */
+            new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: '#00bdff',
+                    width: 2,
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(0, 0, 180, 0.1)',
+                }),
+            }),
+            new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 3,
+                    fill: new ol.style.Fill({
+                        color: '#00bdff',
+                    }),
+                }),
+                geometry: function (feature) {
+                    // return the coordinates of the first ring of the polygon
+                    const coordinates = feature.getGeometry().getCoordinates()[0];
+                    return new ol.geom.MultiPoint(coordinates);
+                },
+            }),
+        ];
+
+
+        const annotationsVectorSource = new ol.source.Vector({ wrapX: false });
+        annotatorVars.annotationsVectorSource = annotationsVectorSource;
+        
+
+        const annotationsVectorLayerStyle = new ol.style.Style({
+            stroke: new ol.style.Stroke({
+                color: '#86ff00',
+                width: 2,
+            }),
+            fill: new ol.style.Fill({
+                color: 'rgba(0, 255, 0, 0)',
+            }),
+            text: new ol.style.Text({
+                
+                textBaseline: 'bottom',
+                placement: 'line',
+                font: '12px Calibri,sans-serif',
+                overflow: true,
+                fill: new ol.style.Fill({
+                  color: '#000',
+                }),
+                stroke: new ol.style.Stroke({ 
+                    color: "#FFF", 
+                    width: 3 }),
+            })
         });
 
-        const snap = new ol.interaction.Snap({
-            source: vectorSource,
+        const annotationsVectorLayer = new ol.layer.Vector({
+            source: annotationsVectorSource,
+            style: function(feature) {
+                let classId = feature.get('datasetClassId');
+                let label = "No Data";
+                annotatorVars.datasetClasses.forEach(object => {                          
+                    if(object.id == classId){
+                        label = object.className;
+                    }
+                });
+                if (feature.get("isEnabled"))
+                    annotationsVectorLayerStyle.getStroke().setColor("#86ff00");
+                else
+                    annotationsVectorLayerStyle.getStroke().setColor("#dc3545");
+
+                annotationsVectorLayerStyle.getText().setText(label);
+                return annotationsVectorLayerStyle;
+            }                                
         });
 
-        const translate = new ol.interaction.Translate({
-            features: select.getFeatures(),
-        });
+        annotatorVars.annotationsVectorLayer = annotationsVectorLayer;
 
-        const map = new ol.Map({
+
+        const annotator = new ol.Map({
             layers: [
                 new ol.layer.Image({
                     source: new ol.source.ImageStatic({
-                        url: '/images/test-dataset-images/vardariste_1.png',
-                        projection: projection,
+                        url: '/DatasetImages/@Model.Dataset.Id/@Model.DatasetImage.Id' + '.jpg',
+                        projection: imageProjection,
                         imageExtent: extent,
                     }),
                 }),
-                vectorLayer
+                annotationsVectorLayer
             ],
-            target: 'map',
+            target: 'annotator',
             view: new ol.View({
-                projection: projection,
+                projection: imageProjection,
                 center: ol.extent.getCenter(extent),
-                zoom: 2,
+                zoom: 1,
                 maxZoom: 8,
             }),
         });
 
-        //#region Extent Draw with Shift
-        // const extentInteraction = new ol.interaction.Extent({ condition: ol.events.condition.shiftKeyOnly });
-        // map.addInteraction(extentInteraction);
+        annotatorVars.annotator = annotator;
 
-        // const typeSelect = document.getElementById('type');
+        $('#annotator').append($('#annotatorMainToolbar'));
 
-        // let drawWithShift; // global so we can remove it later
-        // function addInteraction() {
-        //     let value = typeSelect.value;
-        //     if (value !== 'None') {
-        //         let geometryFunction;
-        //         if (value === 'Square') {
-        //             value = 'Circle';
-        //             geometryFunction = ol.interaction.Draw.createRegularPolygon(4);
-        //         } else if (value === 'Box') {
-        //             value = 'Circle';
-        //             geometryFunction = ol.interaction.Draw.createBox();
-        //         } else if (value === 'Star') {
-        //             value = 'Circle';
-        //             geometryFunction = function (coordinates, geometry) {
-        //                 const center = coordinates[0];
-        //                 const last = coordinates[coordinates.length - 1];
-        //                 const dx = center[0] - last[0];
-        //                 const dy = center[1] - last[1];
-        //                 const radius = Math.sqrt(dx * dx + dy * dy);
-        //                 const rotation = Math.atan2(dy, dx);
-        //                 const newCoordinates = [];
-        //                 const numPoints = 12;
-        //                 for (let i = 0; i < numPoints; ++i) {
-        //                     const angle = rotation + (i * 2 * Math.PI) / numPoints;
-        //                     const fraction = i % 2 === 0 ? 1 : 0.5;
-        //                     const offsetX = radius * fraction * Math.cos(angle);
-        //                     const offsetY = radius * fraction * Math.sin(angle);
-        //                     newCoordinates.push([center[0] + offsetX, center[1] + offsetY]);
-        //                 }
-        //                 newCoordinates.push(newCoordinates[0].slice());
-        //                 if (!geometry) {
-        //                     geometry = new ol.geom.Polygon([newCoordinates]);
-        //                 } else {
-        //                     geometry.setCoordinates([newCoordinates]);
-        //                 }
-        //                 return geometry;
-        //             };
-        //         }
-        //         drawWithShift = new ol.interaction.Draw({
-        //             source: source,
-        //             type: value,
-        //             geometryFunction: geometryFunction,
-        //         });
-        //         map.addInteraction(drawWithShift);
-        //     }
-        // }
-
-        // /**
-        // * Handle change event.
-        // */
-        // typeSelect.onchange = function () {
-        //     map.removeInteraction(drawWithShift);
-        //     addInteraction();
-        // };
-
-        // document.getElementById('undo').addEventListener('click', function () {
-        //     drawWithShift.removeLastPoint();
-        // });
-
-        // addInteraction();
-        //#endregion
-
-        //#region Resize Polygon
-        function removeInteractions() {
-            map.removeInteraction(modify);
-            map.removeInteraction(select);
-            map.removeInteraction(draw);
-            map.removeInteraction(select);
-            map.removeInteraction(translate);
-        }
-
-        const mode = document.getElementById('mode');
-        function onChange() {
-            removeInteractions();
-            switch (mode.value) {
-                case 'draw': {
-                    map.addInteraction(draw);
-                    map.addInteraction(snap);
-                    break;
-                }
-                case 'modify': {
-                    map.addInteraction(select);
-                    map.addInteraction(modify);
-                    map.addInteraction(snap);
-                    map.addInteraction(translate);
-                    break;
-                }
-                default: {
-                    // pass
-                }
-            }
-            var GeoJSON = new ol.format.GeoJSON();
-            console.log(GeoJSON.writeFeatures(vectorSource.getFeatures()));
-        }
-        mode.addEventListener('change', onChange);
-        onChange();
-        //#endregion
-    </script>
-
-    @* <script type="module">
-        import Draw, { createBox, createRegularPolygon, } from '/lib/openlayers/interaction/Draw.js';
-        import ExtentInteraction from '/lib/openlayers/interaction/Extent.js';
-
-        import ImageLayer from '/lib/openlayers/layer/Image.js';
-        import Map from '/lib/openlayers/Map.js';
-        import Polygon from '/lib/openlayers/geom/Polygon.js';
-
-        import Projection from '/lib/openlayers/proj/Projection.js';
-        import Static from '/lib/openlayers/source/ImageStatic.js';
-        import TileLayer from '/lib/openlayers/layer/Tile.js';
-        import { Vector as VectorSource } from '/lib/openlayers/source.js';
-        import { Vector as VectorLayer } from '/lib/openlayers/layer.js';
-        import View from '/lib/openlayers/View.js';
-        import {getCenter} from '/lib/openlayers/extent.js';
-        import {shiftKeyOnly} from '/lib/openlayers/events/condition.js';
-
-        // Map views always need a projection.  Here we just want to map image
-        // coordinates directly to map coordinates, so we create a projection that uses
-        // the image extent in pixels.
-        const extent = [0, 0, 1807, 785];
-        const projection = new Projection({
-          code: 'xkcd-image',
-          units: 'pixels',
-          extent: extent,
-        });
-
-        const source = new VectorSource({wrapX: false});
-
-        const vector = new VectorLayer({
-          source: source,
-        });
-
-        const map = new Map({
-          layers: [
-            new ImageLayer({
-              source: new Static({
-                url: '/images/test-dataset-images/vardariste_1.png',
-                projection: projection,
-                imageExtent: extent,
-              }),
-            }),
-            vector
-          ],
-          target: 'map',
-          view: new View({
-            projection: projection,
-            center: getCenter(extent),
-            zoom: 2,
-            maxZoom: 8,
-          }),
-        });
-
-        const typeSelect = document.getElementById('type');
-
-        let draw; // global so we can remove it later
-        function addInteraction() {
-          let value = typeSelect.value;
-          if (value !== 'None') {
-            let geometryFunction;
-            if (value === 'Square') {
-              value = 'Circle';
-              geometryFunction = createRegularPolygon(4);
-            } else if (value === 'Box') {
-              value = 'Circle';
-              geometryFunction = createBox();
-            } else if (value === 'Star') {
-              value = 'Circle';
-              geometryFunction = function (coordinates, geometry) {
-                const center = coordinates[0];
-                const last = coordinates[coordinates.length - 1];
-                const dx = center[0] - last[0];
-                const dy = center[1] - last[1];
-                const radius = Math.sqrt(dx * dx + dy * dy);
-                const rotation = Math.atan2(dy, dx);
-                const newCoordinates = [];
-                const numPoints = 12;
-                for (let i = 0; i < numPoints; ++i) {
-                  const angle = rotation + (i * 2 * Math.PI) / numPoints;
-                  const fraction = i % 2 === 0 ? 1 : 0.5;
-                  const offsetX = radius * fraction * Math.cos(angle);
-                  const offsetY = radius * fraction * Math.sin(angle);
-                  newCoordinates.push([center[0] + offsetX, center[1] + offsetY]);
-                }
-                newCoordinates.push(newCoordinates[0].slice());
-                if (!geometry) {
-                  geometry = new Polygon([newCoordinates]);
-                } else {
-                  geometry.setCoordinates([newCoordinates]);
-                }
-                return geometry;
-              };
-            }
-            draw = new Draw({
-              source: source,
-              type: value,
-              geometryFunction: geometryFunction,
+        //mousePositionControl
+        function mousePositionAnnotatorControl() {
+            var control = new ol.control.MousePosition({
+                coordinateFormat: ol.coordinate.createStringXY(0),
+                projection: annotationsProjection,
+                // comment the following two lines to have the mouse position
+                // be placed within the annotator.
+                className: 'annotator-control-mouse-position',
+                //target: document.getElementById('mouse-position'),
+                undefinedHTML: '&nbsp;',
             });
-            map.addInteraction(draw);
-          }
+            return control;
         }
 
-        /**
-         * Handle change event.
-         */
-        typeSelect.onchange = function () {
-          map.removeInteraction(draw);
-          addInteraction();
-        };
+        annotator.addControl(mousePositionAnnotatorControl());
 
-        document.getElementById('undo').addEventListener('click', function () {
-          draw.removeLastPoint();
+        $.ajax({
+            type: "GET",
+            url: "@Url.Action("GetImageAnnotations", "Annotations", new { Area = "IntranetPortal" })",
+            data: { datasetImageId: "@Model.DatasetImage.Id" },
+            success: function (data) {
+
+                console.info(data);
+                AddImageAnnotationsToAnnotator(data);
+            },
+            error: function (req, status, error) {
+                Swal.fire({
+                    icon: 'error',
+                    text: `@DbResHtml.T("Something went wrong!", "Resources") - ${req.status}`
+                })
+            }
         });
 
-        addInteraction();
+        function featureSelected(feature){
+            annotatorVars.selectedFeature = feature;
+            var datasetClassId = feature.get("datasetClassId");
+            var isEnabled = feature.get("isEnabled");
 
-        const extentInteraction = new ExtentInteraction({condition: shiftKeyOnly});
-        map.addInteraction(extentInteraction);
-    </Script> *@
-}
+            $('#annotatorToolbarClassesList input').prop('disabled', false);
+            $(`#annotatorToolbarClassesList input[value='${datasetClassId}']`).prop('checked', true);
+
+            $('#annotatorToolbarStatus input').prop('disabled', false);
+            $(`#annotatorToolbarStatus input[value='${isEnabled}']`).prop('checked', true);
+            $('#btnDeleteAnnotation').removeClass('disabled');
+        }
+
+        function featureDeselected() {
+            $('#annotatorToolbarClassesList input').prop('checked', false);
+            $('#annotatorToolbarClassesList input').prop('disabled', true);
+
+            $('#annotatorToolbarStatus input').prop('checked', false);
+            $('#annotatorToolbarStatus input').prop('disabled', true);
+
+            $('#btnDeleteAnnotation').addClass('disabled');
+        }
+
+        function changeFeatureClass(obj) {
+            if (annotatorVars.selectedFeature) {
+                annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+                annotatorVars.redoList = [];
+
+                var classId = $(obj.target).attr("value");
+                annotatorVars.selectedFeature.set("datasetClassId", classId);
+                annotatorVars.lastUsedClass = classId;
+            }
+        }
+
+        function changeFeatureIsEnabled(obj) {
+            if (annotatorVars.selectedFeature) {
+
+                annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+                annotatorVars.redoList = [];
+
+                var isEnabled = $(obj.target).attr("value") == 'true';
+                annotatorVars.selectedFeature.set("isEnabled", isEnabled);                
+            }
+        }
+
+        $("#annotatorToolbarClassesList input").click(changeFeatureClass);
+        $("#annotatorToolbarStatus input").click(changeFeatureIsEnabled);
+        $("#btnDeleteAnnotation").click(deleteSelectedFeature);
+        $("#saveToolBtn").click(saveAnnotations);
+
+        function AddImageAnnotationsToAnnotator(imageAnnotations) {
+
+            var jsonReader = new ol.format.GeoJSON();
+
+            imageAnnotations.forEach(function (imageAnnotation) {
+                var feature = jsonReader.readFeature(imageAnnotation.geoJson, { dataProjection: annotationsProjection, featureProjection: imageProjection });
+
+                feature.set("id", imageAnnotation.id);
+                feature.set("datasetClassId", imageAnnotation.datasetClassId);
+                feature.set("createdOn", imageAnnotation.createdOn);
+                feature.set("isEnabled", imageAnnotation.isEnabled);
+                feature.set("updatedOn", imageAnnotation.updatedOn);               
+
+                annotationsVectorSource.addFeature(feature);
+            });
+
+        }
+
+        let drawBboxInteraction; // global so we can remove it later
+        function addDrawBboxInteraction() {
+
+            drawBboxInteraction = new ol.interaction.Draw({
+                source: annotationsVectorSource,
+                type: 'Circle',
+                geometryFunction: ol.interaction.Draw.createBox(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: '#86ff00',
+                        width: 2,
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(0, 255, 0, 0)',
+                    }),
+                }),
+                condition: function (evt) {
+                    //Check if draw points are inside the image area (extent)
+                    //console.log(evt);
+                    if (ol.extent.containsXY(extent, evt.coordinate[0], evt.coordinate[1])) {
+                        return true;
+                    }
+                    return false;
+                }
+
+            });
+
+            drawBboxInteraction.on('drawend', function (evt) {
+                //console.log(evt);
+                //console.log(getAnnotationsGeoJsonFromLayer());
+
+                evt.feature.set("isEnabled", true);
+                let datasetClassId = "";
+                if (annotatorVars.lastUsedClass) {
+                    datasetClassId =  annotatorVars.lastUsedClass;
+                }
+                else {
+                    datasetClassId = $("#annotatorToolbarClassesList input").first().attr("value");                    
+                }
+                evt.feature.set("datasetClassId", datasetClassId);
+
+                annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+                annotatorVars.redoList = [];
+            });
+
+            annotator.addInteraction(drawBboxInteraction);
+        }
+
+
+        // global so we can remove it later
+        let selectInteraction;
+        let translateInteraction;
+        let modityInteraction;
+        let snapInteraction;
+        function addSelectInteraction() {
+
+            selectInteraction = new ol.interaction.Select({
+                layers: [annotationsVectorLayer],
+                style: annotationSelectStyles
+            });
+
+            selectInteraction.on('select', function (evt) { 
+                //console.log(evt);
+                if(evt.selected.length > 0){                    
+                    featureSelected(evt.selected[0]);
+                }
+                else {
+                    annotatorVars.selectedFeature = undefined;
+                    featureDeselected()
+                }
+            });
+
+            translateInteraction = new ol.interaction.Translate({
+                //layers: [annotationsVectorLayer],
+                features: selectInteraction.getFeatures()                
+                // condition: function (evt) {
+                //     //Check if draw points are inside the image area (extent)
+                //     console.log("condition");
+                //     if (ol.extent.containsXY(extent, evt.coordinate[0], evt.coordinate[1])) {
+                //         return true;
+                //     }
+                //     return false;
+                // }
+            });
+            translateInteraction.on('translatestart', function (evt) {
+                //console.log(getAnnotationsGeoJsonFromLayer());
+
+                annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+                annotatorVars.redoList = [];
+            });
+
+            translateInteraction.on('translateend', function (evt) {
+                //console.log(evt);
+                var feature = evt.features.getArray()[0];
+                var featureExtent = feature.getGeometry().getExtent();
+                if (!ol.extent.containsExtent(extent, featureExtent)) {
+                    $("#undoToolBtn").click();
+                    annotatorVars.redoList = [];
+                }
+            });
+
+            snapInteraction = new ol.interaction.Snap({
+                features: selectInteraction.getFeatures(),
+                vertex:false
+            });
+            
+            annotatorVars.selectInteraction = selectInteraction;
+            annotator.addInteraction(selectInteraction);
+            annotator.addInteraction(translateInteraction);
+            //annotator.addInteraction(snapInteraction);
+        }
+
+        function removeInteractions() {
+            featureDeselected();
+            annotator.removeInteraction(drawBboxInteraction);
+            annotator.removeInteraction(selectInteraction);
+            annotator.removeInteraction(translateInteraction);            
+            //annotator.removeInteraction(snapInteraction);
+            $("#drawBboxToolBtn").removeClass("bg-secondary");
+            $("#selectToolBtn").removeClass("bg-secondary");
+        }
+
+        $("#drawBboxToolBtn").click(function (evt) {            
+            removeInteractions();
+            $("#drawBboxToolBtn").addClass("bg-secondary");
+            addDrawBboxInteraction();
+
+        });
+
+        $("#selectToolBtn").click(function () {            
+            removeInteractions();
+            $("#selectToolBtn").addClass("bg-secondary");
+            addSelectInteraction();
+        });
+
+        $("#undoToolBtn").click(function () {
+
+            if (annotatorVars.undoList.length < 1)
+                return;
+
+            var geoJSONFormat = new ol.format.GeoJSON();
+
+            var annotationsGeoJson = annotatorVars.undoList.pop();
+            annotatorVars.redoList.push(getAnnotationsGeoJsonFromLayer());
+
+            var features = geoJSONFormat.readFeatures(annotationsGeoJson, { dataProjection: annotationsProjection, featureProjection: imageProjection });
+            annotatorVars.annotationsVectorSource.clear();
+            annotatorVars.annotationsVectorSource.addFeatures(features);
+        });
+
+        $("#redoToolBtn").click(function () {
+            if (annotatorVars.redoList.length < 1)
+                return;
+
+            var geoJSONFormat = new ol.format.GeoJSON();
+
+            var annotationsGeoJson = annotatorVars.redoList.pop();
+            annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+
+            var features = geoJSONFormat.readFeatures(annotationsGeoJson, { dataProjection: annotationsProjection, featureProjection: imageProjection });
+            annotatorVars.annotationsVectorSource.clear();
+            annotatorVars.annotationsVectorSource.addFeatures(features);
+        });
+
+        
+
+        
+        function deleteSelectedFeature() {
+
+            if (!annotatorVars.selectInteraction) {
+                return;
+            }
+
+            if (annotatorVars.selectInteraction.getFeatures().getArray().length < 1) {
+                return;
+            }
+
+            var featureToRemove = annotatorVars.selectInteraction.getFeatures().getArray()[0];
+
+            annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+            annotatorVars.redoList = [];
+
+            annotatorVars.annotationsVectorSource.removeFeature(featureToRemove);
+
+            featureDeselected();
+        }
+
+        function saveAnnotations() {
+
+            let geoJSONFormat = new ol.format.GeoJSON();
+            let annotationsList = [];
+            annotatorVars.annotationsVectorSource.getFeatures().forEach(function (feature) {
+                let annotation = {
+                    datasetClassId: feature.get("datasetClassId"),                    
+                    id: feature.get("id"),
+                    isEnabled: feature.get("isEnabled"),
+                    annotationJson: geoJSONFormat.writeFeature(feature, { dataProjection: annotationsProjection, featureProjection: imageProjection })
+                };
+                annotationsList.push(annotation);
+            });
+
+            let editImageAnnotations = {
+                datasetImageId: "@Model.DatasetImage.Id",
+                imageAnnotations: annotationsList
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("SaveImageAnnotations", "Annotations", new { Area = "IntranetPortal" })",
+                data: { editImageAnnotations: editImageAnnotations },
+                success: function (data) {
+                    Toast.fire({
+                        icon: 'success',
+                        title: `@DbResHtml.T("Annotations Saved!", "Resources")`
+                    })                   
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        text: `@DbResHtml.T("Something went wrong!", "Resources") - ${req.status}`
+                    })
+                }
+            });
+        }
+
+        // Register Annotator keyboard shortcuts
+        function pushbtn(event) {
+            var keycode = event.keyCode,
+                key = String.fromCharCode(keycode),
+
+                // finding the element on which the event was originally fired:
+                source = event.target,
+
+                // an Array of element-types upon which the function should not fire (to prevent
+                // interfering needlessly with the UI and user-expectations):
+                exclude = ['input', 'textarea'];
+
+            // finding the element-type (tagName) of the element  upon which the event was fired, converting it to
+            // a lower-case string and then looking in the Array of excluded elements to see if the element is held
+            // within (-1 indicates the string was not found within the Array):
+            if (exclude.indexOf(source.tagName.toLowerCase()) === -1) {
+
+                if (event.keyCode == 90 && event.ctrlKey && event.shiftKey) {
+                    // undo
+                    //console.log('CTRL + Shift + Z');
+                    event.preventDefault(); //disable firing the redo event in controls
+                    $("#redoToolBtn").click();
+                }
+                else if (event.keyCode == 83 && event.ctrlKey) {
+                    // save
+                    event.preventDefault(); //disable firing the event in controls
+                    $("#saveToolBtn").click();
+                }
+                else if (event.keyCode == 90 && event.ctrlKey) {
+                    // redo
+                    //console.log('CTRL + Z');
+                    event.preventDefault(); //disable firing the event in controls
+                    $("#undoToolBtn").click();
+                }
+                else if (event.keyCode == 83) {
+                    //select - S
+                    $("#selectToolBtn").click();
+                }
+                else if (event.keyCode == 82) {
+                    //draw BBox - R
+                    $("#drawBboxToolBtn").click();
+                }
+                else if (event.keyCode == 27) {
+                    //escape
+                    $("#selectToolBtn").click();
+                }
+                else if (event.keyCode == 46) {
+                    //delete
+                    event.preventDefault(); //disable firing the event in controls
+                    deleteSelectedFeature();
+                }
+                else {
+                    console.log('You pressed ' + key + ' (keyCode: ' + keycode + ').');
+                }
+            }
+            return;
+        }
+        document.addEventListener('keydown', pushbtn);
+
+        //select deafault tool
+        $("#selectToolBtn").click();
+
+        setAnnotatorHeight();
+    });
+
+
+    function setAnnotatorHeight() {
+        var topnavbarHeight = $(".main-header").outerHeight();
+        var contentHeader = $(".content-header").outerHeight();
+        var viewportHeight = $(window).height();
+        $("#annotator").css("height", viewportHeight - topnavbarHeight - contentHeader - 30);
+        if (typeof annotator.updateSize === "function") {
+            annotator.updateSize();
+        }
+    }
+
+    window.onresize = function () {
+        setTimeout(function () { setAnnotatorHeight(); }, 200);
+    }
+
+
+</script>
+
+
