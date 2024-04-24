@@ -41,6 +41,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IMapConfigurationService, MapConfigurationService>();
             services.TryAddScoped<IMapLayersConfigurationService, MapLayersConfigurationService>();
             services.TryAddScoped<IMapLayerGroupsConfigurationService, MapLayerGroupsConfigurationService>();
+            services.TryAddScoped<IImageAnnotationsService, ImageAnnotationsService>();
 
             return services;
         }

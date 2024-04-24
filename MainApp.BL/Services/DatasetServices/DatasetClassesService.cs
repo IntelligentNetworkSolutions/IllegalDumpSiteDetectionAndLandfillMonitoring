@@ -32,6 +32,15 @@ namespace MainApp.BL.Services.DatasetServices
             var model = _mapper.Map<List<DatasetClassDTO>>(list.Data) ?? throw new Exception("Model not found");
             return model;
 
+        }        
+        
+        public async Task<List<DatasetClassDTO>> GetAllDatasetClassesByDatasetId(Guid datasetId)
+        {
+            var list = await _datasetDatasetClassRepository.GetAll(filter: x=>x.DatasetId == datasetId, includeProperties: "DatasetClass") ?? throw new Exception("Model not found");
+            var resList = list.Data.Select(x=>x.DatasetClass).ToList();
+            var model = _mapper.Map<List<DatasetClassDTO>>(resList) ?? throw new Exception("Model not found");
+            return model;
+
         }
         public async Task<DatasetClassDTO> GetDatasetClassById(Guid classId)
         {

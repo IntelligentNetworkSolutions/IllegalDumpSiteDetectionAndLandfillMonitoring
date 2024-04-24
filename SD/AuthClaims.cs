@@ -212,6 +212,12 @@ namespace SD
             FromModule = Modules.Datasets,
             Description = "Datasets: Edit dataset image annotations"
         };
+        public static readonly AuthClaim ViewDatasetImageAnnotations = new AuthClaim
+        {
+            Value = "5:15",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: View dataset image annotations"
+        };
         public static readonly AuthClaim MapToolMeasureLength = new AuthClaim
         {
             Value = "6:1",

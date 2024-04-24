@@ -124,8 +124,8 @@ services.AddTransient<IViewLocalizer, DbResViewLocalizer>();
 services.AddDefaultIdentity<ApplicationUser>()
                     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-//services.RegisterMainAppDb();
-services.AddDbContext<ApplicationDbContext>();
+services.RegisterMainAppDb(configuration);
+//services.AddDbContext<ApplicationDbContext>();
 
 if (applicationStartMode == ApplicationStartModes.IntranetPortal)
 {
@@ -192,9 +192,9 @@ Audit.Core.Configuration.AddOnSavingAction(scope =>
             {
                 if (change.OriginalValue is NetTopologySuite.Geometries.Geometry)
                 {
-                    change.OriginalValue = 
+                    change.OriginalValue =
                         Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)change.OriginalValue);
-                    change.NewValue = 
+                    change.NewValue =
                         Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)change.NewValue);
                 }
             }
@@ -208,7 +208,7 @@ Audit.Core.Configuration.AddOnSavingAction(scope =>
         foreach (var colValue in tempList)
         {
             if (colValue.Value is NetTopologySuite.Geometries.Geometry)
-                entry.ColumnValues[colValue.Key] = 
+                entry.ColumnValues[colValue.Key] =
                     Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)colValue.Value);
         }
     }
@@ -289,7 +289,7 @@ app.Use(async (context, next) =>
             await next();
         });
     }
-        //app.ConfigureMissingCultureCookie(configuration);
+    //app.ConfigureMissingCultureCookie(configuration);
 
     await next();
 });

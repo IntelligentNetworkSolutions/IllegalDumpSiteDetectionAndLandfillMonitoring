@@ -27,6 +27,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IMapConfigurationRepository, MapConfigurationRepository>();
             services.TryAddScoped<IMapLayersConfigurationRepository, MapLayersConfigurationRepository>();
             services.TryAddScoped<IMapLayerGroupsConfigurationRepository, MapLayerGroupsConfigurationRepository>();
+            services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
 
             return services;
         }

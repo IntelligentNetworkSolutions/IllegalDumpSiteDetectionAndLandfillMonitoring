@@ -15,23 +15,24 @@ div.show-image {
         opacity: 0.5;
     }
 
-    div.show-image:hover input {
+    div.show-image:hover input, div.show-image:hover a {
         display: block;
     }
 
-    div.show-image input {
+    div.show-image input, div.show-image a {
         position: absolute;
         display: none;
     }
 
         div.show-image input.editImage {
             top: 3px;
-            left: 4px;
+            left: 4px;           
         }
 
-        div.show-image input.editAnnotation {
+        div.show-image a.editAnnotation {
             top: 3px;
             left: 50%;
+            
         }
 .pagination-container ul{
    justify-content:center;
