@@ -18,8 +18,7 @@ namespace MainApp.BL.Interfaces.Services
         Task<ResultDTO<bool>> BulkUpdateImageAnnotations(EditImageAnnotationsDTO editImageAnnotations);
         #endregion
 
-        #region Delete
-        Task<ResultDTO<int>> DeleteImageAnnotationsByImageId(Guid datasetImageId);
+        #region Delete        
         #endregion
     }
 }

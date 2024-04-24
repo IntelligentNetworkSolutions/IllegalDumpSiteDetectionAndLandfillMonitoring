@@ -52,7 +52,7 @@ namespace DAL.Migrations
                     b.HasKey("Key")
                         .HasName("pk_application_settings");
 
-                    b.ToTable("application_settings");
+                    b.ToTable("application_settings", (string)null);
                 });
 
             modelBuilder.Entity("Entities.ApplicationUser", b =>
@@ -188,7 +188,7 @@ namespace DAL.Migrations
                     b.HasKey("AuditLogId")
                         .HasName("pk_audit_log");
 
-                    b.ToTable("audit_log");
+                    b.ToTable("audit_log", (string)null);
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.Dataset", b =>
@@ -250,7 +250,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("datasets");
+                    b.ToTable("datasets", (string)null);
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetClass", b =>
@@ -287,7 +287,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("ParentClassId");
 
-                    b.ToTable("dataset_classes");
+                    b.ToTable("dataset_classes", (string)null);
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetImage", b =>
@@ -354,7 +354,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("dataset_images");
+                    b.ToTable("dataset_images", (string)null);
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.Dataset_DatasetClass", b =>
@@ -379,7 +379,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DatasetId");
 
-                    b.ToTable("datasets_dataset_classes");
+                    b.ToTable("datasets_dataset_classes", (string)null);
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.ImageAnnotation", b =>
@@ -388,6 +388,11 @@ namespace DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("AnnotationsGeoJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("annotations_geo_json");
 
                     b.Property<string>("CreatedById")
                         .IsRequired()
@@ -400,17 +405,13 @@ namespace DAL.Migrations
                         .HasColumnName("created_on")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
 
-                    b.Property<Guid?>("DatasetClassId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("dataset_class_id");
-
                     b.Property<Guid?>("DatasetImageId")
                         .HasColumnType("uuid")
                         .HasColumnName("dataset_image_id");
 
-                    b.Property<Polygon>("Geom")
+                    b.Property<Geometry>("Geom")
                         .IsRequired()
-                        .HasColumnType("geometry(Polygon)")
+                        .HasColumnType("geometry")
                         .HasColumnName("geom");
 
                     b.Property<bool>("IsEnabled")
@@ -432,13 +433,12 @@ namespace DAL.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.HasIndex("DatasetClassId");
-
-                    b.HasIndex("DatasetImageId");
+                    b.HasIndex("DatasetImageId")
+                        .IsUnique();
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("image_annotations");
+                    b.ToTable("image_annotations", (string)null);
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>
@@ -469,7 +469,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("intranet_portal_users_tokens");
+                    b.ToTable("intranet_portal_users_tokens", (string)null);
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>
@@ -553,7 +553,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_configurations");
+                    b.ToTable("map_configurations", (string)null);
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapLayerConfiguration", b =>
@@ -625,7 +625,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_layer_configurations");
+                    b.ToTable("map_layer_configurations", (string)null);
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapLayerGroupConfiguration", b =>
@@ -695,7 +695,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_layer_group_configurations");
+                    b.ToTable("map_layer_group_configurations", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -959,14 +959,9 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_image_annotations_asp_net_users_created_by_id");
 
-                    b.HasOne("Entities.DatasetEntities.DatasetClass", "DatasetClass")
-                        .WithMany()
-                        .HasForeignKey("DatasetClassId")
-                        .HasConstraintName("fk_image_annotations_dataset_classes_dataset_class_id");
-
                     b.HasOne("Entities.DatasetEntities.DatasetImage", "DatasetImage")
-                        .WithMany()
-                        .HasForeignKey("DatasetImageId")
+                        .WithOne()
+                        .HasForeignKey("Entities.DatasetEntities.ImageAnnotation", "DatasetImageId")
                         .HasConstraintName("fk_image_annotations_dataset_images_dataset_image_id");
 
                     b.HasOne("Entities.ApplicationUser", "UpdatedBy")
@@ -975,8 +970,6 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_image_annotations_asp_net_users_updated_by_id");
 
                     b.Navigation("CreatedBy");
-
-                    b.Navigation("DatasetClass");
 
                     b.Navigation("DatasetImage");
 

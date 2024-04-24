@@ -1,7 +1,8 @@
 ﻿@model MainApp.MVC.ViewModels.IntranetPortal.Annotations.AnnotateViewModel
 @using MainApp.MVC.Helpers
 @{
-    ViewData["Title"] = @DbResHtml.T("Annotate", "Resources");
+    //TODO: this whole page should be refactored
+    ViewData["Title"] = @DbResHtml.T("Annotate", "Resources");    
 }
 
 @section Styles {
@@ -95,16 +96,24 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="row">
+
+                            @{
+                                var nextImageUrl = Model.NextImage != null ? Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = Model.NextImage.Id }) : "";
+                                var nextDisabled = Model.NextImage == null ? "disabled" : "";
+                                var prevImageUrl = Model.PreviousImage != null ? Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = Model.PreviousImage.Id }) : "";
+                                var prevDisabled = Model.PreviousImage == null ? "disabled" : "";
+                            }
+
                             <div class="col text-center">
-                                <a class="btn btn-default">
+                                <a class="btn btn-default @prevDisabled" title="@DbResHtml.T("Previous Image", "Resources")" href="@prevImageUrl">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </div>
                             <div class="col text-center align-middle" style="line-height:36px">
-                                1 / 2
+                               @Model.CurrentImagePositionInDataset / @Model.TotalImagesCount
                             </div>
                             <div class="col text-center">
-                                <a class="btn btn-default">
+                                <a class="btn btn-default @nextDisabled" title="@DbResHtml.T("Next Image", "Resources")" href="@nextImageUrl">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </div>
@@ -134,11 +143,12 @@
 
         //regisrer a global object that will hold all annotator configuration
         window.annotatorVars = {
+            hasUnsavedChanges: false,
             selectedFeature: undefined,
             lastUsedClass: undefined,
             datasetClasses: [],
             undoList: [],
-            redoList: []
+            redoList: []            
         };
 
         @if (@Model.DatasetClasses!=null){
@@ -175,10 +185,10 @@
 
         ol.proj.addCoordinateTransforms(imageProjection, annotationsProjection,
             function (coordinate) {
-                return [coordinate[0], -1 * coordinate[1]];
+                return [Math.round(coordinate[0]), -1 * Math.round(coordinate[1])];
             },
             function (coordinate) {
-                return [coordinate[0], -1 * coordinate[1]];
+                return [Math.round(coordinate[0]), -1 * Math.round(coordinate[1])];
             }
         );
 
@@ -269,7 +279,7 @@
             layers: [
                 new ol.layer.Image({
                     source: new ol.source.ImageStatic({
-                        url: '/DatasetImages/@Model.Dataset.Id/@Model.DatasetImage.Id' + '.jpg',
+                        url: '@Url.Content("~/DatasetImages/" + Model.Dataset.Id + "/" + Model.DatasetImage.Id + ".jpg")',
                         projection: imageProjection,
                         imageExtent: extent,
                     }),
@@ -281,7 +291,7 @@
                 projection: imageProjection,
                 center: ol.extent.getCenter(extent),
                 zoom: 1,
-                maxZoom: 8,
+                maxZoom: 8
             }),
         });
 
@@ -349,6 +359,7 @@
             if (annotatorVars.selectedFeature) {
                 annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
                 annotatorVars.redoList = [];
+                annotatorVars.hasUnsavedChanges = true;
 
                 var classId = $(obj.target).attr("value");
                 annotatorVars.selectedFeature.set("datasetClassId", classId);
@@ -361,6 +372,7 @@
 
                 annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
                 annotatorVars.redoList = [];
+                annotatorVars.hasUnsavedChanges = true;
 
                 var isEnabled = $(obj.target).attr("value") == 'true';
                 annotatorVars.selectedFeature.set("isEnabled", isEnabled);                
@@ -433,6 +445,7 @@
 
                 annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
                 annotatorVars.redoList = [];
+                annotatorVars.hasUnsavedChanges = true;
             });
 
             annotator.addInteraction(drawBboxInteraction);
@@ -479,6 +492,7 @@
 
                 annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
                 annotatorVars.redoList = [];
+                annotatorVars.hasUnsavedChanges = true;
             });
 
             translateInteraction.on('translateend', function (evt) {
@@ -534,6 +548,7 @@
 
             var annotationsGeoJson = annotatorVars.undoList.pop();
             annotatorVars.redoList.push(getAnnotationsGeoJsonFromLayer());
+            annotatorVars.hasUnsavedChanges = true;
 
             var features = geoJSONFormat.readFeatures(annotationsGeoJson, { dataProjection: annotationsProjection, featureProjection: imageProjection });
             annotatorVars.annotationsVectorSource.clear();
@@ -548,6 +563,7 @@
 
             var annotationsGeoJson = annotatorVars.redoList.pop();
             annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+            annotatorVars.hasUnsavedChanges = true;
 
             var features = geoJSONFormat.readFeatures(annotationsGeoJson, { dataProjection: annotationsProjection, featureProjection: imageProjection });
             annotatorVars.annotationsVectorSource.clear();
@@ -571,6 +587,7 @@
 
             annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
             annotatorVars.redoList = [];
+            annotatorVars.hasUnsavedChanges = true;
 
             annotatorVars.annotationsVectorSource.removeFeature(featureToRemove);
 
@@ -601,10 +618,20 @@
                 url: "@Url.Action("SaveImageAnnotations", "Annotations", new { Area = "IntranetPortal" })",
                 data: { editImageAnnotations: editImageAnnotations },
                 success: function (data) {
-                    Toast.fire({
-                        icon: 'success',
-                        title: `@DbResHtml.T("Annotations Saved!", "Resources")`
-                    })                   
+                    console.log(data);
+                    if (data.isSuccess) {             
+                        annotatorVars.hasUnsavedChanges = false;
+                        Toast.fire({
+                            icon: 'success',
+                            title: `@DbResHtml.T("Annotations Saved!", "Resources")`
+                        })
+                    }
+                    else{
+                        Swal.fire({
+                            icon: 'error',
+                            text: `@DbResHtml.T("Something went wrong!", "Resources") - ${data.errMsg}`
+                        })
+                    }
                 },
                 error: function (req, status, error) {
                     Swal.fire({
@@ -695,6 +722,14 @@
         setTimeout(function () { setAnnotatorHeight(); }, 200);
     }
 
+    $(window).bind('beforeunload', function (e) {
+        if (window.annotatorVars.hasUnsavedChanges) {
+            return true;
+        }
+        else{
+           e = null;
+        }
+    });
 
 </script>
 

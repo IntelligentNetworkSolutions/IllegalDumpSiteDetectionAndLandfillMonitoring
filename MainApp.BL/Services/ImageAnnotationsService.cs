@@ -61,11 +61,6 @@ namespace MainApp.BL.Services
             return new ResultDTO<bool>(res, res, "", null);
         }
 
-        public Task<ResultDTO<int>> DeleteImageAnnotationsByImageId(Guid datasetImageId)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<List<ImageAnnotationDTO>> GetImageAnnotationsByImageId(Guid datasetImageId)
         {
             var datasetImageDb = await _imageAnnotationsRepository.GetAll(filter: x => x.DatasetImageId == datasetImageId);

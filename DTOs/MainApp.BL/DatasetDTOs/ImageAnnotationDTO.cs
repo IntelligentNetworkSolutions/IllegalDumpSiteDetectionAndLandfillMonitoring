@@ -21,6 +21,22 @@ namespace DTOs.MainApp.BL.DatasetDTOs
             }            
         }
 
+        public Dictionary<int, int>? TopLeftBottomRight
+        {
+            get
+            {
+                return GeoJsonHelpers.GeometryBBoxToTopLeftBottomRight(Geom);
+            }
+        }
+
+        public Dictionary<int, int>? TopLeftWidthHeight
+        {
+            get
+            {
+                return GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeight(Geom);
+            }
+        }
+
         public bool IsEnabled { get; init; } = false;
 
         public Guid? DatasetImageId { get; init; }

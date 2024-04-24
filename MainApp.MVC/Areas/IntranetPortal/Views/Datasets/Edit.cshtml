@@ -33,7 +33,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-md-3 mb-3">
-                <div class="card card-info">
+                <div class="card card-light">
                     <div class="card-header">
                         <h3 class="card-title">Dataset statistics</h3>
                         <div class="card-tools">
@@ -80,7 +80,7 @@
                         </ul>
                     </div>
                 </div>
-                <div class="card card-primary">
+                <div class="card card-light">
                     <div class="card-header">
                         <h3 class="card-title">Dataset classes</h3>
 
@@ -126,7 +126,7 @@
                             {
                                 @if (User.HasAuthClaim(SD.AuthClaims.AddDatasetClass))
                                 {
-                                    <button class="mt-3 mr-3 float-right btn btn-sm bg-gradient-primary" data-toggle="modal" data-target="#addNewDatasetClassModal">@DbResHtml.T("Add Class", "Resources")</button>
+                                    <button class="mt-3 mr-3 float-right btn btn-sm bg-gradient-lightblue" data-toggle="modal" data-target="#addNewDatasetClassModal">@DbResHtml.T("Add Class", "Resources")</button>
                                 }
                             }
                             @if (Model.ClassesByDatasetId.Count < 1)
@@ -303,6 +303,9 @@
                     {
                         @foreach (var item in Model.PagedImagesList)
                         {
+                            string thumbPath = item.ThumbnailPath + item.Id.ToString() + item.FileName.Substring(item.FileName.LastIndexOf('.'));
+                            thumbPath = thumbPath.Replace("\\", "/");  //TODO: Change the DB format of this path                                      
+
                             bool isAnnotated = Model.AllImageAnnotations.Select(x => x.DatasetImageId).Contains(@item.Id);
                             <div class="col-md-3">
                                 <div class="card shadow">
@@ -325,7 +328,9 @@
                                     </div>
                                     <div class="card-body border border-top-0 d-flex flex-column align-items-center @cardBodyClass">
                                         <div class="show-image position-relative">
-                                            <img id="@item.Id" class="rounded" src="@($"{item.ThumbnailPath}{item.Id}{item.FileName.Substring(item.FileName.LastIndexOf('.'))}")"  />
+                                            
+
+                                            <img id="@item.Id" class="rounded" src="@Url.Content("~" + thumbPath)"/>
                                             @if (User.HasAuthClaim(SD.AuthClaims.EditDatasetImage))
                                             {
                                                 <input id="@($"{item.Id}_editImage")" class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" data-toggle="modal" data-target="#editDatasetImageModal_@item.Id" />

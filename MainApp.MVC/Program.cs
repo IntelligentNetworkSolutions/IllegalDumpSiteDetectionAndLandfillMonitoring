@@ -124,8 +124,8 @@ services.AddTransient<IViewLocalizer, DbResViewLocalizer>();
 services.AddDefaultIdentity<ApplicationUser>()
                     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-//services.RegisterMainAppDb();
-services.AddDbContext<ApplicationDbContext>();
+services.RegisterMainAppDb(configuration);
+//services.AddDbContext<ApplicationDbContext>();
 
 if (applicationStartMode == ApplicationStartModes.IntranetPortal)
 {
@@ -163,12 +163,12 @@ builder.Services.TryAddScoped<IMailService, MailService>();
 builder.Services.TryAddScoped<IDatasetsRepository, DatasetsRepository>();
 builder.Services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
 builder.Services.TryAddScoped<IImageAnnotationsService, ImageAnnotationsService>();
-builder.Services.TryAddScoped<IDatasetService, DatasetService>(); 
-builder.Services.TryAddScoped<IDatasetClassesRepository, DatasetClassesRepository>(); 
-builder.Services.TryAddScoped<IDataset_DatasetClassRepository, Dataset_DatasetClassRepository>(); 
-builder.Services.TryAddScoped<IDatasetClassesService, DatasetClassesService>(); 
-builder.Services.TryAddScoped<IDatasetImagesRepository, DatasetImagesRepository>(); 
-builder.Services.TryAddScoped<IDatasetImagesService, DatasetImagesService>(); 
+builder.Services.TryAddScoped<IDatasetService, DatasetService>();
+builder.Services.TryAddScoped<IDatasetClassesRepository, DatasetClassesRepository>();
+builder.Services.TryAddScoped<IDataset_DatasetClassRepository, Dataset_DatasetClassRepository>();
+builder.Services.TryAddScoped<IDatasetClassesService, DatasetClassesService>();
+builder.Services.TryAddScoped<IDatasetImagesRepository, DatasetImagesRepository>();
+builder.Services.TryAddScoped<IDatasetImagesService, DatasetImagesService>();
 builder.Services.TryAddScoped<IDataset_DatasetClassService, Dataset_DatasetClassService>();
 builder.Services.TryAddScoped<IMapConfigurationRepository, MapConfigurationRepository>();
 builder.Services.TryAddScoped<IMapConfigurationService, MapConfigurationService>();
@@ -220,9 +220,9 @@ Audit.Core.Configuration.AddOnSavingAction(scope =>
             {
                 if (change.OriginalValue is NetTopologySuite.Geometries.Geometry)
                 {
-                    change.OriginalValue = 
+                    change.OriginalValue =
                         Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)change.OriginalValue);
-                    change.NewValue = 
+                    change.NewValue =
                         Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)change.NewValue);
                 }
             }
@@ -236,7 +236,7 @@ Audit.Core.Configuration.AddOnSavingAction(scope =>
         foreach (var colValue in tempList)
         {
             if (colValue.Value is NetTopologySuite.Geometries.Geometry)
-                entry.ColumnValues[colValue.Key] = 
+                entry.ColumnValues[colValue.Key] =
                     Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)colValue.Value);
         }
     }
@@ -317,7 +317,7 @@ app.Use(async (context, next) =>
             await next();
         });
     }
-        //app.ConfigureMissingCultureCookie(configuration);
+    //app.ConfigureMissingCultureCookie(configuration);
 
     await next();
 });
