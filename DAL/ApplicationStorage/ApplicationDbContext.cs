@@ -6,6 +6,8 @@ using Entities;
 using System.Reflection;
 using Entities.DatasetEntities;
 using Entities.MapConfigurationEntities;
+using Entities.TrainingEntities;
+using Entities.DetectionEntities;
 
 namespace DAL.ApplicationStorage
 {
@@ -37,6 +39,19 @@ namespace DAL.ApplicationStorage
         public virtual DbSet<MapConfiguration> MapConfigurations { get; set; }
         public virtual DbSet<MapLayerConfiguration> MapLayerConfigurations { get; set; }
         public virtual DbSet<MapLayerGroupConfiguration> MapLayerGroupConfigurations { get; set; }
+        #endregion
+
+        #region Training
+        public virtual DbSet<TrainingRun> TrainingRuns { get; set; }
+        public virtual DbSet<TrainedModel> TrainedModels { get; set; }
+        public virtual DbSet<TrainedModelStatistics> TrainedModelStatistics { get; set; }
+        #endregion
+
+        #region Detection
+        public virtual DbSet<DetectionRun> DetectionRuns { get; set; }
+        public virtual DbSet<DetectedDumpSite> DetectedDumpSites { get; set; }
+        public virtual DbSet<DetectionIgnoreZone> DetectionIgnoreZones { get; set; }
+
         #endregion
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

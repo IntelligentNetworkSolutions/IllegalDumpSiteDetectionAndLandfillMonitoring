@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.DatasetDTOs;
-using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Interfaces.Services.DatasetServices;
-
 using MainApp.MVC.Filters;
 using MainApp.MVC.ViewModels.IntranetPortal.Annotations;
 using Microsoft.AspNetCore.Mvc;
@@ -125,17 +123,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> VGGAnnotator(string? datasetImageId = null)
+        public async Task<IActionResult> TestJsonToPolygon()
         {
-            string imgToAnnotatePath = string.Empty;
-            if (string.IsNullOrEmpty(datasetImageId))
-            {
-                imgToAnnotatePath = "";
-            }
+            var result = await Helpers.JsonFileReader.ReceiveDeserializedDetectionRunResponseJson();
 
-            imgToAnnotatePath = datasetImageId;
-
-            return View((imgToAnnotatePath));
+            return View();
         }
     }
 }

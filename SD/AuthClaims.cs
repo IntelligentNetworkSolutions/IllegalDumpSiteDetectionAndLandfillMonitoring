@@ -248,6 +248,12 @@ namespace SD
             FromModule = Modules.GoToCoordinatesTool,
             Description = "Go To Coordinates Tool"
         };
+        public static readonly AuthClaim ViewHistoricData = new AuthClaim
+        {
+            Value = "11:1",
+            FromModule = Modules.HistoricData,
+            Description = "View Historic Data"
+        };
     } 
 }
 
