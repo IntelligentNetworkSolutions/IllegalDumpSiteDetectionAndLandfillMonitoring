@@ -153,6 +153,8 @@ services.AddHttpContextAccessor();
 services.AddApplicationServices();
 services.AddInfrastructureServices();
 
+builder.Services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
+
 builder.Services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
 builder.Services.TryAddScoped<IDetectionRunService, DetectionRunService>();
 

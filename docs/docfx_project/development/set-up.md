@@ -94,5 +94,10 @@
 
 - Download and Install Visual Studio Build Tools in order to have C++ 14  
 - Had some problems here, resolved but no sure what download check option resolved this
+- Windws Server setup:  
+  - Choose SDK Windows 10
+  - Choose MSVC v141
+  - Choose MSVC v143
+  - Choose C++ CMAKE 
 
 ## To Be Continued ...  

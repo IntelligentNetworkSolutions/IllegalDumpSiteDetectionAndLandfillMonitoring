@@ -4,7 +4,7 @@
     {
         public int[] labels { get; set; }
         public float[] scores { get; set; }
-        public float[][] bboxes { get; set; }
+        public double[][] bboxes { get; set; }
     }
 
 
