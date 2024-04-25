@@ -1,4 +1,6 @@
-﻿using System;
+﻿using DTOs.MainApp.BL.DetectionDTOs;
+using SD;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +24,22 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
         Task<ResultDTO<(string visualizedFilePath, string bboxesFilePath)>> GetRawDetectionRunResultPathsByRunId(Guid detectionRunId, string filePath);
 
         Task<ResultDTO<DetectionRunFinishedResponse>> GetBBoxResultsDeserialized(string absBBoxResultsFilePath);
+        #region Read
+        #region Get DetectionRun/s
+        Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClasses();
+        #endregion
+        #endregion
+
+        #region Create
+        #endregion
+
+        #region Update
+
+        #endregion
+
+        #region Delete
+        #endregion
+
         Task<ResultDTO<DetectionRunFinishedResponse>> ConvertBBoxResultToImageProjection
             (string absoluteImagePath, DetectionRunFinishedResponse detectionRunFinishedResponse);
 

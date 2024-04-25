@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using DTOs.Helpers;
 using DTOs.MainApp.BL.DatasetDTOs;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json;
 
 namespace DTOs.MainApp.BL.DetectionDTOs
 {

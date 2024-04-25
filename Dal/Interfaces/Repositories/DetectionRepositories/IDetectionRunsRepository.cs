@@ -9,5 +9,20 @@ namespace DAL.Interfaces.Repositories.DetectionRepositories
 {
     public interface IDetectionRunsRepository : IBaseResultRepository<DetectionRun, Guid>
     {
+        #region Read
+        #region Get DetectionRun/s
+        Task<List<DetectionRun>> GetDetectionRunsWithClasses();
+        #endregion
+        #endregion
+
+        #region Create
+        #endregion
+
+        #region Update
+        #endregion
+
+        #region Delete
+
+        #endregion
     }
 }
