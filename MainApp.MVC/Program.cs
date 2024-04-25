@@ -40,6 +40,10 @@ using DAL.Interfaces.Repositories.MapConfigurationRepositories;
 using DAL.Repositories.MapConfigurationRepositories;
 using MainApp.BL.Interfaces.Services.MapConfigurationServices;
 using MainApp.BL.Services.MapConfigurationServices;
+using MainApp.BL.Services.DetectionServices;
+using DAL.Repositories.DetectionRepositories;
+using DAL.Interfaces.Repositories.DetectionRepositories;
+using MainApp.BL.Interfaces.Services.DetectionServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -176,6 +180,8 @@ builder.Services.TryAddScoped<IMapLayersConfigurationService, MapLayersConfigura
 builder.Services.TryAddScoped<IMapLayerGroupsConfigurationRepository, MapLayerGroupsConfigurationRepository>();
 builder.Services.TryAddScoped<IMapLayerGroupsConfigurationService, MapLayerGroupsConfigurationService>();
 
+builder.Services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
+builder.Services.TryAddScoped<IDetectionRunService, DetectionRunService>();
 
 // TODO: look over
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);
@@ -183,6 +189,9 @@ services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfile).A
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfileBL).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfile).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(MapConfigurationProfileBL).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(DetectionProfileBL).Assembly);
+//services.AddAutoMapper(typeof(Program).Assembly, typeof(MainApp.BL.Infrastructure.RegisterServices).Assembly);
+
 
 //services.RegisterAuditNet();
 Audit.Core.Configuration.Setup()

@@ -370,3 +370,5 @@ FodyWeavers.xsd
 /coveragereport
 /MainApp.MVC/wwwroot/DatasetImages/
 /MainApp.MVC/wwwroot/DatasetThumbnails/
+/MainApp.MVC/wwwroot/detection-runs/input-images
+/MainApp.MVC/wwwroot/detection-runs/outputs/visualized-images

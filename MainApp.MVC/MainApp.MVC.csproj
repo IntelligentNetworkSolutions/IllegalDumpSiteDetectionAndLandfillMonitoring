@@ -37,6 +37,7 @@
 	<ItemGroup>
 		<Folder Include="Areas\IntranetPortal\Views\DatasetImages\" />
 		<Folder Include="ViewModels\Common\" />
+		<Folder Include="wwwroot\detection-runs\outputs\visualized-images\" />
 		<Folder Include="wwwroot\i18n\" />
 		<Folder Include="wwwroot\images\test-dataset-images\" />
 	</ItemGroup>

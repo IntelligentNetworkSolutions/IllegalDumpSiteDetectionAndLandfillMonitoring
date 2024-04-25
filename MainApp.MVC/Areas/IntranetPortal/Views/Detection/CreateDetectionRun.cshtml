@@ -1,0 +1,352 @@
+﻿@using DTOs.MainApp.BL.DetectionDTOs
+@using MainApp.MVC.Helpers
+@model List<DetectionRunDTO>
+
+@{
+    ViewData["Title"] = "Create Detection Run";
+}
+@section Styles {
+    <style>
+        .file-upload-wrapper {
+            position: relative;
+            display: flex;
+            flex-grow: 0;
+            flex-shrink: 0;
+            width: max-content;
+        }
+
+        .hidden-file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            opacity: 0;
+        }
+
+        /* input[type="file"] { position: absolute;  top: 0; left: 0; width: 100%; height: 100%; cursor: pointer; opacity: 0; } */
+
+        .show-uploaded-img-container {
+            display: flex;
+            margin-left: 1rem;
+            margin-right: 1rem;
+            border: 1px solid #28a745;
+        }
+
+        .show-uploaded-img-img {
+            display: flex;
+            width: 100%;
+            padding: 3px;
+            object-fit: contain;
+        }
+    </style>
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Create detection run", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Detection", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card d-flex">
+                    <div class="card-header d-flex bg-dark text-white">
+                        <h3 class="card-title">
+                            @DbResHtml.T("New Detection Run", "Resources")
+                        </h3>
+                    </div>
+                    <div class="card-body overlay-wrapper">
+                        <div class="d-flex flex-row gap-2">
+                            <!-- Name & Description & IsCompleted & Add/Choose Image -->
+                            <div class="col-12 col-md-6">
+                                <!-- Name -->
+                                <div class="form-group">
+                                    <label class="form-control-label mt-3" for="#inpName">
+                                        @DbResHtml.T("Detection Run Name", "Resources")
+                                    </label>
+                                    <input type="text" name="Name" class="form-control" id="inpName" required />
+                                </div>
+                                <!-- Description -->
+                                <div class="form-group">
+                                    <label class="form-control-label mt-3" for="#inpDescription">
+                                        @DbResHtml.T("Detection Run Description", "Resources")
+                                    </label>
+                                    <input type="text" name="Description" class="form-control" id="inpDescription" />
+                                </div>
+                                <!-- Add/Choose Image -->
+                                <div class="form-group clearfix d-flex flex-row flex-grow-1 justify-content-center gap-2">
+                                    <div class="icheck-success d-inline">
+                                        <input type="radio" id="radioAddImage" name="radioInputImage" data-target="#tabAddImage" checked="">
+                                        <label for="radioAddImage">
+                                            @DbResHtml.T("Add Image", "Resources")
+                                        </label>
+                                    </div>
+                                    @* <div class="icheck-success d-inline">
+                                    <input type="radio" id="radioChooseImage" name="radioInputImage" data-target="#tabChooseImage" checked="">
+                                    <label for="radioChooseImage">
+                                    @DbResHtml.T("Choose Image", "Resources")
+                                    </label>
+                                    </div> *@
+                                </div>
+                                <div class="tab-content">
+                                    <!-- Add new Image -->
+                                    <div id="tabAddImage" class="tab-pane fade show active d-flex flex-column justify-content-center align-items-center">
+                                        <div class="file-upload-wrapper">
+                                            <input type="file" id="inpImage" accept="image/*" class="hidden-file-input" hidden>
+                                            <label for="inpImage" class="btn btn-outline-success file-upload-input">
+                                                <i class="fas fa-file-image"></i> &nbsp;&nbsp;
+                                                @DbResHtml.T("Add an Image file", "Resources")
+                                            </label>
+                                        </div>
+                                    </div>
+                                    @* <!-- Choose Image from previous runs -->
+                                    <div id="tabChooseImage" class="tab-pane fade">
+                                    </div> *@
+                                </div>
+                            </div>
+                            <!-- Show Added/Chosen Image -->
+                            <div class="col-12 col-md-6">
+                                <div class="show-uploaded-img-container" id="showInputImageContainer"></div>
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex flex-column justify-content-center align-items-center">
+                            <!-- Is Completed -->
+                            <div class="form-group clearfix">
+                                <div class="icheck-success d-inline">
+                                    <input type="checkbox" disabled id="chbIsCompleted" />
+                                    <label for="chbIsCompleted">
+                                        @DbResHtml.T("Run Is Completed", "Resources")
+                                    </label>
+                                </div>
+                            </div>
+                            <!-- Detect Btn -->
+                            <button type="button" onclick="StartDetectionRun()" class="btn btn-success">
+                                @DbResHtml.T("Detect", "Resources")
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Document Ready
+        $(function () {
+            $('input[type="radio"][name="radioInputImage"]').on('change', function () {
+                var targetTab = $(this).data('target');
+                var activeTab = $('.tab-pane.active');
+
+                // Fade out the current active tab
+                activeTab.fadeOut(300, function () {
+                    // Remove active class after fade out completes
+                    activeTab.removeClass('active show');
+
+                    // Fade in the new active tab
+                    $(targetTab).fadeIn(300, function () {
+                        // Add active class only after fade in completes
+                        $(this).addClass('active show');
+                    });
+                });
+            });
+
+            $('#inpImage').on('change', function (e) {
+                $("#showInputImageContainer").empty();
+                var file = e.target.files[0];
+                var reader = new FileReader();
+                var img = new Image();
+                img.classList.add("show-uploaded-img-img");
+                reader.onload = function (event) {
+                    img.onload = function () {
+                        $("#showInputImageContainer").empty();
+                        $("#showInputImageContainer").append(this);
+                    }
+
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function DisableAllChildControlsByContainerClass(className) {
+            const parent = document.querySelector('.' + className); // Select the parent element with the class "content"
+
+            const controls = parent.querySelectorAll('input, button, select'); // Find all input elements within this parent
+            controls.forEach(input => { // Disable each control
+                input.disabled = true;
+            });
+
+            // For Select2 elements specifically, you may need to trigger a change because Select2 uses a different approach by masking the real select element
+            $('.content select').select2().prop('disabled', true).select2();
+        }
+
+        function EnableAllChildControlsByContainerClass(className) {
+            const parent = document.querySelector('.' + className); // Select the parent element with the class "content"
+
+            const controls = parent.querySelectorAll('input, button, select'); // Find all input elements within this parent
+            controls.forEach(input => { // Disable each control
+                input.disabled = false;
+            });
+
+            // For Select2 elements specifically, you may need to trigger a change because Select2 uses a different approach by masking the real select element
+            $('.content select').select2().prop('disabled', false).select2();
+        }
+
+        function hasValue(variable) {
+            if (variable === undefined || variable === null) return false;
+            if (typeof variable === 'string' && variable.trim() === '') return false;
+            if (Array.isArray(variable) && variable.length === 0) return false;
+            if (variable.constructor === Object && Object.keys(variable).length === 0) return false;
+            return true;
+        }
+
+        function addOverlayToDivByQuerySelector(querySelectionStr) {
+            var containerElem = document.querySelector(querySelectionStr);
+            if (containerElem) {
+                // Create overlay div
+                var overlayDiv = document.createElement('div');
+                overlayDiv.className = 'overlay';
+
+                // Create icon
+                var icon = document.createElement('i');
+                icon.className = 'fas fa-3x fa-sync-alt fa-spin text-succes';
+
+                // Create text div
+                var textDiv = document.createElement('div');
+                textDiv.className = 'text-bold pt-2';
+                textDiv.textContent = 'Loading...';
+
+                // Append icon and text to overlay div
+                overlayDiv.appendChild(icon);
+                overlayDiv.appendChild(textDiv);
+
+                // Prepend overlay div to card body
+                containerElem.prepend(overlayDiv);
+            }
+        }
+
+        function removeOverlayByQuerySelector(querySelectionStr) {
+            var overlayDiv = document.querySelector(querySelectionStr + ' .overlay');
+            if (overlayDiv) {
+                overlayDiv.remove();
+            }
+        }
+
+        function StartDetectionRun() {
+            DisableAllChildControlsByContainerClass('content');
+
+            const nameElem = document.getElementById('inpName');
+            let nameValue = nameElem.value;
+
+            const descriptionElem = document.getElementById('inpDescription');
+            let descriptionValue = descriptionElem.value;
+
+            const inpImgElem = document.querySelector('#inpImage');
+            let imgFileName = '';
+            let imgFile = null;
+            if (inpImgElem && inpImgElem.files.length > 0) {
+                imgFile = inpImgElem.files[0];
+                imgFileName = inpImgElem.files[0].name;
+            }
+
+            if (hasValue(nameValue) === false || hasValue(descriptionValue) === false
+                || hasValue(imgFile) === false || hasValue(imgFileName) === false) {
+                Swal.fire({
+                    text: "@DbResHtml.T("Detection Run must have a Name, Description and an Image", "Resources")",
+                    icon: 'error'
+                });
+                return;
+            }
+
+            addOverlayToDivByQuerySelector('.card-body');
+
+            let formData = new FormData();
+            formData.append('name', nameValue);
+            formData.append('description', descriptionValue);
+            formData.append('imgFile', imgFile);
+            formData.append('imgName', imgFileName);
+
+            // for (let [key, value] of formData.entries()) {
+            //     console.log(key, value);
+            // }
+
+            // Ajax
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("StartDetectionRun", "Detection", new { area = "IntranetPortal" })',
+                processData: false,
+                contentType: false,
+                data: formData,
+                success: function (data) {
+                    console.log('success');
+                    console.log(data);
+                    if (hasValue(data) === false || hasValue(data.data) === false) {
+                        Swal.fire({
+                            text: 'Detection Run Completed Successfully',
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "success"
+                        })
+                    }
+
+                    removeOverlayByQuerySelector('.card-body');
+
+                    // Get the checkbox element by its ID
+                    var checkbox = document.getElementById('chbIsCompleted');
+                    // Temporarily enable the checkbox to modify its state
+                    checkbox.disabled = false;
+                    checkbox.checked = true;
+                    checkbox.disabled = true;
+
+                    // Assuming 'response' contains the URL of the new image
+                    var newImageUrl = data.data.item2; // Adjust according to your API response structure
+                    console.log("newImageUrl");
+                    console.log(newImageUrl);
+                    var imageElem = document.querySelector('#showInputImageContainer img');
+                    console.log("image");
+                    console.log(imageElem);
+                    imageElem.src = '/' + newImageUrl;
+
+                    // Select the image inside the div by specifying the div ID and finding the img element
+                    // var $image = $('#imageContainer img');
+
+                    // // Fade out the current image
+                    // $image.fadeOut('slow', function () {
+                    //     // Change the image source
+                    //     $image.attr('src', newImageUrl);
+
+                    //     // Fade in the new image
+                    //     $image.fadeIn('slow');
+                    // });
+
+                },
+                error: function (req, status, error) {
+                    console.log('error');
+                    Swal.fire({
+                        text: "Error occured",
+                        icon: "error"
+                    });
+                },
+                completed: function () {
+                    EnableAllChildControlsByContainerClass('content');
+                }
+            });
+        }
+    </script>
+}
