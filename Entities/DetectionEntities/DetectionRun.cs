@@ -17,7 +17,6 @@ namespace Entities.DetectionEntities
         public DateTime CreatedOn { get; set; }
         public virtual ApplicationUser? CreatedBy { get; set; }
 
-        [NotMapped]
         public virtual ICollection<DetectedDumpSite>? DetectedDumpSites { get; set; }
     }
 }
