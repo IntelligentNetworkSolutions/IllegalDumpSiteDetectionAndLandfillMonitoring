@@ -81,19 +81,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return datasets;
         }
         [HttpPost]
-        public async Task<IActionResult> GetParentAndChildrenDatasets(Guid currenctDatasetId)
+        public async Task<IActionResult> GetParentAndChildrenDatasets(Guid currentDatasetId)
         {
-            if (currenctDatasetId == Guid.Empty)
+            if (currentDatasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
             }
             var allDatasetsDb = await _datasetService.GetAllDatasets() ?? throw new Exception("Object not found");
-            var currentDatasetDb = await _datasetService.GetDatasetById(currenctDatasetId) ?? throw new Exception("Object not found");
+            var currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId) ?? throw new Exception("Object not found");
             if (currentDatasetDb == null)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid current dataset", "Resources") });
             }
-            var childrenDatasets = allDatasetsDb.Where(x => x.ParentDatasetId == currenctDatasetId).ToList() ?? throw new Exception("Object not found");
+            var childrenDatasets = allDatasetsDb.Where(x => x.ParentDatasetId == currentDatasetId).ToList() ?? throw new Exception("Object not found");
             var parentDataset = currentDatasetDb.ParentDataset;
             if(parentDataset == null)
             {

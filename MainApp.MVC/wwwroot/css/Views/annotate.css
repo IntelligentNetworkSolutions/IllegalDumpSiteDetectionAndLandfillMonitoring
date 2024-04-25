@@ -1,0 +1,32 @@
+﻿.annotator-control-mouse-position {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: .5em;
+    text-shadow: -1px -1px 0 rgba(255,255,255,0.8), 1px -1px 0 rgba(255,255,255,0.8), -1px 1px 0 rgba(255,255,255,0.8), 1px 1px 0 rgba(255,255,255,0.8);
+    font-weight: bold;
+    font-size: 12px;
+    /*width: 100px;
+    height: 50px;*/
+}
+
+.ol-zoom {
+    top:unset;
+    bottom: .5em;
+}
+
+.annotator-control-main-toolbar {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: .5em;
+    padding: 5px;
+    background-color: #fff;
+}
+
+.annotator-main-toolbar-button {
+    display: inline !important;
+    font-size: 15pt !important;
+    margin: 0 3px !important;
+    vertical-align: middle;
+}

@@ -1,4 +1,5 @@
-﻿using NetTopologySuite.Geometries;
+﻿using NetTopologySuite.Features;
+using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
 using System;
@@ -23,6 +24,14 @@ namespace Entities.Helpers
                 geoJson = stringWriter.ToString();
             }
             return geoJson;
+        }
+
+        public static Geometry GeoJsonFeatureToGeometry(string geoJson)
+        {
+            GeoJsonReader reader = new GeoJsonReader();
+            Feature feature = reader.Read<Feature>(geoJson);
+            Geometry geometry = feature.Geometry;
+            return geometry;
         }
     }
 }

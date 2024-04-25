@@ -49,7 +49,7 @@ namespace MainApp.BL.Services.DatasetServices
         public async Task<List<DatasetImageDTO>> GetImagesForDataset(Guid datasetId)
         {
             var datasetImages = await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetId) ?? throw new Exception("Object not found");
-            return _mapper.Map<List<DatasetImageDTO>>(datasetImages);
+            return _mapper.Map<List<DatasetImageDTO>>(datasetImages.Data);
         }
         #endregion
         #endregion

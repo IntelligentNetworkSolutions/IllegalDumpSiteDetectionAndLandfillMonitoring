@@ -1,4 +1,10 @@
-﻿@section Styles{
+﻿@using MainApp.MVC.Helpers
+@{
+    
+    ViewData["Title"] = @DbResHtml.T("Map", "Resources");
+}
+
+@section Styles{
     <link rel="stylesheet" href="~/vendor/ol/ol.css">
     <link rel="stylesheet" href="~/css/Map/ol-overrides.css">
     <link rel="stylesheet" href="~/master/custom-layerswitcher/custom-layerswitcher.css">
