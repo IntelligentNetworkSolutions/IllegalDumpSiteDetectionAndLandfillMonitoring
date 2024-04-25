@@ -38,9 +38,6 @@ namespace MainApp.BL.Services.DetectionServices
             _logger = logger;
         }
 
-
-        #region Read
-        #region Get DetectionRun/s
         public async Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClasses()
         {
             var list = await _detectionRunRepository.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");

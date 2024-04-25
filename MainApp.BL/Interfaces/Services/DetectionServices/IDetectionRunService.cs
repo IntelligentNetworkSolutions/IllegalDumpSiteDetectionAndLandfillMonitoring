@@ -25,9 +25,6 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
         #region Read
         #region Get DetectionRun/s
         Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClasses();
-        Task<ResultDTO<DetectionRunDTO>> GetDetectionRunById(Guid id, bool track = false);
-        Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRunsIncludingDetectedDumpSites();
-        Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRuns();
         #endregion
         #endregion
 
