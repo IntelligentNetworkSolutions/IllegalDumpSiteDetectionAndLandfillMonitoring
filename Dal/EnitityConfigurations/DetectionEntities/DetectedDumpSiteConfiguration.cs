@@ -20,7 +20,7 @@ namespace DAL.EnitityConfigurations.DetectionEntities
                 .IsRequired();
 
             builder.HasOne(dds => dds.DetectionRun)
-               .WithMany() // Configure the inverse navigation if necessary
+               .WithMany(x => x.DetectedDumpSites) // Configure the inverse navigation if necessary
                .HasForeignKey(dds => dds.DetectionRunId)
                .OnDelete(DeleteBehavior.Restrict) // CASCADE delete when DetectionRun is deleted
                .IsRequired();

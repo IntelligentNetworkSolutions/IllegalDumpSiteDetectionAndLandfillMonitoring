@@ -1,13 +1,12 @@
-﻿@model List<DetectionRunsDTO>
+﻿@model List<HistoricDataLayerDTO>
 @using DTOs.MainApp.BL.DetectionDTOs
 @using MainApp.MVC.Helpers;
 @using Westwind.Globalization
 @using Westwind.Globalization.AspNetCore.Extensions
 @using Westwind.Globalization.AspNetCore
 @using Newtonsoft.Json
-<!--Go To Coordinates Tool BEGIN-->
 <script type="text/javascript">
-   
+
     $(function () {
 
         function activateHistoricDataTool() {
@@ -25,36 +24,34 @@
         var historicData = new MapToolBaseClass("HistoricData");
         historicData.activateTool = activateHistoricDataTool;
         historicData.deactivateTool = deactivateHistoricDataTool;
-        historicData.defaultFitPadding = [30, 580, 30, 30]; // top,right,bottom,left fit options padding screen pixels
+        historicData.defaultFitPadding = [30, 580, 30, 30]; 
 
         mapVars.mapTools.push(historicData);
 
         var tabHtml = `<li>
-                           <a href="#map-sidebar-historicdata-pane" id="map-sidebar-historicdata-btn" role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="" data-original-title="@DbResHtml.T("Historic Data", "Resources")"><i class="fas fa-history"></i></a>
-                       </li>`;
+                               <a href="#map-sidebar-historicdata-pane" id="map-sidebar-historicdata-btn" role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="" data-original-title="@DbResHtml.T("Historic Data", "Resources")"><i class="fas fa-history"></i></a>
+                           </li>`;
 
         var paneHtml = `<div class="turbosidebar-pane" id="map-sidebar-historicdata-pane">
-                                <h1 class="turbosidebar-header text-center">
-                                     @DbResHtml.T("Historic Data", "Resources")
-                                    <span class="turbosidebar-close"><i class="fa fa-times"></i></span>
-                                </h1>
-                                <div id="map-sidebar-historicdatatable-tab-container"></div>
-                            </div>`;
-        
+                                    <h1 class="turbosidebar-header text-center">
+                                              @DbResHtml.T("Historic Data", "Resources")
+                                        <span class="turbosidebar-close"><i class="fa fa-times"></i></span>
+                                    </h1>
+                                    <div id="map-sidebar-historicdatatable-tab-container"></div>
+                                </div>`;
+
         $("#map-sidebar-upper-tabs-list").append(tabHtml);
         $("#map-sidebar-content").append(paneHtml);
         $('#map-sidebar-gotocoordinatestool-btn').tooltip();
-        
-        
+
+
         generateDetectionRuns();
 
-             @* On change activate / deactivate tab panes *@
             $("#map-sidebar-historicdata-pane-selector").on("change", function () {
                 $("#map-sidebar-historicdata-tab-container .tab-pane").removeClass("active");
                 $("#" + this.value).addClass("active");
             });
 
-             @* Deactivate other tools *@
             $("#map-sidebar-historicdata-btn").on("click", function () {
                 if ($(this).parent().hasClass("active")) {
                     historicData.deactivateTool();
@@ -63,59 +60,97 @@
                     historicData.activateTool();
                 }
             });
-       
-        function generateDetectionRuns() {
+
+         function generateDetectionRuns() {
             let detectionRunsList = @Html.Raw(@JsonConvert.SerializeObject(Model, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore }));
-            var detectionRunsTable = `
-                                                <table class='table table-striped table-bordered table-hover mt-4' id='historicDataDetectionRunsTable'>
-                                                    <thead>
-                                                        <tr>
-                                                             <th hidden></th>
-                                                             <th hidden></th>
-                                                             <th>@DbResHtml.T("Created By", "Resources")</th>
-                                                             <th>@DbResHtml.T("Created On", "Resources")</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                                ${detectionRunsList.map(el => `
+            var detectionRunsTable = "";
+            if (detectionRunsList.length == 0) {
+                detectionRunsTable += `<table class='table table-responsive table-striped table-bordered table-hover mt-4'>
+                                                                <thead>
                                                                     <tr>
-                                                                         <td hidden> ${el.Id}</td>
-                                                                         <td hidden>${el.GeoJson}</td>
-                                                                         <td>${el.CreatedBy}</td>
-                                                                         <td>${new Date(el.CreatedOn).toLocaleDateString()}</td>
-                                                                         <td>
-                                                                             <div class="form-group clearfix">
-                                                                                <div class="icheck-dark mt-3 text-bold">
-                                                                                            <input type="checkbox" id="editDatasetImageEnabledInput_${el.Id}" name="editDatasetImageEnabledInput_${el.Id}">
-                                                                                        <label for="editDatasetImageEnabledInput_${el.Id}">
-                                                                                    </label>
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
+                                                                         <th>@DbResHtml.T("Name", "Resources")</th>
+                                                                         <th>@DbResHtml.T("Is Completed", "Resources")</th>
+                                                                         <th>@DbResHtml.T("Created By", "Resources")</th>
+                                                                         <th>@DbResHtml.T("Created On", "Resources")</th>
                                                                     </tr>
-                                                                `).join('')}                                                           
-                                                    </tbody>
-                                                </table>
-                                                <div class="text-center">
-                                                               <a id="showOnMapBtn" class="mr-2 btn bg-gradient-success"  title="@DbResHtml.T("Show on map", "Resources")">@DbResHtml.T("Show on map", "Resources")</a>
-                                                                <div class="btn-group">
-                                                                        <button type="button" class="btn  bg-gradient-info">Reports</button>
-                                                                        <button type="button" class="btn  bg-gradient-info dropdown-toggle dropdown-icon" data-toggle="dropdown">
-                                                                      <span class="sr-only">Toggle Dropdown</span>
-                                                                    </button>
-                                                                    <div class="dropdown-menu" role="menu">
-                                                                      <a class="dropdown-item" href="#">Report 1</a>
-                                                                      <a class="dropdown-item" href="#">Report 2</a>
-                                                                      <a class="dropdown-item" href="#">Report 3</a>
-                                                                    </div>
-                                                               </div>
-                                                </div>`;
+                                                                </thead>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td colspan="5" class="text-center">@DbResHtml.T("No data available.", "Resources")</td>
+                                                                    </tr>
+                                                                </tbody>
+                                           </table>`
+            } else {
+                detectionRunsTable += `
+                                                        <table class='table table-striped table-bordered table-hover mt-4' id='historicDataDetectionRunsTable'>
+                                                            <thead>
+                                                                <tr>
+                                                                         <th>@DbResHtml.T("Name", "Resources")</th>
+                                                                         <th hidden></th>
+                                                                         <th>@DbResHtml.T("Is Completed", "Resources")</th>
+                                                                         <th>@DbResHtml.T("Created By", "Resources")</th>
+                                                                         <th>@DbResHtml.T("Created On", "Resources")</th>
+                                                                         <th></th>
+                                                                         <th hidden></th>                                                                         
+                                                                         <th hidden></th>                                                                         
+                                                                         <th hidden></th>                                                                         
+                                                                         <th hidden></th>                                                                         
+                                                                         <th hidden></th>                                                                         
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                        ${detectionRunsList.map(el => `
+                                                                            <tr>
+                                                                                 <td title="${el.DetectionRunDescription}"> ${el.DetectionRunName}</td>
+                                                                                 <td hidden>${el.DetectionRunDescription}</td>
+                                                                                 <td> ${el.IsCompleted}</td>
+                                                                                 <td> ${el.CreatedBy}</td>
+                                                                                 <td>${new Date(el.CreatedOn).toLocaleDateString()}</td>   
+                                                                                 <td>
+                                                                                      <div class="form-group clearfix">
+                                                                                        <div class="icheck-dark mt-3 text-bold">
+                                                                                                     <input type="checkbox" id="editDatasetImageEnabledInput_${el.DetectionRunId}" name="editDatasetImageEnabledInput_${el.DetectionRunId}">
+                                                                                                <label for="editDatasetImageEnabledInput_${el.DetectionRunId}">
+                                                                                            </label>
+                                                                                         </div>
+                                                                                     </div>
+                                                                                </td>
+                                                                                <td hidden>${el.DetectionRunId}</td>
+                                                                                <td hidden>${el.GroupedDumpSitesList.map(site => site.GeoJsons.join(',')).join(',')}</td>
+                                                                                <td hidden>${el.TotalAreaOfDetectionRun}</td>
+                                                                                <td hidden>
+                                                                                    ${el.GroupedDumpSitesList.map(site => `
+                                                                                        <div>
+                                                                                            <strong>ClassName:</strong> <p>${site.ClassName}</p> <br>
+                                                                                            <strong>TotalGroupArea:</strong> <p>${site.TotalGroupArea.toFixed(2)}</p>
+                                                                                        </div>
+                                                                                    `).join('<br>')}
+                                                                                </td>
+                                                                                <td hidden>${el.AvgConfidenceRate}</td>
+                                                                            </tr>
+                                                                        `).join('')}
+                                                            </tbody>
+                                                        </table>
+                                                        <div class="text-center">
+                                                                       <a id="showOnMapBtn" class="mr-2 btn bg-gradient-success"  title="@DbResHtml.T("Show on map", "Resources")">@DbResHtml.T("Show on map", "Resources")</a>
+                                                                        <div class="btn-group">
+                                                                                <button type="button" class="btn  bg-gradient-info">Reports</button>
+                                                                                <button type="button" class="btn  bg-gradient-info dropdown-toggle dropdown-icon" data-toggle="dropdown">
+                                                                              <span class="sr-only">Toggle Dropdown</span>
+                                                                            </button>
+                                                                            <div class="dropdown-menu" role="menu">
+                                                                                <a id="showAreaComparisonAvgConfidenceRateModalBtn" class="dropdown-item btn">@DbResHtml.T("Area comparison", "Resources")</a>
+                                                                            </div>
+                                                                       </div>
+                                                        </div>`;
+            }
+
 
             $("#map-sidebar-historicdatatable-tab-container").html(detectionRunsTable);
         }
-      
+
         $("#showOnMapBtn").on("click", function () {
-                
+
             var selectedRows = [];
 
             $("#historicDataDetectionRunsTable tbody tr").each(function () {
@@ -123,71 +158,185 @@
                 var checkbox = row.find("input[type='checkbox']");
 
                 if (checkbox.prop("checked")) {
-                    var detectionRunId = row.find("td:nth-child(1)").text();
-                    var runGeoJson = row.find("td:nth-child(2)").text();
-                    var createdBy = row.find("td:nth-child(3)").text();
-                    var createdOn = row.find("td:nth-child(4)").text();
-
+                    var name = row.find("td:nth-child(1)").text();
+                    var description = row.find("td:nth-child(2)").text();
+                    var isCompleted = row.find("td:nth-child(3)").text();
+                    var createdBy = row.find("td:nth-child(4)").text();
+                    var createdOn = row.find("td:nth-child(5)").text();
+                    var detectionRunId = row.find("td:nth-child(7)").text();
+                    var dumpSiteGeoJsonList = row.find("td:nth-child(8)").text();
                     selectedRows.push({
                         detectionRunId: detectionRunId,
-                        runGeoJson:runGeoJson,
+                        dumpSiteGeoJsonList: dumpSiteGeoJsonList,
+                        name: name,
+                        description: description,
+                        isCompleted: isCompleted,
                         createdBy: createdBy,
                         createdOn: createdOn
                     });
                 }
             });
 
-
             mapVars.map.getLayers().forEach(function (layer) {
                 if (layer instanceof ol.layer.Group && layer.get('title') === 'Historic Data') {
                     mapVars.map.removeLayer(layer);
                 }
             });
-            
 
-            var historicDataLayerGroup  = new ol.layer.Group({
+
+            var historicDataLayerGroup = new ol.layer.Group({
                 title: 'Historic Data',
                 order: 3,
                 opacity: 1,
                 visible: true,
                 openInLayerSwitcher: true,
                 fold: 'open',
-                layers: new ol.Collection([ ])
+                layers: new ol.Collection([])
             });
 
             for (var i = 0; i < selectedRows.length; i++) {
                 var detectionRun = selectedRows[i];
-                var olGeoJson = new ol.format.GeoJSON();
-                var geoJsonObj = JSON.parse(detectionRun.runGeoJson);
+                if (detectionRun.dumpSiteGeoJsonList != "" || detectionRun.dumpSiteGeoJsonList != undefined) {
+                    var geoJsonArray = JSON.parse("[" + detectionRun.dumpSiteGeoJsonList + "]");
 
-                var feature = olGeoJson.readFeature(geoJsonObj, {
-                    dataProjection: "EPSG:4326",
-                    featureProjection: "EPSG:6316" 
-                });
+                    geoJsonArray.forEach((geoJsonObj, j) => {
+                        var olGeoJson = new ol.format.GeoJSON();
+                        var feature = olGeoJson.readFeature(geoJsonObj, {
+                            dataProjection: mapVars.projection,
+                            featureProjection: mapVars.projection
+                        });
 
-                var vectorSource = new ol.source.Vector({
-                    features: [feature]
-                });
+                        var vectorSource = new ol.source.Vector({
+                            features: [feature]
+                        });
 
-                var vectorLayer = new ol.layer.Vector({
-                    source: vectorSource,
-                    title: detectionRun.createdBy,
-                    order: i + 1,
-                    visible: true,
-                    style: new ol.style.Style({
-                        fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' }),
-                        stroke: new ol.style.Stroke({
-                            color: 'red', width: 2
-                        })
-                    })
-                });
+                        var vectorLayer = new ol.layer.Vector({
+                            source: vectorSource,
+                            title: detectionRun.name,
+                            order: j + 1,
+                            visible: true,
+                            style: new ol.style.Style({
+                                fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' }),
+                                stroke: new ol.style.Stroke({
+                                    color: 'red', width: 2
+                                })
+                            })
+                        });
 
-                historicDataLayerGroup.getLayers().push(vectorLayer);
+                        historicDataLayerGroup.getLayers().push(vectorLayer);
+                    });
+                }
+
             }
-           
             mapVars.map.addLayer(historicDataLayerGroup);
-            console.log(historicDataLayerGroup.getLayers().getArray());
-        
+
         });
+
+        $("#showAreaComparisonAvgConfidenceRateModalBtn").on("click", function () {
+            $("#areaComparisonAvgConfidenceRatemodalBody").empty();
+            generateAreaComparisonAvgConfidenceRateModal();
+            var selectedRowsRuns = [];
+
+            $("#historicDataDetectionRunsTable tbody tr").each(function () {
+                var row = $(this);
+                var checkbox = row.find("input[type='checkbox']");
+
+                if (checkbox.prop("checked")) {
+                    var name = row.find("td:nth-child(1)").text();
+                    var description = row.find("td:nth-child(2)").text();
+                    var isCompleted = row.find("td:nth-child(3)").text();
+                    var createdBy = row.find("td:nth-child(4)").text();
+                    var createdOn = row.find("td:nth-child(5)").text();
+                    var detectionRunId = row.find("td:nth-child(7)").text();
+                    var dumpSiteGeoJsonList = row.find("td:nth-child(8)").text().trim();
+                    var totalAreaOfDetectionRun = row.find("td:nth-child(9)").text();
+                    var dumpSiteInfo = [];
+                    row.find("td:nth-child(10) div").each(function() {
+                        var className = $(this).find("strong:contains('ClassName')").next().text().trim();
+                        var totalGroupArea = $(this).find("strong:contains('TotalGroupArea')").next().text().trim();
+                       
+                        dumpSiteInfo.push({
+                            className: className,
+                            totalGroupArea: parseFloat(totalGroupArea)
+                        });
+                    });
+                   var confidenceRate = row.find("td:nth-child(11)").text();
+                                      
+                    selectedRowsRuns.push({
+                        detectionRunId: detectionRunId,
+                        dumpSiteGeoJsonList: dumpSiteGeoJsonList,
+                        name: name,
+                        description: description,
+                        isCompleted: isCompleted,
+                        createdBy: createdBy,
+                        createdOn: createdOn,
+                        dumpSiteInfo: dumpSiteInfo,
+                        confidenceRate: confidenceRate,
+                        totalAreaOfDetectionRun: parseFloat(totalAreaOfDetectionRun)
+                    });
+                }
+            });
+                selectedRowsRuns.forEach(row => {
+                     var tableHtml = "";
+                     tableHtml += `
+                      <div class="card mb-5">
+                        <div class="card-header bg-gradient-dark text-white">
+                           <h5 class="card-title">${row.name}</h5>
+                         </div>
+                         <div class="card-body p-0">
+                         <table class='table table-striped table-bordered table-hover'>
+                            <thead>
+                                <tr>
+                                    <th>Confidence Rate</th>                                   
+                    `;
+                    row.dumpSiteInfo.forEach(info => {
+                        tableHtml += `<th>${info.className} Area  (m²)</th>`;
+                    });
+                    tableHtml +=`<th>Total Area (m²)</th>`;
+                    tableHtml += `
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                 <td>${row.confidenceRate !== "null" ? (row.confidenceRate * 100).toFixed(2) + '%' : '/'}</td>
+                              
+                    `;
+                    row.dumpSiteInfo.forEach(info => {
+                        tableHtml += `<td>${info.totalGroupArea.toFixed(2)}</td>`;
+                    });
+
+                    tableHtml += ` <td>${isNaN(row.totalAreaOfDetectionRun) ? '/' : row.totalAreaOfDetectionRun.toFixed(2)}</td> `;
+                    tableHtml += `
+                                </tr>
+                            </tbody>
+                        </table>
+                       </div>     
+                      </div>     
+                    `;
+
+                    $("#areaComparisonAvgConfidenceRatemodalBody").append(tableHtml);
+                });
+            $("#areaComparisonAvgConfidenceRateModal").modal("show");  
+        });      
     });
+
+    function generateAreaComparisonAvgConfidenceRateModal() {
+        var modalHtml = `<div class="modal fade" id="areaComparisonAvgConfidenceRateModal" tabindex="-1" aria-labelledby="areaComparisonAvgConfidenceRateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-info">
+                    <h5 class="modal-title" id="areaComparisonAvgConfidenceRateModalLabel">Area Comparison</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id='areaComparisonAvgConfidenceRatemodalBody'>
+                
+                </div>
+            </div>
+          </div>
+        </div>`
+        $('body').append(modalHtml);
+        $('#areaComparisonAvgConfidenceRateModal').css('z-index', '2000');
+    }
 </script>

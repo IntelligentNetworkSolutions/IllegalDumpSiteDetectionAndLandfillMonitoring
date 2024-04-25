@@ -19,6 +19,8 @@ using MainApp.MVC.Helpers;
 using Services.Interfaces;
 using MailSend;
 using MailSend.Interfaces;
+using MainApp.BL.Interfaces.Services.DetectionServices;
+using MainApp.BL.Services.DetectionServices;
 
 namespace MainApp.MVC.Infrastructure.Register
 {
@@ -41,6 +43,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IMapConfigurationService, MapConfigurationService>();
             services.TryAddScoped<IMapLayersConfigurationService, MapLayersConfigurationService>();
             services.TryAddScoped<IMapLayerGroupsConfigurationService, MapLayerGroupsConfigurationService>();
+            services.TryAddScoped<IDetectionRunService, DetectionRunService>();
             services.TryAddScoped<IImageAnnotationsService, ImageAnnotationsService>();
 
             return services;
