@@ -7,6 +7,8 @@ using DAL.Repositories;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Services.Interfaces.Services;
 using Services;
+using DAL.Interfaces.Repositories.DetectionRepositories;
+using DAL.Repositories.DetectionRepositories;
 
 namespace MainApp.MVC.Infrastructure.Register
 {
@@ -27,6 +29,8 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IMapConfigurationRepository, MapConfigurationRepository>();
             services.TryAddScoped<IMapLayersConfigurationRepository, MapLayersConfigurationRepository>();
             services.TryAddScoped<IMapLayerGroupsConfigurationRepository, MapLayerGroupsConfigurationRepository>();
+            services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
+            services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
             services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
 
             return services;
