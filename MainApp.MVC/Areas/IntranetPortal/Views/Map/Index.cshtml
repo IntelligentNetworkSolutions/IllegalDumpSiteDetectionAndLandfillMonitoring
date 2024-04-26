@@ -1,4 +1,5 @@
 ﻿@using MainApp.MVC.Helpers
+@model Guid?
 @{
     
     ViewData["Title"] = @DbResHtml.T("Map", "Resources");
@@ -22,8 +23,7 @@
                 @await Component.InvokeAsync("MeasureLengthTool")
                 @await Component.InvokeAsync("MeasureAreaTool")
                 @await Component.InvokeAsync("GoToCoordinatesTool")
-                @await Component.InvokeAsync("HistoricData")
-
+                @await Component.InvokeAsync("HistoricData", new { detectionRunId = Model})
             </div>
         </div>
     </div>

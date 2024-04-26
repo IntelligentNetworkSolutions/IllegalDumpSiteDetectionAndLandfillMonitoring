@@ -18,12 +18,16 @@ namespace MainApp.MVC.ViewComponents.Map
             _modulesAndAuthClaims = modulesAndAuthClaims;
             _detectionRunService = detectionRunService;
         }
-        public async Task<IViewComponentResult> InvokeAsync()
+        public async Task<IViewComponentResult> InvokeAsync(Guid? detectionRunId)
         {
             if (_modulesAndAuthClaims.HasModule(SD.Modules.HistoricData) && User.HasAuthClaim(SD.AuthClaims.ViewHistoricData))
             {
                 var listOfHistoricDataLayerDto = await _detectionRunService.GetDetectionRunsWithClasses();
-                return View(listOfHistoricDataLayerDto);
+                HistoricDataDTO model = new();
+                model.DetectionRuns = listOfHistoricDataLayerDto;
+                model.SelectedDetectionRunId = detectionRunId;
+                
+                return View(model);
             }
             else
             {
