@@ -10,6 +10,7 @@ using DAL.Repositories.MapConfigurationRepositories;
 using Entities.DetectionEntities;
 using Entities.MapConfigurationEntities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 
 namespace DAL.Repositories.DetectionRepositories
