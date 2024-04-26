@@ -5,7 +5,6 @@
 @{
     ViewData["Title"] = "Create Detection Run";
 }
-
 <div class="content-header bg-gradient-white border-bottom mb-4">
     <div class="container-fluid">
         <div class="row">
@@ -25,7 +24,7 @@
 <div class="content">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-8 offset-2">
                 <div class="card d-flex">
                     <div class="card-header d-flex bg-dark text-white">
                         <h3 class="card-title">
@@ -33,26 +32,26 @@
                         </h3>
                     </div>
                     <div class="card-body overlay-wrapper">
-                        <div class="d-flex flex-row gap-2">
+                        <div class="">
                             <!-- Name & Description & IsCompleted & Add/Choose Image -->
-                            <div class="col-12 col-md-6">
+                            <div class="col-md-12">
                                 <!-- Name -->
                                 <div class="form-group">
-                                    <label class="form-control-label mt-3" for="#inpName">
+                                    <label class="form-control-label" for="#inpName">
                                         @DbResHtml.T("Detection Run Name", "Resources")
                                     </label>
                                     <input type="text" name="Name" class="form-control" id="inpName" required />
                                 </div>
                                 <!-- Description -->
                                 <div class="form-group">
-                                    <label class="form-control-label mt-3" for="#inpDescription">
+                                    <label class="form-control-label" for="#inpDescription">
                                         @DbResHtml.T("Detection Run Description", "Resources")
                                     </label>
                                     <input type="text" name="Description" class="form-control" id="inpDescription" />
                                 </div>
                                 <!-- Add/Choose Image -->
-                                <div class="form-group clearfix d-flex flex-row flex-grow-1 justify-content-center gap-2">
-                                    <div class="icheck-success d-inline">
+                                <div class="form-group clearfix">
+                                    <div class="icheck-dark d-inline">
                                         <input type="radio" id="radioAddImage" name="radioInputImage" data-target="#tabAddImage" checked="">
                                         <label for="radioAddImage">
                                             @DbResHtml.T("Add Image", "Resources")
@@ -67,10 +66,10 @@
                                 </div>
                                 <div class="tab-content">
                                     <!-- Add new Image -->
-                                    <div id="tabAddImage" class="tab-pane fade show active d-flex flex-column justify-content-center align-items-center">
-                                        <div class="custom-file-upload-wrapper">
+                                    <div id="tabAddImage" class="tab-pane fade show active">
+                                        <div class="cusstom-file-upload-wrapper">
                                             <input type="file" id="inpImage" accept="image/*" class="hidden-custom-file-input" hidden>
-                                            <label for="inpImage" class="btn btn-outline-success file-upload-input">
+                                            <label for="inpImage" class="btn btn-sm bg-gradient-info file-upload-input">
                                                 <i class="fas fa-file-image"></i> &nbsp;&nbsp;
                                                 @DbResHtml.T("Add an Image file", "Resources")
                                             </label>
@@ -82,7 +81,7 @@
                                 </div>
                             </div>
                             <!-- Show Added/Chosen Image -->
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-6 hidden">
                                 <div class="show-uploaded-img-container" id="showInputImageContainer"></div>
                             </div>
                         </div>
@@ -90,8 +89,8 @@
                             <!-- Is Completed -->
                             <div class="form-group clearfix">
                                 <div class="icheck-success d-inline">
-                                    <input type="checkbox" disabled id="chbIsCompleted" />
-                                    <label for="chbIsCompleted">
+                                    <input type="checkbox" disabled id="chbIsCompleted" hidden/>
+                                    <label for="chbIsCompleted" hidden>
                                         @DbResHtml.T("Run Is Completed", "Resources")
                                     </label>
                                 </div>
@@ -206,15 +205,16 @@
 
                     removeOverlayByQuerySelector('.card-body');
 
+                    location.href = '@Url.Action("Index", "Map", new { area = "IntranetPortal" })' + '?detectionRunId=' + data.data.item1;
                     // Get the checkbox element by its ID
-                    var checkbox = document.getElementById('chbIsCompleted');
+                    //var checkbox = document.getElementById('chbIsCompleted');
                     // Temporarily enable the checkbox to modify its state
-                    checkbox.disabled = false;
-                    checkbox.checked = true;
-                    checkbox.disabled = true;
+                   // checkbox.disabled = false;
+                    //checkbox.checked = true;
+                    //checkbox.disabled = true;
 
                     // Assuming 'response' contains the URL of the new image
-                    var newImageUrl = data.data.detectionRunVisualizedOutImg; // Adjust according to your API response structure
+                   // var newImageUrl = data.data.detectionRunVisualizedOutImg; // Adjust according to your API response structure
                     //console.log("newImageUrl");
                     //console.log(newImageUrl);
                     // var imageElem = document.querySelector('#showInputImageContainer img');
@@ -225,27 +225,27 @@
                     // }
                     // imageElem.src = '/' + newImageUrl;
 
-                    var imageContainer = document.querySelector('#showInputImageContainer');
+                   // var imageContainer = document.querySelector('#showInputImageContainer');
 
                     // Function to check if the image element exists
-                    function hasValue(elem) {
-                        return elem !== null;
-                    }
+                   // function hasValue(elem) {
+                    //    return elem !== null;
+                   // }
 
                     // Attempt to find an existing img element within the container
-                    var imageElem = imageContainer.querySelector('img');
+                    //var imageElem = imageContainer.querySelector('img');
 
-                    if (!hasValue(imageElem)) {
+                   // if (!hasValue(imageElem)) {
                         // Create a new img element if one does not exist
-                        imageElem = document.createElement('img');
+                       // imageElem = document.createElement('img');
                         // Set the source of the image
-                        imageElem.src = '/' + newImageUrl;
+                        //imageElem.src = '/' + newImageUrl;
                         // Append the new image element to the container
-                        imageContainer.appendChild(imageElem);
-                    } else {
+                        //imageContainer.appendChild(imageElem);
+                   // } else {
                         // If an img element already exists, just update the source
-                        imageElem.src = '/' + newImageUrl;
-                    }
+                        //imageElem.src = '/' + newImageUrl;
+                   // }
                 },
                 error: function (req, status, error) {
                     removeOverlayByQuerySelector('.card-body');

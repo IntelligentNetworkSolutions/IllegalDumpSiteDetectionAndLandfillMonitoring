@@ -42,9 +42,9 @@
                         </a>
                     </li>
                 }
-                @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
                 {
-                    <li class="nav-item menu-open">
+                    <li class="nav-item">
                         <a href="#" class="nav-link" >
                             <i class="fas fa-search-location"></i> &nbsp;&nbsp;
                             <p>
@@ -52,16 +52,7 @@
                                 <i class="fas fa-angle-left right"></i>
                             </p>
                         </a>
-                        <ul class="nav nav-treeview">
-                            @* <li class="nav-item">
-                                <a asp-action="Index" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link" 
-                                    title="@DbResHtml.T("Detection Runs", "Resources")">
-                                    <i class="far fa-list-alt"></i> &nbsp;&nbsp;
-                                    <p>
-                                        @DbResHtml.T("Detection Runs", "Resources")
-                                    </p>
-                                </a>
-                            </li> *@
+                        <ul class="nav nav-treeview">                            
                             <li class="nav-item">
                                 <a asp-action="CreateDetectionRun" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link"
                                    title="@DbResHtml.T("Create Detection Run", "Resources")">

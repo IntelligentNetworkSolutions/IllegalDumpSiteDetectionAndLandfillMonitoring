@@ -70,6 +70,7 @@ namespace SD
         public static readonly Module MapToolZoomToExtent = new Module { Value = "MapToolZoomToExtent", Title = "Zoom To Area", Description = "ZoomToExtent map tool" };
         public static readonly Module GoToCoordinatesTool = new Module { Value = "GoToCoordinatesTool", Title = "Go To Coordinates", Description = "Go To Coordinates Tool" };
         public static readonly Module HistoricData = new Module { Value = "HistoricData", Title = "Historic Data", Description = "Historic Data" };
+        public static readonly Module Detection = new Module { Value = "Detection", Title = "Detection", Description = "Detection" };
 
 
     }

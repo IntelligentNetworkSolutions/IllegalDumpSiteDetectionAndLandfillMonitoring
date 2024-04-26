@@ -5,6 +5,8 @@ using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
 using Entities.DetectionEntities;
 using MainApp.BL.Interfaces.Services.DetectionServices;
+using MainApp.MVC.ViewModels.IntranetPortal.Dataset;
+using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using Microsoft.AspNetCore.Mvc;
 using NetTopologySuite.Geometries;
 using SD;
@@ -58,6 +60,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return View();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> DetectedZones()
+        {
+            var detectionRunsListDTOs = await _detectionRunService.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");
+            var detectionRunsViewModelList = _mapper.Map<List<DetectionRunViewModel>>(detectionRunsListDTOs) ?? throw new Exception("Object not found");
+            return View(detectionRunsViewModelList);
+        }
+
         private async Task<List<DetectionRunDTO>> GetDummyDetectionRunDTOsAsync()
         {
             var id = User.FindFirstValue("UserId");
@@ -106,7 +116,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         [RequestSizeLimit(int.MaxValue)]
         [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue)]
-        public async Task<ResultDTO<(string detectionRunId, string detectionRunVisualizedOutImg)>> StartDetectionRun
+        public async Task<ResultDTO<(string, string)>> StartDetectionRun
             (string name, string description, string imgName, IFormFile imgFile)
         {
             if (string.IsNullOrEmpty(name))
@@ -182,7 +192,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                 // Copy Visualized Output Image to MVC wwwroot to be able to show
                 ResultDTO<(string absVisualizedFilePathMVC, string relVisualizedFilePathMVC)> resultCopyFile =
-                    CopyFileFromPathToRootAtDir(resultGetDetectionResultFiles.Data.visualizedFilePath, 
+                    CopyFileFromPathToRootAtDir(resultGetDetectionResultFiles.Data.visualizedFilePath,
                                                 _baseDetectionRunCopyVisualizedOutputImagesDirectoryPathMVC);
                 if (resultCopyFile.IsSuccess == false && resultCopyFile.HandleError())
                     return ResultDTO<(string, string)>.Fail(resultGetDetectionResultFiles.ErrMsg!);

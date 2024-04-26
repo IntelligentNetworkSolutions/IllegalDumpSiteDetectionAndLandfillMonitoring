@@ -26,7 +26,8 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
         Task<ResultDTO<DetectionRunFinishedResponse>> GetBBoxResultsDeserialized(string absBBoxResultsFilePath);
         #region Read
         #region Get DetectionRun/s
-        Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClasses();
+        Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClassesHistoricDataLayer();
+        Task<List<DetectionRunDTO>> GetDetectionRunsWithClasses();
         #endregion
         #endregion
 

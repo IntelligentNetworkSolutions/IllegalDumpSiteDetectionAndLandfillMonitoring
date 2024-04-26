@@ -185,6 +185,87 @@
         $('body').append(modalHtml);
         $('#areaComparisonAvgConfidenceRateModal').css('z-index', '2000');
     }
+//     function triggerShowOnMap() {
+//         var selectedRows = [];
+
+//         $("#historicDataDetectionRunsTable tbody tr").each(function () {
+//             var row = $(this);
+//             var checkbox = row.find("input[type='checkbox']");
+
+//             if (checkbox.prop("checked")) {
+//                 var name = row.find("td:nth-child(1)").text();
+//                 var description = row.find("td:nth-child(2)").text();
+//                 var isCompleted = row.find("td:nth-child(3)").text();
+//                 var createdBy = row.find("td:nth-child(4)").text();
+//                 var createdOn = row.find("td:nth-child(5)").text();
+//                 var detectionRunId = row.find("td:nth-child(7)").text();
+//                 var dumpSiteGeoJsonList = row.find("td:nth-child(8)").text();
+//                 selectedRows.push({
+//                     detectionRunId: detectionRunId,
+//                     dumpSiteGeoJsonList: dumpSiteGeoJsonList,
+//                     name: name,
+//                     description: description,
+//                     isCompleted: isCompleted,
+//                     createdBy: createdBy,
+//                     createdOn: createdOn
+//                 });
+//             }
+//         });
+
+//         mapVars.map.getLayers().forEach(function (layer) {
+//             if (layer instanceof ol.layer.Group && layer.get('title') === 'Historic Data') {
+//                 mapVars.map.removeLayer(layer);
+//             }
+//         });
+
+//         var historicDataLayerGroup = new ol.layer.Group({
+//             title: 'Historic Data',
+//             order: 3,
+//             opacity: 1,
+//             visible: true,
+//             openInLayerSwitcher: true,
+//             fold: 'open',
+//             layers: new ol.Collection([])
+//         });
+
+//         var extent = ol.extent.createEmpty();
+
+//         for (var i = 0; i < selectedRows.length; i++) {
+//             var detectionRun = selectedRows[i];
+//             if (detectionRun.dumpSiteGeoJsonList != "" || detectionRun.dumpSiteGeoJsonList != undefined) {
+//                 var geoJsonArray = JSON.parse("[" + detectionRun.dumpSiteGeoJsonList + "]");
+
+//                 geoJsonArray.forEach((geoJsonObj, j) => {
+//                     var olGeoJson = new ol.format.GeoJSON();
+//                     var feature = olGeoJson.readFeature(geoJsonObj, {
+//                         dataProjection: mapVars.projection,
+//                         featureProjection: mapVars.projection
+//                     });
+//                     var vectorSource = new ol.source.Vector({
+//                         features: [feature]
+//                     });
+
+//                     var vectorLayer = new ol.layer.Vector({
+//                         source: vectorSource,
+//                         title: detectionRun.name,
+//                         order: j + 1,
+//                         visible: true,
+//                         style: new ol.style.Style({
+//                             fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' }),
+//                             stroke: new ol.style.Stroke({
+//                                 color: 'red', width: 2
+//                             })
+//                         })
+//                     });
+
+//                     historicDataLayerGroup.getLayers().push(vectorLayer);
+//                     ol.extent.extend(extent, vectorSource.getExtent());
+//                 });
+//             }
+//         }
+//         mapVars.map.addLayer(historicDataLayerGroup);
+//         mapVars.map.getView().fit(extent, mapVars.map.getSize());
+// }
     function triggerShowOnMap() {
         var selectedRows = [];
 
@@ -232,8 +313,9 @@
 
         for (var i = 0; i < selectedRows.length; i++) {
             var detectionRun = selectedRows[i];
-            if (detectionRun.dumpSiteGeoJsonList != "" || detectionRun.dumpSiteGeoJsonList != undefined) {
+            if (detectionRun.dumpSiteGeoJsonList != "" && detectionRun.dumpSiteGeoJsonList != undefined) {
                 var geoJsonArray = JSON.parse("[" + detectionRun.dumpSiteGeoJsonList + "]");
+                var vectorSource = new ol.source.Vector();
 
                 geoJsonArray.forEach((geoJsonObj, j) => {
                     var olGeoJson = new ol.format.GeoJSON();
@@ -241,31 +323,29 @@
                         dataProjection: mapVars.projection,
                         featureProjection: mapVars.projection
                     });
-                    var vectorSource = new ol.source.Vector({
-                        features: [feature]
-                    });
-
-                    var vectorLayer = new ol.layer.Vector({
-                        source: vectorSource,
-                        title: detectionRun.name,
-                        order: j + 1,
-                        visible: true,
-                        style: new ol.style.Style({
-                            fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' }),
-                            stroke: new ol.style.Stroke({
-                                color: 'red', width: 2
-                            })
-                        })
-                    });
-
-                    historicDataLayerGroup.getLayers().push(vectorLayer);
-                    ol.extent.extend(extent, vectorSource.getExtent());
+                    vectorSource.addFeature(feature);
                 });
+
+                var vectorLayer = new ol.layer.Vector({
+                    source: vectorSource,
+                    title: detectionRun.name,
+                    order: i + 1,
+                    visible: true,
+                    style: new ol.style.Style({
+                        fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' }),
+                        stroke: new ol.style.Stroke({
+                            color: 'red', width: 2
+                        })
+                    })
+                });
+
+                historicDataLayerGroup.getLayers().push(vectorLayer);
+                ol.extent.extend(extent, vectorSource.getExtent());
             }
         }
         mapVars.map.addLayer(historicDataLayerGroup);
         mapVars.map.getView().fit(extent, mapVars.map.getSize());
-}
+    }
 
     
     function triggerAreaComparisonAvgConfidenceRate(){

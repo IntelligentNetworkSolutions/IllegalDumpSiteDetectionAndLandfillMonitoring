@@ -254,6 +254,12 @@ namespace SD
             FromModule = Modules.HistoricData,
             Description = "View Historic Data"
         };
+        public static readonly AuthClaim ViewDetectionRuns = new AuthClaim
+        {
+            Value = "12:1",
+            FromModule = Modules.Detection,
+            Description = "View Detection Runs"
+        };
     } 
 }
 

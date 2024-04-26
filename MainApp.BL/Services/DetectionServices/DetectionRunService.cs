@@ -15,6 +15,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OSGeo.GDAL;
 using SD;
+using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Office2019.Presentation;
+using DTOs.MainApp.BL.DatasetDTOs;
 
 namespace MainApp.BL.Services.DetectionServices
 {
@@ -80,7 +83,7 @@ namespace MainApp.BL.Services.DetectionServices
             DetectionResultDummyDatasetClassId = detectionResultDummyDatasetClassId;
         }
 
-        public async Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClasses()
+        public async Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClassesHistoricDataLayer()
         {
             var list = await _detectionRunRepository.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");
             var groupedDumpSites = list.Select(detectionRun => new
@@ -186,6 +189,21 @@ namespace MainApp.BL.Services.DetectionServices
             {
                 _logger.LogError(ex.Message, ex);
                 return ResultDTO<DetectionRunDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<List<DetectionRunDTO>> GetDetectionRunsWithClasses()
+        {
+            try
+            {
+                var detectionRuns = await _detectionRunRepository.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");
+                var listDetectionRunsDTOs = _mapper.Map<List<DetectionRunDTO>>(detectionRuns) ?? throw new Exception("Object not found");
+                return listDetectionRunsDTOs;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                throw;
             }
         }
 
