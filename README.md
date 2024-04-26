@@ -2,6 +2,8 @@
     Illegal Dump Site Detection and Landfill Monitoring <img align="center" width="250" src="./docs/images/logo-robot-formal.png" alt="">  
 </h1>
 
+[![codecov](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/branch/master/graph/badge.svg?token=44SYRYP1H7)](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring)
+
 ## 🌐 Overview  
 
 Welcome to the Illegal Dump Site Detection and Landfill Monitoring repository.  
