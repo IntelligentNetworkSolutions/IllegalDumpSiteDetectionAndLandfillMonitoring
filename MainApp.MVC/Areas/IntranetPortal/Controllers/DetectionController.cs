@@ -105,6 +105,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         [HttpPost]
         [RequestSizeLimit(int.MaxValue)]
+        [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue)]
         public async Task<ResultDTO<(string detectionRunId, string detectionRunVisualizedOutImg)>> StartDetectionRun
             (string name, string description, string imgName, IFormFile imgFile)
         {
@@ -194,13 +195,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                 // TODO: Convert BBoxes to Projection 
                 ResultDTO<DetectionRunFinishedResponse> resultBBoxConversionToProjection =
-                    await _detectionRunService.ConvertBBoxResultToImageProjection(absoluteFilePath, resultBBoxDeserialization.Data);
+                    await _detectionRunService.ConvertBBoxResultToImageProjection(absoluteFilePath, resultBBoxDeserialization.Data!);
                 if (resultBBoxDeserialization.IsSuccess == false && resultBBoxDeserialization.HandleError())
                     return ResultDTO<(string, string)>.Fail(resultBBoxDeserialization.ErrMsg!);
 
                 // TODO: Save Detected Dump Sites -> ! Each row is a single polygon  
                 ResultDTO<List<DetectedDumpSite>> resultCreateDetectedDumpSites =
-                    await _detectionRunService.CreateDetectedDumpsSitesFromDetectionRun(detectionRunId, resultBBoxConversionToProjection.Data);
+                    await _detectionRunService.CreateDetectedDumpsSitesFromDetectionRun(detectionRunId, resultBBoxConversionToProjection.Data!);
                 if (resultCreateDetectedDumpSites.IsSuccess == false && resultCreateDetectedDumpSites.HandleError())
                     return ResultDTO<(string, string)>.Fail(resultCreateDetectedDumpSites.ErrMsg!);
 
