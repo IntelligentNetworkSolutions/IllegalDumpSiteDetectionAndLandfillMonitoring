@@ -163,7 +163,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     ImageFileName = imgName,
                     ImagePath = absoluteFilePath,
                     CreatedById = currUserDTO.Id,
-                    CreatedBy = currUserDTO,
+                    CreatedBy = currUserDTO
                 };
 
                 // Create Detection Run
