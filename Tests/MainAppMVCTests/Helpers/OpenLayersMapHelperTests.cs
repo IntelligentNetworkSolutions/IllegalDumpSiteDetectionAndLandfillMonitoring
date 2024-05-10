@@ -148,6 +148,65 @@ namespace Tests.MainAppMVCTests.Helpers
 
             Assert.Equal(expected, result);
         }
-       
+
+        [Fact]
+        public void GenerateLayers_ReturnsEmptyString_WhenNoLayersExist()
+        {
+            var layers = new List<MapLayerConfigurationDTO>();
+
+            _mockConfiguration.SetupGet(x => x["AppSettings:GeoServerIpOrDomain"]).Returns("localhost");
+            _mockConfiguration.SetupGet(x => x["AppSettings:GeoServerPort"]).Returns("8080");
+            _mockConfiguration.SetupGet(x => x["AppSettings:GeoServerWorkspace"]).Returns("workspace");
+
+            var mapConfig = new MapConfigurationDTO
+            {
+                MinX = 0,
+                MinY = 0,
+                MaxX = 100,
+                MaxY = 100,
+                Resolutions = "[]",
+                TileGridJs = "tileGridJs",
+                Projection = "EPSG:3857",
+                MapLayerGroupConfigurations = new List<MapLayerGroupConfigurationDTO>(),
+                MapLayerConfigurations = layers
+            };
+
+            var helper = new OpenLayersMapHelper(mapConfig, "en", _mockConfiguration.Object);
+
+            var result = helper.GenerateLayers(layers.OrderBy(o => o.Order));
+
+            Assert.Equal("", result);
+        }
+        
+        [Fact]
+        public void GenerateGroups_ReturnsEmptyString_WhenNoGroupsExist()
+        {
+            var groups = new List<MapLayerGroupConfigurationDTO>();
+
+            _mockConfiguration.SetupGet(x => x["AppSettings:GeoServerIpOrDomain"]).Returns("localhost");
+            _mockConfiguration.SetupGet(x => x["AppSettings:GeoServerPort"]).Returns("8080");
+            _mockConfiguration.SetupGet(x => x["AppSettings:GeoServerWorkspace"]).Returns("workspace");
+
+            var mapConfig = new MapConfigurationDTO
+            {
+                MinX = 0,
+                MinY = 0,
+                MaxX = 100,
+                MaxY = 100,
+                Resolutions = "[]",
+                TileGridJs = "tileGridJs",
+                Projection = "EPSG:3857",
+                MapLayerGroupConfigurations = groups,
+                MapLayerConfigurations = new List<MapLayerConfigurationDTO>()
+            };
+
+            var helper = new OpenLayersMapHelper(mapConfig, "en", _mockConfiguration.Object);
+
+            var result = helper.GenerateGroups(groups.OrderBy(o => o.Order));
+
+            Assert.Equal("", result);
+        }
+
+
     }
 }
