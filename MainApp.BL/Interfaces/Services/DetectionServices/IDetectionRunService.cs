@@ -16,34 +16,17 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
     {
         Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRuns();
         Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRunsIncludingDetectedDumpSites();
+        Task<ResultDTO<List<DetectionRunDTO>>> GetSelectedDetectionRunsIncludingDetectedDumpSites(List<Guid> selectedDetectionRunsIds);
+        Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds);
         Task<ResultDTO<DetectionRunDTO>> GetDetectionRunById(Guid id, bool track = false);
-
         Task<ResultDTO> CreateDetectionRun(DetectionRunDTO detectionRunDTO);
         Task<ResultDTO> StartDetectionRun(DetectionRunDTO detectionRunDTO);
         Task<ResultDTO> IsCompleteUpdateDetectionRun(DetectionRunDTO detectionRunDTO);
         Task<ResultDTO<(string visualizedFilePath, string bboxesFilePath)>> GetRawDetectionRunResultPathsByRunId(Guid detectionRunId, string filePath);
-
         Task<ResultDTO<DetectionRunFinishedResponse>> GetBBoxResultsDeserialized(string absBBoxResultsFilePath);
-        #region Read
-        #region Get DetectionRun/s
-        Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClassesHistoricDataLayer();
         Task<List<DetectionRunDTO>> GetDetectionRunsWithClasses();
-        #endregion
-        #endregion
-
-        #region Create
-        #endregion
-
-        #region Update
-
-        #endregion
-
-        #region Delete
-        #endregion
-
         Task<ResultDTO<DetectionRunFinishedResponse>> ConvertBBoxResultToImageProjection
             (string absoluteImagePath, DetectionRunFinishedResponse detectionRunFinishedResponse);
-
         Task<ResultDTO<List<DetectedDumpSite>>> CreateDetectedDumpsSitesFromDetectionRun
             (Guid detectionRunId, DetectionRunFinishedResponse detectedDumpSitesProjectedResponse);
     }
