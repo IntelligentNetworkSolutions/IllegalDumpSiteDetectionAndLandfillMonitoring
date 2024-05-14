@@ -12,6 +12,7 @@ namespace DAL.Interfaces.Repositories.DetectionRepositories
         #region Read
         #region Get DetectionRun/s
         Task<List<DetectionRun>> GetDetectionRunsWithClasses();
+        Task<List<DetectionRun>> GetSelectedDetectionRunsWithClasses(List<Guid> selectedDetectionRunsIds);
         #endregion
         #endregion
 

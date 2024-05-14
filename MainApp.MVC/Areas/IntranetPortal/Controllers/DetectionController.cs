@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using AutoMapper;
+using DocumentFormat.OpenXml.Wordprocessing;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
@@ -321,6 +322,32 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 return ResultDTO<(string, string)>.Fail($"Error saving file: {ex.Message}");
             }
+        }
+
+        
+        public async Task<List<DetectionRunViewModel>> GetAllDetectionRuns()
+        {
+            var detectionRunsListDTOs = await _detectionRunService.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");
+            var detectionRunsViewModelList = _mapper.Map<List<DetectionRunViewModel>>(detectionRunsListDTOs) ?? throw new Exception("Object not found");
+            return detectionRunsViewModelList;
+        }
+
+        [HttpPost]
+        public async Task<ResultDTO<List<DetectionRunDTO>>> ShowDumpSitesOnMap(List<Guid> selectedDetectionRunsIds)
+        {
+            var selectedDetectionRuns = await _detectionRunService.GetSelectedDetectionRunsIncludingDetectedDumpSites(selectedDetectionRunsIds);
+            if (selectedDetectionRuns.IsSuccess == false && selectedDetectionRuns.HandleError())
+                return ResultDTO<List<DetectionRunDTO>>.Fail(selectedDetectionRuns.ErrMsg!);
+            if (selectedDetectionRuns.Data == null)
+                return ResultDTO<List<DetectionRunDTO>>.Fail("Data is null");
+
+            return ResultDTO<List<DetectionRunDTO>>.Ok(selectedDetectionRuns.Data);
+        }
+
+        [HttpPost]
+        public async Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateReport(List<Guid> selectedDetectionRunsIds)
+        {
+            return await _detectionRunService.GenerateAreaComparisonAvgConfidenceRateData(selectedDetectionRunsIds);
         }
     }
 }

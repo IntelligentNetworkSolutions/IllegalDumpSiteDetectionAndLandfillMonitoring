@@ -45,6 +45,25 @@ namespace DAL.Repositories.DetectionRepositories
             }
 
         }
+
+        public async Task<List<DetectionRun>> GetSelectedDetectionRunsWithClasses(List<Guid> selectedDetectionRunsIds)
+        {
+            try
+            {
+                var list = await _db.DetectionRuns.Where(x => selectedDetectionRunsIds.Contains(x.Id)).Include(x => x.CreatedBy).Include(x => x.DetectedDumpSites).ThenInclude(x => x.DatasetClass).ToListAsync();
+                if (list == null)
+                {
+                    return new List<DetectionRun>();
+                }
+                return list;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw;
+            }
+
+        }
         #endregion
         #endregion
 

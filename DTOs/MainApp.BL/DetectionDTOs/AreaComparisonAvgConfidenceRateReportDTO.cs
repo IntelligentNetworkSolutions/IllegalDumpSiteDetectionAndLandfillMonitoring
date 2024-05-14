@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.MainApp.BL.DetectionDTOs
 {
-    public record HistoricDataLayerDTO
+    public record AreaComparisonAvgConfidenceRateReportDTO
     {
         public Guid? DetectionRunId { get; set; }
         public string? DetectionRunName { get; set; }

@@ -22,12 +22,7 @@ namespace MainApp.MVC.ViewComponents.Map
         {
             if (_modulesAndAuthClaims.HasModule(SD.Modules.HistoricData) && User.HasAuthClaim(SD.AuthClaims.ViewHistoricData))
             {
-                var listOfHistoricDataLayerDto = await _detectionRunService.GetDetectionRunsWithClassesHistoricDataLayer();
-                HistoricDataDTO model = new();
-                model.DetectionRuns = listOfHistoricDataLayerDto;
-                model.SelectedDetectionRunId = detectionRunId;
-                
-                return View(model);
+                return View(detectionRunId);
             }
             else
             {

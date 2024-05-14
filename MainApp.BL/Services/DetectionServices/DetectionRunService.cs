@@ -83,51 +83,6 @@ namespace MainApp.BL.Services.DetectionServices
             DetectionResultDummyDatasetClassId = detectionResultDummyDatasetClassId;
         }
 
-        public async Task<List<HistoricDataLayerDTO>> GetDetectionRunsWithClassesHistoricDataLayer()
-        {
-            var list = await _detectionRunRepository.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");
-            var groupedDumpSites = list.Select(detectionRun => new
-            {
-                DetectionRun = detectionRun,
-                GroupedDumpSites = detectionRun.DetectedDumpSites
-            .GroupBy(dumpSite => dumpSite.DatasetClass.ClassName)
-            .ToDictionary(group => group.Key, group => group.ToList())
-            }).ToList();
-
-            List<HistoricDataLayerDTO> listDTO = new();
-            foreach ( var group in groupedDumpSites)
-            {
-                HistoricDataLayerDTO model = new();
-                model.DetectionRunId = group.DetectionRun?.Id;
-                model.DetectionRunName = group.DetectionRun?.Name;
-                model.DetectionRunDescription = group.DetectionRun?.Description;
-                model.CreatedBy = group.DetectionRun?.CreatedBy?.UserName;
-                model.CreatedOn = group.DetectionRun?.CreatedOn;
-                model.IsCompleted = group.DetectionRun?.IsCompleted;
-                model.GroupedDumpSitesList = new();
-                model.AllConfidenceRates = new();
-                foreach (var item in group.GroupedDumpSites)
-                {
-                    GroupedDumpSitesListHistoricDataDTO dumpSiteModel = new();
-                    
-                    dumpSiteModel.ClassName = item.Key;                    
-                    dumpSiteModel.Geoms = new();
-                    dumpSiteModel.GeomAreas = new();
-                    foreach (var i in item.Value)
-                    {
-                        dumpSiteModel.Geoms.Add(i.Geom);                        
-                        dumpSiteModel.GeomAreas.Add(i.Geom.Area);
-                        model.AllConfidenceRates.Add(i.ConfidenceRate);
-                    }
-                    dumpSiteModel.TotalGroupArea = dumpSiteModel.GeomAreas.Sum();
-                    model.GroupedDumpSitesList.Add(dumpSiteModel);
-                    model.TotalAreaOfDetectionRun = model.GroupedDumpSitesList.Sum(x => x.TotalGroupArea);
-                    model.AvgConfidenceRate = model.AllConfidenceRates.Average();
-                }
-                listDTO.Add(model);
-            }
-            return listDTO;
-        }
         public async Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRuns()
         {
             try
@@ -169,6 +124,75 @@ namespace MainApp.BL.Services.DetectionServices
                 _logger.LogError(ex.Message, ex);
                 return ResultDTO<List<DetectionRunDTO>>.ExceptionFail(ex.Message, ex);
             }
+        }
+
+        public async Task<ResultDTO<List<DetectionRunDTO>>> GetSelectedDetectionRunsIncludingDetectedDumpSites(List<Guid> selectedDetectionRunsIds)
+        {
+            try
+            {
+                // DetectedDumpSites might throw error
+                ResultDTO<IEnumerable<DetectionRun>> resultGetAllEntites =
+                    await _detectionRunRepository.GetAll(filter: x=> selectedDetectionRunsIds.Contains(x.Id),includeProperties: "CreatedBy,DetectedDumpSites");
+
+                if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
+                    return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntites.ErrMsg!);
+
+                List<DetectionRunDTO> dtos = _mapper.Map<List<DetectionRunDTO>>(resultGetAllEntites.Data);
+
+                return ResultDTO<List<DetectionRunDTO>>.Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<List<DetectionRunDTO>>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds)
+        {
+            var list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds) ?? throw new Exception("Object not found");
+            
+            var groupedDumpSites = list.Select(detectionRun => new
+            {
+                DetectionRun = detectionRun,
+                GroupedDumpSites = detectionRun.DetectedDumpSites
+            .GroupBy(dumpSite => dumpSite.DatasetClass.ClassName)
+            .ToDictionary(group => group.Key, group => group.ToList())
+            }).ToList();
+
+            List<AreaComparisonAvgConfidenceRateReportDTO> listDTO = new();
+            foreach (var group in groupedDumpSites)
+            {
+                AreaComparisonAvgConfidenceRateReportDTO model = new();
+                model.DetectionRunId = group.DetectionRun?.Id;
+                model.DetectionRunName = group.DetectionRun?.Name;
+                model.DetectionRunDescription = group.DetectionRun?.Description;
+                model.CreatedBy = group.DetectionRun?.CreatedBy?.UserName;
+                model.CreatedOn = group.DetectionRun?.CreatedOn;
+                model.IsCompleted = group.DetectionRun?.IsCompleted;
+                model.GroupedDumpSitesList = new();
+                model.AllConfidenceRates = new();
+                foreach (var item in group.GroupedDumpSites)
+                {
+                    GroupedDumpSitesListHistoricDataDTO dumpSiteModel = new();
+
+                    dumpSiteModel.ClassName = item.Key;
+                    dumpSiteModel.Geoms = new();
+                    dumpSiteModel.GeomAreas = new();
+                    foreach (var i in item.Value)
+                    {
+                        dumpSiteModel.Geoms.Add(i.Geom);
+                        dumpSiteModel.GeomAreas.Add(i.Geom.Area);
+                        model.AllConfidenceRates.Add(i.ConfidenceRate);
+                    }
+                    dumpSiteModel.TotalGroupArea = dumpSiteModel.GeomAreas.Sum();
+                    model.GroupedDumpSitesList.Add(dumpSiteModel);
+                    model.TotalAreaOfDetectionRun = model.GroupedDumpSitesList.Sum(x => x.TotalGroupArea);
+                    model.AvgConfidenceRate = model.AllConfidenceRates.Average();
+                }
+                listDTO.Add(model);
+            }
+            return listDTO;
         }
 
         public async Task<ResultDTO<DetectionRunDTO>> GetDetectionRunById(Guid id, bool track = false)
