@@ -26,7 +26,15 @@ namespace MainApp.MVC.Areas.Common.Controllers
 
             if (appStartMode == SD.ApplicationStartModes.IntranetPortal)
             {
-                defaultRoute = "~/IntranetPortal/Map/Index";
+                if (User.Identity.IsAuthenticated)
+                {
+                    defaultRoute = "~/IntranetPortal/Map/Index";
+                }
+                else
+                {
+                    defaultRoute = "~/IntranetPortal/LandingPage";
+                }
+                    
             }
             else
             {
