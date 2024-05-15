@@ -40,6 +40,10 @@ using DAL.Interfaces.Repositories.MapConfigurationRepositories;
 using DAL.Repositories.MapConfigurationRepositories;
 using MainApp.BL.Interfaces.Services.MapConfigurationServices;
 using MainApp.BL.Services.MapConfigurationServices;
+using MainApp.BL.Services.DetectionServices;
+using DAL.Repositories.DetectionRepositories;
+using DAL.Interfaces.Repositories.DetectionRepositories;
+using MainApp.BL.Interfaces.Services.DetectionServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -124,8 +128,8 @@ services.AddTransient<IViewLocalizer, DbResViewLocalizer>();
 services.AddDefaultIdentity<ApplicationUser>()
                     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-//services.RegisterMainAppDb();
-services.AddDbContext<ApplicationDbContext>();
+services.RegisterMainAppDb(configuration);
+//services.AddDbContext<ApplicationDbContext>();
 
 if (applicationStartMode == ApplicationStartModes.IntranetPortal)
 {
@@ -149,6 +153,10 @@ services.AddHttpContextAccessor();
 services.AddApplicationServices();
 services.AddInfrastructureServices();
 
+builder.Services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
+
+builder.Services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
+builder.Services.TryAddScoped<IDetectionRunService, DetectionRunService>();
 
 // TODO: look over
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);
@@ -156,6 +164,10 @@ services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfile).A
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfileBL).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfile).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(MapConfigurationProfileBL).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(DetectionProfileBL).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(DetectionProfile).Assembly);
+//services.AddAutoMapper(typeof(Program).Assembly, typeof(MainApp.BL.Infrastructure.RegisterServices).Assembly);
+
 
 //services.RegisterAuditNet();
 Audit.Core.Configuration.Setup()
@@ -192,9 +204,9 @@ Audit.Core.Configuration.AddOnSavingAction(scope =>
             {
                 if (change.OriginalValue is NetTopologySuite.Geometries.Geometry)
                 {
-                    change.OriginalValue = 
+                    change.OriginalValue =
                         Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)change.OriginalValue);
-                    change.NewValue = 
+                    change.NewValue =
                         Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)change.NewValue);
                 }
             }
@@ -208,7 +220,7 @@ Audit.Core.Configuration.AddOnSavingAction(scope =>
         foreach (var colValue in tempList)
         {
             if (colValue.Value is NetTopologySuite.Geometries.Geometry)
-                entry.ColumnValues[colValue.Key] = 
+                entry.ColumnValues[colValue.Key] =
                     Entities.Helpers.GeoJsonHelpers.GeometryToGeoJson((NetTopologySuite.Geometries.Geometry)colValue.Value);
         }
     }
@@ -289,7 +301,7 @@ app.Use(async (context, next) =>
             await next();
         });
     }
-        //app.ConfigureMissingCultureCookie(configuration);
+    //app.ConfigureMissingCultureCookie(configuration);
 
     await next();
 });

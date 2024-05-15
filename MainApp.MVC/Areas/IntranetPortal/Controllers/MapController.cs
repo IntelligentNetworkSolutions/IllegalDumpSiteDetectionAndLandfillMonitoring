@@ -6,9 +6,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     public class MapController : Controller
     {
         // A TEST MAP CONTROLLER
-        public IActionResult Index()
+        public IActionResult Index(Guid? detectionRunId)
         {
-            return View();
+            return View(detectionRunId);
         }
     }
 }

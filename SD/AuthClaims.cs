@@ -212,6 +212,12 @@ namespace SD
             FromModule = Modules.Datasets,
             Description = "Datasets: Edit dataset image annotations"
         };
+        public static readonly AuthClaim ViewDatasetImageAnnotations = new AuthClaim
+        {
+            Value = "5:15",
+            FromModule = Modules.Datasets,
+            Description = "Datasets: View dataset image annotations"
+        };
         public static readonly AuthClaim MapToolMeasureLength = new AuthClaim
         {
             Value = "6:1",
@@ -247,6 +253,12 @@ namespace SD
             Value = "11:1",
             FromModule = Modules.HistoricData,
             Description = "View Historic Data"
+        };
+        public static readonly AuthClaim ViewDetectionRuns = new AuthClaim
+        {
+            Value = "12:1",
+            FromModule = Modules.Detection,
+            Description = "View Detection Runs"
         };
     } 
 }

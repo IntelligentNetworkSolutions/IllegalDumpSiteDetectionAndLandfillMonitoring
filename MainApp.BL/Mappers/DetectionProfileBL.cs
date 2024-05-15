@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using DTOs.MainApp.BL.DetectionDTOs;
 using Entities.DetectionEntities;
 
@@ -14,7 +9,7 @@ namespace MainApp.BL.Mappers
         public DetectionProfileBL()
         {
             CreateMap<DetectedDumpSiteDTO, DetectedDumpSite>().ReverseMap();
-            CreateMap<DetectionRunDTO, DetectionRun>().ReverseMap();
+            CreateMap<DetectionRunDTO, DetectionRun>().ForMember(dest => dest.CreatedBy, opt => opt.Ignore()).ReverseMap();
             CreateMap<DetectionIgnoreZoneDTO, DetectionIgnoreZone>().ReverseMap();
         }
     }

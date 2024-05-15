@@ -56,16 +56,18 @@ namespace DAL.ApplicationStorage
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
-			if (!optionsBuilder.IsConfigured)
-			{
-                var connectionString = _configuration["ConnectionStrings:MasterDatabase"];
+            //There is a new way of configuring, IMPORTANT! Look in RegisterDbContext.cs
 
-                string applicationStartMode = _configuration.GetSection("ApplicationStartupMode").Value;
+            //if (!optionsBuilder.IsConfigured)
+            //{
+            //    var connectionString = _configuration["ConnectionStrings:MasterDatabase"];
 
-				optionsBuilder.UseNpgsql(connectionString, db => db.UseNetTopologySuite()
-								.MigrationsAssembly(typeof(ApplicationDbContext).GetTypeInfo().Assembly.GetName().Name));
-			}
-		}
+            //    string applicationStartMode = _configuration.GetSection("ApplicationStartupMode").Value;
+
+            //    optionsBuilder.UseNpgsql(connectionString, db => db.UseNetTopologySuite()
+            //                    .MigrationsAssembly(typeof(ApplicationDbContext).GetTypeInfo().Assembly.GetName().Name));
+            //}
+        }
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{

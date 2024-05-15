@@ -2,6 +2,8 @@
     Illegal Dump Site Detection and Landfill Monitoring <img align="center" width="250" src="./docs/images/logo-robot-formal.png" alt="">  
 </h1>
 
+[![codecov](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/branch/master/graph/badge.svg?token=44SYRYP1H7)](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring)
+
 ## 🌐 Overview  
 
 Welcome to the Illegal Dump Site Detection and Landfill Monitoring repository.  
@@ -38,6 +40,8 @@ This repository aims to equip researchers, environmental agencies, and policymak
 
 Join us in leveraging these capabilities to maintain ecological integrity and promote sustainable practices in waste management.  
 
+Our complete [Project Charter](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/about/project-charter.html).
+
 <br />
 
 <table align="center" cellpadding="12" frame="above">
@@ -66,19 +70,19 @@ Join us in leveraging these capabilities to maintain ecological integrity and pr
 
 ## 📝Table of Contents
 
-1. [Overview](#🌐-overview)  
-     - [🗝️ Key Features](#🗝️key-features)  
-2. [Main Dependencies](#🖇️-main-dependencies)  
-3. [Set-up](#⛺-set-up)  
-4. [Development](#👨‍💻development)  
-    - [🔒 Secrets](#🔒secrets) | [📈Diagrams](#📈-development-diagrams) | [🔬 Testing](#🔬-testing)  
-5. [Licensing](#⚖️-licensing)  
+1. [Overview](#-overview)  
+     - [🗝️ Key Features](#%EF%B8%8Fkey-features)  
+2. [Main Dependencies](#%EF%B8%8F-main-dependencies)  
+3. [Set-up](#-set-up)  
+4. [Development](#development)  
+    - [🔒 Secrets](#secrets) | [📈Diagrams](#-development-diagrams) | [🔬 Testing](#-testing)  
+5. [Licensing](#%EF%B8%8F-licensing)  
     - Apache 2.0  
-6. [Acknowledgments](#👏-acknowledgments)  
+6. [Acknowledgments](#-acknowledgments)  
     - UNICEF Venture Fund  
-7. [Code of Conduct](#🤝-code-of-conduct)  
+7. [Code of Conduct](#-code-of-conduct)  
     - Contributor Covenant  
-8. [Contributing](#📌✅🍴-contributing)  
+8. [Contributing](#-contributing)  
     - 📌✅ Issue | 🍴 Fork | 🪢 Pull  
 </table>
 

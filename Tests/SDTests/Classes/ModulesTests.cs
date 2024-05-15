@@ -13,7 +13,7 @@ namespace Tests.SDTests.Classes
 
             // Assert
             Assert.NotEmpty(modules);
-            Assert.Equal(11, modules.Count());
+            Assert.Equal(12, modules.Count());
             Assert.Contains(modules, m => m.Value == "UserManagement");
             Assert.Contains(modules, m => m.Value == "AuditLog");
             Assert.Contains(modules, m => m.Value == "Admin");
@@ -25,6 +25,7 @@ namespace Tests.SDTests.Classes
             Assert.Contains(modules, m => m.Value == "MapToolZoomToExtent");
             Assert.Contains(modules, m => m.Value == "GoToCoordinatesTool");
             Assert.Contains(modules, m => m.Value == "HistoricData");
+            Assert.Contains(modules, m => m.Value == "Detection");
 
         }
 

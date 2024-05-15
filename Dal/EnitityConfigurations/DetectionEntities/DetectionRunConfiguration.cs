@@ -28,8 +28,6 @@ namespace DAL.EnitityConfigurations.DetectionEntities
                    .OnDelete(DeleteBehavior.Restrict) // Prevent CASCADE delete if ApplicationUser is deleted
                    .IsRequired();
 
-            // Configure the ignored properties
-            builder.Ignore(dr => dr.DetectedDumpSites);
         }
     }
 }

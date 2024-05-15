@@ -1,0 +1,117 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.Detection
+@using Microsoft.AspNetCore.Localization
+@using Newtonsoft.Json
+@using SD.Helpers
+@model IEnumerable<DetectionRunViewModel>
+
+@{
+    ViewData["Title"] = @DbResHtml.T("List of detection runs", "Resources");
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("View all detection runs", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h3 class="card-title">@DbResHtml.T("Detection Runs", "Resources")</h3>
+                    </div>
+                    <div class="card-body">
+                        <table id="detectionRunsTable" class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Name", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Description", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Is Completed", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Created By", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Created On", "Resources")
+                                    </th>
+                                    <th class="notexport">
+                                        @DbResHtml.T("Action", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td>@item.Description</td>
+                                        <td>@item.IsCompleted</td>
+                                        <td>@item.CreatedBy?.UserName</td>
+                                        <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
+                                        <td>
+                                            @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
+                                            {
+                                                <a asp-controller="Map" asp-action="Index" asp-route-detectionRunId="@item.Id" class="mb-1 btn bg-gradient-info text-white" title="@DbResHtml.T("View detection run", "Resources")">
+                                                    <i class="fas fa-map-marked-alt"></i>
+                                                </a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+        $(document).ready(function () {
+            $('#detectionRunsTable').DataTable({
+                paging: true,
+                pageLength: 100,
+                "language": {
+                    "url": "@langPath"
+                },
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        className: 'btn bg-gradient-success border-0',
+                        text: '<i class="fas fa-file-alt"></i>',
+                        titleAttr: "Export to excel",
+                        filename: "Detection Runs - @DateTime.Now.ToString("dd.MM.yyyy")",
+                        exportOptions: {
+                            columns: ':not(.notexport)'
+                        }
+                    }
+                ]
+            });
+        });
+    </script>
+}

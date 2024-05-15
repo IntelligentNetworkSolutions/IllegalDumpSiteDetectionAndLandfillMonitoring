@@ -24,5 +24,26 @@ namespace DTOs.Helpers
             }
             return geoJson;
         }
+
+
+        public static List<string> GeometryListToGeoJson(List<Polygon> geom)
+        {
+            List<string> geoJsons = new();
+
+            foreach (var item in geom)
+            {
+                string geoJson;
+                var serializer = GeoJsonSerializer.Create();
+                using (var stringWriter = new StringWriter())
+                using (var jsonWriter = new JsonTextWriter(stringWriter))
+                {
+                    serializer.Serialize(jsonWriter, item);
+                    geoJson = stringWriter.ToString();
+                }
+                geoJsons.Add(geoJson);
+            }
+           
+            return geoJsons;
+        }
     }
 }

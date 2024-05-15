@@ -41,7 +41,39 @@
                             </p>
                         </a>
                     </li>
-                }     
+                }
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
+                {
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" >
+                            <i class="fas fa-search-location"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Detection", "Resources")
+                                <i class="fas fa-angle-left right"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">                            
+                            <li class="nav-item">
+                                <a asp-action="CreateDetectionRun" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link"
+                                   title="@DbResHtml.T("Create Detection Run", "Resources")">
+                                    <i class="fas fa-search-plus"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Create Detection Run", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-action="DetectedZones" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link"
+                                   title="@DbResHtml.T("Detected Zones", "Resources")">
+                                    <i class="fas fa-map-marked-alt"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Detected Zones", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
                @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
                {
                     <li class="nav-item">

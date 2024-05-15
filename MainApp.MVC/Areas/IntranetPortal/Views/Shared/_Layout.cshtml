@@ -25,6 +25,9 @@
     <link rel="stylesheet" href="~/vendor/paginationjs/dist/pagination.css" />
     <link rel="stylesheet" href="~/css/sidebar.css">
 
+    <!-- Our Style -->
+    <link rel="stylesheet" href="~/css/site.css" />
+
     @if (IsSectionDefined("Styles"))
     {
         @RenderSection("Styles", required: false)
@@ -55,6 +58,8 @@
     <script src="~/vendor/admin-lte/dist/js/adminlte.min.js"></script>
     <script src="~/vendor/cropperjs/dist/cropper.min.js"></script>
     <script src="~/vendor/paginationjs/dist/pagination.min.js"></script>
+
+    <script src="~/js/site.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 

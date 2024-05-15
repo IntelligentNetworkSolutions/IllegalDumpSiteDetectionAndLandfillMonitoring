@@ -12,14 +12,17 @@ namespace DAL.EnitityConfigurations
     public class ImageAnnotationConfiguration : IEntityTypeConfiguration<ImageAnnotation>
     {
         public void Configure(EntityTypeBuilder<ImageAnnotation> builder)
-        {
-            builder.Property(ia => ia.AnnotationsGeoJson).IsRequired();
+        {            
             builder.Property(ia => ia.Geom).IsRequired();
             builder.Property(ia => ia.IsEnabled).HasDefaultValue(false);
 
             builder.HasOne(ia => ia.DatasetImage)
-                .WithOne()
-                .HasForeignKey<ImageAnnotation>(ia => ia.DatasetImageId);
+                .WithMany()
+                .HasForeignKey(ia => ia.DatasetImageId);
+
+            builder.HasOne(ia => ia.DatasetClass)
+                .WithMany()
+                .HasForeignKey(ia => ia.DatasetClassId);
 
             builder.Property(ia => ia.CreatedById).IsRequired();
             builder.Property(ia => ia.CreatedOn).HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
