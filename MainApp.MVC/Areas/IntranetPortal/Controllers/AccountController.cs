@@ -56,7 +56,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public IActionResult Login()
         {
             if (User.Identity.IsAuthenticated)
-                return Redirect(Url.Content("~"));
+                return Redirect(Url.Action("Index", "Home", new {area="Common"}));
 
             return View();
         }
