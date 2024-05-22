@@ -311,6 +311,17 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
         public async Task<IActionResult> DeleteUserConfirmed(string id)
         {
+            var hasUserEntry = await _userManagementService.CheckUserBeforeDelete(id);
+            if (hasUserEntry.IsSuccess == false && hasUserEntry.HandleError())
+            {
+                return Json(new { errorRetrievingData = hasUserEntry.ErrMsg! });
+            }
+            
+            if(hasUserEntry.IsSuccess == true && hasUserEntry.Data == true)
+            {
+                return Json(new { userHasEntry = hasUserEntry });
+            }
+
             await _userManagementService.DeleteUser(id);
             return RedirectToAction(nameof(Index));
         }

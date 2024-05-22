@@ -21,7 +21,8 @@ namespace MainApp.BL.Mappers
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => src.IsActive ?? false));
 
-            CreateMap<UserManagementDTO, ApplicationUser>();
+            CreateMap<UserManagementDTO, ApplicationUser>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
 
             CreateMap<ApplicationUser, UserManagementDTO>();
 

@@ -247,10 +247,31 @@
                 data: {
                     id: userId
                 },
-                success: function (data) {
-                    if (deleteBtn != null) {
-                        deleteBtn.parentElement.parentElement.remove();
+                success: function (response) {
+                    if (response.errorRetrievingData != null || response.errorRetrievingData != undefined) {
+                        Swal.fire({
+                            icon: "warning",
+                            text: `${response.errorRetrievingData}`
+                        });
+                        return;
                     }
+                    else if (response.userHasEntry != null || response.userHasEntry != undefined) {
+                        Swal.fire({
+                            icon: "warning",                        
+                            text: "@DbResHtml.T("You can not delete this user because there are data entries connected with the same user!", "Resources")"
+                        });
+                        return;
+                    }
+                    else{
+                        if (deleteBtn != null) {
+                            deleteBtn.parentElement.parentElement.remove();
+                        }
+                        location.reload();
+                    }
+
+
+
+                   
                 },
                 error: function (req, status, error) {
                     ajaxErrorHandlingAlert("error", req.status);

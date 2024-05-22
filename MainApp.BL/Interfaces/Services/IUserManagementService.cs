@@ -23,6 +23,7 @@ namespace Services.Interfaces.Services
         Task<ResultDTO> UpdateRole(RoleManagementDTO dto);
 
         Task<ResultDTO> DeleteUser(string userId);
+        Task<ResultDTO<bool>> CheckUserBeforeDelete(string userId);
         Task<ResultDTO> DeleteRole(string roleId);
         
         Task<ResultDTO<UserManagementDTO>> FillUserManagementDto(UserManagementDTO? dto = null);
