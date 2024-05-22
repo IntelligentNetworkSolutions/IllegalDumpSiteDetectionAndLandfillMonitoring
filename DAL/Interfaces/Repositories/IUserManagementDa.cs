@@ -74,6 +74,7 @@ namespace DAL.Interfaces.Repositories
 
         #region Delete
         Task<ApplicationUser> DeleteUser(ApplicationUser user);
+        bool? CheckUserBeforeDelete(string userId);
 
         Task<IdentityRole> DeleteRole(IdentityRole role);
 

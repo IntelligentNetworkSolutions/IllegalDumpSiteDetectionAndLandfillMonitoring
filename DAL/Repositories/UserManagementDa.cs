@@ -375,6 +375,35 @@ namespace DAL.Repositories
             }
         }
 
+        public bool? CheckUserBeforeDelete(string userId)
+        {
+            try
+            {
+                return _db.Datasets.Any(x => x.CreatedById == userId) ||
+                    _db.Datasets.Any(x => x.UpdatedById == userId) ||
+                    _db.DatasetClasses.Any(x => x.CreatedById == userId) ||
+                    _db.DatasetImages.Any(x => x.CreatedById == userId) ||
+                    _db.DatasetImages.Any(x => x.UpdatedById == userId) ||
+                    _db.ImageAnnotations.Any(x => x.CreatedById == userId) ||
+                    _db.ImageAnnotations.Any(x => x.UpdatedById == userId) ||
+                    _db.MapConfigurations.Any(x => x.CreatedById == userId) ||
+                    _db.MapConfigurations.Any(x => x.UpdatedById == userId) ||
+                    _db.MapLayerGroupConfigurations.Any(x => x.CreatedById == userId) ||
+                    _db.MapLayerGroupConfigurations.Any(x => x.UpdatedById == userId) ||
+                    _db.MapLayerConfigurations.Any(x => x.CreatedById == userId) ||
+                    _db.MapLayerConfigurations.Any(x => x.UpdatedById == userId) ||
+                    _db.DetectionIgnoreZones.Any(x => x.CreatedById == userId) ||
+                    _db.DetectionRuns.Any(x => x.CreatedById == userId) ||
+                    _db.TrainedModels.Any(x => x.CreatedById == userId) ||
+                    _db.TrainingRuns.Any(x => x.CreatedById == userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw;
+            }
+        }
+
         public async Task<IdentityRole> DeleteRole(IdentityRole role)
         {
             try

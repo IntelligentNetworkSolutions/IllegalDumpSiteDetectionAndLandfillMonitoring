@@ -2,6 +2,7 @@
 using DAL.Helpers;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories;
+using DocumentFormat.OpenXml.Bibliography;
 using DTOs.MainApp.BL;
 using Entities;
 using Microsoft.AspNetCore.Identity;
@@ -41,6 +42,7 @@ namespace Services
                     return ResultDTO.Fail(resGetPassHash.ErrMsg);
                 user.PasswordHash = resGetPassHash.Data;
 
+               
                 ApplicationUser insertedUser = await _userManagementDa.AddUser(user);
 
                 // Add User Roles
@@ -352,6 +354,21 @@ namespace Services
         #endregion
 
         #region Delete
+        public async Task<ResultDTO<bool>> CheckUserBeforeDelete(string userId)
+        {
+            try
+            {
+                var hasUserEntry = _userManagementDa.CheckUserBeforeDelete(userId);
+                if (hasUserEntry.HasValue)
+                    return ResultDTO<bool>.Ok(hasUserEntry.Value);
+
+                return ResultDTO<bool>.Fail("Error occured while retriving data");
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<bool>.ExceptionFail(ex.Message, ex);
+            }
+        }
         public async Task<ResultDTO> DeleteUser(string userId)
         {
             try
