@@ -14,7 +14,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">@DbResHtml.T("View all detection runs", "Resources")</small>
+                <small class="text-muted">@DbResHtml.T("Access a comprehensive list of all detection runs to review and monitor the outcomes of each analysis session.", "Resources")</small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -30,11 +30,11 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-dark text-white">
+                  @*   <div class="card-header bg-dark text-white">
                         <h3 class="card-title">@DbResHtml.T("Detection Runs", "Resources")</h3>
-                    </div>
+                    </div> *@
                     <div class="card-body">
-                        <table id="detectionRunsTable" class="table table-bordered table-striped">
+                        <table id="detectionRunsTable" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>
@@ -69,7 +69,7 @@
                                         <td>
                                             @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
                                             {
-                                                <a asp-controller="Map" asp-action="Index" asp-route-detectionRunId="@item.Id" class="mb-1 btn bg-gradient-info text-white" title="@DbResHtml.T("View detection run", "Resources")">
+                                                <a asp-controller="Map" asp-action="Index" asp-route-detectionRunId="@item.Id" class="mb-1 btn bg-gradient-info text-white btn-xs" title="@DbResHtml.T("View detection run", "Resources")">
                                                     <i class="fas fa-map-marked-alt"></i>
                                                 </a>
                                             }
@@ -84,6 +84,14 @@
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $("#NavlinkDetection").addClass("active");
+    });
+    $(document).ready(function () {
+        $("#NavlinkDetection", "#NavlinkDetectionZones").addClass("active");
+    });
+</script>
 @section Scripts{
     <script>
         @{

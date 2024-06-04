@@ -14,7 +14,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">@DbResHtml.T("Add, manage and view all datasets", "Resources")</small>
+                <small class="text-muted">@DbResHtml.T("Add, manage, and view all datasets efficiently to streamline data handling and accessibility.", "Resources")</small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -30,19 +30,24 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-dark text-white">
+                    @* <div class="card-header bg-dark text-white">
                         <h3 class="card-title">@DbResHtml.T("Datasets", "Resources")</h3>
-                    </div>
+                    </div> *@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.AddDataset))
                         {
-                            <div class="text-sm mb-3">
-                                <button class="mb-1 btn bg-gradient-primary" data-toggle="modal" data-target="#addNewDatasetModal">
-                                    @DbResHtml.T("Add Dataset", "Resources")
-                                </button>
-                            </div>
+                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addNewDatasetModal">
+                                <i class="fas fa-plus"></i> 
+                                @DbResHtml.T("Add Dataset", "Resources")
+                            </button>
+                                      
+                            <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                                <i class="fas fa-file-alt"></i>
+                            </button>
+                                   
                         }
-                        <table id="datasetsTable" class="table table-bordered table-striped">
+                        <div class="mt-5">
+                        <table id="datasetsTable" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>
@@ -89,7 +94,7 @@
                                         <td>
                                             @if (User.HasAuthClaim(SD.AuthClaims.ManageDataset) && item.IsPublished == false)
                                             {
-                                                <a asp-controller="Datasets" asp-action="Edit" asp-route-datasetId="@item.Id" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Manage dataset", "Resources")">
+                                                <a asp-controller="Datasets" asp-action="Edit" asp-route-datasetId="@item.Id" class="mb-1 btn bg-gradient-warning text-white btn-xs" title="@DbResHtml.T("Manage dataset", "Resources")">
                                                     <i class="far fa-edit"></i>
                                                 </a>
                                             }
@@ -97,13 +102,13 @@
                                             {
                                                 @if (User.HasAuthClaim(SD.AuthClaims.ManageDataset) && item.IsPublished == true)
                                                 {
-                                                    <button class="ml-5 mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteDatasetModal_@item.Id" title="@DbResHtml.T("Delete dataset", "Resources")">
+                                                    <button class="ml-5 mb-1 btn bg-gradient-danger btn-xs" data-toggle="modal" data-target="#deleteDatasetModal_@item.Id" title="@DbResHtml.T("Delete dataset", "Resources")">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 }
                                                 else
                                                 {
-                                                    <button class="mx-1 mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteDatasetModal_@item.Id" title="@DbResHtml.T("Delete dataset", "Resources")">
+                                                    <button class="mx-1 mb-1 btn bg-gradient-danger btn-xs" data-toggle="modal" data-target="#deleteDatasetModal_@item.Id" title="@DbResHtml.T("Delete dataset", "Resources")">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 }
@@ -114,12 +119,18 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $("#NavlinkDatasets").addClass("active");
+    });
+</script>
 @section Scripts {
     <script>
         @{
@@ -141,7 +152,7 @@
                     buttons: [
                         {
                             extend: 'excelHtml5',
-                            className: 'btn bg-gradient-success border-0',
+                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
                             text: '<i class="fas fa-file-alt"></i>',
                             titleAttr: "Export to excel",
                             filename: "Datasets - @DateTime.Now.ToString("dd.MM.yyyy")",
@@ -169,6 +180,11 @@
                 });
 
             });
+        $(document).ready(function () {
+            $("#exportToExcelButton").click(function () {
+                $(".export-to-excel-button").click();
+            });
+        });
         
         function closeViewParentChildrenDatasetsModal() {
             $("#viewParentChildrenDatasetModal").hide();
