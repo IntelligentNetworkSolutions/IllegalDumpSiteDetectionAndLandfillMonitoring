@@ -13,7 +13,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">@DbResHtml.T("Add, manange and view all datasets classes", "Resources")</small>
+                <small class="text-muted">@DbResHtml.T("Add, manage, and view all dataset classes to facilitate efficient organization and accessibility of data categories.", "Resources")</small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -30,19 +30,25 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-dark text-white">
+                    @* <div class=" bg-dark text-white">
                         <h3 class="card-title">@DbResHtml.T("Dataset Classes", "Resources")</h3>
-                    </div>
+                    </div> *@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.AddDatasetClass))
                         {
-                            <div class="text-sm mb-3">
-                                <button class="mb-1 btn bg-gradient-primary" data-toggle="modal" data-target="#addClassModal">
-                                    @DbResHtml.T("Add Dataset Class", "Resources")
-                                </button>
-                            </div>
+                          
+                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addClassModal">
+                                <i class="fas fa-plus"></i>
+                                @DbResHtml.T("Add Dataset Class", "Resources")
+                            </button>
+                                      
+                            <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                                <i class="fas fa-file-alt"></i>
+                            </button>
+                                  
                         }
-                         <table id="allClassesTable" class="table table-bordered table-striped">
+                        <div class="mt-5">
+                         <table id="allClassesTable" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>
@@ -73,13 +79,13 @@
                                        <td>
                                             @if (User.HasAuthClaim(SD.AuthClaims.EditDatasetClass))
                                             {
-                                                <a class="mb-1 btn bg-gradient-warning text-white" data-toggle="modal" data-target="#editDatasetClassModal_@item.Id" title="@DbResHtml.T("Edit Dataset Class", "Resources")">
+                                                <a class="mb-1 btn bg-gradient-warning text-white btn-xs" data-toggle="modal" data-target="#editDatasetClassModal_@item.Id" title="@DbResHtml.T("Edit Dataset Class", "Resources")">
                                                     <i class="far fa-edit"></i>
                                                 </a>
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.DeleteDatasetClass))
                                             {
-                                                <a class=" mx-1 mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteDatasetClassModal_@item.Id" title="@DbResHtml.T("Delete dataset", "Resources")">
+                                                <a class=" mx-1 mb-1 btn bg-gradient-danger btn-xs" data-toggle="modal" data-target="#deleteDatasetClassModal_@item.Id" title="@DbResHtml.T("Delete dataset", "Resources")">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             }
@@ -88,12 +94,18 @@
                                 }
                             </tbody>
                         </table> 
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $("#NavlinkDatasetClasses").addClass("active");
+    });
+</script>
 @section Scripts{
     <script>
         @{
@@ -112,7 +124,7 @@
                     buttons: [
                         {
                             extend: 'excelHtml5',
-                            className: 'btn bg-gradient-success border-0',
+                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
                             text: '<i class="fas fa-file-alt"></i>',
                             titleAttr: "Export to excel",
                             filename: "Dataset classes - @DateTime.Now.ToString("dd.MM.yyyy")",
@@ -129,6 +141,11 @@
                     allowClear: true
                 });
             });
+        $(document).ready(function () {
+            $("#exportToExcelButton").click(function () {
+                $(".export-to-excel-button").click();
+            });
+        });
 
         function addNewDatasetClassConfirmed() {
             var className = $("#classNameInput").val();

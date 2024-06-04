@@ -10,7 +10,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">@DbResHtml.T("Add, edit, delete and view application settings", "Resources") </small>
+                <small class="text-muted">@DbResHtml.T("Application settings involves the functionalities of adding, editing, deleting, and viewing configurations to customize the behavior of the application.", "Resources") </small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -26,17 +26,25 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-dark text-white">
+                    @* <div class="card-header bg-dark text-white">
                         <h3 class="card-title">@DbResHtml.T("Application settings", "Resources")</h3>
-                    </div>
+                    </div> *@
                     <div class="card-body">
                         @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
                         {
-                            <div class="text-sm mb-3">
-                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Create" class="mb-1 btn bg-gradient-primary">@DbResHtml.T("Add setting", "Resources")</a>
-                            </div>
+                            
+                             <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Create" class="mb-1 btn bg-gradient-primary float-left">
+                                <i class="fas fa-plus"></i> 
+                                @DbResHtml.T("Add setting", "Resources")
+                             </a>
+                          
+                                <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                                    <i class="fas fa-file-alt"></i>
+                                </button>
+                            
                         }
-                        <table id="applicationSettingsTable" class="table table-bordered table-striped">
+                        <div class="mt-5">
+                        <table id="applicationSettingsTable" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>
@@ -71,10 +79,10 @@
                                         <td>
                                             @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
                                             {
-                                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Edit" asp-route-settingKey="@item.Key" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Edit", "Resources")">
+                                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Edit" asp-route-settingKey="@item.Key" class="mb-1 btn bg-gradient-warning text-white btn-xs" title="@DbResHtml.T("Edit", "Resources")">
                                                     <i class="far fa-edit"></i>
                                                 </a>
-                                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Delete" asp-route-key="@item.Key" class="mb-1 btn bg-gradient-danger" title="@DbResHtml.T("Delete", "Resources")">
+                                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Delete" asp-route-key="@item.Key" class="mb-1 btn bg-gradient-danger btn-xs" title="@DbResHtml.T("Delete", "Resources")">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </a>
                                             }
@@ -84,13 +92,21 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
+<script>
+    $(document).ready(function () {
+        $("#NavlinkSuperAdmin").addClass("active");
+    });
+    $(document).ready(function () {
+        $("#NavlinkSuperAdmin, #NavlinkApplicationSettings").addClass("active");
+    });
+</script>
 
 @section Scripts{
      @{
@@ -110,7 +126,7 @@
                 buttons: [
                     {
                         extend: 'excelHtml5',
-                        className: 'btn btn-success',
+                        className: 'btn btn-success d-none export-to-excel-button',
                         text: '<i class="fas fa-file-alt"></i>',
                         titleAttr: "Export to excel",
                         filename: "Application Settings - @DateTime.Now.ToString("dd.MM.yyyy")",
@@ -119,6 +135,11 @@
                         }
                     }
                 ]
+            });
+        });
+        $(document).ready(function () {
+            $("#exportToExcelButton").click(function () {
+                $(".export-to-excel-button").click();
             });
         });
     </script>

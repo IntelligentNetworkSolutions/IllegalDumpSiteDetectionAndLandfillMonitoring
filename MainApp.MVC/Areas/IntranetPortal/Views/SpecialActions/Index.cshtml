@@ -15,7 +15,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">@DbResHtml.T("Special admin actions", "Resources")</small>
+                <small class="text-muted">@DbResHtml.T("Admin actions include triggering a pop-up message when pressing a button to confirm critical operations or provide important information.", "Resources")</small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -38,14 +38,30 @@
                             <span class="info-box-text">@DbResHtml.T("Reset translation cache", "Resources")</span>
                             <span class="info-box-number">
                                 <button class="mb-1 btn bg-gradient-olive" onclick="resetTranslationCache()" title=@DbResHtml.T("Reset translation cache", "Resources")>@DbResHtml.T("Reset", "Resources")</button>
+                                <button class="mb-1 btn bg-gradient-info" data-toggle="tooltip" data-placement="top" title="This button resets the translation cache.">
+                                <i class="fas fa-question-circle"></i>
+                                </button>
                             </span>
                         </div>
-                    </div>
+                    </div>                
                 }
             </div>
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $("#NavlinkAdmin").addClass("active");
+    });
+    $(document).ready(function () {
+        $("#NavlinkAdmin, #NavlinkSpecialActions").addClass("active");
+    });
+</script>
+<script>
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+</script>
 
 
 @section Scripts{

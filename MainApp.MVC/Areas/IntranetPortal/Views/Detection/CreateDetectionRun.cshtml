@@ -10,7 +10,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">@DbResHtml.T("Create detection run", "Resources")</small>
+                <small class="text-muted">@DbResHtml.T("Initiate a detection run to analyze and identify potential instances of illegal dumping using system algorithms and data inputs.", "Resources")</small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -26,11 +26,11 @@
         <div class="row">
             <div class="col-md-8 offset-2">
                 <div class="card d-flex">
-                    <div class="card-header d-flex bg-dark text-white">
+                    @* <div class="card-header d-flex bg-dark text-white">
                         <h3 class="card-title">
                             @DbResHtml.T("New Detection Run", "Resources")
                         </h3>
-                    </div>
+                    </div> *@
                     <div class="card-body overlay-wrapper">
                         <div class="">
                             <!-- Name & Description & IsCompleted & Add/Choose Image -->
@@ -106,6 +106,14 @@
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function () {
+        $("#NavlinkDetection").addClass("active");
+    });
+    $(document).ready(function () {
+        $("#NavlinkDetection", "#NavlinkDetectionRun").addClass("active");
+    });   
+</script>
 
 @section Scripts {
     <script>
