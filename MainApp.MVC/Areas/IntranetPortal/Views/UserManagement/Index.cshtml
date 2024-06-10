@@ -10,7 +10,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">@DbResHtml.T("Add, edit, delete and view users, roles and privileges", "Resources")</small>
+                <small class="text-muted">@DbResHtml.T("User management involves administering and overseeing user access and permissions.", "Resources")</small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -32,11 +32,19 @@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
                         {
-                            <div class="text-sm mb-3">
-                                <a class="mb-1 btn bg-gradient-primary" asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="CreateUser">@DbResHtml.T("Add user", "Resources")</a>
-                            </div>
+                           
+                                <a class="mb-1 btn bg-gradient-primary float-left" asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="CreateUser">
+                                    <i class="fas fa-plus"></i> 
+                                    @DbResHtml.T("Add user", "Resources")
+                                </a>
+                            
+                                <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                                    <i class="fas fa-file-alt"></i>
+                                 </button>
+                            
                         }
-                        <table id="usersTable" class="table table-bordered table-striped">
+                        <div class="mt-5">
+                        <table id="usersTable" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>
@@ -67,25 +75,25 @@
                                         <td>
                                             @if (User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
                                             {
-                                                <a asp-controller="UserManagement" asp-action="EditUser" asp-route-id="@item.Id" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Edit", "Resources")">
+                                                <a asp-controller="UserManagement" asp-action="EditUser" asp-route-id="@item.Id" class="mb-1 btn bg-gradient-warning text-white btn-xs" title="@DbResHtml.T("Edit", "Resources")">
                                                     <i class="far fa-edit"></i>
                                                 </a>
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
                                             {
-                                                <button onclick="deleteUser('@item.Id',this)" class="mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteUserModal" title="@DbResHtml.T("Delete", "Resources")">
+                                                <button onclick="deleteUser('@item.Id',this)" class="mb-1 btn bg-gradient-danger btn-xs" data-toggle="modal" data-target="#deleteUserModal" title="@DbResHtml.T("Delete", "Resources")">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.UserManagementViewUserClaims))
                                             {
-                                                <button onclick="getUserClaims('@item.Id')" class="mb-1 btn bg-gradient-success" data-toggle="modal" data-target="#claimsModal" title="@DbResHtml.T("Privileges", "Resources")">
+                                                <button onclick="getUserClaims('@item.Id')" class="mb-1 btn bg-gradient-success btn-xs" data-toggle="modal" data-target="#claimsModal" title="@DbResHtml.T("Privileges", "Resources")">
                                                     <i class="fas fa-book-open"></i>
                                                 </button>
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.UserManagementViewUserRoles))
                                             {
-                                                <button onclick="getUserRoles('@item.Id')" class="mb-1 btn bg-gradient-info" data-toggle="modal" data-target="#rolesModal" title="@DbResHtml.T("Roles", "Resources")">
+                                                <button onclick="getUserRoles('@item.Id')" class="mb-1 btn bg-gradient-info btn-xs" data-toggle="modal" data-target="#rolesModal" title="@DbResHtml.T("Roles", "Resources")">
                                                     <i class="fas fa-user"></i>
                                                 </button>
                                             }
@@ -94,6 +102,7 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -105,11 +114,19 @@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.UserManagementAddUsersAndRoles))
                         {
-                            <div class="text-sm mb-3">
-                                <a class="mb-1 btn bg-gradient-primary" asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="CreateRole">@DbResHtml.T("Add role", "Resources")</a>
-                            </div>
+                            
+                            <a class="mb-1 btn bg-gradient-primary float-left" asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="CreateRole">
+                                <i class="fas fa-plus"></i> 
+                                @DbResHtml.T("Add role", "Resources")
+                            </a>
+                            
+                                <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                                     <i class="fas fa-file-alt"></i>
+                                </button>
+
                         }
-                        <table id="rolesTable" class="table table-bordered table-striped">
+                        <div class="mt-5">
+                        <table id="rolesTable" class="table table-sm table-bordered table-striped">
                             <thead>
                                 <tr>
                                     <th>@DbResHtml.T("Role name", "Resources")</th>
@@ -124,19 +141,19 @@
                                         <td>
                                             @if (User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
                                             {
-                                                <a asp-controller="UserManagement" asp-action="EditRole" asp-route-id="@item.Id" class="mb-1 btn bg-gradient-warning text-white" title="@DbResHtml.T("Edit", "Resources")">
+                                                <a asp-controller="UserManagement" asp-action="EditRole" asp-route-id="@item.Id" class="mb-1 btn bg-gradient-warning text-white btn-xs" title="@DbResHtml.T("Edit", "Resources")">
                                                     <i class="far fa-edit"></i>
                                                 </a>
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.UserManagementDeleteUsersAndRoles))
                                             {
-                                                <button onclick="deleteRole('@item.Id',this)" class="mb-1 btn bg-gradient-danger" data-toggle="modal" data-target="#deleteRoleModal" title="@DbResHtml.T("Delete", "Resources")">
+                                                <button onclick="deleteRole('@item.Id',this)" class="mb-1 btn bg-gradient-danger btn-xs" data-toggle="modal" data-target="#deleteRoleModal" title="@DbResHtml.T("Delete", "Resources")">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.UserManagementViewRoleClaims))
                                             {
-                                                <button onclick="getRoleClaims('@item.Id')" class="mb-1 btn bg-gradient-success mb-1" data-toggle="modal" data-target="#roleClaimsModal" title="@DbResHtml.T("Privileges", "Resources")">
+                                                <button onclick="getRoleClaims('@item.Id')" class="mb-1 btn bg-gradient-success mb-1 btn-xs" data-toggle="modal" data-target="#roleClaimsModal" title="@DbResHtml.T("Privileges", "Resources")">
                                                     <i class="fas fa-book-open"></i>
                                                 </button>
                                             }
@@ -145,12 +162,21 @@
                                 }
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<script>
+    // $(document).ready(function () {
+    //     $("#NavlinkAdmin").addClass("active");
+    // });
+    $(document).ready(function () {
+        $("#NavlinkAdmin, #NavlinkUserManagement").addClass("active");
+    });
+</script>
 
 @section Scripts{
     @{
@@ -170,7 +196,7 @@
                 buttons: [
                     {
                         extend: 'excelHtml5',
-                        className: 'btn bg-gradient-success border-0',
+                        className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
                         text: '<i class="fas fa-file-alt"></i>',
                         titleAttr: "Export to excel",
                         filename: "Intranet portal users - @DateTime.Now.ToString("dd.MM.yyyy")",
@@ -190,7 +216,7 @@
                 buttons: [
                     {
                         extend: 'excelHtml5',
-                        className: 'btn bg-gradient-success border-0',
+                        className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
                         text: '<i class="fas fa-file-alt"></i>',
                         titleAttr: "Export to excel",
                         filename: "Roles - @DateTime.Now.ToString("dd.MM.yyyy")",
@@ -278,6 +304,11 @@
                 }
             });
         }
+        $(document).ready(function () {
+            $("#exportToExcelButton").click(function () {
+                $(".export-to-excel-button").click();
+            });
+        });
 
         function deleteRole(roleId, btn) {
             deleteBtn = btn;

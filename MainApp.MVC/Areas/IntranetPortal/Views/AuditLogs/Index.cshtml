@@ -12,7 +12,7 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted"> @DbResHtml.T("View audit logs", "Resources")</small>
+                <small class="text-muted"> @DbResHtml.T("View audit logs to monitor and track all system activities and changes.", "Resources")</small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
@@ -51,11 +51,15 @@
                             </div>
                             <div class="col-md-1 col-sm-1 col-lg-1">
                                 <button id="btnSubmit" class="btn btn-outline-primary rounded-right align-bottom" type="button" onclick="onclickSearch()">
+                                    <i class="fas fa-search"></i>
                                     @DbResHtml.T("Search", "Resources")
                                 </button>
                             </div>
                             <div class="col-md-1 col-sm-1 col-lg-1">
-                                <a class="btn btn-warning text-white" href="" onclick="getUrlActionExport()" id="exportUrl" target="_blank">  @DbResHtml.T("Export", "Resources")</a>
+                                <a class="btn btn-warning text-white" href="" onclick="getUrlActionExport()" id="exportUrl" target="_blank">
+                                    <i class="fas fa-file-export"></i>
+                                    @DbResHtml.T("Export", "Resources")
+                                </a>
                             </div>
                         </div>
                         <br />
@@ -78,6 +82,14 @@
         </div>
     </div>
 </div>
+<script>
+    // $(document).ready(function () {
+    //     $("#NavlinkAdmin").addClass("active");
+    // });
+    $(document).ready(function () {
+        $("#NavlinkAdmin, #NavlinkAuditLogs").addClass("active");
+    });
+</script>
 
 
 @section Scripts{
