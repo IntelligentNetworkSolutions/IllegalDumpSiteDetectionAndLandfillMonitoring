@@ -11,10 +11,10 @@ namespace Tests.SDTests.Helpers
         {
             // Arrange
             var user = new ClaimsPrincipal();
-            user.AddIdentity(new ClaimsIdentity(new[] { new Claim("SpecialAuthClaim", "insadmin") }));
+            user.AddIdentity(new ClaimsIdentity(new[] { new Claim("SpecialAuthClaim", "superadmin") }));
 
             // Act
-            var result = user.HasAuthClaim(new AuthClaim() { Value = "insadmin" });
+            var result = user.HasAuthClaim(new AuthClaim() { Value = "superadmin" });
 
             // Assert
             Assert.True(result);
@@ -27,7 +27,7 @@ namespace Tests.SDTests.Helpers
             var user = new ClaimsPrincipal();
 
             // Act
-            var result = user.HasAuthClaim(new AuthClaim() { Value = "insadmin" });
+            var result = user.HasAuthClaim(new AuthClaim() { Value = "superadmin" });
 
             // Assert
             Assert.False(result);
@@ -38,11 +38,11 @@ namespace Tests.SDTests.Helpers
         {
             // Arrange
             var user = new ClaimsPrincipal();
-            user.AddIdentity(new ClaimsIdentity(new[] { new Claim("SpecialAuthClaim", "insadmin") }));
+            user.AddIdentity(new ClaimsIdentity(new[] { new Claim("SpecialAuthClaim", "superadmin") }));
             user.AddIdentity(new ClaimsIdentity(new[] { new Claim("AuthorizationClaim", "admin") }));
 
             // Act
-            bool result = user.HasAnyAuthClaim(new[] { new AuthClaim() { Value = "insadmin" }, new AuthClaim() { Value = "admin" }});
+            bool result = user.HasAnyAuthClaim(new[] { new AuthClaim() { Value = "superadmin" }, new AuthClaim() { Value = "admin" }});
 
             // Assert
             Assert.True(result);
@@ -55,7 +55,7 @@ namespace Tests.SDTests.Helpers
             var user = new ClaimsPrincipal();
 
             // Act
-            var result = user.HasAnyAuthClaim(new[] { new AuthClaim() { Value = "insadmin" }, new AuthClaim() { Value = "admin" }});
+            var result = user.HasAnyAuthClaim(new[] { new AuthClaim() { Value = "superadmin" }, new AuthClaim() { Value = "admin" }});
 
             // Assert
             Assert.False(result);
@@ -66,10 +66,10 @@ namespace Tests.SDTests.Helpers
         {
             // Arrange
             var user = new ClaimsPrincipal();
-            user.AddIdentity(new ClaimsIdentity(new[] { new Claim("SpecialAuthClaim", "insadmin") }));
+            user.AddIdentity(new ClaimsIdentity(new[] { new Claim("SpecialAuthClaim", "superadmin") }));
 
             // Act
-            var result = user.HasCustomClaim("SpecialAuthClaim", "insadmin");
+            var result = user.HasCustomClaim("SpecialAuthClaim", "superadmin");
 
             // Assert
             Assert.True(result);
@@ -82,7 +82,7 @@ namespace Tests.SDTests.Helpers
             var user = new ClaimsPrincipal();
 
             // Act
-            var result = user.HasCustomClaim("SpecialAuthClaim", "insadmin");
+            var result = user.HasCustomClaim("SpecialAuthClaim", "superadmin");
 
             // Assert
             Assert.False(result);

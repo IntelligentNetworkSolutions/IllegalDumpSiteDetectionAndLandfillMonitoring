@@ -126,7 +126,7 @@ namespace MainApp.BL.Services.DatasetServices
 
 
             var numberOfEnabledImages = allDatasetImagesData.Where(x => x.IsEnabled == true).Count();
-            var numberOfAnnotatedImages = allImageAnnotationsList.Where(x => allDatasetImagesData.Select(m => m.Id).Contains(x.DatasetImageId.Value)).Count();
+            var numberOfAnnotatedImages = allImageAnnotationsList.Where(x => allDatasetImagesData.Select(m => m.Id).Contains(x.DatasetImageId.Value)).DistinctBy(x => x.DatasetImageId).Count();
             var enabledImagesList = allDatasetImagesData.Where(x => x.IsEnabled == true).ToList() ?? throw new Exception("Object not found");
             var allEnabledImagesHaveAnnotations = enabledImagesList.Any() ?
                              enabledImagesList.All(x => allImageAnnotationsList.Where(x => x.DatasetImageId == x.Id).Select(x => x.DatasetImageId).Any(a => a == x.Id)) : false;

@@ -10,7 +10,7 @@ namespace MainApp.MVC.Filters
 
         public void OnResourceExecuting(ResourceExecutingContext context)
         {
-            if (!context.HttpContext.User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+            if (!context.HttpContext.User.HasCustomClaim("SpecialAuthClaim", "superadmin"))
             {
                 context.Result = new NotFoundResult();   
             }

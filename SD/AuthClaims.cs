@@ -43,7 +43,7 @@ namespace SD
             }
             return claims;
         }
-
+        //TODO: Maybe add function return claims for role name
         public static void CheckAuthClaimsValuesForDuplicates()
         {
             var valuesList = GetAll().Select(s => s.Value);

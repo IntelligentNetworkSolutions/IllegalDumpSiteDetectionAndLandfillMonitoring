@@ -32,6 +32,7 @@ namespace Services.Interfaces.Services
         Task<ICollection<UserDTO>> GetAllIntanetPortalUsers();
         Task<ICollection<RoleDTO>> GetAllRoles();
         Task<UserDTO?> GetUserById(string userId);
+        Task<UserDTO> GetSuperAdminUserBySpecificClaim();
         Task<RoleDTO?> GetRoleById(string roleId);
         Task<List<RoleDTO>> GetRolesForUser(string userId);
         Task<List<RoleClaimDTO>> GetRoleClaims(string roleId);

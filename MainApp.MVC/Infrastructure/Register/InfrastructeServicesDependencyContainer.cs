@@ -9,6 +9,10 @@ using Services.Interfaces.Services;
 using Services;
 using DAL.Interfaces.Repositories.DetectionRepositories;
 using DAL.Repositories.DetectionRepositories;
+using DAL.ApplicationStorage.SeedDatabase;
+using MainApp.BL.Interfaces.Services.DetectionServices;
+using MainApp.BL.Services.DetectionServices;
+using Microsoft.AspNetCore.Identity;
 
 namespace MainApp.MVC.Infrastructure.Register
 {
@@ -32,6 +36,9 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
             services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
             services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
+            services.TryAddScoped<IDbInitializer, DbInitializer>();
+            services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
+            services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
 
             return services;
         }

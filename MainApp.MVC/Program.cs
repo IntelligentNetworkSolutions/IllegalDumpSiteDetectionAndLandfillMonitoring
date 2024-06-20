@@ -44,8 +44,11 @@ using MainApp.BL.Services.DetectionServices;
 using DAL.Repositories.DetectionRepositories;
 using DAL.Interfaces.Repositories.DetectionRepositories;
 using MainApp.BL.Interfaces.Services.DetectionServices;
+using DAL.ApplicationStorage.SeedDatabase;
+using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables(prefix: "ASPNETCORE_");
 
 IConfiguration configuration = builder.Configuration;
 IServiceCollection services = builder.Services;
@@ -79,7 +82,7 @@ services.AddWestwindGlobalization(opt =>
     opt.ResxBaseFolder = "~/Properties/";
     opt.ConfigureAuthorizeLocalizationAdministration(actionContext =>
     {
-        return actionContext.HttpContext.User.HasCustomClaim("SpecialAuthClaim", "insadmin");
+        return actionContext.HttpContext.User.HasCustomClaim("SpecialAuthClaim", "superadmin");
     });
 
 });
@@ -152,11 +155,6 @@ services.AddAuthorization(options => new AuthorizationOptions()
 services.AddHttpContextAccessor();
 services.AddApplicationServices();
 services.AddInfrastructureServices();
-
-builder.Services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
-
-builder.Services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
-builder.Services.TryAddScoped<IDetectionRunService, DetectionRunService>();
 
 // TODO: look over
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);
@@ -306,6 +304,15 @@ app.Use(async (context, next) =>
     await next();
 });
 
+var seed = args.Contains("/seed");
+var runMigrations = args.Contains("/runMigrations");
+var loadModules = args.Contains("/loadModules");
+var modulesToLoad = args.Where(x => x.StartsWith("/module:")).ToList();
+if (seed)
+{
+    SeedDatabase(runMigrations, loadModules, modulesToLoad);
+}
+
 if (applicationStartMode == ApplicationStartModes.IntranetPortal)
 //app.ConfigureIntranetPortalEndpoints();
 {
@@ -330,3 +337,24 @@ if (applicationStartMode == ApplicationStartModes.PublicPortal)
 }
 
 app.Run();
+
+void SeedDatabase(bool? runMigrations, bool? loadModules, List<string> modulesToLoad)
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        try
+        {
+            logger.LogInformation("Seeding database...");
+            var dbInitializer = services.GetRequiredService<IDbInitializer>();
+            dbInitializer.Initialize(runMigrations, loadModules, modulesToLoad);
+            logger.LogInformation("Done seeding database.");
+        }
+        catch (Exception ex)
+        {
+            
+            logger.LogError(ex, "An error occurred while seeding the database.");
+        }
+    }
+}

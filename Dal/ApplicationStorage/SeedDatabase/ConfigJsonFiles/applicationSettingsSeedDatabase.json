@@ -1,0 +1,65 @@
+[
+  {
+    "Key": "PasswordMinLength",
+    "Value": "10",
+    "Description": "Password Min Length",
+    "DataType": "Integer",
+    "Module": "UserManagement"
+  },
+  {
+    "Key": "DatasetImagesFolder",
+    "Value": "DatasetImages",
+    "Description": "Dataset Images Folder Path",
+    "DataType": "String"
+  },
+  {
+    "Key": "DatasetThumbnailsFolder",
+    "Value": "DatasetImages",
+    "Description": "Dataset Thumbnails Folder Path",
+    "DataType": "String"
+  },
+  {
+    "Key": "MainApplicationLanguages",
+    "Value": "{\"mk\":\"Македонски\", \"en\":\"English\",\"sq\":\"Shqip\"}",
+    "Description": "Main Application Languages",
+    "DataType": "String"
+  },
+  {
+    "Key": "NumberOfClassesNeededToPublishDataset",
+    "Value": "1",
+    "Description": "Number Of Classes Needed To Publish Dataset",
+    "DataType": "Integer"
+  },
+  {
+    "Key": "NumberOfImagesNeededToPublishDataset",
+    "Value": "100",
+    "Description": "Number Of Images Needed To Publish Dataset",
+    "DataType": "Integer"
+  },
+  {
+    "Key": "PasswordMustHaveLetters",
+    "Value": "true",
+    "Description": "Password Must Have Letters",
+    "DataType": "Boolean"
+  },
+  {
+    "Key": "PasswordMustHaveNumbers",
+    "Value": "true",
+    "Description": "Password Must Have Numbers",
+    "DataType": "Boolean"
+  },
+  {
+    "Key": "TranslationClearCacheIntranetPortal",
+    "Value": "https://localhost:7230/Common/Home/ResetTranslationCache",
+    "Description": "Translation Clear Cache Intranet Portal",
+    "DataType": "String"
+  },
+  {
+    "Key": "TranslationClearCachePublicPortal",
+    "Value": "https://localhost:7230/Common/Home/ResetTranslationCache",
+    "Description": "Translation Clear Cache Public Portal",
+    "DataType": "String"
+  }
+
+
+]
