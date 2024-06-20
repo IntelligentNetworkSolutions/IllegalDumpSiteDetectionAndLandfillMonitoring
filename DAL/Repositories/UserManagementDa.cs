@@ -38,6 +38,19 @@ namespace DAL.Repositories
             }
         }
 
+        public async Task<ApplicationUser> GetUserBySpecificClaim()
+        {
+            try
+            {
+                return await _db.Users.Where(u => _db.UserClaims.Any(c => c.UserId == u.Id && c.ClaimType == "SpecialAuthClaim" && c.ClaimValue == "superadmin")).FirstOrDefaultAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                throw;
+            }
+        }
+
         public async Task<List<ApplicationUser>> GetAllIntanetPortalUsersExcludingCurrent(string id)
         {
             try
@@ -54,7 +67,7 @@ namespace DAL.Repositories
         public async Task<ApplicationUser?> GetUserById(string userId)
         {
             try
-            {
+            {                
                 return await _db.Users.FirstOrDefaultAsync(z => z.Id == userId);
             }
             catch (Exception ex)

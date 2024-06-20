@@ -1,0 +1,46 @@
+[
+  {
+    "Superadmin": {
+      "Email": "super_admin@msn.com",
+      "EmailConfirmed": true,
+      "FirstName": "SuperAdmin",
+      "IsActive": true,
+      "LastName": "Administrator",
+      "NormalizedEmail": "SUPER_ADMIN@MSN.COM",
+      "PhoneNumber": "077321321",
+      "PhoneNumberConfirmed": true,
+      "UserName": "superadmin",
+      "NormalizedUserName": "SUPERADMIN"
+    }
+  },
+  {
+    "InitialRoles": [
+      {
+        "Name": "SuperAdmin",
+        "NormalizedName": "SUPERADMIN"
+      },
+      {
+        "Name": "Admin",
+        "NormalizedName": "ADMIN"
+      }
+
+    ]
+  },
+  {
+    "InitialUsers": [
+      {
+        "UserName": "Admin1",
+        "Roles": [
+          "Admin"
+        ]
+      },
+      {
+        "UserName": "Admin2",
+        "Roles": [
+          "Admin"
+        ]
+      }
+    ]
+  }
+
+]

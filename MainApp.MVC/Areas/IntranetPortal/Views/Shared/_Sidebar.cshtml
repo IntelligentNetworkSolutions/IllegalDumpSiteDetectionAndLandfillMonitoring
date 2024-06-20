@@ -74,7 +74,7 @@
                         </ul>
                     </li>
                 }
-               @if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
+               @if (User.HasCustomClaim("SpecialAuthClaim", "superadmin"))
                {
                     <li class="nav-item">
                         <a href="#" class="nav-link" id="NavlinkSuperAdmin" title="@DbResHtml.T("Super admin", "Resources")">
