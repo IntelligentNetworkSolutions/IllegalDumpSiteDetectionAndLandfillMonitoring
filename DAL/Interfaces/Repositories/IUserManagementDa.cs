@@ -12,6 +12,7 @@ namespace DAL.Interfaces.Repositories
 
         #region Get User/s
         Task<ApplicationUser?> GetUserById(string userId);
+        Task<ApplicationUser> GetUserBySpecificClaim();
 
         Task<ApplicationUser?> GetUserByUsername(string username);
 

@@ -525,6 +525,11 @@ namespace Services
             return userRolesDTOs;
         }
 
+        public async Task<UserDTO> GetSuperAdminUserBySpecificClaim()
+        {
+            var superAdmin = await _userManagementDa.GetUserBySpecificClaim();
+            return _mapper.Map<UserDTO>(superAdmin) ?? new UserDTO();
+        }
         public async Task<ICollection<UserDTO>> GetAllIntanetPortalUsers()
         {
             var allUsers = await _userManagementDa.GetAllIntanetPortalUsers();

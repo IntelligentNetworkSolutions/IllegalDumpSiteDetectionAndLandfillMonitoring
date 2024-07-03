@@ -12,7 +12,7 @@ namespace SD.Helpers
     {
         public static bool HasAuthClaim(this IPrincipal user, AuthClaim authClaim)
         {
-            if (HasCustomClaim(user, "SpecialAuthClaim", "insadmin") ||
+            if (HasCustomClaim(user, "SpecialAuthClaim", "superadmin") ||
                 HasCustomClaim(user, "AuthorizationClaim", authClaim.Value))
                 return true;
             

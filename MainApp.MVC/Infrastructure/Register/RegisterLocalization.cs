@@ -34,7 +34,7 @@ namespace MainApp.MVC.Infrastructure.Register
                 opt.ResxBaseFolder = "~/Properties/";
                 opt.ConfigureAuthorizeLocalizationAdministration(actionContext =>
                 {
-                    return actionContext.HttpContext.User.HasCustomClaim("SpecialAuthClaim", "insadmin");
+                    return actionContext.HttpContext.User.HasCustomClaim("SpecialAuthClaim", "superadmin");
                 });
 
             });

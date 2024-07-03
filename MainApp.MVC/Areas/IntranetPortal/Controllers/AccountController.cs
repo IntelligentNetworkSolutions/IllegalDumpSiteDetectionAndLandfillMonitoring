@@ -107,8 +107,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 claims.Add(new Claim(item.ClaimType, item.ClaimValue));
 
             // TODO: look over
-            if (user.UserName == "insadmin")
-                claims.Add(new Claim("SpecialAuthClaim", "insadmin"));
+            //if (user.UserName == "superadmin")
+            //    claims.Add(new Claim("SpecialAuthClaim", "superadmin"));
+            var superAdmin = await _userManagementService.GetSuperAdminUserBySpecificClaim();
+            if (user.UserName == superAdmin.UserName)
+                claims.Add(new Claim("SpecialAuthClaim", "superadmin"));
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties
