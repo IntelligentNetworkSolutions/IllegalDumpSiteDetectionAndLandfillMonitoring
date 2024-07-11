@@ -85,5 +85,62 @@ namespace Tests.MainAppMVCTests.Areas.Common
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.Equal("Error", viewResult.ViewName);
         }
+
+        [Fact]
+        public void Index_ReturnsView()
+        {
+            // Arrange
+            var controller = new ErrorController();
+
+            // Act
+            var result = controller.Index();
+
+            // Assert
+            Assert.IsType<ViewResult>(result);
+        }
+
+        [Fact]
+        public void Error_LargePositiveStatusCode_ReturnsDefaultErrorView()
+        {
+            // Arrange
+            var controller = new ErrorController();
+            int largeStatusCode = 9999;
+
+            // Act
+            var result = controller.Error(largeStatusCode);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("Error", viewResult.ViewName);
+        }
+
+        [Theory]
+        [InlineData(402)]
+        [InlineData(405)]
+        public void Error_ReturnsDefaultErrorView_ForSpecificStatusCode(int statusCode)
+        {
+            // Arrange
+            var controller = new ErrorController();
+
+            // Act
+            var result = controller.Error(statusCode);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Equal("Error", viewResult.ViewName);
+        }
+
+        [Fact]
+        public void Error_ReturnsView()
+        {
+            // Arrange
+            var controller = new ErrorController();
+
+            // Act
+            var result = controller.Error();
+
+            // Assert
+            Assert.IsType<ViewResult>(result);
+        }
     }
 }

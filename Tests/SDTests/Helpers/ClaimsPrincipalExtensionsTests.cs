@@ -87,5 +87,72 @@ namespace Tests.SDTests.Helpers
             // Assert
             Assert.False(result);
         }
+
+        [Fact]
+        public void HasCustomClaim_ReturnsFalseIfUserDoesNotHaveClaimWithMatchingValue()
+        {
+            // Arrange
+            var user = new ClaimsPrincipal();
+            user.AddIdentity(new ClaimsIdentity(new[] { new Claim("SpecialAuthClaim", "admin,manager") }));
+
+            // Act
+            var result = user.HasCustomClaim("SpecialAuthClaim", "superadmin");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasAuthClaim_ReturnsFalseForEmptyClaimsPrincipal()
+        {
+            // Arrange
+            var user = new ClaimsPrincipal();
+
+            // Act
+            var result = user.HasAuthClaim(new AuthClaim() { Value = "superadmin" });
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasAnyAuthClaim_ReturnsFalseForEmptyClaimsPrincipal()
+        {
+            // Arrange
+            var user = new ClaimsPrincipal();
+
+            // Act
+            var result = user.HasAnyAuthClaim(new[] { new AuthClaim() { Value = "superadmin" }, new AuthClaim() { Value = "admin" } });
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasCustomClaim_ReturnsFalseForEmptyClaimsPrincipal()
+        {
+            // Arrange
+            var user = new ClaimsPrincipal();
+
+            // Act
+            var result = user.HasCustomClaim("SpecialAuthClaim", "superadmin");
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasCustomClaim_ReturnsTrueForSpecialCharactersInClaimValue()
+        {
+            // Arrange
+            var user = new ClaimsPrincipal();
+            user.AddIdentity(new ClaimsIdentity(new[] { new Claim("SpecialAuthClaim", "\"super, admin\"") }));
+
+            // Act
+            var result = user.HasCustomClaim("SpecialAuthClaim", "super, admin");
+
+            // Assert
+            Assert.True(result);
+        }
     }
 }

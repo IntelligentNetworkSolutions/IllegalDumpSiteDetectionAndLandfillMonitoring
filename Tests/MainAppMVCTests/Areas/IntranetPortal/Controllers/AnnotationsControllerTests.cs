@@ -208,5 +208,79 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockImageAnnotationsService.Verify(service => service.BulkUpdateImageAnnotations(It.IsAny<EditImageAnnotationsDTO>()), Times.Once);
         }
 
+        [Fact]
+        public void Index_ReturnsViewResult()
+        {
+            // Act
+            var result = _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Null(viewResult.ViewName);
+        }
+
+        [Fact]
+        public async Task TestJsonToPolygon_ReturnsViewResult()
+        {
+            // Act
+            var result = await _controller.TestJsonToPolygon();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Null(viewResult.ViewName); 
+        }
+
+        [Fact]
+        public async Task Annotate_WithNextAndPreviousImages_ReturnsViewResult()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var datasetImage = new DatasetImageDTO { Id = datasetImageId, DatasetId = datasetId };
+            var datasetAllImages = new List<DatasetImageDTO> { datasetImage };
+            var dataset = new DatasetDTO { Id = datasetId };
+            var datasetClasses = new List<DatasetClassDTO>();
+            var currentImagePositionInDataset = 1;
+
+            _mockDatasetImagesService.Setup(service => service.GetDatasetImageById(datasetImageId))
+                .ReturnsAsync(datasetImage);
+
+            _mockDatasetImagesService.Setup(service => service.GetImagesForDataset(datasetId))
+                .ReturnsAsync(datasetAllImages);
+
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId))
+                .ReturnsAsync(dataset);
+
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClassesByDatasetId(datasetId))
+                .ReturnsAsync(datasetClasses);
+
+            // Act
+            var result = await _controller.Annotate(datasetImageId);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsType<AnnotateViewModel>(viewResult.ViewData.Model);
+            Assert.Equal(datasetImage, model.DatasetImage);
+            Assert.Equal(dataset, model.Dataset);
+            Assert.Equal(datasetClasses, model.DatasetClasses);
+            Assert.Equal(currentImagePositionInDataset, model.CurrentImagePositionInDataset);
+            Assert.Null(model.NextImage);
+            Assert.Null(model.PreviousImage);
+            Assert.Equal(datasetAllImages.Count, model.TotalImagesCount);
+        }
+
+        [Fact]
+        public async Task Annotate_NoDatasetImageFound_ThrowsException()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+
+            _mockDatasetImagesService.Setup(service => service.GetDatasetImageById(datasetImageId))
+                .ReturnsAsync((DatasetImageDTO)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.Annotate(datasetImageId));
+        }
+
     }
 }
