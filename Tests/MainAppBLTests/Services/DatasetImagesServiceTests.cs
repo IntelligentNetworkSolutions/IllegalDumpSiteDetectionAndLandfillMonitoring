@@ -237,6 +237,23 @@ namespace Tests.MainAppBLTests.Services
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(invalidDatasetImageId));
         }
-              
+
+        [Fact]
+        public async Task DeleteDatasetImage_ImageNotFound_ThrowsException()
+        {
+            // Arrange
+            var invalidDatasetImageId = Guid.NewGuid();
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.GetById(It.IsAny<Guid>(), false, null))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(null));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(invalidDatasetImageId));
+            Assert.Equal("Object not found", exception.Message);
+        }
+
+       
+
     }
 }

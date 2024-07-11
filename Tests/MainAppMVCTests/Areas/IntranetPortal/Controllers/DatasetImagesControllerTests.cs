@@ -164,6 +164,26 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Dataset is already published. No changes allowed", data["responseErrorAlreadyPublished"]["Value"].ToString());
         }
 
-       
+        [Fact]
+        public async Task DeleteDatasetImage_ReturnsError_WhenDatasetPublished()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var datasetDto = new DatasetDTO { IsPublished = true };
+
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+
+            // Act
+            var result = await _controller.DeleteDatasetImage(datasetImageId, datasetId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Dataset is already published. No changes allowed", data["responseErrorAlreadyPublished"]["Value"].ToString());
+        }
+
+        
+
     }
 }

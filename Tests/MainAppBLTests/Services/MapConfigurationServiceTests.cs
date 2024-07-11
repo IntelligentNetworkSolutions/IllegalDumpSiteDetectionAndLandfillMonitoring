@@ -85,6 +85,67 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal(expectedMapConfigDTO, result);
         }
 
-       
+        [Fact]
+        public async Task GetMapConfigurationByName_MapperReturnsNull_ThrowsException()
+        {
+            // Arrange
+            string mapName = "ValidMapName";
+            var mapConfigRepositoryMock = new Mock<IMapConfigurationRepository>();
+            mapConfigRepositoryMock.Setup(repo => repo.GetMapConfigurationByName(mapName)).ReturnsAsync(new MapConfiguration());
+
+            var mapperMock = new Mock<IMapper>();
+            mapperMock.Setup(mapper => mapper.Map<MapConfigurationDTO>(It.IsAny<MapConfiguration>())).Returns((MapConfigurationDTO)null);
+
+            var mapConfigurationService = new MapConfigurationService(mapConfigRepositoryMock.Object, mapperMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => mapConfigurationService.GetMapConfigurationByName(mapName));
+        }
+
+        [Fact]
+        public async Task GetMapConfigurationByName_EmptyMapName_ThrowsException()
+        {
+            // Arrange
+            string emptyMapName = string.Empty;
+            var mapConfigRepositoryMock = new Mock<IMapConfigurationRepository>();
+            var mapperMock = new Mock<IMapper>();
+
+            var mapConfigurationService = new MapConfigurationService(mapConfigRepositoryMock.Object, mapperMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => mapConfigurationService.GetMapConfigurationByName(emptyMapName));
+        }
+
+        [Fact]
+        public async Task GetMapConfigurationByName_RepositoryThrowsException_ThrowsException()
+        {
+            // Arrange
+            string mapName = "ValidMapName";
+            var mapConfigRepositoryMock = new Mock<IMapConfigurationRepository>();
+            mapConfigRepositoryMock.Setup(repo => repo.GetMapConfigurationByName(mapName)).ThrowsAsync(new Exception("Repository exception"));
+
+            var mapperMock = new Mock<IMapper>();
+
+            var mapConfigurationService = new MapConfigurationService(mapConfigRepositoryMock.Object, mapperMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => mapConfigurationService.GetMapConfigurationByName(mapName));
+        }
+
+        [Fact]
+        public async Task GetMapConfigurationByName_RepositoryReturnsNull_ThrowsException()
+        {
+            // Arrange
+            string mapName = "NonExistentMapName";
+            var mapConfigRepositoryMock = new Mock<IMapConfigurationRepository>();
+            mapConfigRepositoryMock.Setup(repo => repo.GetMapConfigurationByName(mapName)).ReturnsAsync((MapConfiguration)null);
+
+            var mapperMock = new Mock<IMapper>();
+
+            var mapConfigurationService = new MapConfigurationService(mapConfigRepositoryMock.Object, mapperMock.Object);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => mapConfigurationService.GetMapConfigurationByName(mapName));
+        }
     }
 }

@@ -359,7 +359,73 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
         }
 
+        [Fact]
+        public async Task EditClass_DatasetsUsingClass_ReturnsErrorJsonWithDatasets()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var errorMessage = "Datasets are using this class. Cannot update!";
+            var model = new EditDatasetClassDTO { Id = classId };
 
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                                      .ReturnsAsync(new ResultDTO<int>(false, 3, errorMessage, null));
+
+            var allClasses = new List<DatasetClassDTO>();
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                                      .ReturnsAsync(allClasses);
+
+            var datasetDatasetClasses = new List<Dataset_DatasetClassDTO>();
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
+                                           .ReturnsAsync(datasetDatasetClasses);
+
+            var datasets = new List<DatasetDTO>();
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                               .ReturnsAsync(datasets);
+
+            // Act
+            var result = await _controller.EditClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task DeleteClass_HasSubclasses_ReturnsErrorJsonWithChildrenClasses()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var errorMessage = "This dataset class cannot be deleted because there are subclasses.";
+            var childrenClassesList = new List<DatasetClassDTO>
+            {
+                new DatasetClassDTO { Id = Guid.NewGuid(), ParentClassId = classId }
+            };
+
+            _mockDatasetClassesService.Setup(service => service.DeleteDatasetClass(classId))
+                                      .ReturnsAsync(new ResultDTO<int>(false, 2, errorMessage, null));
+
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                                      .ReturnsAsync(childrenClassesList);
+
+            var datasetDatasetClasses = new List<Dataset_DatasetClassDTO>();
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
+                                           .ReturnsAsync(datasetDatasetClasses);
+
+            var datasets = new List<DatasetDTO>();
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                               .ReturnsAsync(datasets);
+
+            // Act
+            var result = await _controller.DeleteClass(classId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+        }
+
+        
         private void SetupUser(string userId)
         {
             var claims = new List<Claim>();

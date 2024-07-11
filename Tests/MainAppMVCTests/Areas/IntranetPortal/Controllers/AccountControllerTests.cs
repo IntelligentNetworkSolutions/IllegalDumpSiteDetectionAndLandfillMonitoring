@@ -274,8 +274,35 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.IsType<NotFoundResult>(result);
         }
-             
 
+        [Fact]
+        public async Task Login_ReturnsViewIfNotAuthenticated()
+        {
+            // Arrange
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            // Act
+            var result = _controller.Login();
+
+            // Assert
+            Assert.IsType<ViewResult>(result);
+        }
+
+        [Fact]
+        public async Task Login_ReturnsViewWithModelErrorIfUsernameOrPasswordIsEmpty()
+        {
+            // Act
+            var result = await _controller.Login("", "", false, null);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.False(viewResult.ViewData.ModelState.IsValid);
+            Assert.True(viewResult.ViewData.ModelState.ContainsKey("msgError"));
+        }
+               
         private static Mock<UserManager<TUser>> MockUserManager<TUser>() where TUser : class
         {
             var store = new Mock<IUserStore<TUser>>();

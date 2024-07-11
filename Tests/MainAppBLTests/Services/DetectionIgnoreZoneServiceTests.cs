@@ -351,6 +351,103 @@ namespace Tests.MainAppBLTests.Services
             _mockRepository.Verify(repo => repo.Delete(ignoreZone, true, default), Times.Once);
         }
 
-      
+        [Fact]
+        public async Task CreateDetectionIgnoreZoneFromDTO_LogsError_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var dto = new DetectionIgnoreZoneDTO { Id = Guid.NewGuid(), Name = "Test Zone" };
+            var exceptionMessage = "Some error occurred.";
+            _mockMapper.Setup(m => m.Map<DetectionIgnoreZone>(dto)).Throws(new Exception(exceptionMessage));
+
+            var logger = Mock.Get(_mockLogger.Object);
+
+            // Act
+            var result = await _service.CreateDetectionIgnoreZoneFromDTO(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+
+            logger.Verify(log => log.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(exceptionMessage)),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateDetectionIgnoreZoneFromDTO_LogsError_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var dto = new DetectionIgnoreZoneDTO { Id = Guid.NewGuid(), Name = "Test Zone" };
+            var exceptionMessage = "Some error occurred.";
+            _mockMapper.Setup(m => m.Map<DetectionIgnoreZone>(dto)).Throws(new Exception(exceptionMessage));
+
+            var logger = Mock.Get(_mockLogger.Object);
+
+            // Act
+            var result = await _service.UpdateDetectionIgnoreZoneFromDTO(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+
+            logger.Verify(log => log.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(exceptionMessage)),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionIgnoreZoneFromDTO_ReturnsFail_WhenRepositoryDeleteFails()
+        {
+            // Arrange
+            var dto = new DetectionIgnoreZoneDTO { Id = Guid.NewGuid(), Name = "Test Zone" };
+            var ignoreZone = new DetectionIgnoreZone { Id = dto.Id.Value, Name = dto.Name };
+            var resultGetById = ResultDTO<DetectionIgnoreZone>.Ok(ignoreZone);
+            var resultDeleteFail = ResultDTO.Fail("Delete failed");
+
+            _mockMapper.Setup(m => m.Map<DetectionIgnoreZone>(dto)).Returns(ignoreZone);
+            _mockRepository.Setup(repo => repo.GetById(ignoreZone.Id, true, null)).ReturnsAsync(resultGetById);
+            _mockRepository.Setup(repo => repo.Delete(ignoreZone, true, default)).ReturnsAsync(resultDeleteFail);
+
+            // Act
+            var result = await _service.DeleteDetectionIgnoreZoneFromDTO(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Delete failed", result.ErrMsg);
+            _mockRepository.Verify(repo => repo.Delete(ignoreZone, true, default), Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateDetectionIgnoreZoneFromDTO_ReturnsFail_WhenRepositoryCreateThrowsException()
+        {
+            // Arrange
+            var dto = new DetectionIgnoreZoneDTO { Id = Guid.NewGuid(), Name = "Test Zone" };
+            var ignoreZone = new DetectionIgnoreZone { Id = dto.Id.Value, Name = dto.Name };
+            var exceptionMessage = "Some error occurred.";
+
+            _mockMapper.Setup(m => m.Map<DetectionIgnoreZone>(dto)).Returns(ignoreZone);
+            _mockRepository.Setup(repo => repo.Create(ignoreZone, true, default)).ThrowsAsync(new Exception(exceptionMessage));
+
+            var logger = Mock.Get(_mockLogger.Object);
+            // Act
+            var result = await _service.CreateDetectionIgnoreZoneFromDTO(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+            logger.Verify(log => log.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(exceptionMessage)),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)), Times.Once);
+        }
+
     }
 }

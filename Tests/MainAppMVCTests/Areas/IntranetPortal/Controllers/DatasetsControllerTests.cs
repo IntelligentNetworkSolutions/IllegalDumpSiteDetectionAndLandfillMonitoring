@@ -241,9 +241,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
             Assert.Equal("Successfully published dataset", jsonData["responseSuccess"]["Value"].ToString());
-        }
-
-       
+        }              
 
         [Fact]
         public async Task Index_ReturnsViewResult_WithListOfDatasets()
@@ -291,8 +289,45 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal(expectedDatasets.Count, result.Count);
         }
 
-        
+        [Fact]
+        public async Task CreateConfirmed_ReturnsJsonError_WhenParentDatasetIsNotPublished()
+        {
+            // Arrange
+            var parentDatasetId = Guid.NewGuid();
+            var datasetViewModel = new CreateDatasetViewModel { ParentDatasetId = parentDatasetId };
+            _mockDatasetService.Setup(s => s.GetDatasetById(parentDatasetId))
+                .ReturnsAsync(new DatasetDTO { IsPublished = false });
 
+            // Act
+            var result = await _controller.CreateConfirmed(datasetViewModel) as JsonResult;
 
+            // Assert
+            Assert.NotNull(result);
+            var jsonData = JObject.FromObject(result.Value);
+            Assert.Equal("User id is not valid", jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task DeleteDatasetConfirmed_ReturnsJsonSuccess_WhenSuccessful()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            _mockDatasetService.Setup(s => s.DeleteDataset(datasetId))
+                .ReturnsAsync(new ResultDTO<int>(true, 1, null, null));
+            _mockDatasetService.Setup(s => s.GetAllDatasets())
+                .ReturnsAsync(new List<DatasetDTO>());
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages"))
+                .ReturnsAsync(new ResultDTO<string>(true, "DatasetImages", null, null));
+            _mockWebHostEnvironment.Setup(e => e.WebRootPath).Returns("wwwroot");
+
+            // Act
+            var result = await _controller.DeleteDatasetConfirmed(datasetId) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            var jsonData = JObject.FromObject(result.Value);
+            Assert.Equal("Successfully deleted dataset", jsonData["responseSuccess"]["Value"].ToString());
+        }
+                
     }
 }

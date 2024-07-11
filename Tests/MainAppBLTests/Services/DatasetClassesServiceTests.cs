@@ -444,6 +444,100 @@ namespace Tests.MainAppBLTests.Services
             Assert.Null(result.ErrMsg);
         }
 
+        [Fact]
+        public async Task EditDatasetClass_Throws_Exception_When_Child_Classes_Exist()
+        {
+            // Arrange
+            var dto = new EditDatasetClassDTO
+            {
+                Id = Guid.NewGuid(),
+                ClassName = "EditedClass"
+            };
 
+            var childClasses = new List<DatasetClass>
+            {
+                new DatasetClass { Id = Guid.NewGuid(), ClassName = "ChildClass", ParentClassId = dto.Id }
+            };
+
+            var childClassesResult = ResultDTO<IEnumerable<DatasetClass>>.Ok(childClasses);
+
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetClass, bool>>>(), null, It.IsAny<bool>(), It.IsAny<string>(), null))
+                                         .ReturnsAsync(childClassesResult);
+
+            var mapperMock = new Mock<IMapper>();
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: null,
+                mapper: mapperMock.Object
+            );
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => service.EditDatasetClass(dto));
+        }
+             
+        [Fact]
+        public async Task DeleteDatasetClass_Throws_Exception_When_Child_Classes_Exist()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var childClasses = new List<DatasetClass>
+            {
+                new DatasetClass { Id = Guid.NewGuid(), ParentClassId = classId }
+            };
+
+            var childClassesResult = ResultDTO<IEnumerable<DatasetClass>>.Ok(childClasses);
+
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetClass, bool>>>(), null, It.IsAny<bool>(), It.IsAny<string>(), null))
+                                         .ReturnsAsync(childClassesResult);
+
+            var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
+
+            var mapperMock = new Mock<IMapper>();
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: datasetDatasetClassRepositoryMock.Object,
+                mapper: mapperMock.Object
+            );
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => service.DeleteDatasetClass(classId));
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClass_Throws_Exception_When_Class_In_Use_By_Datasets()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var datasetDatasetClasses = new List<Dataset_DatasetClass>
+            {
+                new Dataset_DatasetClass { DatasetClassId = classId }
+            };
+
+            var datasetDatasetClassesResult = ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetDatasetClasses);
+
+            var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
+            datasetDatasetClassRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(), null, It.IsAny<bool>(), It.IsAny<string>(), null))
+                                             .ReturnsAsync(datasetDatasetClassesResult);
+
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+
+            var mapperMock = new Mock<IMapper>();
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: datasetDatasetClassRepositoryMock.Object,
+                mapper: mapperMock.Object
+            );
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => service.DeleteDatasetClass(classId));
+        }
     }
 }

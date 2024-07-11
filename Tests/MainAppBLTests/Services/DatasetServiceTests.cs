@@ -320,7 +320,25 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Dataset not found", exception.Message);
         }
 
-      
+        [Fact]
+        public async Task DeleteDatasetClassForDataset_ShouldThrowException_WhenDatasetClassNotFound()
+        {
+            // Arrange
+            var selectedClassId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var userId = "testUser";
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetFirstOrDefault(It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(), It.IsAny<bool>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<Dataset_DatasetClass>.Fail("Dataset class not found"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await _datasetService.DeleteDatasetClassForDataset(selectedClassId, datasetId, userId));
+            Assert.Equal("Dataset not found", exception.Message);
+        }
+
+        
+
 
     }
 }

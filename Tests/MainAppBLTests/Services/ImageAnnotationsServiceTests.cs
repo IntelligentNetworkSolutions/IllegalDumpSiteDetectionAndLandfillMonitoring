@@ -133,6 +133,34 @@ namespace Tests.MainAppBLTests.Services
             Assert.NotNull(result);
             Assert.Empty(result);
         }
+      
+        [Fact]
+        public async Task BulkUpdateImageAnnotations_Exception()
+        {
+            // Arrange
+            var imageAnnotationsRepositoryMock = new Mock<IImageAnnotationsRepository>();
+            var datasetImagesRepositoryMock = new Mock<IDatasetImagesRepository>();
+            var mapperMock = new Mock<IMapper>();
+
+            var service = new ImageAnnotationsService(imageAnnotationsRepositoryMock.Object, datasetImagesRepositoryMock.Object, mapperMock.Object);
+
+            var editImageAnnotationsDto = new EditImageAnnotationsDTO
+            {
+                DatasetImageId = Guid.NewGuid(),
+                ImageAnnotations = new List<ImageAnnotationDTO>
+                {
+                    new ImageAnnotationDTO { Id = Guid.NewGuid() }
+                }
+            };
+
+            imageAnnotationsRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<ImageAnnotation, bool>>>(), null, false, null, null))
+                                          .ThrowsAsync(new Exception("An error occurred while fetching existing annotations."));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => service.BulkUpdateImageAnnotations(editImageAnnotationsDto));
+        }
+
+      
 
     }
 }
