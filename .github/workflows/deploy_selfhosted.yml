@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted
+    runs-on: arhitectvirt
 
     steps:
     - name: Checkout code
