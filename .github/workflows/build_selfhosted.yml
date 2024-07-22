@@ -25,5 +25,5 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      - name: Display OS version
-        run: echo "Running on $(uname -a)" # More accurate OS version display
+      - name: Display Message
+        run: echo "Build SUCCESSFULL"
