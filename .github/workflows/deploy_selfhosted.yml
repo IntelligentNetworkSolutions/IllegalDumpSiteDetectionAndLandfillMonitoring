@@ -1,0 +1,43 @@
+name: deploy_selfhosted
+
+on:
+  workflow_dispatch: # This event allows manual triggering
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish --configuration Release --output publish_output
+
+    - name: Deploy to folder
+      run: |
+        if (-Not (Test-Path -Path "C:\continous_delivery\waste_sniffer")) {
+          New-Item -ItemType Directory -Force -Path "C:\continous_delivery\waste_sniffer"
+        }
+        Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_sniffer" -Recurse -Force
+
+    - name: Notify success
+      if: success()
+      run: |
+        echo "Deployment to C:\continous_delivery\waste_sniffer was successful!"
+
+    - name: Notify failure
+      if: failure()
+      run: |
+        echo "Deployment to C:\continous_delivery\waste_sniffer failed."
