@@ -52,7 +52,7 @@ namespace DAL.Migrations
                     b.HasKey("Key")
                         .HasName("pk_application_settings");
 
-                    b.ToTable("application_settings", (string)null);
+                    b.ToTable("application_settings");
                 });
 
             modelBuilder.Entity("Entities.ApplicationUser", b =>
@@ -188,7 +188,7 @@ namespace DAL.Migrations
                     b.HasKey("AuditLogId")
                         .HasName("pk_audit_log");
 
-                    b.ToTable("audit_log", (string)null);
+                    b.ToTable("audit_log");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.Dataset", b =>
@@ -250,7 +250,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("datasets", (string)null);
+                    b.ToTable("datasets");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetClass", b =>
@@ -287,7 +287,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("ParentClassId");
 
-                    b.ToTable("dataset_classes", (string)null);
+                    b.ToTable("dataset_classes");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetImage", b =>
@@ -354,7 +354,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("dataset_images", (string)null);
+                    b.ToTable("dataset_images");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.Dataset_DatasetClass", b =>
@@ -383,7 +383,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DatasetId");
 
-                    b.ToTable("datasets_dataset_classes", (string)null);
+                    b.ToTable("datasets_dataset_classes");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.ImageAnnotation", b =>
@@ -392,11 +392,6 @@ namespace DAL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
-
-                    b.Property<string>("AnnotationsGeoJson")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("annotations_geo_json");
 
                     b.Property<string>("CreatedById")
                         .IsRequired()
@@ -409,13 +404,17 @@ namespace DAL.Migrations
                         .HasColumnName("created_on")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
 
+                    b.Property<Guid?>("DatasetClassId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("dataset_class_id");
+
                     b.Property<Guid?>("DatasetImageId")
                         .HasColumnType("uuid")
                         .HasColumnName("dataset_image_id");
 
-                    b.Property<Geometry>("Geom")
+                    b.Property<Polygon>("Geom")
                         .IsRequired()
-                        .HasColumnType("geometry")
+                        .HasColumnType("geometry(Polygon)")
                         .HasColumnName("geom");
 
                     b.Property<bool>("IsEnabled")
@@ -437,12 +436,13 @@ namespace DAL.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.HasIndex("DatasetImageId")
-                        .IsUnique();
+                    b.HasIndex("DatasetClassId");
+
+                    b.HasIndex("DatasetImageId");
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("image_annotations", (string)null);
+                    b.ToTable("image_annotations");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectedDumpSite", b =>
@@ -477,7 +477,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DetectionRunId");
 
-                    b.ToTable("detected_dump_sites", (string)null);
+                    b.ToTable("detected_dump_sites");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectionIgnoreZone", b =>
@@ -517,7 +517,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("detection_ignore_zones", (string)null);
+                    b.ToTable("detection_ignore_zones");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
@@ -566,7 +566,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("detection_runs", (string)null);
+                    b.ToTable("detection_runs");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>
@@ -597,7 +597,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("intranet_portal_users_tokens", (string)null);
+                    b.ToTable("intranet_portal_users_tokens");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>
@@ -681,7 +681,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_configurations", (string)null);
+                    b.ToTable("map_configurations");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapLayerConfiguration", b =>
@@ -753,7 +753,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_layer_configurations", (string)null);
+                    b.ToTable("map_layer_configurations");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapLayerGroupConfiguration", b =>
@@ -823,7 +823,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_layer_group_configurations", (string)null);
+                    b.ToTable("map_layer_group_configurations");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainedModel", b =>
@@ -886,7 +886,7 @@ namespace DAL.Migrations
                     b.HasIndex("TrainingRunId")
                         .IsUnique();
 
-                    b.ToTable("trained_models", (string)null);
+                    b.ToTable("trained_models");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainedModelStatistics", b =>
@@ -930,7 +930,7 @@ namespace DAL.Migrations
                     b.HasIndex("TrainedModelId")
                         .IsUnique();
 
-                    b.ToTable("trained_model_statistics", (string)null);
+                    b.ToTable("trained_model_statistics");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainingRun", b =>
@@ -981,7 +981,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DatasetId");
 
-                    b.ToTable("training_runs", (string)null);
+                    b.ToTable("training_runs");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1245,9 +1245,14 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_image_annotations_asp_net_users_created_by_id");
 
+                    b.HasOne("Entities.DatasetEntities.DatasetClass", "DatasetClass")
+                        .WithMany()
+                        .HasForeignKey("DatasetClassId")
+                        .HasConstraintName("fk_image_annotations_dataset_classes_dataset_class_id");
+
                     b.HasOne("Entities.DatasetEntities.DatasetImage", "DatasetImage")
-                        .WithOne()
-                        .HasForeignKey("Entities.DatasetEntities.ImageAnnotation", "DatasetImageId")
+                        .WithMany()
+                        .HasForeignKey("DatasetImageId")
                         .HasConstraintName("fk_image_annotations_dataset_images_dataset_image_id");
 
                     b.HasOne("Entities.ApplicationUser", "UpdatedBy")
@@ -1256,6 +1261,8 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_image_annotations_asp_net_users_updated_by_id");
 
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("DatasetClass");
 
                     b.Navigation("DatasetImage");
 
@@ -1272,7 +1279,7 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_detected_dump_sites_dataset_classes_dataset_class_id");
 
                     b.HasOne("Entities.DetectionEntities.DetectionRun", "DetectionRun")
-                        .WithMany()
+                        .WithMany("DetectedDumpSites")
                         .HasForeignKey("DetectionRunId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
@@ -1537,6 +1544,11 @@ namespace DAL.Migrations
             modelBuilder.Entity("Entities.DatasetEntities.DatasetClass", b =>
                 {
                     b.Navigation("Datasets");
+                });
+
+            modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
+                {
+                    b.Navigation("DetectedDumpSites");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>
