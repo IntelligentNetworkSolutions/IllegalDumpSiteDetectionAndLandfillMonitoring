@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240725100853_LegalLandfillsManagementTablesAdded")]
+    partial class LegalLandfillsManagementTablesAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -604,53 +607,44 @@ namespace DAL.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                        .HasColumnType("text");
 
-                    b.HasKey("Id")
-                        .HasName("pk_legal_landfills");
+                    b.HasKey("Id");
 
-                    b.ToTable("legal_landfills");
+                    b.ToTable("LegalLandfill");
                 });
 
             modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillPointCloudFile", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("FileName")
                         .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("file_name");
+                        .HasColumnType("text");
 
                     b.Property<Guid>("LegalLandfillId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("legal_landfill_id");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("ScanDateTime")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("scan_date_time")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
 
-                    b.HasKey("Id")
-                        .HasName("pk_legal_landfill_point_cloud_files");
+                    b.HasKey("Id");
 
                     b.HasIndex("LegalLandfillId");
 
-                    b.ToTable("legal_landfill_point_cloud_files");
+                    b.ToTable("LegalLandfillPointCloudFile");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>
@@ -1385,8 +1379,7 @@ namespace DAL.Migrations
                         .WithMany("LegalLandfillPointCloudFiles")
                         .HasForeignKey("LegalLandfillId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_legal_landfill_point_cloud_files_legal_landfills_legal_land~");
+                        .IsRequired();
 
                     b.Navigation("LegalLandfill");
                 });

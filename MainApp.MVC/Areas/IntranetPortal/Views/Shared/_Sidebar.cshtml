@@ -74,6 +74,29 @@
                         </ul>
                     </li>
                 }
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewLegalLandfillsManagement))
+                {
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" id="NavlinkDetection">
+                            <i class="fas fa-truck-loading"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Landfills management", "Resources")
+                                <i class="fas fa-angle-left right"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-action="ViewLegalLandfills" asp-controller="LegalLandfillsManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                   title="@DbResHtml.T("Legal Landfills", "Resources")">
+                                    <i class="fas fa-industry"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Legal Landfills", "Resources")
+                                    </p>
+                                </a>
+                            </li>                           
+                        </ul>
+                    </li>
+                }
                @if (User.HasCustomClaim("SpecialAuthClaim", "superadmin"))
                {
                     <li class="nav-item">

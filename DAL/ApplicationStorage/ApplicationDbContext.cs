@@ -8,6 +8,7 @@ using Entities.DatasetEntities;
 using Entities.MapConfigurationEntities;
 using Entities.TrainingEntities;
 using Entities.DetectionEntities;
+using Entities.LegalLandfillsManagementEntites;
 
 namespace DAL.ApplicationStorage
 {
@@ -52,6 +53,11 @@ namespace DAL.ApplicationStorage
         public virtual DbSet<DetectedDumpSite> DetectedDumpSites { get; set; }
         public virtual DbSet<DetectionIgnoreZone> DetectionIgnoreZones { get; set; }
 
+        #endregion
+
+        #region LegalLandfillsManagement
+        public virtual DbSet<LegalLandfill> LegalLandfills { get; set; }
+        public virtual DbSet<LegalLandfillPointCloudFile> LegalLandfillPointCloudFiles { get; set; }
         #endregion
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

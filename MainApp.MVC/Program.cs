@@ -164,6 +164,8 @@ services.AddAutoMapper(typeof(Program).Assembly, typeof(DatasetProfile).Assembly
 services.AddAutoMapper(typeof(Program).Assembly, typeof(MapConfigurationProfileBL).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DetectionProfileBL).Assembly);
 services.AddAutoMapper(typeof(Program).Assembly, typeof(DetectionProfile).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(LegalLandfillManagementProfileBL).Assembly);
+services.AddAutoMapper(typeof(Program).Assembly, typeof(LegalLandfillManagementProfile).Assembly);
 //services.AddAutoMapper(typeof(Program).Assembly, typeof(MainApp.BL.Infrastructure.RegisterServices).Assembly);
 
 

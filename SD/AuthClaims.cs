@@ -260,6 +260,38 @@ namespace SD
             FromModule = Modules.Detection,
             Description = "View Detection Runs"
         };
+        public static readonly AuthClaim AddLegalLandfill = new AuthClaim
+        {
+            Value = "13:1",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "Add Legal Landfill"
+        };
+        public static readonly AuthClaim EditLegalLandfill = new AuthClaim
+        {
+            Value = "13:2",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "Edit Legal Landfill"
+        };
+        public static readonly AuthClaim DeleteLegalLandfill = new AuthClaim
+        {
+            Value = "13:3",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "Delete Legal Landfill"
+        };
+        public static readonly AuthClaim ViewLegalLandfillsManagement = new AuthClaim
+        {
+            Value = "13:4",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "View Legal Landfills Management"
+        };
+        public static readonly AuthClaim ViewLegalLandfills = new AuthClaim
+        {
+            Value = "13:5",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "View Legal Landfills"
+        };
+
+
     } 
 }
 
