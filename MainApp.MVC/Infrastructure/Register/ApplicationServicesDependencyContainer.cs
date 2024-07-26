@@ -21,6 +21,8 @@ using MailSend;
 using MailSend.Interfaces;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Services.DetectionServices;
+using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
+using MainApp.BL.Services.LegalLandfillManagementServices;
 
 namespace MainApp.MVC.Infrastructure.Register
 {
@@ -46,6 +48,8 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IDetectionRunService, DetectionRunService>();
             services.TryAddScoped<IImageAnnotationsService, ImageAnnotationsService>();
             services.TryAddScoped<IDetectionRunService, DetectionRunService>();
+            services.TryAddScoped<ILegalLandfillService, LegalLandfillService>();
+            services.TryAddScoped<ILegalLandfillPointCloudFileService, LegalLandfillPointCloudFileService>();
 
             return services;
         }

@@ -13,6 +13,8 @@ using DAL.ApplicationStorage.SeedDatabase;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Services.DetectionServices;
 using Microsoft.AspNetCore.Identity;
+using DAL.Interfaces.Repositories.LegalLandfillManagementRepositories;
+using DAL.Repositories.LegalLandfillManagementRepositories;
 
 namespace MainApp.MVC.Infrastructure.Register
 {
@@ -39,6 +41,8 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IDbInitializer, DbInitializer>();
             services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
             services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
+            services.TryAddScoped<ILegalLandfillRepository, LegalLandfillRepository>();
+            services.TryAddScoped<ILegalLandfillPointCloudFileRepository, LegalLandfillPointCloudFileRepository>();
 
             return services;
         }
