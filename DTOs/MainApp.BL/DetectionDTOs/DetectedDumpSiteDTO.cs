@@ -29,7 +29,7 @@ namespace DTOs.MainApp.BL.DetectionDTOs
         {
             get
             {
-                return GeoJsonHelper.GeometryToGeoJson(Geom);
+                return GeoJsonHelpers.GeometryToGeoJson(Geom);
             }
         }
     }

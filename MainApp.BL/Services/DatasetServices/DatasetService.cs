@@ -1,9 +1,11 @@
-﻿using AutoMapper;
+﻿using System.Linq.Expressions;
+using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories.DatasetRepositories;
-using DocumentFormat.OpenXml.Office.PowerPoint.Y2021.M06.Main;
+using DTOs.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
+using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using Microsoft.EntityFrameworkCore;
@@ -18,12 +20,13 @@ namespace MainApp.BL.Services.DatasetServices
         private readonly IDataset_DatasetClassRepository _datasetDatasetClassRepository;
         private readonly IDatasetImagesRepository _datasetImagesRepository;
         private readonly IImageAnnotationsRepository _imageAnnotationsRepository;
+
         private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IMapper _mapper;
 
-        public DatasetService(IDatasetsRepository datasetsRepository, 
-                              IDatasetClassesRepository datasetClassesRepository, 
-                              IDataset_DatasetClassRepository datasetDatasetClassRepository, 
+        public DatasetService(IDatasetsRepository datasetsRepository,
+                              IDatasetClassesRepository datasetClassesRepository,
+                              IDataset_DatasetClassRepository datasetDatasetClassRepository,
                               IDatasetImagesRepository datasetImagesRepository,
                               IImageAnnotationsRepository imageAnnotationsRepository,
                               IAppSettingsAccessor appSettingsAccessor,
@@ -56,10 +59,12 @@ namespace MainApp.BL.Services.DatasetServices
             var data = listDatasets.Data ?? throw new Exception("Object not found");
             var listDatasetsDTOs = _mapper.Map<List<DatasetDTO>>(data) ?? throw new Exception("Dataset list not found");
             return listDatasetsDTOs;
-        }       
+        }
         public async Task<DatasetDTO> GetDatasetById(Guid datasetId)
         {
-            var datasetDb = await _datasetsRepository.GetById(datasetId,includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
+            //var datasetRawDto = GetDatasetJoinedClassesImagesAnnotationsById(datasetId);
+
+            var datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
             var data = datasetDb.Data ?? throw new Exception("Object not found");
             var datasetDto = _mapper.Map<DatasetDTO>(data) ?? throw new Exception("Object not found");
             return datasetDto;
@@ -87,7 +92,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
             if (allDatasetImagesData.Count() > 0 && !string.IsNullOrEmpty(orderByImages))
             {
-                if(orderByImages == "ascName")
+                if (orderByImages == "ascName")
                 {
                     allDatasetImagesData = allDatasetImagesData.OrderBy(x => x.Name).ToList();
                 }
@@ -100,7 +105,7 @@ namespace MainApp.BL.Services.DatasetServices
                     allDatasetImagesData = allDatasetImagesData.OrderByDescending(x => x.CreatedOn).ToList();
                 }
                 if (orderByImages == "descCreatedOn")
-                {                    
+                {
                     allDatasetImagesData = allDatasetImagesData.OrderBy(x => x.CreatedOn).ToList();
                 }
             }
@@ -113,12 +118,12 @@ namespace MainApp.BL.Services.DatasetServices
             var allImageAnnotationsList = imageAnnotationsDbList.Data?.Where(x => x.IsEnabled == true).ToList();
             var annotationsForDatasetImages = allImageAnnotationsList?.Where(x => allDatasetImagesData.Select(m => m.Id).ToList().Contains(x.DatasetImageId.Value)).ToList();
             if (searchByIsAnnotatedImage is not null)
-            {                
-                if(searchByIsAnnotatedImage == true)
+            {
+                if (searchByIsAnnotatedImage == true)
                 {
                     allDatasetImagesData = allDatasetImagesData.Where(x => annotationsForDatasetImages.Select(m => m.DatasetImageId).Contains(x.Id)).ToList();
                 }
-                if(searchByIsAnnotatedImage == false)
+                if (searchByIsAnnotatedImage == false)
                 {
                     allDatasetImagesData = allDatasetImagesData.Where(x => !annotationsForDatasetImages.Select(m => m.DatasetImageId).Contains(x.Id)).ToList();
                 }
@@ -135,7 +140,7 @@ namespace MainApp.BL.Services.DatasetServices
             var classesForParentDataset = allDataset_DatasetClasses.Data?.Where(x => x.DatasetId == currentDatasetData.ParentDatasetId).Select(x => x.DatasetClass).ToList();
             var numOfChildrenDatasetsByDatasetIdResult = await _datasetsRepository.GetAll(filter: x => x.ParentDatasetId == datasetId, includeProperties: "ParentDataset") ?? throw new Exception("Object not found");
             var numOfChildrenDatasetsByDatasetIdData = numOfChildrenDatasetsByDatasetIdResult.Data ?? throw new Exception("Object not found");
-           
+
             EditDatasetDTO dto = new()
             {
                 UninsertedDatasetRootClasses = _mapper.Map<List<DatasetClassDTO>>(uninsertedRootClasses),
@@ -157,7 +162,7 @@ namespace MainApp.BL.Services.DatasetServices
             };
             return dto;
         }
-              
+
         #endregion
 
         #region Create
@@ -178,13 +183,13 @@ namespace MainApp.BL.Services.DatasetServices
             };
 
             var datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
-            var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");                     
+            var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
             var createdDatasetClass = await _datasetDatasetClassRepository.Create(dataset_datasetClass);
             datasetDbData.UpdatedOn = DateTime.UtcNow;
             datasetDbData.UpdatedById = userId;
-            
+
             await _datasetsRepository.Update(datasetDbData);
-            if(createdDatasetClass.IsSuccess == true)
+            if (createdDatasetClass.IsSuccess == true)
             {
                 return new ResultDTO<int>(IsSuccess: true, 1, null, null);
             }
@@ -194,7 +199,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
-        public async Task<ResultDTO<int>> AddInheritedParentClasses(Guid insertedDatasetId,  Guid parentDatasetId)
+        public async Task<ResultDTO<int>> AddInheritedParentClasses(Guid insertedDatasetId, Guid parentDatasetId)
         {
             var parentClassesList = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetId == parentDatasetId) ?? throw new Exception("Object not found");
             var parentClassesIdsList = parentClassesList.Data?.Select(x => x.DatasetClassId).ToList() ?? throw new Exception("Object not found");
@@ -207,8 +212,8 @@ namespace MainApp.BL.Services.DatasetServices
                 dataset_class.DatasetClassId = item;
                 dataset_DatasetClasses.Add(dataset_class);
             }
-            var isAdded =  await _datasetDatasetClassRepository.CreateRange(dataset_DatasetClasses);
-            if(isAdded.IsSuccess == true)
+            var isAdded = await _datasetDatasetClassRepository.CreateRange(dataset_DatasetClasses);
+            if (isAdded.IsSuccess == true)
             {
                 return new ResultDTO<int>(IsSuccess: true, 1, null, null);
             }
@@ -217,7 +222,7 @@ namespace MainApp.BL.Services.DatasetServices
                 return new ResultDTO<int>(IsSuccess: false, 2, "Dataset classes were not added", null);
             }
         }
-        
+
 
         #endregion
 
@@ -246,9 +251,9 @@ namespace MainApp.BL.Services.DatasetServices
             datasetDbData.IsPublished = true;
             datasetDbData.UpdatedOn = DateTime.UtcNow;
             datasetDbData.UpdatedById = userId;
-            
+
             var updatedDataset = await _datasetsRepository.Update(datasetDbData);
-            if(updatedDataset.IsSuccess == true)
+            if (updatedDataset.IsSuccess == true)
             {
                 return new ResultDTO<int>(IsSuccess: true, 1, null, null);
             }
@@ -256,7 +261,7 @@ namespace MainApp.BL.Services.DatasetServices
             {
                 return new ResultDTO<int>(IsSuccess: false, 3, updatedDataset.ErrMsg, null);
             }
-            
+
         }
 
         public async Task<ResultDTO<int>> SetAnnotationsPerSubclass(Guid datasetId, bool annotationsPerSubclass, string userId)
@@ -268,13 +273,13 @@ namespace MainApp.BL.Services.DatasetServices
             datasetDbData.UpdatedById = userId;
 
             var updatedDataset = await _datasetsRepository.Update(datasetDbData);
-            if(updatedDataset.IsSuccess == true)
+            if (updatedDataset.IsSuccess == true)
             {
-               return new ResultDTO<int> (IsSuccess: true, 1, null, null);
+                return new ResultDTO<int>(IsSuccess: true, 1, null, null);
             }
             else
             {
-               return new ResultDTO<int>(IsSuccess: false, 2, updatedDataset.ErrMsg, null);
+                return new ResultDTO<int>(IsSuccess: false, 2, updatedDataset.ErrMsg, null);
             }
         }
         #endregion
@@ -286,12 +291,12 @@ namespace MainApp.BL.Services.DatasetServices
             Dataset_DatasetClass dataset_DatasetClassDb = result.Data ?? throw new Exception("Object not found");
             var datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
             var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
-            var deletedDataset_DatasetClass =  await _datasetDatasetClassRepository.Delete(dataset_DatasetClassDb);
+            var deletedDataset_DatasetClass = await _datasetDatasetClassRepository.Delete(dataset_DatasetClassDb);
             datasetDbData.UpdatedOn = DateTime.UtcNow;
             datasetDbData.UpdatedById = userId;
 
             await _datasetsRepository.Update(datasetDbData);
-            if(deletedDataset_DatasetClass.IsSuccess == true)
+            if (deletedDataset_DatasetClass.IsSuccess == true)
             {
                 return new ResultDTO<int>(IsSuccess: true, 1, null, null);
             }
@@ -309,7 +314,7 @@ namespace MainApp.BL.Services.DatasetServices
             var listOfAllDatasets = await _datasetsRepository.GetAll(includeProperties: "CreatedBy") ?? throw new Exception("Datasets not found");
             var listOfAllDatasetsData = listOfAllDatasets.Data ?? throw new Exception("Object not found");
             var childrenDatasets = listOfAllDatasetsData.Where(x => x.ParentDatasetId == datasetId).ToList();
-            if(childrenDatasets.Count > 0)
+            if (childrenDatasets.Count > 0)
             {
                 return new ResultDTO<int>(IsSuccess: false, 2, "This dataset can not be deleted because there are subdatasets. Delete first the subdatasets!", null);
             }
@@ -337,7 +342,189 @@ namespace MainApp.BL.Services.DatasetServices
         }
         #endregion
 
+        #region Export
 
+        private ResultDTO<DatasetFullIncludeDTO> GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
+            (Dataset datasetIncluded, bool includeDisabledImages = true, bool includeDisabledAnnotations = true)
+        {
+            try
+            {
+                if (datasetIncluded is null)
+                    return ResultDTO<DatasetFullIncludeDTO>.Fail("Dataset is null");
 
+                // Order by CreatedOn
+                List<DatasetImage> orderedDatasetImages = includeDisabledImages switch
+                {
+                    true => datasetIncluded.DatasetImages.OrderBy(x => x.CreatedOn).ToList(),
+                    false => datasetIncluded.DatasetImages.Where(x => x.IsEnabled).OrderBy(x => x.CreatedOn).ToList()
+                };
+                List<DatasetImageDTO> datasetImageDTOs = _mapper.Map<List<DatasetImageDTO>>(orderedDatasetImages);
+
+                List<ImageAnnotation> orderedAnnotations = (includeDisabledImages, includeDisabledAnnotations) switch
+                {
+                    (true, true) => datasetIncluded.DatasetImages
+                                                    .SelectMany(image => image.ImageAnnotations)
+                                                    .OrderBy(annotation => annotation.CreatedOn)
+                                                    .ToList(),
+                    (true, false) => datasetIncluded.DatasetImages
+                                                    .SelectMany(image => image.ImageAnnotations
+                                                    .Where(ima => ima.IsEnabled))
+                                                    .OrderBy(annotation => annotation.CreatedOn)
+                                                    .ToList(),
+                    (false, true) => datasetIncluded.DatasetImages
+                                                    .Where(im => im.IsEnabled)
+                                                    .SelectMany(image => image.ImageAnnotations)
+                                                    .OrderBy(annotation => annotation.CreatedOn)
+                                                    .ToList(),
+                    (false, false) => datasetIncluded.DatasetImages
+                                                    .Where(im => im.IsEnabled)
+                                                    .SelectMany(image => image.ImageAnnotations.Where(ima => ima.IsEnabled))
+                                                    .OrderBy(annotation => annotation.CreatedOn)
+                                                    .ToList(),
+                };
+                List<ImageAnnotationDTO> imageAnnotationDTOs = _mapper.Map<List<ImageAnnotationDTO>>(orderedAnnotations);
+
+                DatasetImageDTO[] datasetImagesDTOsArr = datasetImageDTOs.ToArray();
+                ImageAnnotationDTO[] imageAnnotationDTOsArr = imageAnnotationDTOs.ToArray();
+
+                for (int i = 0; i < datasetImagesDTOsArr.Length; i++)
+                    datasetImagesDTOsArr[i].IdInt = i;
+
+                for (int i = 0; i < imageAnnotationDTOsArr.Length; i++)
+                {
+                    imageAnnotationDTOsArr[i].IdInt = i;
+                    imageAnnotationDTOsArr[i].DatasetImageIdInt =
+                        datasetImagesDTOsArr.First(x => x.Id == imageAnnotationDTOsArr[i].DatasetImageId).IdInt;
+                }
+
+                DatasetFullIncludeDTO datasetFullIncludeDTO = new DatasetFullIncludeDTO(_mapper.Map<DatasetDTO>(datasetIncluded))
+                {
+                    DatasetImages = datasetImagesDTOsArr.ToList(),
+                    ImageAnnotations = imageAnnotationDTOsArr.ToList(),
+                    DatasetClassForDataset = datasetIncluded.DatasetClasses.Select(dc => new DatasetClassForDatasetDTO()
+                    {
+                        ClassName = dc.DatasetClass.ClassName,
+                        ClassValue = dc.DatasetClassValue,
+                        DatasetClassId = dc.DatasetClass.Id,
+                        DatasetDatasetClassId = dc.DatasetClassId
+                    }).ToList(),
+                };
+
+                return ResultDTO<DatasetFullIncludeDTO>.Ok(datasetFullIncludeDTO);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<DatasetFullIncludeDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO<CocoDatasetDTO>> ExportDatasetAsCOCOFormat(Guid datasetId)
+        {
+            try
+            {
+                if (datasetId == Guid.Empty)
+                    return ResultDTO<CocoDatasetDTO>.Fail("Invalid Dataset Id");
+
+                ResultDTO<Dataset?> resultDatasetIncludeThenAll =
+                        await _datasetsRepository.GetByIdIncludeThenAll(datasetId, track: false,
+                            includeProperties: new (Expression<Func<Dataset, object>> Include, Expression<Func<object, object>>[]? ThenInclude)[]
+                            {
+                            (d => d.CreatedBy, null),
+                            (d => d.UpdatedBy, null),
+                            (d => d.ParentDataset, null),
+                            (d => d.DatasetClasses,
+                                [
+                                    ddc => ((Dataset_DatasetClass)ddc).DatasetClass,
+                                    dc => ((DatasetClass)dc).ParentClass, 
+                                   // dc => ((DatasetClass)dc).Datasets, // Cycle Error
+                                ]),
+                            (d => d.DatasetImages,
+                                new Expression<Func<object, object>>[]
+                                {
+                                    di => ((DatasetImage)di).ImageAnnotations,
+                                    ia => ((ImageAnnotation)ia).CreatedBy
+                                }),
+                            (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).UpdatedBy]),
+                            (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations,
+                                    ia => ((ImageAnnotation)ia).DatasetClass,
+                                    dc => ((DatasetClass)dc).Datasets
+                                ]),
+                            }
+                        );
+
+                if (resultDatasetIncludeThenAll.IsSuccess == false)
+                    return ResultDTO<CocoDatasetDTO>.Fail(resultDatasetIncludeThenAll.ErrMsg!);
+
+                if (resultDatasetIncludeThenAll.Data is null)
+                    return ResultDTO<CocoDatasetDTO>.Fail("Error getting Dataset");
+
+                ResultDTO<DatasetFullIncludeDTO> resultGetDatasetFullIncludeDTO =
+                    GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(datasetIncluded: resultDatasetIncludeThenAll.Data,
+                                                                                includeDisabledImages: false,
+                                                                                includeDisabledAnnotations: false);
+                if (resultGetDatasetFullIncludeDTO.IsSuccess == false)
+                    return ResultDTO<CocoDatasetDTO>.Fail(resultGetDatasetFullIncludeDTO.ErrMsg!);
+
+                DatasetFullIncludeDTO datasetExtClassesImagesAnnotations = resultGetDatasetFullIncludeDTO.Data!;
+
+                List<CocoImageDTO> cocoImageDTOs =
+                    datasetExtClassesImagesAnnotations.DatasetImages.OrderBy(x => x.CreatedOn)
+                                                                    .Select(x => new CocoImageDTO()
+                                                                    {
+                                                                        Id = x.IdInt,
+                                                                        FileName = x.Id.ToString() + ".jpg",
+                                                                        Width = 1280,
+                                                                        Height = 1280,
+                                                                    })
+                                                                    .ToList();
+
+                List<CocoAnnotationDTO> cocoAnnotationDTOs =
+                    datasetExtClassesImagesAnnotations.ImageAnnotations
+                        .Select(x => new CocoAnnotationDTO()
+                        {
+                            Id = x.IdInt,
+                            ImageId = x.DatasetImageIdInt,
+                            CategoryId =
+                                datasetExtClassesImagesAnnotations.DatasetClassForDataset
+                                                                    .First(dcfd => dcfd.DatasetClassId == x.DatasetClass.Id).ClassValue,
+                            IsCrowd = 0, // TODO: Implement maybe
+                            Bbox = GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeightList(x.Geom)
+                        }).ToList();
+
+                List<CocoCategoryDTO> cocoCategoryDTOs =
+                    datasetExtClassesImagesAnnotations.DatasetClassForDataset
+                        .Select(d => new CocoCategoryDTO()
+                        {
+                            Id = d.ClassValue,
+                            Name = d.ClassName,
+                            // TODO: Implement
+                            // Supercategory = 
+                        }).ToList();
+
+                CocoDatasetDTO cocoDatasetDTO = new CocoDatasetDTO()
+                {
+                    Images = cocoImageDTOs,
+                    Annotations = cocoAnnotationDTOs,
+                    Categories = cocoCategoryDTOs,
+                    Info = new CocoInfoDTO
+                    {
+                        Year = DateTime.Now.Year,
+                        Version = "1.0",
+                        Description = datasetExtClassesImagesAnnotations.Dataset.Description,
+                        Contributor = "IllegalDumpSiteDetectionAndLandfillMonitoring",
+                        DateCreated = datasetExtClassesImagesAnnotations.Dataset.CreatedOn.ToString("yyyy-MM-dd HH:mm:ss")
+                    },
+
+                    Licenses = new List<CocoLicenseDTO>() { new CocoLicenseDTO() },
+                };
+
+                return ResultDTO<CocoDatasetDTO>.Ok(cocoDatasetDTO);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<CocoDatasetDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+        #endregion
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Entities.Intefaces;
+﻿using Entities.Intefaces;
 
 namespace Entities.DatasetEntities
 {
@@ -21,5 +20,7 @@ namespace Entities.DatasetEntities
         public string? UpdatedById { get; set; }
         public DateTime? UpdatedOn { get; set; }
         public ApplicationUser? UpdatedBy { get; set; }
+
+        public virtual ICollection<ImageAnnotation> ImageAnnotations { get; set; } = new List<ImageAnnotation>();
     }
 }

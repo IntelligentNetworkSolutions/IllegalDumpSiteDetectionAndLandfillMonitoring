@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,19 +10,20 @@ using DAL.ApplicationStorage;
 using DAL.Interfaces.Repositories;
 using Entities.Intefaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using SD;
 
 namespace DAL.Repositories
 {
     public abstract class BaseResultRepository<TEntity, TId> : IBaseResultRepository<TEntity, TId> where TEntity : class, IBaseEntity<TId> where TId : IEquatable<TId>
     {
-        private readonly ApplicationDbContext _dbContext;
+        protected internal readonly ApplicationDbContext _dbContext;
 
         public BaseResultRepository(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(_dbContext));
         }
-        
+
         public virtual IQueryable<TEntity> Table => _dbContext.Set<TEntity>().AsQueryable();
 
         public virtual async Task<ResultDTO<int>> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -204,18 +206,132 @@ namespace DAL.Repositories
                 TEntity? entity = await query.FirstOrDefaultAsync(e => e.Id.Equals(id));
                 return ResultDTO<TEntity?>.Ok(entity);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ResultDTO<TEntity?>.ExceptionFail(ex.Message, ex);
             }
         }
-        
+
+        public virtual async Task<ResultDTO<TEntity?>> GetByIdInclude(TId id, bool track = false,
+            Expression<Func<TEntity, object>>[]? includeProperties = null)
+        {
+            try
+            {
+                IQueryable<TEntity> query = _dbContext.Set<TEntity>();
+
+                if (!track)
+                    query = query.AsNoTracking();
+
+                if (includeProperties != null && includeProperties.Length > 0)
+                    foreach (Expression<Func<TEntity, object>> includeProperty in includeProperties)
+                        query = query.Include(includeProperty);
+
+                TEntity? entity = await query.FirstOrDefaultAsync(e => e.Id.Equals(id));
+                return ResultDTO<TEntity?>.Ok(entity);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<TEntity?>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public virtual async Task<ResultDTO<TEntity?>> GetByIdIncludeThenAll(TId id, bool track = false,
+            (Expression<Func<TEntity, object>> Include, Expression<Func<object, object>>[]? ThenInclude)[]? includeProperties = null)
+        {
+            try
+            {
+                IQueryable<TEntity> query = _dbContext.Set<TEntity>();
+
+                if (!track)
+                    query = query.AsNoTracking();
+
+                if (includeProperties != null && includeProperties.Length > 0)
+                {
+                    foreach ((Expression<Func<TEntity, object>> Include, Expression<Func<object, object>>[]? ThenInclude) includeProperty
+                                in includeProperties)
+                    {
+                        ValidateIncludeThenIncludeChain(includeProperty.Include, includeProperty.ThenInclude);
+
+                        query = includeProperties.Aggregate(query, (current, includeProp) =>
+                        {
+                            if (includeProp.ThenInclude is null)
+                                return current.Include(includeProp.Include);
+
+                            return includeProp.ThenInclude.Aggregate(current.Include(includeProp.Include),
+                                (currentQuery, thenIncludeProp) => currentQuery.ThenInclude(thenIncludeProp));
+                        });
+                    }
+                }
+
+                TEntity? entity = await query.FirstOrDefaultAsync(e => e.Id.Equals(id));
+                return ResultDTO<TEntity?>.Ok(entity);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<TEntity?>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        private void ValidateIncludeThenIncludeChain(Expression<Func<TEntity, object>> include, Expression<Func<object, object>>[]? thenIncludes)
+        {
+            if (thenIncludes == null || thenIncludes.Length == 0)
+                return;
+
+            Type includeType = GetPropertyType(include);
+            Type previousType = includeType;
+
+            foreach (Expression<Func<object, object>> thenInclude in thenIncludes)
+            {
+                Type thenIncludeType = GetPropertyType(thenInclude);
+
+                if (!IsValidThenInclude(previousType, thenIncludeType))
+                    throw new InvalidOperationException($"The ThenInclude property '{thenIncludeType.Name}' is not a valid property of '{previousType.Name}'");
+
+                previousType = thenIncludeType;
+            }
+        }
+
+        private Type GetPropertyType(LambdaExpression expression)
+        {
+            MemberExpression? memberExpression = RemoveConvert(expression.Body) as MemberExpression;
+            if (memberExpression == null)
+                throw new InvalidOperationException("Invalid expression");
+
+            PropertyInfo? propertyInfo = memberExpression.Member as PropertyInfo;
+            if (propertyInfo == null)
+                throw new InvalidOperationException("Expression does not refer to a property");
+
+            return propertyInfo.PropertyType;
+        }
+
+        private Expression RemoveConvert(Expression expression)
+        {
+            while (expression.NodeType == ExpressionType.Convert || expression.NodeType == ExpressionType.ConvertChecked)
+            {
+                expression = ((UnaryExpression)expression).Operand;
+            }
+            return expression;
+        }
+
+        private bool IsValidThenInclude(Type includeType, Type thenIncludeType)
+        {
+            // Check if includeType is a collection
+            if (includeType.IsGenericType)
+            {
+                Type elementType = includeType.GetGenericArguments().First();
+                return elementType.GetProperties().Any(p => p.PropertyType == thenIncludeType);
+            }
+
+            return includeType.GetProperties().Any(p => p.PropertyType == thenIncludeType);
+        }
+
+
         public virtual async Task<ResultDTO<TEntity?>> GetFirstOrDefault(Expression<Func<TEntity, bool>>? filter = null, bool track = false, string? includeProperties = null)
         {
             try
             {
                 IQueryable<TEntity> query = _dbContext.Set<TEntity>();
-                
+
                 if (!track)
                     query = query.AsNoTracking();
 
@@ -234,7 +350,7 @@ namespace DAL.Repositories
                 TEntity? entity = await query.FirstOrDefaultAsync();
                 return ResultDTO<TEntity?>.Ok(entity);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ResultDTO<TEntity?>.ExceptionFail(ex.Message, ex);
             }

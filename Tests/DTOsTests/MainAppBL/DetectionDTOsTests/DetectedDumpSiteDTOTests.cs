@@ -81,7 +81,7 @@ namespace Tests.DTOsTests.MainAppBL.DetectionDTOsTests
                 new Coordinate(0, 1),
                 new Coordinate(0, 0)
             }));
-            var expectedGeoJson = GeoJsonHelper.GeometryToGeoJson(geom);
+            var expectedGeoJson = GeoJsonHelpers.GeometryToGeoJson(geom);
 
             // Act
             var dto = new DetectedDumpSiteDTO { Geom = geom };

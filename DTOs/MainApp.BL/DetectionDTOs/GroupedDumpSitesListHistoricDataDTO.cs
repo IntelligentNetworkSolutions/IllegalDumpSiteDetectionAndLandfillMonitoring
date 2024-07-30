@@ -18,7 +18,7 @@ namespace DTOs.MainApp.BL.DetectionDTOs
         {
             get
             {
-                return GeoJsonHelper.GeometryListToGeoJson(Geoms);
+                return GeoJsonHelpers.GeometryListToGeoJson(Geoms);
             }
         }
         public List<double> GeomAreas { get; set; }

@@ -25,7 +25,7 @@ namespace MainApp.MVC.ViewModels.IntranetPortal.Detection
         {
             get
             {
-                return GeoJsonHelper.GeometryToGeoJson(Geom);
+                return GeoJsonHelpers.GeometryToGeoJson(Geom);
             }
         }
     }
