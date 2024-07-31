@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Entities.Intefaces;
@@ -13,6 +12,12 @@ namespace DAL.Interfaces.Repositories
     public interface IBaseResultRepository<TEntity, TId> where TEntity : class, IBaseEntity<TId> where TId : IEquatable<TId>
     {
         IQueryable<TEntity> Table { get; }
+
+        Task<ResultDTO<TEntity?>> GetByIdInclude
+            (TId id, bool track = false, Expression<Func<TEntity, object>>[]? includeProperties = null);
+
+        Task<ResultDTO<TEntity?>> GetByIdIncludeThenAll(TId id, bool track = false,
+            (Expression<Func<TEntity, object>> Include, Expression<Func<object, object>>[]? ThenInclude)[]? includeProperties = null);
 
         Task<ResultDTO<int>> SaveChangesAsync(CancellationToken cancellationToken = default);
 

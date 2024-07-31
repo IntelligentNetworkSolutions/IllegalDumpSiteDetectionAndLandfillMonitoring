@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Entities.DatasetEntities;
+﻿using Entities.DatasetEntities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -12,12 +7,12 @@ namespace DAL.EnitityConfigurations
     public class ImageAnnotationConfiguration : IEntityTypeConfiguration<ImageAnnotation>
     {
         public void Configure(EntityTypeBuilder<ImageAnnotation> builder)
-        {            
+        {
             builder.Property(ia => ia.Geom).IsRequired();
             builder.Property(ia => ia.IsEnabled).HasDefaultValue(false);
 
             builder.HasOne(ia => ia.DatasetImage)
-                .WithMany()
+                .WithMany(di => di.ImageAnnotations)
                 .HasForeignKey(ia => ia.DatasetImageId);
 
             builder.HasOne(ia => ia.DatasetClass)

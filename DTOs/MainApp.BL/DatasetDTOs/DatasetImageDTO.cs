@@ -1,8 +1,13 @@
-﻿namespace DTOs.MainApp.BL.DatasetDTOs
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace DTOs.MainApp.BL.DatasetDTOs
 {
     public record DatasetImageDTO
     {
         public Guid Id { get; init; }
+        [NotMapped]
+        public int IdInt { get; set; } // MMDetection Id
+
         public string FileName { get; set; }
         public string Name { get; set; }
         public string ImagePath { get; init; }

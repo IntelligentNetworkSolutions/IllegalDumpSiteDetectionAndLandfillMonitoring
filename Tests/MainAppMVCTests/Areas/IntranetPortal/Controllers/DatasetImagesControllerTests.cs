@@ -93,6 +93,21 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Entered model is not valid", data["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ReturnsError_WhenUserIdIsMissing()
+        {
+            // Arrange
+            var model = new EditDatasetImageDTO { DatasetId = Guid.NewGuid() };
+
+            // Act
+            var result = await _controller.EditDatasetImage(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
             Assert.Equal("User id is not valid", data["responseError"]["Value"].ToString());
         }
 

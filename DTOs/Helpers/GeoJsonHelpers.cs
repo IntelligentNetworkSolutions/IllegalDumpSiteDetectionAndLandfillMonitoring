@@ -1,9 +1,7 @@
 ﻿using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
-using NetTopologySuite.IO.Converters;
 using Newtonsoft.Json;
-using System.IO;
 
 namespace DTOs.Helpers
 {
@@ -25,10 +23,30 @@ namespace DTOs.Helpers
 
         public static Geometry GeoJsonFeatureToGeometry(string geoJson)
         {
-            GeoJsonReader reader = new GeoJsonReader();            
+            GeoJsonReader reader = new GeoJsonReader();
             Feature feature = reader.Read<Feature>(geoJson);
             Geometry geometry = feature.Geometry;
             return geometry;
+        }
+
+        public static List<string> GeometryListToGeoJson(List<Polygon> geom)
+        {
+            List<string> geoJsons = new();
+
+            foreach (var item in geom)
+            {
+                string geoJson;
+                var serializer = GeoJsonSerializer.Create();
+                using (var stringWriter = new StringWriter())
+                using (var jsonWriter = new JsonTextWriter(stringWriter))
+                {
+                    serializer.Serialize(jsonWriter, item);
+                    geoJson = stringWriter.ToString();
+                }
+                geoJsons.Add(geoJson);
+            }
+
+            return geoJsons;
         }
 
         /// <summary>
@@ -50,7 +68,7 @@ namespace DTOs.Helpers
             int bottom = Convert.ToInt32(envelope.MaxX);
             int right = Convert.ToInt32(envelope.MaxY);
 
-            return new Dictionary<int, int> {{ top, left }, { bottom, right }};
+            return new Dictionary<int, int> { { top, left }, { bottom, right } };
         }
 
         /// <summary>
@@ -68,11 +86,51 @@ namespace DTOs.Helpers
             var envelope = geom.EnvelopeInternal;
 
             int top = Convert.ToInt32(envelope.MinX);
-            int left = Convert.ToInt32(envelope.MaxY);            
+            int left = Convert.ToInt32(envelope.MaxY);
             int width = Convert.ToInt32(envelope.Width);
             int height = Convert.ToInt32(envelope.Height);
 
             return new Dictionary<int, int> { { top, left }, { width, height } };
+        }
+
+        // TODO: Review with Igor
+        public static List<float>? GeometryBBoxToTopLeftWidthHeightListIgorche(Geometry geom)
+        {
+            if (geom == null)
+            {
+                return null;
+            }
+
+            var envelope = geom.EnvelopeInternal;
+
+            int top = Convert.ToInt32(envelope.MinX);
+            int left = Convert.ToInt32(envelope.MaxY);
+            float width = (float)envelope.Width;
+            float height = (float)envelope.Height;
+
+            return new List<float> { left, top, width, height };
+        }
+
+        /// <summary>
+        /// Returns BBox coordinates (top left, width, height) format
+        /// </summary>
+        /// <param name="geom"></param>
+        /// <returns></returns>
+        public static List<float>? GeometryBBoxToTopLeftWidthHeightList(Geometry geom)
+        {
+            if (geom == null)
+            {
+                return null;
+            }
+
+            var envelope = geom.EnvelopeInternal;
+
+            float left = (float)envelope.MinX;
+            float top = (float)envelope.MinY;
+            float width = (float)envelope.Width;
+            float height = (float)envelope.Height;
+
+            return new List<float> { left, top, width, height };
         }
     }
 }

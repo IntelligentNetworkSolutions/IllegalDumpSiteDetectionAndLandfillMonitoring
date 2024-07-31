@@ -1,12 +1,7 @@
 ﻿using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using Entities.DatasetEntities;
+using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
 {
@@ -37,5 +32,8 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         Task<ResultDTO<int>> DeleteDataset(Guid datasetId);
         #endregion
 
+        #region Export
+        Task<ResultDTO<CocoDatasetDTO>> ExportDatasetAsCOCOFormat(Guid datasetId);
+        #endregion
     }
 }

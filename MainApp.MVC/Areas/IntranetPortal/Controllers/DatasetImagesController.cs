@@ -1,24 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using DAL.ApplicationStorage;
-using Entities.DatasetEntities;
+﻿using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using DTOs.MainApp.BL.DatasetDTOs;
 using MainApp.MVC.Helpers;
-using Humanizer;
-using System.Drawing;
-using System.Drawing.Imaging;
 using ImageMagick;
 using DAL.Interfaces.Helpers;
-using System.Data;
 using MainApp.MVC.Filters;
 using System.Security.Claims;
+using SD;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -32,10 +21,10 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IAppSettingsAccessor _appSettingsAccessor;
 
-        public DatasetImagesController(IConfiguration configuration, 
-                                       IMapper mapper, 
-                                       IDatasetService datasetService, 
-                                       IDatasetImagesService datasetImagesService, 
+        public DatasetImagesController(IConfiguration configuration,
+                                       IMapper mapper,
+                                       IDatasetService datasetService,
+                                       IDatasetImagesService datasetImagesService,
                                        IWebHostEnvironment webHostEnvironment,
                                        IAppSettingsAccessor appSettingsAccessor)
         {
@@ -50,7 +39,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetImage))]
         public async Task<IActionResult> DeleteDatasetImage(Guid datasetImageId, Guid datasetId)
-        {           
+        {
             if (datasetId == Guid.Empty)
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
@@ -99,34 +88,25 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.EditDatasetImage))]
         public async Task<IActionResult> EditDatasetImage(EditDatasetImageDTO model)
         {
+            if (ModelState.IsValid == false)
+                return Json(new { responseError = DbResHtml.T("Entered model is not valid", "Resources") });
+
             string? userId = User.FindFirstValue("UserId");
             if (string.IsNullOrEmpty(userId))
-            {
                 return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
-            }
 
-            if (!ModelState.IsValid)
-            {
-                return Json(new { responseError = DbResHtml.T("Entered model is not valid", "Resources") });
-            }
-
-            var datasetDb = await _datasetService.GetDatasetById(model.DatasetId) ?? throw new Exception("Dataset not found");
+            DatasetDTO datasetDb = await _datasetService.GetDatasetById(model.DatasetId) ?? throw new Exception("Dataset not found");
             if (datasetDb.IsPublished == true)
-            {
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
-            }
 
             model.FileName = string.Format("{0}.jpg", model.Name);
             model.UpdatedById = userId;
-            var isImageUpdated = await _datasetImagesService.EditDatasetImage(model);
-            if (isImageUpdated.IsSuccess == true && isImageUpdated.Data == 1 && string.IsNullOrEmpty(isImageUpdated.ErrMsg))
-            {
+            ResultDTO<int> resultImageUpdate = await _datasetImagesService.EditDatasetImage(model);
+            if (resultImageUpdate.IsSuccess == true && resultImageUpdate.Data == 1 && string.IsNullOrEmpty(resultImageUpdate.ErrMsg))
                 return Json(new { responseSuccess = DbResHtml.T("Successfully updated dataset image", "Resources") });
-            }
-            if (!string.IsNullOrEmpty(isImageUpdated.ErrMsg))
-            {
-               return Json(new { responseError = DbResHtml.T(isImageUpdated.ErrMsg, "Resources") });                               
-            }
+
+            if (!string.IsNullOrEmpty(resultImageUpdate.ErrMsg))
+                return Json(new { responseError = DbResHtml.T(resultImageUpdate.ErrMsg, "Resources") });
 
             return Json(new { responseError = DbResHtml.T("Dataset image was not updated", "Resources") });
         }
@@ -137,36 +117,28 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         {
             string? userId = User.FindFirstValue("UserId");
             if (string.IsNullOrEmpty(userId))
-            {
                 return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
-            }
 
             if (datasetId == Guid.Empty)
-            {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
-            }
+
             if (string.IsNullOrEmpty(imageCropped))
-            {
                 return Json(new { responseError = DbResHtml.T("Invalid image", "Resources") });
-            }
+
             if (string.IsNullOrEmpty(imageName))
-            {
                 return Json(new { responseError = DbResHtml.T("Invalid image name", "Resources") });
-            }
 
-            var datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Dataset not found");
+            DatasetDTO datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Dataset not found");
             if (datasetDb.IsPublished == true)
-            {
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
-            }
 
-            var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
-            var datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+            ResultDTO<string?> datasetImagesFolder =
+                await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
+            ResultDTO<string?> datasetThumbnailsFolder =
+                await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
             string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Id.ToString());
             if (!Directory.Exists(uploadsFolder))
-            {
                 Directory.CreateDirectory(uploadsFolder);
-            }
 
             DatasetImageDTO dto = new()
             {
@@ -180,11 +152,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 ThumbnailPath = string.Format("\\{0}\\{1}\\", datasetThumbnailsFolder.Data, datasetDb.Id.ToString()),
             };
 
-            var isImageAdded = await _datasetImagesService.AddDatasetImage(dto);
-            if (isImageAdded.Data != Guid.Empty)
+            ResultDTO<Guid> resultImageAdd = await _datasetImagesService.AddDatasetImage(dto);
+            if (resultImageAdd.IsSuccess && resultImageAdd.Data != Guid.Empty)
             {
-                var imageFileName = string.Format("{0}.jpg", isImageAdded.Data);
-                var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Id.ToString(), imageFileName);
+                string imageFileName = string.Format("{0}.jpg", resultImageAdd.Data);
+                string imagePath =
+                    Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Id.ToString(), imageFileName);
                 string base64Datas = imageCropped.Split(',')[1];
                 byte[] imageBytes = Convert.FromBase64String(base64Datas);
 
@@ -196,35 +169,40 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                         image.Write(imagePath);
                     }
                 }
-                SaveTumbnailImage(datasetId, isImageAdded.Data, imageCropped, datasetThumbnailsFolder.Data);
+                SaveTumbnailImage(datasetId, resultImageAdd.Data, imageCropped, datasetThumbnailsFolder.Data);
                 return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset image", "Resources") });
             }
-            else
-            {
-                return Json(new { responseError = DbResHtml.T(isImageAdded.ErrMsg, "Resources") });
-            }
+
+            return Json(new { responseError = DbResHtml.T(resultImageAdd.ErrMsg, "Resources") });
         }
 
-        private void SaveTumbnailImage(Guid datasetId, Guid addedImageId, string originalImage, string thumbnailsFolderData)
+        private ResultDTO SaveTumbnailImage(Guid datasetId, Guid addedImageId, string originalImage, string thumbnailsFolderData)
         {
-            string thumbnailsFolder = Path.Combine(_webHostEnvironment.WebRootPath, thumbnailsFolderData, datasetId.ToString());
-            if (!Directory.Exists(thumbnailsFolder))
+            try
             {
-                Directory.CreateDirectory(thumbnailsFolder);
-            }
+                string thumbnailsFolder = Path.Combine(_webHostEnvironment.WebRootPath, thumbnailsFolderData, datasetId.ToString());
+                if (Directory.Exists(thumbnailsFolder) == false)
+                    Directory.CreateDirectory(thumbnailsFolder);
 
-            var thumbnailFileName = string.Format("{0}.jpg", addedImageId);
-            var thumbnailPath = Path.Combine(_webHostEnvironment.WebRootPath, thumbnailsFolder, thumbnailFileName);
-            string base64DatasThumbnail = originalImage.Split(',')[1];
-            byte[] thumbnailBytes = Convert.FromBase64String(base64DatasThumbnail);
-            using (MemoryStream msThumbnail = new(thumbnailBytes))
-            {
-                using (MagickImage imageThumbnail = new(msThumbnail))
+                string thumbnailFileName = string.Format("{0}.jpg", addedImageId);
+                string thumbnailPath = Path.Combine(_webHostEnvironment.WebRootPath, thumbnailsFolder, thumbnailFileName);
+                string base64DatasThumbnail = originalImage.Split(',')[1];
+                byte[] thumbnailBytes = Convert.FromBase64String(base64DatasThumbnail);
+                using (MemoryStream msThumbnail = new(thumbnailBytes))
                 {
-                    imageThumbnail.Resize(192, 192);
-                    imageThumbnail.Quality = 95;
-                    imageThumbnail.Write(thumbnailPath);
+                    using (MagickImage imageThumbnail = new(msThumbnail))
+                    {
+                        imageThumbnail.Resize(192, 192);
+                        imageThumbnail.Quality = 95;
+                        imageThumbnail.Write(thumbnailPath);
+                    }
                 }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
     }

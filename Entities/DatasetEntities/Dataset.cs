@@ -21,5 +21,7 @@ namespace Entities.DatasetEntities
         public ApplicationUser? UpdatedBy { get; set; }
         public bool? AnnotationsPerSubclass { get; set; }
         public virtual ICollection<Dataset_DatasetClass> DatasetClasses { get; set; }
+
+        public virtual ICollection<DatasetImage> DatasetImages { get; set; } = new List<DatasetImage>();
     }
 }

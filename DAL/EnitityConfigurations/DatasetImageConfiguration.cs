@@ -13,7 +13,7 @@ namespace DAL.EnitityConfigurations
             builder.Property(di => di.IsEnabled).HasDefaultValue(false);
 
             builder.HasOne(di => di.Dataset)
-                .WithMany()
+                .WithMany(ds => ds.DatasetImages)
                 .HasForeignKey(di => di.DatasetId);
 
             builder.Property(di => di.CreatedById).IsRequired();

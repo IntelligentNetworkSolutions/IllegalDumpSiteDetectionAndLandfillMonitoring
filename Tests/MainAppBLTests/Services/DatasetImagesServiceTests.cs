@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.DatasetRepositories;
 using DTOs.MainApp.BL.DatasetDTOs;
+using Entities;
 using Entities.DatasetEntities;
 using MainApp.BL.Services.DatasetServices;
 using Moq;
@@ -183,22 +184,135 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task EditDatasetImage_ExceptionDuringProcess_ThrowsException()
+        public async Task EditDatasetImage_ShouldReturnSuccess_WhenAllOperationsSucceed()
         {
             // Arrange
-            var editDatasetImageDTO = new EditDatasetImageDTO
-            {
-                Id = Guid.NewGuid(),
-                DatasetId = Guid.NewGuid(),
-                UpdatedById = "userId"
-            };
+            EditDatasetImageDTO editDto = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), 
+                                                                    Id = Guid.NewGuid(), 
+                                                                    IsEnabled = false, 
+                                                                    UpdatedById = Guid.NewGuid().ToString() };
+            Dataset dataset = new Dataset { Id = editDto.DatasetId, 
+                                            CreatedBy = new ApplicationUser(), 
+                                            UpdatedBy = new ApplicationUser() { Id = editDto.UpdatedById }, 
+                                            ParentDataset = new Dataset() };
+            DatasetImage datasetImage = new DatasetImage { Id = editDto.Id, ImageAnnotations = new List<ImageAnnotation>() };
+            DatasetImage updatedDatasetImage = new DatasetImage { Id = editDto.Id, ImageAnnotations = new List<ImageAnnotation>() };
 
-            _mockImageAnnotationsRepository
-                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<ImageAnnotation, bool>>>(), null, false, null, null))
-                .ThrowsAsync(new Exception("Error retrieving annotations"));
+            _mockDatasetsRepository.Setup(x => x.GetByIdInclude(editDto.DatasetId, true, It.IsAny<Expression<Func<Dataset, object>>[]>()))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+            _mockDatasetImagesRepository.Setup(x => x.GetByIdInclude(editDto.Id, true, It.IsAny<Expression<Func<DatasetImage, object>>[]>()))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
+            _mockMapper.Setup(x => x.Map(editDto, datasetImage)).Returns(datasetImage);
+            _mockDatasetImagesRepository.Setup(x => x.Update(datasetImage, true, default)).ReturnsAsync(ResultDTO.Ok());
+            _mockDatasetsRepository.Setup(x => x.Update(dataset, true, default)).ReturnsAsync(ResultDTO.Ok());
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _service.EditDatasetImage(editDatasetImageDTO));
+            // Act
+            ResultDTO<int> result = await _service.EditDatasetImage(editDto);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(1, result.Data);
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ShouldReturnFail_WhenDatasetNotFound()
+        {
+            // Arrange
+            EditDatasetImageDTO editDto = new EditDatasetImageDTO { DatasetId = Guid.NewGuid() };
+            _mockDatasetsRepository.Setup(x => x.GetByIdInclude(editDto.DatasetId, true, It.IsAny<Expression<Func<Dataset, object>>[]>()))
+                .ReturnsAsync(ResultDTO<Dataset?>.Fail("Dataset not found"));
+
+            // Act
+            ResultDTO<int> result = await _service.EditDatasetImage(editDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ShouldReturnFail_WhenDatasetImageNotFound()
+        {
+            // Arrange
+            EditDatasetImageDTO editDto = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Id = Guid.NewGuid() };
+            Dataset dataset = new Dataset { Id = editDto.DatasetId };
+            _mockDatasetsRepository.Setup(x => x.GetByIdInclude(editDto.DatasetId, true, It.IsAny<Expression<Func<Dataset, object>>[]>()))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+            _mockDatasetImagesRepository.Setup(x => x.GetByIdInclude(editDto.Id, true, It.IsAny<Expression<Func<DatasetImage, object>>[]>()))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Fail("Dataset Image not found"));
+
+            // Act
+            ResultDTO<int> result = await _service.EditDatasetImage(editDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset Image not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ShouldReturnFail_WhenUpdateDatasetImageFails()
+        {
+            // Arrange
+            EditDatasetImageDTO editDto = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Id = Guid.NewGuid() };
+            Dataset dataset = new Dataset { Id = editDto.DatasetId };
+            DatasetImage datasetImage = new DatasetImage { Id = editDto.Id };
+            _mockDatasetsRepository.Setup(x => x.GetByIdInclude(editDto.DatasetId, true, It.IsAny<Expression<Func<Dataset, object>>[]>()))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+            _mockDatasetImagesRepository.Setup(x => x.GetByIdInclude(editDto.Id, true, It.IsAny<Expression<Func<DatasetImage, object>>[]>()))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
+            _mockDatasetImagesRepository.Setup(x => x.Update(It.IsAny<DatasetImage>(), true, default))
+                .ReturnsAsync(ResultDTO.Fail("Update DatasetImage failed"));
+
+            // Act
+            ResultDTO<int> result = await _service.EditDatasetImage(editDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Update DatasetImage failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ShouldReturnFail_WhenUpdateDatasetFails()
+        {
+            // Arrange
+            EditDatasetImageDTO editDto = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Id = Guid.NewGuid() };
+            Dataset dataset = new Dataset { Id = editDto.DatasetId };
+            DatasetImage datasetImage = new DatasetImage { Id = editDto.Id };
+            _mockDatasetsRepository.Setup(x => x.GetByIdInclude(editDto.DatasetId, true, It.IsAny<Expression<Func<Dataset, object>>[]>()))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+            _mockDatasetImagesRepository.Setup(x => x.GetByIdInclude(editDto.Id, true, It.IsAny<Expression<Func<DatasetImage, object>>[]>()))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
+            _mockDatasetImagesRepository.Setup(x => x.Update(It.IsAny<DatasetImage>(), true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+            _mockDatasetsRepository.Setup(x => x.Update(It.IsAny<Dataset>(), true, default))
+                .ReturnsAsync(ResultDTO.Fail("Update Dataset failed"));
+
+            // Act
+            ResultDTO<int> result = await _service.EditDatasetImage(editDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Update Dataset failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ShouldReturnFail_WhenEnablingImageWithoutAnnotations()
+        {
+            // Arrange
+            EditDatasetImageDTO editDto = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Id = Guid.NewGuid(), IsEnabled = true };
+            Dataset dataset = new Dataset { Id = editDto.DatasetId };
+            DatasetImage datasetImage = new DatasetImage { Id = editDto.Id, ImageAnnotations = [] };
+            _mockDatasetsRepository.Setup(x => x.GetByIdInclude(editDto.DatasetId, true, It.IsAny<Expression<Func<Dataset, object>>[]>()))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+            _mockDatasetImagesRepository.Setup(x => x.GetByIdInclude(editDto.Id, true, It.IsAny<Expression<Func<DatasetImage, object>>[]>()))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
+
+            // Act
+            ResultDTO<int> result = await _service.EditDatasetImage(editDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("You can not enable this image because there are not annotations!", result.ErrMsg);
         }
 
         [Fact]
