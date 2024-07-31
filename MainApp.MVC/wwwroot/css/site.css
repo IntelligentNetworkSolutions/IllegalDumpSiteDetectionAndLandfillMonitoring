@@ -1,6 +1,9 @@
 :root {
     --red-danger: #dc3545;
     --green-success: #28a745;
+    --green-active: #06D001;
+    --dark-green: #059212;
+    --white: #f2f2f2;
 }
 
 html {
@@ -159,3 +162,10 @@ html {
     .enable-disable-toggler:not(:checked) ~ .custom-control-label {
         color: var(--red-danger);
     }
+
+/* Sidebar Menu */
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active, .sidebar-light-primary .nav-sidebar > .nav-item > .nav-link.active {
+    background: var(--green-active);
+    color: var(--white) !important;
+}
+

@@ -216,8 +216,10 @@
                 <!-- Export Btn TODO: Change Auth Claim-->
                 @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
                 {
-                    <button class="btn btn-outline-dark btn-block" data-toggle="modal" data-target="#exportDatasetModal">
-                        @DbResHtml.T("Export Dataset", "Resources")
+                    <button class="btn btn-outline-dark btn-block" onclick="exportDatasetAnnotationsToCOCO()">
+                        <span>
+                            @DbResHtml.T("Export Annotations", "Resources") <small>@DbResHtml.T("to COCO Format", "Resources")</small>
+                        </span>
                         <i class=" mx-1 fas fa-file-export"></i>
                     </button>
                 }
@@ -229,46 +231,7 @@
             </div>
             <!-- Dataset Images -->
             <div class="col-md-9">
-                @*                 <div class="row mb-3" id="filterDataRow" hidden>
-                <div class="col-3">
-                <div class="form-group">
-                <select id="selectImageNameFilter" class="select2" style="width: 100%;">
-                <option></option>
-                @foreach (var item in Model.ListOfDatasetImages.OrderBy(x => x.Name))
-                {
-                <option value="@item.Id">@item.Name</option>
-                }
-                </select>
-                </div>
-                </div>
-                <div class="col-3">
-                <div class="form-group">
-                <select id="selectIsEnabledImageFilter" class="select2" style="width: 100%;">
-                <option></option>
-                <option>True</option>
-                <option>False</option>
-                </select>
-                </div>
-                </div>
-                <div class="col-3">
-                <div class="form-group">
-                <select id="selectIsAnnotatedImageFilter" class="select2" style="width: 100%;">
-                <option></option>
-                <option>True</option>
-                <option>False</option>
-                </select>
-                </div>
-                </div>
-                <div class="col-3 d-flex align-items-start">
-                <button id="submitFilter" onclick="filterPagination()" class="btn bg-gradient-secondary">
-                <i class="fa fa-search text-white"></i>
-                </button>
-                </div>
-                </div>
-                <div class="row" id="data-container" hidden> </div>
-                <div class="row text-center" hidden>
-                <div id="pagination" class="mx-auto my-2" hidden></div>
-                </div> *@
+                <!-- Search -->
                 <form asp-action="Edit" asp-controller="Datasets" class="row mb-3" method="get">
                     <input name="datasetId" value="@Model.CurrentDataset.Id" hidden />
                     <div class="col-2">
@@ -415,24 +378,6 @@
                 placeholder: "@DbResHtml.T("Select Dataset Class", "Resources")",
                 theme: 'bootstrap4'
             })
-            // $('#selectImageNameFilter').select2({
-            //     width: '100%',
-            //     theme: 'bootstrap4',
-            //     placeholder: "DbResHtml.T("Select Image Name", "Resources")",
-            //     allowClear: true
-            // })
-            // $('#selectIsEnabledImageFilter').select2({
-            //     width: '100%',
-            //     theme: 'bootstrap4',
-            //     placeholder: "DbResHtml.T("Is Image Enabled?", "Resources")",
-            //     allowClear: true
-            // })
-            // $('#selectIsAnnotatedImageFilter').select2({
-            //     width: '100%',
-            //     theme: 'bootstrap4',
-            //     placeholder: "DbResHtml.T("Is Image Annotated?", "Resources")",
-            //     allowClear: true
-            // })
 
             $('#SearchByImageName').select2({
                 width: '100%',
@@ -467,8 +412,6 @@
             let container = $('#pagination');
             container.empty();
             $("#data-container").empty();
-            // let dataList = Html.Raw(JsonConvert.SerializeObject(Model.ListOfDatasetImages.OrderBy(x => x.Name)));
-            // populatePagination(dataList);
 
             $('#inputImage').on('change', function (e) {
                 $("#showInputImage").empty();
@@ -499,15 +442,12 @@
                             responsive: false,
                             ready() {
                                 cropper.setCropBoxData({ width: 1280, height: 1280 });
-
                             }
                         });
 
                         this.addEventListener('cropmove', () => {
                             cropper.setCropBoxData({ width: 1280, height: 1280 });
                         });
-
-
 
                         $('#btnCrop').off('click').on('click', function () {
                             const croppedCanvas = cropper.getCroppedCanvas({ width: 1280, height: 1280 });
@@ -567,16 +507,11 @@
                                     }
                                 });
                             }, 'image/png');
-
                         });
-
                     };
                     img.src = event.target.result;
-
                 };
                 reader.readAsDataURL(file);
-
-
             });
         });
 
@@ -643,8 +578,6 @@
                     });
                 }
             });
-
-
         }
         // function populatePagination(dataList) {
         //     let allImageAnnotationsList = Html.Raw(JsonConvert.SerializeObject(Model.AllImageAnnotations));
@@ -971,6 +904,55 @@
             });
 
         }
+
+        function exportDatasetAnnotationsToCOCO() {
+            const datasetId = '@Model.CurrentDataset.Id'; // Replace with your actual dataset ID
+
+            // Set up the click event for the button
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("ExportDataset", "Datasets", new { area = "IntranetPortal" })', // Replace with your actual area and controller
+                data: { datasetId: datasetId },
+                success: function (data) {
+                    console.log(data);
+                    console.log(data.responseSuccess);
+                    console.log(data.cocoDataset);
+                    if (data.responseSuccess.value == 'Successfully Exported Dataset in COCO Format') {
+                        // Create a JSON string from the dataset
+                        const jsonData = JSON.stringify(data.cocoDataset, null, 2);
+                        console.log(jsonData);
+                        // Create a Blob with the JSON data and type set to JSON
+                        const blob = new Blob([jsonData], { type: 'application/json' });
+
+                        // Create a URL for the Blob
+                        const url = URL.createObjectURL(blob);
+
+                        // Create a temporary anchor element
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'dataset.json';
+                        a.target = '_blank';
+
+                        // Programmatically click the anchor to trigger the download/open action
+                        a.click();
+
+                        // Revoke the object URL to free up memory
+                        URL.revokeObjectURL(url);
+                    } else {
+                        Swal.fire({
+                            text: data.responseError || 'An error occurred while exporting the dataset.',
+                            icon: 'error'
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: 'An error occurred while processing your request.',
+                        icon: 'error'
+                        });
+        }
+            });
+        }
     </script>
 }
 
@@ -1216,7 +1198,6 @@
                     <button type="button" class="mb-1 btn bg-gradient-primary" onclick="chooseDatasetClassTypeConfirmed('@Model.CurrentDataset.Id')" data-dismiss="modal" aria-label="Ok">
                         <span aria-hidden="true"> @DbResHtml.T("Ok", "Resources")</span>
                     </button>
-
                 </div>
             </div>
         </div>
