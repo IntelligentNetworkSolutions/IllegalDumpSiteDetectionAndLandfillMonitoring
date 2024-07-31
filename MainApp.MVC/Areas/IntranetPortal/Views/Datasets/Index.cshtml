@@ -36,7 +36,7 @@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.AddDataset))
                         {
-                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addNewDatasetModal">
+                            <button class="mb-1 btn btn-outline-primary float-left" data-toggle="modal" data-target="#addNewDatasetModal">
                                 <i class="fas fa-plus"></i> 
                                 @DbResHtml.T("Add Dataset", "Resources")
                             </button>
