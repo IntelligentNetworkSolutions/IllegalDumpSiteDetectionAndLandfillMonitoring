@@ -86,6 +86,9 @@ namespace MainApp.BL.Services.DatasetServices
         #region Update
         public async Task<ResultDTO<int>> EditDatasetImage(EditDatasetImageDTO editDatasetImageDTO)
         {
+            if (editDatasetImageDTO is null)
+                return ResultDTO<int>.Fail("Null EditDatasetImageDTO");
+
             ResultDTO<Dataset?> resultDatasetIncluded = await _datasetsRepository.GetByIdInclude(editDatasetImageDTO.DatasetId, true,
                 includeProperties:
                 [
