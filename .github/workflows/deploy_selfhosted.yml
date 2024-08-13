@@ -36,6 +36,7 @@ jobs:
 
     - name: Install npm dependencies
       run: npm install
+      working-directory: ./MainApp.MVC
 
     - name: Deploy to folder
       run: |
