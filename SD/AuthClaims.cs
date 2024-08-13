@@ -290,7 +290,37 @@ namespace SD
             FromModule = Modules.LegalLandfillManagement,
             Description = "View Legal Landfills"
         };
-
+        public static readonly AuthClaim ViewLegalLandfillPointCloudFiles = new AuthClaim
+        {
+            Value = "13:6",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "View Legal Landfill Point Cloud Files"
+        };
+        public static readonly AuthClaim UploadConvertLegalLandfillPointCloudFile = new AuthClaim
+        {
+            Value = "13:7",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "Upload And Convert Legal Landfill Point Cloud File"
+        };
+        public static readonly AuthClaim EditLegalLandfillPointCloudFile = new AuthClaim
+        {
+            Value = "13:8",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "Edit Legal Landfill Point Cloud File"
+        };
+        public static readonly AuthClaim DeleteLegalLandfillPointCloudFile = new AuthClaim
+        {
+            Value = "13:9",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "Delete Legal Landfill Point Cloud File"
+        };
+        public static readonly AuthClaim PreviewLegalLandfillPointCloudFiles = new AuthClaim
+        {
+            Value = "13:10",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "Preview Legal Landfill Point Cloud Files"
+        };
+        
 
     } 
 }

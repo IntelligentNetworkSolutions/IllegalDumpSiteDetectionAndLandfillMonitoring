@@ -14,6 +14,7 @@ namespace DAL.EnitityConfigurations.LegalLandfillsManagementEntites
         public void Configure(EntityTypeBuilder<LegalLandfillPointCloudFile> builder)
         {
             builder.Property(x => x.FileName).IsRequired();
+            builder.Property(x => x.FilePath).IsRequired();
             builder.Property(x => x.ScanDateTime).HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");           
             builder.HasOne(x => x.LegalLandfill)
             .WithMany(l => l.LegalLandfillPointCloudFiles)

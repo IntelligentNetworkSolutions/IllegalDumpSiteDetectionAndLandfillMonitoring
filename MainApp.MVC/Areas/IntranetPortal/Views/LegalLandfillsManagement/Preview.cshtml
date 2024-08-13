@@ -1,4 +1,7 @@
-﻿@section Styles {
+﻿@using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement
+@model IEnumerable<PreviewViewModel>
+
+@section Styles {
     <link rel="stylesheet" type="text/css" href="~/vendor/potree-npm/build/potree/potree.css">
     <link rel="stylesheet" type="text/css" href="~/vendor/potree-npm/libs/jquery-ui/jquery-ui.min.css">
     <link rel="stylesheet" type="text/css" href="~/vendor/potree-npm/libs/openlayers3/ol.css">
@@ -27,6 +30,10 @@
             right: 0;
             width: 300px;
             height: 100%;
+        }
+
+        #potree_menu{
+            margin-top: 10px;
         }
 
     </style>
@@ -62,19 +69,42 @@
         viewer.loadSettingsFromURL();
         viewer.setBackground("skybox");
 
-       
+
 
         viewer.loadGUI(() => {
-            viewer.setLanguage('en');
-            $("#menu_tools").next().show();
-            $("#menu_clipping").next().show();
+             viewer.setLanguage('en');
+            let section = $(`
+                        <h3 id="menu_meta" class="accordion-header ui-widget"><span>Additional actions</span></h3>
+                        <div class="accordion-content ui-widget pv-menu-list"></div>
+                    `);
+            let content = section.last();
+            content.html(`
+                    <div class="pv-menu-list">
+                         <a href='@Url.Action("ViewPointCloudFiles", "LegalLandfillsManagement", new { Area = "IntranetPortal" })' class="btn btn-xs m-0 bg-gradient-gray text-white">Back to files list</a>
+                    </div>
+                    `);
+            section.first().click(() => content.slideToggle());
+            section.insertAfter($('#menu_about'));
+            $("#menu_about").hide();
+            $("#potree_languages").hide();
+            $("#sidebar_header").hide();
+            $("#menu_tools").next().show();            
             viewer.toggleSidebar();
         });
 
-        const tests = ['@Url.Content("~/PotreeTests/Sara4_20_06_2024/metadata.json")','@Url.Content("~/PotreeTests/Sara4_11_04_2024/metadata.json")'];
+        const metadatas = [];
+        @foreach (var item in Model)
+        {
+            <text>
+                metadatas.push({
+                    FileName: '@Html.Raw(Json.Serialize(item.FileName))',
+                    FileUrl: '@Url.Content($"~/Uploads/LegalLandfillUploads/PointCloudConverts/{item.LandfillId}/{item.FileId}/metadata.json")'
+                });
+            </text>
+        }
 
-        for (let i = 0; i < tests.length; i++) {
-            Potree.loadPointCloud(tests[i], `Sara4_${i}`, e => {
+        for (let i = 0; i < metadatas.length; i++) {
+            Potree.loadPointCloud(metadatas[i].FileUrl, metadatas[i].FileName, e => {
                 let scene = viewer.scene;
                 let pointcloud = e.pointcloud;
 
@@ -85,13 +115,14 @@
 
                 scene.addPointCloud(pointcloud);
 
-                viewer.fitToScreen();
+                viewer.fitToScreen();               
                 // scene.view.setView(
-                // 	[589974.341, 231698.397, 986.146], //set camera position
-                // 	[589851.587, 231428.213, 715.634], //set target position
+                //     [2390889.923, 5159653.190, 276.674], //set camera position
+                //     [2390904.895, 5159851.304, 281.208], //set target position
                 // );
             });
-        }       
+        }
     </script>
 
 }
+

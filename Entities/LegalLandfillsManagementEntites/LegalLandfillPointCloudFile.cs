@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Conventions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,7 @@ namespace Entities.LegalLandfillsManagementEntites
     public class LegalLandfillPointCloudFile : BaseEntity<Guid>
     {
         public string FileName { get; set; }
+        public string FilePath { get; set; }
         public DateTime ScanDateTime { get; set; }
         public Guid LegalLandfillId { get; set; }
         public virtual LegalLandfill? LegalLandfill { get; set; }

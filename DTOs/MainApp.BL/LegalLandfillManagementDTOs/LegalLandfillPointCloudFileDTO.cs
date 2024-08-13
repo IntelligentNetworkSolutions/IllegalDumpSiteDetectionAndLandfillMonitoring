@@ -10,7 +10,8 @@ namespace DTOs.MainApp.BL.LegalLandfillManagementDTOs
     public record LegalLandfillPointCloudFileDTO
     {
         public Guid Id { get; set; }
-        public string? FileName { get; set; }
+        public string FileName { get; set; }
+        public string? FilePath { get; set; }
         public DateTime ScanDateTime { get; set; }
         public Guid LegalLandfillId { get; set; }
         public virtual LegalLandfillDTO? LegalLandfill { get; set; }

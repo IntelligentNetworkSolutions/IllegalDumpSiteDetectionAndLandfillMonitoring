@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240730083648_FilePathPropertyAddedInLegalLandfillPointCloudFileTable")]
+    partial class FilePathPropertyAddedInLegalLandfillPointCloudFileTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1257,7 +1260,7 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_dataset_images_asp_net_users_created_by_id");
 
                     b.HasOne("Entities.DatasetEntities.Dataset", "Dataset")
-                        .WithMany("DatasetImages")
+                        .WithMany()
                         .HasForeignKey("DatasetId")
                         .HasConstraintName("fk_dataset_images_datasets_dataset_id");
 
@@ -1309,7 +1312,7 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_image_annotations_dataset_classes_dataset_class_id");
 
                     b.HasOne("Entities.DatasetEntities.DatasetImage", "DatasetImage")
-                        .WithMany("ImageAnnotations")
+                        .WithMany()
                         .HasForeignKey("DatasetImageId")
                         .HasConstraintName("fk_image_annotations_dataset_images_dataset_image_id");
 
@@ -1609,18 +1612,11 @@ namespace DAL.Migrations
             modelBuilder.Entity("Entities.DatasetEntities.Dataset", b =>
                 {
                     b.Navigation("DatasetClasses");
-
-                    b.Navigation("DatasetImages");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetClass", b =>
                 {
                     b.Navigation("Datasets");
-                });
-
-            modelBuilder.Entity("Entities.DatasetEntities.DatasetImage", b =>
-                {
-                    b.Navigation("ImageAnnotations");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
