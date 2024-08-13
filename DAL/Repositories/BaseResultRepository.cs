@@ -119,6 +119,21 @@ namespace DAL.Repositories
 
             return ResultDTO.Ok();
         }
+
+        public virtual async Task<ResultDTO<TEntity>> UpdateAndReturnEntity(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)
+        {
+            _dbContext.Set<TEntity>().Update(entity);
+            if (saveChanges)
+            {
+                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                if (!resSave.IsSuccess)
+                    return ResultDTO<TEntity>.Fail(resSave.ErrMsg);
+
+                return ResultDTO<TEntity>.Ok(entity);
+            }
+
+            return ResultDTO<TEntity>.Ok(entity);
+        }
         #endregion
 
         #region Delete

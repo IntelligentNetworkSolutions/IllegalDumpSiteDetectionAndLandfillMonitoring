@@ -59,6 +59,30 @@
     "Value": "https://localhost:7230/Common/Home/ResetTranslationCache",
     "Description": "Translation Clear Cache Public Portal",
     "DataType": "String"
+  },
+  {
+    "Key": "LegalLandfillPointCloudFileConverts",
+    "Value": "Uploads\\LegalLandfillUploads\\PointCloudConverts",
+    "Description": "Legal Landfill PointCloud File Converts",
+    "DataType": "String"
+  },
+  {
+    "Key": "LegalLandfillPointCloudFileUploads",
+    "Value": "Uploads\\LegalLandfillUploads\\PointCloudUploads",
+    "Description": "Legal Landfill PointCloud File Uploads",
+    "DataType": "String"
+  },
+  {
+    "Key": "PotreeConverterFilePath",
+    "Value": "C:\\PotreeConverter\\PotreeConverter.exe",
+    "Description": "Potree Converter File Path",
+    "DataType": "String"
+  },
+  {
+    "Key": "SupportedPointCloudFileExtensions",
+    "Value": ".las, .laz",
+    "Description": "Supported extensions for point cloud file",
+    "DataType": "String"
   }
 
 

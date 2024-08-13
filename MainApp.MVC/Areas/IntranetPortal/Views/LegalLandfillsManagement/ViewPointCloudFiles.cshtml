@@ -1,0 +1,711 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement
+@using Microsoft.AspNetCore.Localization
+@using SD.Helpers
+@model IEnumerable<LegalLandfillPointCloudFileViewModel>
+
+@{
+    ViewData["Title"] = @DbResHtml.T("Legal landfill point cloud files list", "Resources");
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Upload/Convert, edit, delete and view all legal landfill point cloud files", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        @if (User.HasAuthClaim(SD.AuthClaims.UploadConvertLegalLandfillPointCloudFile))
+                        {
+                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#uploadConvertFileModal">
+                                <i class="fas fa-plus"></i>
+                                @DbResHtml.T("Upload/Convert file", "Resources")
+                            </button>
+                        }
+                        @if (User.HasAuthClaim(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))
+                        {
+                            <button id="previewPointCloudFileBtn" onclick="previewSelectedFiles()" class="mb-1 ml-2 btn bg-gradient-info float-left" title=@DbResHtml.T("Preview all of the selected point cloud files", "Resources")>
+                                <i class="fas fa-info-circle"></i>
+                                @DbResHtml.T("Preview", "Resources")
+                            </button>
+                        }
+                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+
+                        <div class="mt-5">
+                            <table id="legalLandfillPointCloudFilesTable" class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th hidden></th>
+                                        <th>
+                                            @DbResHtml.T("Name", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Scan Date Time", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Legal Landfill", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Select To Preview", "Resources")
+                                        </th>
+                                        <th class="notexport">
+                                            @DbResHtml.T("Action", "Resources")
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td hidden>@item.Id</td>
+                                            <td>@item.FileName</td>
+                                            <td>@item.ScanDateTime.ToString("dd.MM.yyyy")</td>
+                                            <td>@item.LegalLandfill?.Name</td>
+                                            <td>
+                                                <div class="icheck-info">
+                                                    <input type="checkbox" id="previewFile_@item.Id" name="previewFile_@item.Id" data-id="@item.Id">
+                                                    <label for="previewFile_@item.Id">
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (User.HasAuthClaim(SD.AuthClaims.EditLegalLandfillPointCloudFile))
+                                                {
+                                                    <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editFileModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                }
+                                                @if (User.HasAuthClaim(SD.AuthClaims.DeleteLegalLandfillPointCloudFile))
+                                                {
+                                                    <button  class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteFileModalFunction('@item.Id')" title="@DbResHtml.T("Delete", "Resources")">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+            $(document).ready(function () {
+                $('#legalLandfillPointCloudFilesTable').DataTable({
+                    paging: true,
+                    pageLength: 100,
+                    "columnDefs": [
+                        { "width": "15%", "targets": 2 }
+                    ],
+                    "language": {
+                        "url": "@langPath"
+                    },
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+                            text: '<i class="fas fa-file-alt"></i>',
+                            titleAttr: "Export to excel",
+                            filename: "Legal landfill cloud files - @DateTime.Now.ToString("dd.MM.yyyy")",
+                            exportOptions: {
+                                columns: ':not(.notexport)'
+                            }
+                        }
+                    ]
+                });
+                $("#legalLandfillSelect").select2({
+                    width: '100%',
+                    theme: 'bootstrap4'
+                });               
+                $('#dateOfScan').datetimepicker({
+                    format: 'L'
+                });
+                getAllLegalLandfills();
+                $("#exportToExcelButton").click(function () {
+                    $(".export-to-excel-button").click();
+                });
+
+
+            });
+
+        function editFileConfirmed() {
+            var id = $("#editPointCloudFilelIdInput").val();
+            var filePath = $("#editPointCloudFilelPathInput").val();
+            var name = $("#editPointCloudFilelNameInput").val();
+            var scanDateTime = $("#editDateOfScan").data('date');
+            var legalLandfillId = $("#editLegalLandfillSelect").val();
+            var oldLegalLandfillId = $("#editOldLandfillId").val();
+
+            var legalLandfillPointCloudFileViewModel = {
+                Id: id,
+                FileName: name,
+                ScanDateTime: scanDateTime,
+                LegalLandfillId: legalLandfillId,
+                OldLegalLandfillid: oldLegalLandfillId,
+                FilePath: filePath
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditLegalLandfillPointCloudFileConfirmed", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    legalLandfillPointCloudFileViewModel: legalLandfillPointCloudFileViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully edited file", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function editFileModalFunction(fileId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetLegalLandfillPointCloudFileById", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    fileId: fileId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#editLegalLandfillFileModalBody").html("");
+                            var sdt = new Date(data.data.scanDateTime);
+                            getAllLegalLandfills();
+
+                            $("#editLegalLandfillFileModalBody").append(
+                                '<div class="form-group">'
+                                + '<input hidden class="form-control" id="editPointCloudFilelIdInput" />'
+                                + '<input hidden class="form-control" id="editPointCloudFilelPathInput" />'
+                                + '<input hidden class="form-control" id="editOldLandfillId" />'
+                                + '<label class="form-control-label mt-3" for="editPointCloudFilelNameInput">@DbResHtml.T("Name:", "Resources")</label>'
+                                + '<input type="text" name="EditFileName" class="form-control" id="editPointCloudFilelNameInput" required />'
+                                + '</div>'
+                                + '<div class="form-group">'
+                                + '<label>@DbResHtml.T("Date of scan:", "Resources")</label>'
+                                + '<div class="input-group date" id="editDateOfScan" data-target-input="nearest">'
+                                + '<input type="text" class="form-control datetimepicker-input" data-target="#editDateOfScan" name="EditScanDateTime" />'
+                                + '<div class="input-group-append" data-target="#editDateOfScan" data-toggle="datetimepicker">'
+                                + '<div class="input-group-text"><i class="fa fa-calendar"></i></div>'
+                                + '</div>'
+                                + '</div>'
+                                + '</div>'
+                                + '<div class="form-group">'
+                                + '<label>@DbResHtml.T("Select Legal Landfill:", "Resources")</label>'
+                                + '<select id="editLegalLandfillSelect" class="form-control select2" style="width: 100%;" name="EditLegalLandfillId">'
+                                + `<option selected value='${data.data.legalLandfill.id}'>${data.data.legalLandfill.name}</option>`
+                                + '</select>'
+                                + '</div>'
+                            );
+
+                            $("#editPointCloudFilelIdInput").val(data.data.id);
+                            $("#editPointCloudFilelPathInput").val(data.data.filePath);
+                            $("#editOldLandfillId").val(data.data.legalLandfillId);
+
+                            $("#editPointCloudFilelNameInput").val(data.data.fileName);
+
+                            $("#editLegalLandfillSelect").select2({
+                                width: '100%',
+                                theme: 'bootstrap4'
+                            });
+
+                            $('#editLegalLandfillFileModal').on('shown.bs.modal', function () {
+                                $('#editDateOfScan').datetimepicker({
+                                    format: 'L'
+                                });
+                                $('#editDateOfScan').datetimepicker('date', sdt);
+                            });
+
+                            $('#editLegalLandfillFileModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+        function deleteLandfillFileConfirmed() {
+            var id = $("#txtDeleteFileId").val();
+            var name = $("#txtDeleteFileName").val();
+            var scanDateTime = $("#txtDeleteScanDate").val();
+
+            var legalLandfillPointCloudFileViewModel = {
+                Id: id,
+                FileName: name,
+                ScanDateTime: scanDateTime
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteLegalLandfillPointCloudFileConfirmed", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    legalLandfillPointCloudFileViewModel: legalLandfillPointCloudFileViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully deleted file", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function deleteFileModalFunction(fileId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetLegalLandfillPointCloudFileById", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    fileId: fileId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#deleteLegalLandfillFileModalBody").html("");
+                            var sdt = new Date(data.data.scanDateTime);
+                            var formatedDate = `${sdt.getDate()}.${sdt.getMonth() + 1}.${sdt.getFullYear()}`;                                                       
+
+                            $("#deleteLegalLandfillFileModalBody").append(
+                                '<div>'
+                                + '<input type="text" id="txtDeleteFileId" hidden/>'
+                                + '<input type="text" id="txtDeleteFileName" hidden/>'
+                                + '<input type="text" id="txtDeleteScanDate" hidden/>'
+
+                                + '<table class="table table-striped my-4 w-100">'
+                                + '<thead>'
+                                + '<tr>'
+                                + '<th>@DbResHtml.T("Name", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Scan Date", "Resources")</th>'
+                                + '</tr>'
+                                + '</thead>'
+                                + '<tbody>'
+                                + '<tr>'
+                                + `<td>${data.data.fileName}</td>`
+                                + `<td>${formatedDate}</td>`
+                                + '</tr>'
+                                + '</tbody>'
+                                + '</table>'
+                                + '</div>'
+                            );
+
+                            $(`#txtDeleteFileId`).val(data.data.id);
+                            $(`#txtDeleteFileName`).val(data.data.fileName);
+                            $(`#txtDeleteScanDate`).val(data.data.scanDateTime);
+
+                            $('#deleteLegalLandfillFileModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+        function previewSelectedFiles(){
+            var selectedFiles = [];
+            $("input[type='checkbox']:checked").each(function () {
+                var checkboxId = $(this).attr('id');
+                var itemId = checkboxId.split('_')[1];
+                selectedFiles.push(itemId);
+            });
+
+            if (selectedFiles.length === 0) {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("No files selected", "Resources")"
+                });
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("ProcessSelectedFiles", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+                data: JSON.stringify(selectedFiles),
+                contentType: "application/json",
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            window.location.href = data.data;
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire({
+                        icon: "error",
+                        text: "@DbResHtml.T("Error occurred while processing your request", "Resources")"
+                    });
+                }
+            });
+            // $.ajax({
+            //     type: "POST",
+            //     url: "@Url.Action("ProcessSelectedFiles", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+            //     data: JSON.stringify(selectedFiles),
+            //     contentType: "application/json",
+            //     success: function (data) {
+            //         if (data != undefined || data != null) 
+            //         {
+            //             if (data.isSuccess == false && data.errMsg != null) {
+            //                 Swal.fire({
+            //                     text: `${data.errMsg}`,
+            //                     confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+            //                     allowOutsideClick: false,
+            //                     icon: "error"
+            //                 });
+            //             }
+            //             else {
+            //                window.location.href = data.data;                          
+            //             }
+            //         }
+            //         else {
+            //             Swal.fire({
+            //                 text: `@DbResHtml.T("No data received", "Resources")`,
+            //                 confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+            //                 allowOutsideClick: false,
+            //                 icon: "error"
+            //             });
+            //         }
+            //     },
+            //     error: function (xhr, status, error) {
+            //         Swal.fire({
+            //             icon: "error",
+            //             text: "@DbResHtml.T("Error occurred while processing your request", "Resources")"
+            //         });
+            //     }
+            // });
+        }
+        function getAllLegalLandfills() {
+            $("#legalLandfillSelect").empty();
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetAllLegalLandfills", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $(data.data).each(function (index, item) {
+                                $("#legalLandfillSelect").append($('<option></option>').val(item.id).html(item.name));
+                                if ($("#editLegalLandfillSelect option[value='" + item.id + "']").length == 0) {
+                                    $("#editLegalLandfillSelect").append($('<option></option>').val(item.id).html(item.name));
+                                }
+                                
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function uploadConvertFileConfirmed() {
+            var date = getDefaultFormatDate('#dateOfScan');
+            if ($("#addPointCloudFilelNameInput").val() == '' || date == '' || $('#legalLandfillSelect').val() == '' || $('#addPointCloudFileInput')[0].files.length === 0) {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("All fields are required", "Resources")",
+                    allowOutsideClick: false
+                });
+                return;
+            }
+            Swal.fire({
+                icon: "warning",
+                text: "@DbResHtml.T("Uploading/Converting in progress...", "Resources")",
+                allowOutsideClick: false,
+                showConfirmButton: false
+            });
+            var formData = new FormData($('#uploadConvertFileForm')[0]);
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("UploadConvertLegalLandfillPointCloudFileConfirmed", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+                data: formData,
+                async: true,
+                processData: false,
+                contentType: false,
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully uploaded and converted file", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+
+
+        }
+    </script>
+
+}
+@section BodyArea {
+    <div class="modal" id="editLegalLandfillFileModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-warning text-white">
+                    <h4 class="modal-title">@DbResHtml.T("Edit point cloud file", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="editLegalLandfillFileModalBody" class="modal-body">                  
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="editFileConfirmed()" data-dismiss="modal" aria-label="Ok">
+                        <span aria-hidden="true"> @DbResHtml.T("Ok", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="deleteLegalLandfillFileModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-danger">
+                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this file?", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="deleteLegalLandfillFileModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteLandfillFileConfirmed()" data-dismiss="modal" aria-label="Delete">
+                        <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="uploadConvertFileModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("Upload/Convert point cloud file", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="uploadConvertFileModalBody" class="modal-body">
+                    <form id="uploadConvertFileForm">
+                        <div class="form-group">
+                            <label class="form-control-label mt-3" for="#addPointCloudFilelNameInput">@DbResHtml.T("Name:", "Resources")</label>
+                            <input type="text" name="FileName" class="form-control" id="addPointCloudFilelNameInput" required />
+                        </div>
+                        <div class="form-group">
+                            <label>@DbResHtml.T("Date of scan:", "Resources")</label>
+                            <div class="input-group date" id="dateOfScan" data-target-input="nearest">
+                                <input type="text" class="form-control datetimepicker-input" data-target="#dateOfScan" name="ScanDateTime" />
+                                <div class="input-group-append" data-target="#dateOfScan" data-toggle="datetimepicker">
+                                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>@DbResHtml.T("Select Legal Landfill:", "Resources")</label>
+                            <select id="legalLandfillSelect" class="form-control select2" style="width: 100%;" name="LegalLandfillId">
+                                <option></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="file" id="addPointCloudFileInput" name="FileUpload" required>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="mb-1 btn bg-gradient-primary" onclick="uploadConvertFileConfirmed()" data-dismiss="modal" aria-label="Ok">
+                                <span aria-hidden="true"> @DbResHtml.T("Ok", "Resources")</span>
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}

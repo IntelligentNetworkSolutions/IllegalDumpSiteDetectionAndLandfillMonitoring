@@ -8,6 +8,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="wwwroot\Uploads\**" />
+	  <Content Remove="wwwroot\Uploads\**" />
+	  <EmbeddedResource Remove="wwwroot\Uploads\**" />
+	  <None Remove="wwwroot\Uploads\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Magick.NET-Q16-AnyCPU" Version="13.6.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.2" />

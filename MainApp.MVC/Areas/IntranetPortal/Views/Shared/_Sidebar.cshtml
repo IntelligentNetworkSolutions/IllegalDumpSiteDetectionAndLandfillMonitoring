@@ -93,7 +93,16 @@
                                         @DbResHtml.T("Legal Landfills", "Resources")
                                     </p>
                                 </a>
-                            </li>                           
+                            </li>
+                            <li class="nav-item">
+                                <a asp-action="ViewPointCloudFiles" asp-controller="LegalLandfillsManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                   title="@DbResHtml.T("Legal Landfill Point Cloud Files", "Resources")">
+                                    <i class="fas fa-file-contract"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Point Cloud Files", "Resources")
+                                    </p>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 }

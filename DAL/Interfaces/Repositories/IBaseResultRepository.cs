@@ -33,6 +33,7 @@ namespace DAL.Interfaces.Repositories
 
         Task<ResultDTO> Update(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);
         Task<ResultDTO> UpdateRange(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default);
+        Task<ResultDTO<TEntity>> UpdateAndReturnEntity(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);
 
         Task<ResultDTO> Delete(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default);
         Task<ResultDTO> DeleteRange(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default);

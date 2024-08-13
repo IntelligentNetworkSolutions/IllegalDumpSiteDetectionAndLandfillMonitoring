@@ -10,9 +10,7 @@ namespace MainApp.MVC.Mappers
         public LegalLandfillManagementProfile()
         {
             CreateMap<LegalLandfillDTO, LegalLandfillViewModel>().ReverseMap();
-            CreateMap<LegalLandfillPointCloudFileDTO, LegalLandfillPointCloudFileViewModel>()
-                .ForMember(dest => dest.ScanDateTime, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ReverseMap();
+            CreateMap<LegalLandfillPointCloudFileDTO, LegalLandfillPointCloudFileViewModel>().ReverseMap();
         }
     }
 }
