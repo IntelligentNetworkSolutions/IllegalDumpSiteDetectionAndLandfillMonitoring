@@ -22,9 +22,6 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
-    - name: Publish
-      run: dotnet publish --configuration Release --output publish_output
-
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
@@ -38,26 +35,22 @@ jobs:
     - name: Add delay to ensure filesystem sync
       run: Start-Sleep -Seconds 25
 
+    - name: Publish
+      run: dotnet publish --configuration Release --output publish_output
+
     - name: Copy vendor directory to publish output
-      run: |
-        $sourcePath = "./MainApp.MVC/wwwroot/vendor"
-        $destinationPath = "./publish_output/wwwroot/vendor"
-        
-        if (-Not (Test-Path -Path $sourcePath)) {
-          echo "Source directory $sourcePath does not exist."
+      run: |        
+        if (-Not (Test-Path -Path "./MainApp.MVC/wwwroot/vendor")) {
+          echo "Source directory ./MainApp.MVC/wwwroot/vendor does not exist."
           exit 1
         }
-    
-        if (-Not (Test-Path -Path $destinationPath)) {
-          New-Item -ItemType Directory -Force -Path $destinationPath
+        if (-Not (Test-Path -Path "./publish_output/wwwroot/vendor")) {
+          New-Item -ItemType Directory -Force -Path "./publish_output/wwwroot/vendor"
         }
-    
-        Copy-Item -Path "$sourcePath\*" -Destination $destinationPath -Recurse -Force
-      shell: pwsh
+        Copy-Item -Path "./MainApp.MVC/wwwroot/vendor\*" -Destination "./publish_output/wwwroot/vendor" -Recurse -Force
 
     - name: Stop App Pool
       run: Stop-WebAppPool -Name "WasteSniffer"
-      shell: pwsh
 
     - name: Clear destination folder
       run: |
@@ -74,7 +67,6 @@ jobs:
 
     - name: Start App Pool
       run: Start-WebAppPool -Name "WasteSniffer"
-      shell: pwsh
 
     - name: Notify success
       if: success()
