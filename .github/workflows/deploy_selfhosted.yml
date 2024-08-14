@@ -49,8 +49,8 @@ jobs:
         }
         Copy-Item -Path "./MainApp.MVC/wwwroot/vendor\*" -Destination "./publish_output/wwwroot/vendor" -Recurse -Force
 
-    - name: Stop App Pool
-      run: Stop-WebAppPool -Name "WasteSniffer"
+    # - name: Stop App Pool
+    #  run: Stop-WebAppPool -Name "WasteSniffer"
 
     - name: Clear destination folder
       run: |
@@ -65,8 +65,8 @@ jobs:
         }
         Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_sniffer" -Recurse -Force
 
-    - name: Start App Pool
-      run: Start-WebAppPool -Name "WasteSniffer"
+    # - name: Start App Pool
+    #   run: Start-WebAppPool -Name "WasteSniffer"
 
     - name: Notify success
       if: success()
