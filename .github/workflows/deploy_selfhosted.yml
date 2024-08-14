@@ -35,13 +35,22 @@ jobs:
       run: npm install
       working-directory: ./MainApp.MVC
 
+    - name: Add delay to ensure filesystem sync
+      run: Start-Sleep -Seconds 25
+
     - name: Ensure postinstall completed
       run: |
         if (-Not (Test-Path -Path "./MainApp.MVC/wwwroot/vendor")) {
           echo "Postinstall script did not run or did not complete properly."
           exit 1
+        } else {
+          echo "Postinstall script completed successfully."
         }
       working-directory: ./MainApp.MVC
+
+    - name: Stop App Pool
+      run: Stop-WebAppPool -Name "WasteSniffer"
+      shell: pwsh
 
     - name: Clear destination folder
       run: |
@@ -55,6 +64,10 @@ jobs:
           New-Item -ItemType Directory -Force -Path "C:\continous_delivery\waste_sniffer"
         }
         Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_sniffer" -Recurse -Force
+
+    - name: Start App Pool
+      run: Start-WebAppPool -Name "WasteSniffer"
+      shell: pwsh
 
     - name: Notify success
       if: success()
