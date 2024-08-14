@@ -31,12 +31,23 @@ jobs:
         node-version: '20.x' # Ensures Node.js >= 20.0.0
         cache: 'npm'
 
-    - name: Ensure npm version >= 10.0.0
-      run: npm install -g npm@^10.0.0
-
-    - name: Install npm dependencies
+    - name: Install npm dependencies and run postinstall
       run: npm install
       working-directory: ./MainApp.MVC
+
+    - name: Ensure postinstall completed
+      run: |
+        if (-Not (Test-Path -Path "./MainApp.MVC/wwwroot/vendor")) {
+          echo "Postinstall script did not run or did not complete properly."
+          exit 1
+        }
+      working-directory: ./MainApp.MVC
+
+    - name: Clear destination folder
+      run: |
+        if (Test-Path -Path "C:\continous_delivery\waste_sniffer") {
+          Remove-Item -Path "C:\continous_delivery\waste_sniffer\*" -Recurse -Force
+        }
 
     - name: Deploy to folder
       run: |
