@@ -1,4 +1,4 @@
-name: docs_deploy_github_pages
+name: docs_deploy_gh_pages_gh_runner
 
 on:
   push:
