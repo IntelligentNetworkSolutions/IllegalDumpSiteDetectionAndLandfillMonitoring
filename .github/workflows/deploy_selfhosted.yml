@@ -35,8 +35,8 @@ jobs:
     - name: Add delay to ensure filesystem sync
       run: Start-Sleep -Seconds 25
 
-    - name: Publish
-      run: dotnet publish --configuration Release --output publish_output
+    - name: Publish with Staging Environment
+      run: dotnet publish --configuration Release --output publish_output --property:EnvironmentName=Staging
 
     - name: Copy vendor directory to publish output
       run: |        
@@ -64,6 +64,11 @@ jobs:
           New-Item -ItemType Directory -Force -Path "C:\continous_delivery\waste_sniffer"
         }
         Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_sniffer" -Recurse -Force
+
+    - name: Run database migrations and seed data
+      run: |
+        cd "C:\continuous_delivery\waste_sniffer"
+        dotnet ./MainApp.MVC.dll /seed /runMigrations
 
     # - name: Start App Pool
     #   run: Start-WebAppPool -Name "WasteSniffer"
