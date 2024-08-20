@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
+using Entities.LegalLandfillsManagementEntites;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement;
@@ -26,6 +27,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
         private readonly Mock<IWebHostEnvironment> _mockWebHostEnvironment;
+        private readonly LegalLandfillsManagementController _controller;
 
         public LegalLandfillsManagementControllerTests()
         {
@@ -35,6 +37,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockMapper = new Mock<IMapper>();
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
             _mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
+            _controller = new LegalLandfillsManagementController(
+                   _mockLegalLandfillService.Object,
+                   _mockLegalLandfillPointCloudFileService.Object,
+                   _mockConfiguration.Object,
+                   _mockMapper.Object,
+                   _mockAppSettingsAccessor.Object,
+                   _mockWebHostEnvironment.Object);
         }
 
         [Fact]
@@ -110,7 +119,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.True(result.IsSuccess);
         }
-               
+
         [Fact]
         public async Task GetLegalLandfillById_WithValidId_ReturnsLegalLandfillDTO()
         {
@@ -213,35 +222,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task DeleteLegalLandfillPointCloudFileConfirmed_WithValidModel_ReturnsOkResult()
-        {
-            // Arrange
-            var viewModel = new LegalLandfillPointCloudFileViewModel { Id = Guid.NewGuid() };
-            var dto = new LegalLandfillPointCloudFileDTO { Id = viewModel.Id, FilePath = "test/path", FileName = "test.file" };
-            _mockLegalLandfillPointCloudFileService.Setup(s => s.GetLegalLandfillPointCloudFilesById(viewModel.Id))
-                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFileDTO>.Ok(dto));
-            _mockLegalLandfillPointCloudFileService.Setup(s => s.DeleteLegalLandfillPointCloudFile(viewModel.Id))
-                .ReturnsAsync(ResultDTO.Ok());
-            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(ResultDTO<string>.Ok("test/path"));
-            _mockWebHostEnvironment.Setup(w => w.WebRootPath).Returns("test/root");
-
-            var controller = new LegalLandfillsManagementController(
-                _mockLegalLandfillService.Object,
-                _mockLegalLandfillPointCloudFileService.Object,
-                _mockConfiguration.Object,
-                _mockMapper.Object,
-                _mockAppSettingsAccessor.Object,
-                _mockWebHostEnvironment.Object);
-
-            // Act
-            var result = await controller.DeleteLegalLandfillPointCloudFileConfirmed(viewModel);
-
-            // Assert
-            Assert.True(result.IsSuccess);
-        }
-
-        [Fact]
         public async Task CreateLegalLandfillConfirmed_WithInvalidModel_ReturnsFailResult()
         {
             // Arrange
@@ -288,31 +268,429 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task UploadConvertLegalLandfillPointCloudFileConfirmed_WithInvalidFile_ReturnsFailResult()
+        public void ProcessSelectedFiles_NullInput_ReturnsFailResult()
+        {
+            // Arrange
+            List<Guid> selectedFiles = null;
+
+            // Act
+            var result = _controller.ProcessSelectedFiles(selectedFiles);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+        }
+
+        [Fact]
+        public async Task Preview_ReturnsBadRequest_WhenSelectedFilesIsNullOrEmpty()
+        {
+            // Arrange
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns((string)null);
+
+            // Act
+            var result = await _controller.Preview(null);
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task Preview_RedirectsToErrorView_WhenSelectedFilesIsNullOrEmpty()
+        {
+            // Arrange
+            var errorPath = "/Error";
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns(errorPath);
+
+            // Act
+            var result = await _controller.Preview(new List<string>());
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal(errorPath, redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task Preview_ReturnsBadRequest_OnException()
+        {
+            // Arrange
+            var selectedFiles = new List<string> { "encryptedGuid" };
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns((string)null);
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetLegalLandfillPointCloudFilesById(It.IsAny<Guid>()))
+                .ThrowsAsync(new Exception("Test exception"));
+
+            // Act
+            var result = await _controller.Preview(selectedFiles);
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task Preview_RedirectsToErrorView_OnException()
+        {
+            // Arrange
+            var selectedFiles = new List<string> { "encryptedGuid" };
+            var errorPath = "/Error";
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns(errorPath);
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetLegalLandfillPointCloudFilesById(It.IsAny<Guid>()))
+                .ThrowsAsync(new Exception("Test exception"));
+
+            // Act
+            var result = await _controller.Preview(selectedFiles);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal(errorPath, redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFileConfirmed_ReturnsFailResult_WhenModelStateIsInvalid()
+        {
+            // Arrange
+            var model = new LegalLandfillPointCloudFileViewModel();
+            _controller.ModelState.AddModelError("Error", "Invalid model");
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillPointCloudFileConfirmed(model);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Invalid model", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFileConfirmed_ReturnsFailResult_WhenEntityNotFound()
+        {
+            // Arrange
+            var model = new LegalLandfillPointCloudFileViewModel { Id = Guid.NewGuid() };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetLegalLandfillPointCloudFilesById(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFileDTO>.Fail("Entity not found"));
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillPointCloudFileConfirmed(model);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Entity not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFileConfirmed_ReturnsFailResult_WhenEntityDataIsNull()
+        {
+            // Arrange
+            var model = new LegalLandfillPointCloudFileViewModel { Id = Guid.NewGuid() };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetLegalLandfillPointCloudFilesById(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFileDTO>.Ok(null));
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillPointCloudFileConfirmed(model);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Object not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFileConfirmed_ReturnsFailResult_WhenDeletingFilesFromUploadsFails()
+        {
+            // Arrange
+            var model = new LegalLandfillPointCloudFileViewModel { Id = Guid.NewGuid() };
+            var fileDTO = new LegalLandfillPointCloudFileDTO { Id = model.Id, LegalLandfillId = Guid.NewGuid(), FileName = "testfile.las" };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetLegalLandfillPointCloudFilesById(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFileDTO>.Ok(fileDTO));
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteFilesFromUploads(It.IsAny<LegalLandfillPointCloudFileDTO>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Fail("Failed to delete files from uploads"));
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillPointCloudFileConfirmed(model);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to delete files from uploads", result.ErrMsg);
+
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFileConfirmed_ReturnsFailResult_WhenDeletingFilesFromConvertsFails()
+        {
+            // Arrange
+            var model = new LegalLandfillPointCloudFileViewModel { Id = Guid.NewGuid() };
+            var fileDTO = new LegalLandfillPointCloudFileDTO { Id = model.Id, LegalLandfillId = Guid.NewGuid(), FileName = "testfile.las" };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetLegalLandfillPointCloudFilesById(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFileDTO>.Ok(fileDTO));
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteFilesFromUploads(It.IsAny<LegalLandfillPointCloudFileDTO>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteFilesFromConverts(It.IsAny<LegalLandfillPointCloudFileDTO>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Fail("Failed to delete files from converts"));
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillPointCloudFileConfirmed(model);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to delete files from converts", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFileConfirmed_ReturnsFailResult_WhenDeletingFromDatabaseFails()
+        {
+            // Arrange
+            var model = new LegalLandfillPointCloudFileViewModel { Id = Guid.NewGuid() };
+            var fileDTO = new LegalLandfillPointCloudFileDTO { Id = model.Id, LegalLandfillId = Guid.NewGuid(), FileName = "testfile.las" };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetLegalLandfillPointCloudFilesById(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFileDTO>.Ok(fileDTO));
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteFilesFromUploads(It.IsAny<LegalLandfillPointCloudFileDTO>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteFilesFromConverts(It.IsAny<LegalLandfillPointCloudFileDTO>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteLegalLandfillPointCloudFile(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO.Fail("Failed to delete from database"));
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillPointCloudFileConfirmed(model);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to delete from database", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFileConfirmed_ReturnsSuccessResult_WhenDeletionIsSuccessful()
+        {
+            // Arrange
+            var model = new LegalLandfillPointCloudFileViewModel { Id = Guid.NewGuid() };
+            var fileDTO = new LegalLandfillPointCloudFileDTO { Id = model.Id, LegalLandfillId = Guid.NewGuid(), FileName = "testfile.las" };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetLegalLandfillPointCloudFilesById(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFileDTO>.Ok(fileDTO));
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteFilesFromUploads(It.IsAny<LegalLandfillPointCloudFileDTO>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteFilesFromConverts(It.IsAny<LegalLandfillPointCloudFileDTO>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.DeleteLegalLandfillPointCloudFile(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillPointCloudFileConfirmed(model);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillPointCloudFileConfirmed_ModelStateInvalid_ReturnsFail()
+        {
+            // Arrange
+            var mockService = new Mock<ILegalLandfillPointCloudFileService>();
+            var mockMapper = new Mock<IMapper>();
+            var mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
+
+            _controller.ModelState.AddModelError("FileName", "Required");
+
+            var viewModel = new LegalLandfillPointCloudFileViewModel();
+
+            // Act
+            var result = await _controller.EditLegalLandfillPointCloudFileConfirmed(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Required", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillPointCloudFileConfirmed_FilePathIsNull_ReturnsFail()
+        {
+            // Arrange
+            var mockService = new Mock<ILegalLandfillPointCloudFileService>();
+            var mockMapper = new Mock<IMapper>();
+            var mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
+
+            var viewModel = new LegalLandfillPointCloudFileViewModel
+            {
+                FilePath = null
+            };
+
+            // Act
+            var result = await _controller.EditLegalLandfillPointCloudFileConfirmed(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("File path is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillPointCloudFileConfirmed_MappingFailed_ReturnsFail()
+        {
+            // Arrange
+            var mockService = new Mock<ILegalLandfillPointCloudFileService>();
+            var mockMapper = new Mock<IMapper>();
+            mockMapper.Setup(m => m.Map<LegalLandfillPointCloudFileDTO>(It.IsAny<LegalLandfillPointCloudFileViewModel>()))
+                      .Returns<LegalLandfillPointCloudFileDTO>(null);
+
+            var mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
+
+            var viewModel = new LegalLandfillPointCloudFileViewModel
+            {
+                FilePath = "test_path"
+            };
+
+            // Act
+            var result = await _controller.EditLegalLandfillPointCloudFileConfirmed(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Mapping failed", result.ErrMsg);
+        }
+
+
+        [Fact]
+        public async Task WasteVolumeDiffAnalysis_ReturnsFail_WhenGetFilteredLegalLandfillPointCloudFilesFails()
+        {
+            // Arrange
+            var selectedFiles = new List<Guid> { Guid.NewGuid() };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetFilteredLegalLandfillPointCloudFiles(selectedFiles))
+                .ReturnsAsync(ResultDTO<List<LegalLandfillPointCloudFileDTO>>.Fail("Error fetching files"));
+
+            // Act
+            var result = await _controller.WasteVolumeDiffAnalysis(selectedFiles);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO<WasteVolumeComparisonDTO>>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Error fetching files", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task WasteVolumeDiffAnalysis_ReturnsFail_WhenFilteredDataIsNullOrInvalid()
+        {
+            // Arrange
+            var selectedFiles = new List<Guid> { Guid.NewGuid() };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetFilteredLegalLandfillPointCloudFiles(selectedFiles))
+                .ReturnsAsync(ResultDTO<List<LegalLandfillPointCloudFileDTO>>.Ok(null));
+
+            // Act
+            var result = await _controller.WasteVolumeDiffAnalysis(selectedFiles);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO<WasteVolumeComparisonDTO>>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Expected data is null or does not have required number of elements.", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task WasteVolumeDiffAnalysis_ReturnsFail_WhenCreateDiffWasteVolumeComparisonFileFails()
+        {
+            // Arrange
+            var selectedFiles = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+            var mockFiles = new List<LegalLandfillPointCloudFileDTO>
+            {
+                new LegalLandfillPointCloudFileDTO { FileName = "file1.las", ScanDateTime = DateTime.Now },
+                new LegalLandfillPointCloudFileDTO { FileName = "file2.las", ScanDateTime = DateTime.Now.AddDays(1) }
+            };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.GetFilteredLegalLandfillPointCloudFiles(selectedFiles))
+                .ReturnsAsync(ResultDTO<List<LegalLandfillPointCloudFileDTO>>.Ok(mockFiles));
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.CreateDiffWasteVolumeComparisonFile(It.IsAny<List<LegalLandfillPointCloudFileDTO>>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Fail("Error creating file"));
+
+            // Act
+            var result = await _controller.WasteVolumeDiffAnalysis(selectedFiles);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO<WasteVolumeComparisonDTO>>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Error creating file", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UploadConvertLegalLandfillPointCloudFileConfirmed_ReturnsFail_WhenModelStateIsInvalid()
         {
             // Arrange
             var viewModel = new LegalLandfillPointCloudFileViewModel
             {
-                LegalLandfillId = Guid.NewGuid(),
-                FileUpload = new Mock<IFormFile>().Object
+                FileUpload = null // Invalid view model
             };
-            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("SupportedPointCloudFileExtensions", It.IsAny<string>()))
-                .ReturnsAsync(ResultDTO<string>.Ok(".las, .laz"));
-
-            var controller = new LegalLandfillsManagementController(
-                _mockLegalLandfillService.Object,
-                _mockLegalLandfillPointCloudFileService.Object,
-                _mockConfiguration.Object,
-                _mockMapper.Object,
-                _mockAppSettingsAccessor.Object,
-                _mockWebHostEnvironment.Object);
+            _controller.ModelState.AddModelError("FileUpload", "File is required");
 
             // Act
-            var result = await controller.UploadConvertLegalLandfillPointCloudFileConfirmed(viewModel);
+            var result = await _controller.UploadConvertLegalLandfillPointCloudFileConfirmed(viewModel);
 
             // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Contains("Not supported file extension", result.ErrMsg);
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Contains("File is required", failResult.ErrMsg);
         }
+
+        [Fact]
+        public async Task UploadConvertLegalLandfillPointCloudFileConfirmed_ReturnsFail_WhenFileUploadIsNull()
+        {
+            // Arrange
+            var viewModel = new LegalLandfillPointCloudFileViewModel
+            {
+                FileUpload = null
+            };
+
+            // Act
+            var result = await _controller.UploadConvertLegalLandfillPointCloudFileConfirmed(viewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Please insert file", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UploadConvertLegalLandfillPointCloudFileConfirmed_ReturnsFail_WhenFileTypeIsNotSupported()
+        {
+            // Arrange
+            var viewModel = new LegalLandfillPointCloudFileViewModel
+            {
+                FileUpload = new Mock<IFormFile>().Object,
+                FileName = "testFile",
+                ScanDateTime = DateTime.Now,
+                LegalLandfillId = Guid.NewGuid()
+            };
+            _mockLegalLandfillPointCloudFileService
+                .Setup(s => s.CheckSupportingFiles(It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Fail("Unsupported file type"));
+
+            // Act
+            var result = await _controller.UploadConvertLegalLandfillPointCloudFileConfirmed(viewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Unsupported file type", failResult.ErrMsg);
+        }
+
+     
     }
 }
