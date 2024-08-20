@@ -320,7 +320,14 @@ namespace SD
             FromModule = Modules.LegalLandfillManagement,
             Description = "Preview Legal Landfill Point Cloud Files"
         };
+        public static readonly AuthClaim ViewWasteVolumeDiffAnalysis = new AuthClaim
+        {
+            Value = "13:11",
+            FromModule = Modules.LegalLandfillManagement,
+            Description = "View Waste Volume Differential Analysis"
+        };
         
+
 
     } 
 }

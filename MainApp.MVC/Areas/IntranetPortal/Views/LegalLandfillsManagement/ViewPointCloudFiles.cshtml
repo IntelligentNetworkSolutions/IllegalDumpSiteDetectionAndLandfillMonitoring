@@ -32,16 +32,23 @@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.UploadConvertLegalLandfillPointCloudFile))
                         {
-                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#uploadConvertFileModal">
+                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#uploadConvertFileModal" title=@DbResHtml.T("Upload/Convert file", "Resources")>
                                 <i class="fas fa-plus"></i>
                                 @DbResHtml.T("Upload/Convert file", "Resources")
                             </button>
                         }
                         @if (User.HasAuthClaim(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))
                         {
-                            <button id="previewPointCloudFileBtn" onclick="previewSelectedFiles()" class="mb-1 ml-2 btn bg-gradient-info float-left" title=@DbResHtml.T("Preview all of the selected point cloud files", "Resources")>
+                            <button id="previewPointCloudFileBtn" onclick="previewSelectedFiles()" class="mb-1 ml-2 btn bg-gradient-info float-left" title=@DbResHtml.T("View all of the selected point cloud files", "Resources")>
                                 <i class="fas fa-info-circle"></i>
-                                @DbResHtml.T("Preview", "Resources")
+                                @DbResHtml.T("View Point Clouds", "Resources")
+                            </button>
+                        }
+                        @if (User.HasAuthClaim(SD.AuthClaims.ViewWasteVolumeDiffAnalysis))
+                        {
+                            <button id="wasteVolumeDiffAnalysisBtn" onclick="wasteVolumeDiffAnalysisFunc()" class="mb-1 ml-2 btn bg-gradient-secondary float-left" title=@DbResHtml.T("Differential analysis of waste volume", "Resources")>
+                                <i class="fas fa-ruler-combined"></i>
+                                @DbResHtml.T("Waste volume differential analysis", "Resources")
                             </button>
                         }
                         <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
@@ -157,6 +164,96 @@
 
             });
 
+
+        function wasteVolumeDiffAnalysisFunc() {
+            var selectedFiles = [];
+            $("input[type='checkbox']:checked").each(function () {
+                var checkboxId = $(this).attr('id');
+                var itemId = checkboxId.split('_')[1];
+                selectedFiles.push(itemId);
+            });
+
+            if (selectedFiles.length === 0) {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("No files selected", "Resources")"
+                });
+                return;
+            }
+
+            if (selectedFiles.length === 1 || selectedFiles.length > 2) {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Choose only two files", "Resources")"
+                });
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("WasteVolumeDiffAnalysis", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
+                data: JSON.stringify(selectedFiles),
+                contentType: "application/json",
+                success: function (data) {
+                    console.log(data);
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#wasteVolumeDiffAnalysisModalBody").empty();                           
+                            var html = `<div class="info-box">
+                                            <span class="info-box-icon bg-secondary"><i class="fas fa-chart-bar"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">File 1:
+                                                    <br>
+                                                    <label class="btn btn-default text-center font-weight-light">
+                                                        <span class="font-weight-normal">${data.data.fileAName}</span> /
+                                                        ${data.data.scanDateFileA}
+                                                    </label>                                                   
+                                                    <br>
+                                                    File 2:
+                                                    <br>
+                                                    <label class="btn btn-default text-center font-weight-light">
+                                                         <span class="font-weight-normal">${data.data.fileBName}</span> /
+                                                        ${data.data.scanDateFileB}
+                                                    </label>
+                                                    <br>
+                                                    <b>Total:</b>
+                                                    <br>
+                                                    <label class="btn btn-default text-center text-sm border border-dark">
+                                                        <span class="text-sm">${data.data.difference} m³</span>
+                                                    </label>
+                                                </span>                                               
+                                            </div>
+                                        </div>`;
+                            $("#wasteVolumeDiffAnalysisModalBody").append(html);
+                            $("#wasteVolumeDiffAnalysisModal").modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                   
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire({
+                        icon: "error",
+                        text: "@DbResHtml.T("Error occurred while processing your request", "Resources")"
+                    });
+                }
+            });
+        }
         function editFileConfirmed() {
             var id = $("#editPointCloudFilelIdInput").val();
             var filePath = $("#editPointCloudFilelPathInput").val();
@@ -476,42 +573,6 @@
                     });
                 }
             });
-            // $.ajax({
-            //     type: "POST",
-            //     url: "@Url.Action("ProcessSelectedFiles", "LegalLandfillsManagement", new { Area = "IntranetPortal" })",
-            //     data: JSON.stringify(selectedFiles),
-            //     contentType: "application/json",
-            //     success: function (data) {
-            //         if (data != undefined || data != null) 
-            //         {
-            //             if (data.isSuccess == false && data.errMsg != null) {
-            //                 Swal.fire({
-            //                     text: `${data.errMsg}`,
-            //                     confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-            //                     allowOutsideClick: false,
-            //                     icon: "error"
-            //                 });
-            //             }
-            //             else {
-            //                window.location.href = data.data;                          
-            //             }
-            //         }
-            //         else {
-            //             Swal.fire({
-            //                 text: `@DbResHtml.T("No data received", "Resources")`,
-            //                 confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-            //                 allowOutsideClick: false,
-            //                 icon: "error"
-            //             });
-            //         }
-            //     },
-            //     error: function (xhr, status, error) {
-            //         Swal.fire({
-            //             icon: "error",
-            //             text: "@DbResHtml.T("Error occurred while processing your request", "Resources")"
-            //         });
-            //     }
-            // });
         }
         function getAllLegalLandfills() {
             $("#legalLandfillSelect").empty();
@@ -626,6 +687,23 @@
 
 }
 @section BodyArea {
+    <div class="modal" id="wasteVolumeDiffAnalysisModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-secondary">
+                    <h4 class="modal-title">@DbResHtml.T("Waste volume differential analysis", "Resources")</h4>                   
+                </div>
+                <div id="wasteVolumeDiffAnalysisModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-secondary" data-dismiss="modal" aria-label="Ok">
+                         @DbResHtml.T("Ok", "Resources")
+                    </button>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal" id="editLegalLandfillFileModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
