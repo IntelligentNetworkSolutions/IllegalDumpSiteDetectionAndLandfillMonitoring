@@ -44,7 +44,7 @@ jobs:
       run: Start-Sleep -Seconds 25
 
     - name: Publish
-      run: dotnet publish --output publish_output --publish-profile Staging
+      run: dotnet publish --output publish_output -p:PublishProfile=Staging
 
     - name: Copy vendor directory to publish output
       run: |        
