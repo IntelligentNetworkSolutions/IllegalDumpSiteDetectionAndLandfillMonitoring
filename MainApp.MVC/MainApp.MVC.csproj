@@ -60,9 +60,10 @@
 
 	<Target Name="TransformWebConfig" AfterTargets="AfterPublish">
 		<TransformXml
-			Source="web.$(Configuration).config"
-			Transform="web.$(Configuration).config"
-			Destination="$(PublishDir)web.config" />
+		  Source="$(PublishDir)web.config"
+		  Transform="web.$(Configuration).config"
+		  Destination="$(PublishDir)web.config"
+		  Condition="Exists('web.$(Configuration).config')" />
 	</Target>
 
 </Project>
