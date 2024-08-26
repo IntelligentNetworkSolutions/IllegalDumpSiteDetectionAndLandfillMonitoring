@@ -11,14 +11,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Check if the current branch is 'staging_configs'
-      id: branch-check
+    # Check if the workflow is running on the 'staging_configs' branch in PowerShell
+    - name: Ensure running on 'staging_configs' branch
       run: |
-        echo "branch_name=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
-        if [[ "${{ env.branch_name }}" != "staging_configs" ]]; then
-          echo "This workflow can only run on the staging_configs branch."
+        if ($env:GITHUB_REF -ne 'refs/heads/staging_configs') {
+          Write-Host "This workflow can only run on the 'staging_configs' branch."
           exit 1
-        fi
+        }
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
@@ -45,7 +44,7 @@ jobs:
       run: Start-Sleep -Seconds 25
 
     - name: Publish
-      run: dotnet publish --output publish_output --publish-profile Staging
+      run: dotnet publish --output publish_output -p:PublishProfile=Staging
 
     - name: Copy vendor directory to publish output
       run: |        
