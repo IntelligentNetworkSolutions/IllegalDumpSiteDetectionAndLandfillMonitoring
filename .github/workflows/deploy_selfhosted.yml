@@ -11,13 +11,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Check if the current branch is 'staging_configs'
-      id: branch-check
+    # Check if the workflow is running on the 'staging_configs' branch
+    - name: Ensure running on 'staging_configs' branch
       run: |
-        if ([ "${{ env.branch_name }}" != "staging_configs" ]) {
-          echo "This workflow can only run on the staging_configs branch."
+        if [[ "${{ github.ref }}" != "refs/heads/staging_configs" ]]; then
+          echo "This workflow can only run on the 'staging_configs' branch."
           exit 1
-        }
+        fi
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
