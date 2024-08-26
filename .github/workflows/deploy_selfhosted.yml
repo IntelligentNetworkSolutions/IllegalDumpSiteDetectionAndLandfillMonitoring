@@ -10,6 +10,15 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+
+    - name: Check if the current branch is 'staging_configs'
+      id: branch-check
+      run: |
+        echo "branch_name=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
+        if [[ "${{ env.branch_name }}" != "staging_configs" ]]; then
+          echo "This workflow can only run on the staging_configs branch."
+          exit 1
+        fi
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
@@ -36,7 +45,7 @@ jobs:
       run: Start-Sleep -Seconds 25
 
     - name: Publish
-      run: dotnet publish --configuration Release --output publish_output
+      run: dotnet publish --output publish_output --publish-profile Staging
 
     - name: Copy vendor directory to publish output
       run: |        
