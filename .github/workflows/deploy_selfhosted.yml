@@ -13,7 +13,6 @@ jobs:
 
     # Check if the workflow is running on the 'staging_configs' branch in PowerShell
     - name: Ensure running on 'staging_configs' branch
-      shell: pwsh
       run: |
         if ($env:GITHUB_REF -ne 'refs/heads/staging_configs') {
           Write-Host "This workflow can only run on the 'staging_configs' branch."
