@@ -14,11 +14,10 @@ jobs:
     - name: Check if the current branch is 'staging_configs'
       id: branch-check
       run: |
-        echo "branch_name=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_ENV
-        if [[ "${{ env.branch_name }}" != "staging_configs" ]]; then
+        if ([ "${{ env.branch_name }}" != "staging_configs" ]) {
           echo "This workflow can only run on the staging_configs branch."
           exit 1
-        fi
+        }
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
