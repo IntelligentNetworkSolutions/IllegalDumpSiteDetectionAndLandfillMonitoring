@@ -74,6 +74,9 @@ jobs:
         }
         Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_sniffer" -Recurse -Force
 
+    - name: Run Migrations
+      run: dotnet ./MainApp.MVC.dll /seed /runMigrations
+
     # - name: Start App Pool
     #   run: Start-WebAppPool -Name "WasteSniffer"
 
