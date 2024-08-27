@@ -28,7 +28,7 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build --configuration Debug --no-restore
 
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -44,7 +44,7 @@ jobs:
       run: Start-Sleep -Seconds 25
 
     - name: Publish
-      run: dotnet publish --configuration Release --output publish_output
+      run: dotnet publish --output publish_output -p:PublishProfile=Development
       #run: dotnet publish --output publish_output -p:PublishProfile=Staging
 
     - name: Copy vendor directory to publish output
