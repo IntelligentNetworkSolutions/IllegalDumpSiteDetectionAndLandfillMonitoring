@@ -76,6 +76,7 @@ jobs:
 
     - name: Run Migrations
       run: dotnet ./MainApp.MVC.dll /seed /runMigrations
+      working-directory: C:/continous_delivery/waste_sniffer
 
     # - name: Start App Pool
     #   run: Start-WebAppPool -Name "WasteSniffer"
