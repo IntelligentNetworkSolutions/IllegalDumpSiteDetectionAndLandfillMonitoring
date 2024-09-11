@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
-using Entities.LegalLandfillsManagementEntites;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement;
@@ -11,11 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -691,6 +685,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Unsupported file type", failResult.ErrMsg);
         }
 
-     
+
     }
 }

@@ -1,19 +1,10 @@
 ﻿using AutoMapper;
-using DAL.Interfaces.Repositories.DatasetRepositories;
 using DAL.Interfaces.Repositories.LegalLandfillManagementRepositories;
-using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
-using Entities.DetectionEntities;
 using Entities.LegalLandfillsManagementEntites;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
-using MainApp.BL.Services.DetectionServices;
 using Microsoft.Extensions.Logging;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MainApp.BL.Services.LegalLandfillManagementServices
 {
@@ -68,7 +59,7 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
                 _logger.LogError(ex.Message, ex);
                 return ResultDTO<LegalLandfillDTO>.ExceptionFail(ex.Message, ex);
             }
-        }        
+        }
 
         public async Task<ResultDTO> CreateLegalLandfill(LegalLandfillDTO legalLandfillDTO)
         {

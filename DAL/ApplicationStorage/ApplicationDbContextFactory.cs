@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using System;
 
 namespace DAL.ApplicationStorage
@@ -24,7 +24,7 @@ namespace DAL.ApplicationStorage
             //string connectionString = "YourConnectionString";
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            
+
             optionsBuilder.UseNpgsql(connectionString, db => db.UseNetTopologySuite());
 
             // cd DAL

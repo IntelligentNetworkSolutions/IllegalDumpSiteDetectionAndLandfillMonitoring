@@ -1,0 +1,130 @@
+﻿@using MainApp.MVC.Helpers;
+@using SD.Helpers;
+@model MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement.LegalLandfillWasteImportViewModel
+
+@{
+    ViewData["Title"] = "Edit Legal Landfill Waste Import";
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0">
+                    @ViewData["Title"]
+                </h4>
+                <small>
+                    @DbResHtml.T("Edit waste import", "Resources")
+                </small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a href="#" class="text-success">
+                            @DbResHtml.T("Home", "Resources")
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">
+                        @ViewData["Title"]
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <form asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="EditLegalLandfillWasteImport" method="post">
+            <div class="row">
+                <div class="col-md-10 offset-1">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h3 class="card-title">
+                                @DbResHtml.T("Form for add new waste imports", "Resources")
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                            <!-- Import/Export Field -->
+                            <div class="form-group">
+                                <label asp-for="ImportExportStatus" class="control-label">@DbResHtml.T("Import/Export:", "Resources")</label>
+                                <select asp-for="ImportExportStatus" class="form-control">
+                                    <option value="1">@DbResHtml.T("Import", "Resources")</option>
+                                    <option value="-1">@DbResHtml.T("Export", "Resources")</option>
+                                </select>
+                                <span asp-validation-for="ImportExportStatus" class="text-danger"></span>
+                            </div>
+
+                            <!-- Weight Field -->
+                            <div class="form-group">
+                                <label asp-for="Weight" class="control-label">@DbResHtml.T("Weight:", "Resources")</label>
+                                <input asp-for="Weight" class="form-control" placeholder="@DbResHtml.T("Enter weight", "Resources")" id="weight" />
+                                <span asp-validation-for="Weight" class="text-danger"></span>
+                            </div>
+
+                            <!-- Capacity Field -->
+                            <div class="form-group">
+                                <label asp-for="Capacity" class="control-label">@DbResHtml.T("Capacity:", "Resources")</label>
+                                <input asp-for="Capacity" class="form-control" placeholder="@DbResHtml.T("Enter capacity", "Resources")" id="capacity" />
+                                <span asp-validation-for="Capacity" class="text-danger"></span>
+                            </div>
+
+                            <!-- Truck Dropdown -->
+                            <div class="form-group">
+                                <label asp-for="LegalLandfillTruckId" class="control-label">@DbResHtml.T("Truck:", "Resources")</label>
+                                @Html.DropDownListFor(x => x.LegalLandfillTruckId, new SelectList(Model.LegalLandfillTrucks, "Id", "Name"), new { @class = "form-control" })
+                                <span asp-validation-for="LegalLandfillTruckId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Landfill Dropdown -->
+                            <div class="form-group">
+                                <label asp-for="LegalLandfillId" class="control-label">@DbResHtml.T("Landfill:", "Resources")</label>
+                                @Html.DropDownListFor(x => x.LegalLandfillId, new SelectList(Model.LegalLandfills, "Id", "Name"), new { @class = "form-control" })
+                                <span asp-validation-for="LegalLandfillId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Waste Type Dropdown -->
+                            <div class="form-group">
+                                <label asp-for="LegalLandfillWasteTypeId" class="control-label">@DbResHtml.T("Waste Type:", "Resources")</label>
+                                @Html.DropDownListFor(x => x.LegalLandfillWasteTypeId, new SelectList(Model.LegalLandfillWasteTypes, "Id", "Name"), new { @class = "form-control" })
+                                <span asp-validation-for="LegalLandfillWasteTypeId" class="text-danger"></span>
+                            </div>
+
+                            <!-- Hidden ID and Submit Buttons -->
+                            <div class="form-group">
+                                <input type="hidden" asp-for="Id" />
+                                <input type="submit" value="@DbResHtml.T("Save", "Resources")" class="btn btn-primary" />
+                                <a asp-action="Index" class="btn btn-secondary">@DbResHtml.T("Cancel", "Resources")</a>
+                            </div>
+
+                            <input type="hidden" asp-for="CreatedById" />
+                        </div>
+                    </div>
+                </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    $(document).ready(function () {
+        $('form').on('submit', function (e) {
+            var weight = parseFloat($('#weight').val());
+            var capacity = parseFloat($('#capacity').val());
+
+            if ((isNaN(weight) || weight === "") && (isNaN(capacity) || capacity === "")) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'warning',
+                    title: '@DbResHtml.T("Validation Error", "Resources")',
+                    text: '@DbResHtml.T("Either Weight or Capacity must be filled with a valid number.", "Resources")'
+                });
+                return;
+            }
+            $('#weight').next('.text-danger').text('');
+            $('#capacity').next('.text-danger').text('');
+        });
+    });
+</script>
+}

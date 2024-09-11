@@ -50,6 +50,9 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IDetectionRunService, DetectionRunService>();
             services.TryAddScoped<ILegalLandfillService, LegalLandfillService>();
             services.TryAddScoped<ILegalLandfillPointCloudFileService, LegalLandfillPointCloudFileService>();
+            services.TryAddScoped<ILegalLandfillWasteTypeService, LegalLandfillWasteTypeService>();
+            services.TryAddScoped<ILegalLandfillWasteImportService, LegalLandfillWasteImportService>();
+            services.TryAddScoped<ILegalLandfillTruckService, LegalLandfillTruckService>();
 
             return services;
         }

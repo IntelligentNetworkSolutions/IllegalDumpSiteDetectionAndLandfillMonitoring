@@ -59,10 +59,7 @@
 	</ItemGroup>
 
 	<Target Name="TransformWebConfig" AfterTargets="AfterPublish">
-		<TransformXml
-			Source="web.$(Configuration).config"
-			Transform="web.$(Configuration).config"
-			Destination="$(PublishDir)web.config" />
+		<TransformXml Source="web.$(Configuration).config" Transform="web.$(Configuration).config" Destination="$(PublishDir)web.config" />
 	</Target>
 
 </Project>

@@ -43,6 +43,9 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
             services.TryAddScoped<ILegalLandfillRepository, LegalLandfillRepository>();
             services.TryAddScoped<ILegalLandfillPointCloudFileRepository, LegalLandfillPointCloudFileRepository>();
+            services.TryAddScoped<ILegalLandfillTruckRepository, LegalLandfillTruckRepository>();
+            services.TryAddScoped<ILegalLandfillWasteImportRepository, LegalLandfillWasteImportRepository>();
+            services.TryAddScoped<ILegalLandfillWasteTypeRepository, LegalLandfillWasteTypeRepository>();
 
             return services;
         }
