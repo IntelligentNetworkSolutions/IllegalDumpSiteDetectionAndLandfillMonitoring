@@ -1,12 +1,17 @@
 ﻿using AutoMapper;
 using CliWrap;
+using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
+using DTOs.ObjectDetection.API.Responses.DetectionRun;
+using Humanizer;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
 using MainApp.MVC.Filters;
 using MainApp.MVC.Helpers;
 using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SD;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
@@ -20,9 +25,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly IMapper _mapper;
         private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IWebHostEnvironment _webHostEnvironment;
-        public LegalLandfillsManagementController(ILegalLandfillService legalLandfillService, 
-                                                  ILegalLandfillPointCloudFileService legalLandfillPointCloudFileService, 
-                                                  IConfiguration configuration, 
+        public LegalLandfillsManagementController(ILegalLandfillService legalLandfillService,
+                                                  ILegalLandfillPointCloudFileService legalLandfillPointCloudFileService,
+                                                  IConfiguration configuration,
                                                   IMapper mapper,
                                                   IAppSettingsAccessor appSettingsAccessor,
                                                   IWebHostEnvironment webHostEnvironment)
@@ -39,8 +44,37 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewLegalLandfills))]
         public async Task<IActionResult> ViewLegalLandfills()
         {
-            var dtoList = await _legalLandfillService.GetAllLegalLandfills() ?? throw new Exception("Object not found");
-            var vmList = _mapper.Map<List<LegalLandfillViewModel>>(dtoList.Data) ?? throw new Exception("Object not found");
+            var resultDtoList = await _legalLandfillService.GetAllLegalLandfills();
+            if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error"];
+                if (errorPath == null)
+                {
+                    return BadRequest();
+                }
+                return Redirect(errorPath);
+            }
+            if (resultDtoList.Data == null)
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error404"];
+                if (errorPath == null)
+                {
+                    return NotFound();
+                }
+                return Redirect(errorPath);
+            }
+
+            var vmList = _mapper.Map<List<LegalLandfillViewModel>>(resultDtoList.Data);
+            if (vmList == null)
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error404"];
+                if (errorPath == null)
+                {
+                    return NotFound();
+                }
+                return Redirect(errorPath);
+            }
+
             return View(vmList);
         }
 
@@ -55,15 +89,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             var dto = _mapper.Map<LegalLandfillDTO>(legalLandfillViewModel);
-            if(dto == null)
+            if (dto == null)
             {
                 var error = DbResHtml.T("Mapping failed", "Resources");
                 return ResultDTO.Fail(error.ToString());
             }
 
             ResultDTO resultCreate = await _legalLandfillService.CreateLegalLandfill(dto);
-            if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-            {                
+            if (!resultCreate.IsSuccess && resultCreate.HandleError())
+            {
                 return ResultDTO.Fail(resultCreate.ErrMsg!);
             }
 
@@ -88,7 +122,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             ResultDTO resultEdit = await _legalLandfillService.EditLegalLandfill(dto);
-            if (resultEdit.IsSuccess == false && resultEdit.HandleError())
+            if (!resultEdit.IsSuccess && resultEdit.HandleError())
             {
                 return ResultDTO.Fail(resultEdit.ErrMsg!);
             }
@@ -107,12 +141,16 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             var resultCheckForFiles = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesByLandfillId(legalLandfillViewModel.Id);
-            if (resultCheckForFiles.IsSuccess == false && resultCheckForFiles.HandleError())
+            if (!resultCheckForFiles.IsSuccess && resultCheckForFiles.HandleError())
             {
                 return ResultDTO.Fail(resultCheckForFiles.ErrMsg!);
             }
+            if(resultCheckForFiles.Data == null)
+            {
+                return ResultDTO.Fail("Data is null");
+            }
 
-            if(resultCheckForFiles.Data.Count() > 0)
+            if (resultCheckForFiles.Data.Count > 0)
             {
                 var error = DbResHtml.T("There are point cloud files for this landfill. Delete first the files!", "Resources");
                 return ResultDTO.Fail(error.ToString());
@@ -126,7 +164,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             ResultDTO resultDelete = await _legalLandfillService.DeleteLegalLandfill(dto);
-            if (resultDelete.IsSuccess == false && resultDelete.HandleError())
+            if (!resultDelete.IsSuccess && resultDelete.HandleError())
             {
                 return ResultDTO.Fail(resultDelete.ErrMsg!);
             }
@@ -138,7 +176,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public async Task<ResultDTO<LegalLandfillDTO>> GetLegalLandfillById(Guid legalLandfillId)
         {
             ResultDTO<LegalLandfillDTO> resultGetEntity = await _legalLandfillService.GetLegalLandfillById(legalLandfillId);
-            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
             {
                 return ResultDTO<LegalLandfillDTO>.Fail(resultGetEntity.ErrMsg!);
             }
@@ -154,7 +192,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public async Task<ResultDTO<LegalLandfillPointCloudFileDTO>> GetLegalLandfillPointCloudFileById(Guid fileId)
         {
             ResultDTO<LegalLandfillPointCloudFileDTO> resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(fileId);
-            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
             {
                 return ResultDTO<LegalLandfillPointCloudFileDTO>.Fail(resultGetEntity.ErrMsg!);
             }
@@ -170,8 +208,37 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewLegalLandfillPointCloudFiles))]
         public async Task<IActionResult> ViewPointCloudFiles()
         {
-            var dtoList = await _legalLandfillPointCloudFileService.GetAllLegalLandfillPointCloudFiles() ?? throw new Exception("Object not found");
-            var vmList = _mapper.Map<List<LegalLandfillPointCloudFileViewModel>>(dtoList.Data) ?? throw new Exception("Object not found");
+            var resultDtoList = await _legalLandfillPointCloudFileService.GetAllLegalLandfillPointCloudFiles();
+            if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error"];
+                if (errorPath == null)
+                {
+                    return BadRequest();
+                }
+                return Redirect(errorPath);
+            }
+            if (resultDtoList.Data == null)
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error404"];
+                if (errorPath == null)
+                {
+                    return NotFound();
+                }
+                return Redirect(errorPath);
+            }
+
+            var vmList = _mapper.Map<List<LegalLandfillPointCloudFileViewModel>>(resultDtoList.Data);
+            if (vmList == null)
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error404"];
+                if (errorPath == null)
+                {
+                    return NotFound();
+                }
+                return Redirect(errorPath);
+            }
+
             return View(vmList);
         }
 
@@ -179,7 +246,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public async Task<ResultDTO<List<LegalLandfillDTO>>> GetAllLegalLandfills()
         {
             ResultDTO<List<LegalLandfillDTO>> resultGetEntity = await _legalLandfillService.GetAllLegalLandfills();
-            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
             {
                 return ResultDTO<List<LegalLandfillDTO>>.Fail(resultGetEntity.ErrMsg!);
             }
@@ -202,24 +269,17 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
                 return ResultDTO.Fail(error);
             }
-            if(viewModel.FileUpload == null)
+            if (viewModel.FileUpload == null)
             {
                 return ResultDTO.Fail("Please insert file");
             }
 
+            //check file support
             var fileUploadExtension = Path.GetExtension(viewModel.FileUpload.FileName);
-            
-            var supportedExtensionsAppSetting = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("SupportedPointCloudFileExtensions", ".las, .laz");
-            List<string> listOfSupportedExtensions = new List<string>(supportedExtensionsAppSetting.Data.Split(','));
-
-            for (int i = 0; i < listOfSupportedExtensions.Count; i++)
+            ResultDTO resultCheckSuportingFiles = await _legalLandfillPointCloudFileService.CheckSupportingFiles(fileUploadExtension);
+            if (!resultCheckSuportingFiles.IsSuccess && resultCheckSuportingFiles.HandleError())
             {
-                listOfSupportedExtensions[i] = listOfSupportedExtensions[i].Trim();
-            }
-
-            if (!listOfSupportedExtensions.Contains(fileUploadExtension))
-            {
-                return ResultDTO.Fail($"Not supported file extension. Supported extensions are {supportedExtensionsAppSetting.Data}");
+                return ResultDTO.Fail(resultCheckSuportingFiles.ErrMsg!);
             }
 
             ResultDTO<LegalLandfillDTO> resultGetEntity = await _legalLandfillService.GetLegalLandfillById(viewModel.LegalLandfillId);
@@ -237,8 +297,23 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 var pointCloudUploadFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileUploads", "Uploads\\LegalLandfillUploads\\PointCloudUploads");
                 var pointCloudConvertFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts");
                 var potreeConverterFilePath = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("PotreeConverterFilePath", "C:\\PotreeConverter\\PotreeConverter.exe");
+                var pdalAbsPath = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("PdalExePath", string.Empty);
+                var pipelineJsonTemplate = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("PdalPipelineTemplate", string.Empty);
 
-                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudUploadFolder.Data, resultGetEntity.Data.Id.ToString());
+                if((!pointCloudUploadFolder.IsSuccess && pointCloudUploadFolder.HandleError()) || 
+                    (!pointCloudConvertFolder.IsSuccess && pointCloudConvertFolder.HandleError()) || 
+                    (!potreeConverterFilePath.IsSuccess && potreeConverterFilePath.HandleError()) || 
+                    (!pdalAbsPath.IsSuccess && pdalAbsPath.HandleError()) ||
+                    (!pipelineJsonTemplate.IsSuccess && pipelineJsonTemplate.HandleError()))
+                {
+                    return ResultDTO.Fail("Can not get some of the application settings");
+                }
+                if (pointCloudUploadFolder.Data == null || pointCloudConvertFolder.Data == null || potreeConverterFilePath.Data == null || pdalAbsPath.Data == null || pipelineJsonTemplate.Data == null)
+                {
+                    return ResultDTO.Fail("Some of the paths are null");
+                }
+
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudUploadFolder.Data, resultGetEntity.Data.Id.ToString());
                 if (!Directory.Exists(uploadsFolder))
                 {
                     Directory.CreateDirectory(uploadsFolder);
@@ -255,34 +330,43 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                 //Create the file in database
                 var resultCreateEntity = await _legalLandfillPointCloudFileService.CreateLegalLandfillPointCloudFile(dto);
-                if (resultCreateEntity.IsSuccess == false && resultCreateEntity.HandleError())
+                if (!resultCreateEntity.IsSuccess && resultCreateEntity.HandleError())
                 {
                     return ResultDTO.Fail(resultCreateEntity.ErrMsg!);
                 }
+                if (resultCreateEntity.Data == null)
+                {
+                    return ResultDTO.Fail("Created file is null");
+                }
 
-                //Upload the file in folder
+                //Upload the file in folder                
                 var fileName = string.Format("{0}{1}", resultCreateEntity.Data.Id.ToString(), fileUploadExtension);
                 var filePath = Path.Combine(uploadsFolder, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                var uploadResult = await _legalLandfillPointCloudFileService.UploadFile(viewModel.FileUpload, uploadsFolder, resultCreateEntity.Data.Id.ToString() + fileUploadExtension);
+                if (!uploadResult.IsSuccess && uploadResult.HandleError())
                 {
-                    await viewModel.FileUpload.CopyToAsync(stream);
+                    return ResultDTO.Fail("File upload failed");
+                }
+                if (uploadResult.Data == null)
+                {
+                    return ResultDTO.Fail("Uploaded file path is null");
                 }
 
                 //Convert file to potree format
-                string covertsFolder = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudConvertFolder.Data, resultGetEntity.Data.Id.ToString(), resultCreateEntity.Data.Id.ToString());
-                if (!Directory.Exists(covertsFolder))
+                var convertsFolder = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudConvertFolder.Data, resultGetEntity.Data.Id.ToString(), resultCreateEntity.Data.Id.ToString());
+                var convertResult = await _legalLandfillPointCloudFileService.ConvertToPointCloud(potreeConverterFilePath.Data, uploadResult.Data, convertsFolder, filePath);
+                if (!convertResult.IsSuccess && convertResult.HandleError())
                 {
-                    Directory.CreateDirectory(covertsFolder);
+                    return ResultDTO.Fail("Converting to point cloud failed");
                 }
 
-                var result = await Cli.Wrap(potreeConverterFilePath.Data)
-                .WithArguments($"{filePath} -o {covertsFolder}")
-                .WithValidation(CommandResultValidation.None)
-                .ExecuteAsync();
-
-                if (!result.IsSuccess)
+                //create tif file                
+                var tifFileName = string.Format("{0}{1}", resultCreateEntity.Data.Id.ToString(), "_dsm.tif");
+                var tifFilePath = Path.Combine(uploadsFolder, tifFileName);
+                var tiffResult = await _legalLandfillPointCloudFileService.CreateTifFile(pipelineJsonTemplate.Data, pdalAbsPath.Data, filePath, tifFilePath);
+                if (!tiffResult.IsSuccess)
                 {
-                    return ResultDTO.Fail("Converting failed");
+                    return ResultDTO.Fail("Creating TIF file failed");
                 }
 
                 return ResultDTO.Ok();
@@ -293,7 +377,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
         }
-
+               
         //[HttpPost]
         //[HasAuthClaim(nameof(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))]
         //public async Task<ResultDTO<string>> ProcessSelectedFiles([FromBody] List<Guid> selectedFiles)
@@ -364,9 +448,10 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         //    return View(listVM);
         //}
 
+
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))]
-        public async Task<ResultDTO<string>> ProcessSelectedFiles([FromBody] List<Guid> selectedFiles)
+        public ResultDTO<string> ProcessSelectedFiles([FromBody] List<Guid> selectedFiles)
         {
             if (selectedFiles == null)
             {
@@ -390,9 +475,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO<string>.Ok(redirectUrl);
             }
             catch (Exception ex)
-            {               
-                return ResultDTO<string>.Fail(ex.Message);
-            }            
+            {
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpGet]
@@ -402,6 +487,10 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (selectedFiles == null || selectedFiles.Count == 0)
             {
                 var errorPath = _configuration["ErrorViewsPath:Error"];
+                if(errorPath == null)
+                {
+                    return BadRequest();
+                }
                 return Redirect(errorPath);
             }
 
@@ -418,14 +507,22 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 foreach (var item in depryptedGuids)
                 {
                     var resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(item);
-                    if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                    if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
                     {
                         var errorPath = _configuration["ErrorViewsPath:Error404"];
+                        if (errorPath == null)
+                        {
+                            return NotFound();
+                        }
                         return Redirect(errorPath);
                     }
                     if (resultGetEntity.Data == null)
                     {
                         var errorPath = _configuration["ErrorViewsPath:Error404"];
+                        if (errorPath == null)
+                        {
+                            return NotFound();
+                        }
                         return Redirect(errorPath);
                     }
 
@@ -446,6 +543,10 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             catch (Exception)
             {
                 var errorPath = _configuration["ErrorViewsPath:Error"];
+                if (errorPath == null)
+                {
+                    return BadRequest();
+                }
                 return Redirect(errorPath);
             }
         }
@@ -461,41 +562,37 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             var resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(legalLandfillPointCloudFileViewModel.Id);
-            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
             {
                 return ResultDTO.Fail(resultGetEntity.ErrMsg!);
             }
-
             if (resultGetEntity.Data == null)
             {
                 var error = DbResHtml.T("Object not found", "Resources");
                 return ResultDTO.Fail(error.ToString());
             }
 
-            try
+            //delete from uploads
+            ResultDTO resultDeletingFilesFromUploads = await _legalLandfillPointCloudFileService.DeleteFilesFromUploads(resultGetEntity.Data, _webHostEnvironment.WebRootPath);
+            if (!resultDeletingFilesFromUploads.IsSuccess && resultDeletingFilesFromUploads.HandleError())
             {
-                //delete from uploads
-                await DeleteFilesFromUploads(resultGetEntity);
-                //delete from converts
-                await DeleteFilesFromConverts(resultGetEntity);
-                //delete from db
-                ResultDTO resultDelete = await _legalLandfillPointCloudFileService.DeleteLegalLandfillPointCloudFile(legalLandfillPointCloudFileViewModel.Id);
-                if (resultDelete.IsSuccess == false && resultDelete.HandleError())
-                {
-                    return ResultDTO.Fail(resultDelete.ErrMsg!);
-                }
-
-                return ResultDTO.Ok();                               
+                return ResultDTO.Fail(resultDeletingFilesFromUploads.ErrMsg!);
             }
-            catch (Exception ex)
+            //delete from converts
+            ResultDTO resultDeletingFilesFromConverts = await _legalLandfillPointCloudFileService.DeleteFilesFromConverts(resultGetEntity.Data, _webHostEnvironment.WebRootPath);
+            if (!resultDeletingFilesFromConverts.IsSuccess && resultDeletingFilesFromConverts.HandleError())
             {
-                return ResultDTO.ExceptionFail(ex.Message, ex);
+                return ResultDTO.Fail(resultDeletingFilesFromConverts.ErrMsg!);
             }
-           
+            //delete from db
+            ResultDTO resultDelete = await _legalLandfillPointCloudFileService.DeleteLegalLandfillPointCloudFile(legalLandfillPointCloudFileViewModel.Id);
+            if (!resultDelete.IsSuccess && resultDelete.HandleError())
+            {
+                return ResultDTO.Fail(resultDelete.ErrMsg!);
+            }
 
-            
+            return ResultDTO.Ok();
         }
-
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.EditLegalLandfillPointCloudFile))]
@@ -507,154 +604,96 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO.Fail(error);
             }
 
-            if(legalLandfillPointCloudFileViewModel.FilePath == null)
+            if (legalLandfillPointCloudFileViewModel.FilePath == null)
             {
                 var error = DbResHtml.T("File path is null", "Resources");
                 return ResultDTO.Fail(error.ToString());
             }
-                       
-            var dto = _mapper.Map<LegalLandfillPointCloudFileDTO>(legalLandfillPointCloudFileViewModel);            
+
+            var dto = _mapper.Map<LegalLandfillPointCloudFileDTO>(legalLandfillPointCloudFileViewModel);
             if (dto == null)
             {
                 var error = DbResHtml.T("Mapping failed", "Resources");
                 return ResultDTO.Fail(error.ToString());
             }
 
-            try
+            //edit in db
+            ResultDTO<LegalLandfillPointCloudFileDTO> resultEdit = await _legalLandfillPointCloudFileService.EditLegalLandfillPointCloudFile(dto);
+            if (!resultEdit.IsSuccess && resultEdit.HandleError())
             {
-                ResultDTO<LegalLandfillPointCloudFileDTO> resultEdit = await _legalLandfillPointCloudFileService.EditLegalLandfillPointCloudFile(dto);
-                if (resultEdit.IsSuccess == false && resultEdit.HandleError())
-                {
-                    return ResultDTO.Fail(resultEdit.ErrMsg!);
-                }
-
-                if (legalLandfillPointCloudFileViewModel.OldLegalLandfillId != resultEdit.Data.LegalLandfillId)
-                {
-                    //edit upload folder
-                    await EditFileInUploads(legalLandfillPointCloudFileViewModel, resultEdit);
-
-                    //edit convert folder
-                    await EditFileConverts(legalLandfillPointCloudFileViewModel, resultEdit);
-                }
-
-                return ResultDTO.Ok();
+                return ResultDTO.Fail(resultEdit.ErrMsg!);
             }
-            catch (Exception ex)
+            if (resultEdit.Data == null)
             {
-
-                return ResultDTO.Fail(ex.Message);
+                var error = DbResHtml.T("No result data", "Resources");
+                return ResultDTO.Fail(error.ToString());
             }
+
+            if (legalLandfillPointCloudFileViewModel.OldLegalLandfillId != resultEdit.Data.LegalLandfillId)
+            {
+                //edit upload folder
+                ResultDTO resultEditFileInUploads = await _legalLandfillPointCloudFileService.EditFileInUploads(_webHostEnvironment.WebRootPath, legalLandfillPointCloudFileViewModel.FilePath, resultEdit.Data);
+                if (!resultEditFileInUploads.IsSuccess && resultEditFileInUploads.HandleError())
+                {
+                    return ResultDTO.Fail(resultEditFileInUploads.ErrMsg!);
+                }
+                //edit convert folder
+                ResultDTO resultEditFileConverts = await _legalLandfillPointCloudFileService.EditFileConverts(_webHostEnvironment.WebRootPath, legalLandfillPointCloudFileViewModel.OldLegalLandfillId, resultEdit.Data);
+                if (!resultEditFileConverts.IsSuccess && resultEditFileConverts.HandleError())
+                {
+                    return ResultDTO.Fail(resultEditFileConverts.ErrMsg!);
+                }
+            }
+
+            return ResultDTO.Ok();
         }
 
-        private async Task EditFileInUploads(LegalLandfillPointCloudFileViewModel legalLandfillPointCloudFileViewModel, ResultDTO<LegalLandfillPointCloudFileDTO> resultEdit)
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.ViewWasteVolumeDiffAnalysis))]
+        public async Task<ResultDTO<WasteVolumeComparisonDTO>> WasteVolumeDiffAnalysis([FromBody] List<Guid> selectedFiles)
         {
-            var pointCloudUploadFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileUploads", "Uploads\\LegalLandfillUploads\\PointCloudUploads");
-            var fileNameUpload = resultEdit.Data.Id + Path.GetExtension(resultEdit.Data.FileName);
-            var oldFileUploadPath = Path.Combine(_webHostEnvironment.WebRootPath, legalLandfillPointCloudFileViewModel.FilePath, fileNameUpload);
-
-            var newFolderPath = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudUploadFolder.Data, resultEdit.Data.LegalLandfillId.ToString());
-            var newFileUploadPath = Path.Combine(newFolderPath, fileNameUpload);
-
-            if (!System.IO.Directory.Exists(newFolderPath))
+            var resultGetEntities = await _legalLandfillPointCloudFileService.GetFilteredLegalLandfillPointCloudFiles(selectedFiles);
+            if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
             {
-                System.IO.Directory.CreateDirectory(newFolderPath);
+                return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultGetEntities.ErrMsg!);
+            }
+            if (resultGetEntities.Data == null || resultGetEntities.Data.Count < 2 || resultGetEntities.Data.Count > 2)
+            {
+                return ResultDTO<WasteVolumeComparisonDTO>.Fail("Expected data is null or does not have required number of elements.");
             }
 
-            System.IO.File.Move(oldFileUploadPath, newFileUploadPath);
-
-            string oldDirectory = Path.Combine(_webHostEnvironment.WebRootPath, legalLandfillPointCloudFileViewModel.FilePath);
-            if (System.IO.Directory.GetFiles(oldDirectory).Length == 0 && System.IO.Directory.GetDirectories(oldDirectory).Length == 0)
+            var orderedList = resultGetEntities.Data.OrderBy(x => x.ScanDateTime).ToList();
+            var resultCreatingFile = await _legalLandfillPointCloudFileService.CreateDiffWasteVolumeComparisonFile(orderedList, _webHostEnvironment.WebRootPath);
+            if (!resultCreatingFile.IsSuccess && resultCreatingFile.HandleError())
             {
-                System.IO.Directory.Delete(oldDirectory);
+                return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultCreatingFile.ErrMsg!);
             }
-        }
-        private async Task EditFileConverts(LegalLandfillPointCloudFileViewModel legalLandfillPointCloudFileViewModel, ResultDTO<LegalLandfillPointCloudFileDTO> resultEdit)
-        {
-            var pointCloudConvertFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts");
-            var oldConvertedLandfillSubfolderPath = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudConvertFolder.Data, legalLandfillPointCloudFileViewModel.OldLegalLandfillId.ToString(), resultEdit.Data.Id.ToString());
-            var oldConvertedLandfillFolderPath = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudConvertFolder.Data, legalLandfillPointCloudFileViewModel.OldLegalLandfillId.ToString());
-
-            var newConvertedLandfillSubfolderPath = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudConvertFolder.Data, resultEdit.Data.LegalLandfillId.ToString(), resultEdit.Data.Id.ToString());
-            var newConvertedLandfillFolderPath = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudConvertFolder.Data, resultEdit.Data.LegalLandfillId.ToString());
-
-            if (!Directory.Exists(newConvertedLandfillFolderPath))
+            if (resultCreatingFile.Data == null)
             {
-                Directory.CreateDirectory(newConvertedLandfillFolderPath);
+                return ResultDTO<WasteVolumeComparisonDTO>.Fail("Differential file path is null");
             }
 
-            if (!Directory.Exists(newConvertedLandfillSubfolderPath))
+            var resultReadAndDeleteFile = await _legalLandfillPointCloudFileService.ReadAndDeleteDiffWasteVolumeComparisonFile(resultCreatingFile.Data);
+            if (!resultReadAndDeleteFile.IsSuccess && resultReadAndDeleteFile.HandleError())
             {
-                Directory.CreateDirectory(newConvertedLandfillSubfolderPath);
+                return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultReadAndDeleteFile.ErrMsg!);
+            }
+            if (resultReadAndDeleteFile.Data == null)
+            {
+                return ResultDTO<WasteVolumeComparisonDTO>.Fail("Difference was not calculated properly!");
             }
 
-            foreach (var file in Directory.GetFiles(oldConvertedLandfillSubfolderPath))
+            WasteVolumeComparisonDTO dto = new()
             {
-                string fileName = Path.GetFileName(file);
-                string destFile = Path.Combine(newConvertedLandfillSubfolderPath, fileName);
-                System.IO.File.Move(file, destFile);
-            }
+                FileAName = Path.GetFileNameWithoutExtension(orderedList[0].FileName),
+                FileBName = Path.GetFileNameWithoutExtension(orderedList[1].FileName),
+                ScanDateFileA = orderedList[0].ScanDateTime.ToString("dd.MM.yyyy"),
+                ScanDateFileB = orderedList[1].ScanDateTime.ToString("dd.MM.yyyy"),
+                Difference = resultReadAndDeleteFile.Data
+            };
 
-            if (System.IO.Directory.GetFiles(oldConvertedLandfillSubfolderPath).Length == 0 && System.IO.Directory.GetDirectories(oldConvertedLandfillSubfolderPath).Length == 0)
-            {
-                System.IO.Directory.Delete(oldConvertedLandfillSubfolderPath);
-            }
+            return ResultDTO<WasteVolumeComparisonDTO>.Ok(dto);
+        }    
 
-            if (System.IO.Directory.GetFiles(oldConvertedLandfillFolderPath).Length == 0 && System.IO.Directory.GetDirectories(oldConvertedLandfillFolderPath).Length == 0)
-            {
-                System.IO.Directory.Delete(oldConvertedLandfillFolderPath);
-            }
-        }
-        private async Task DeleteFilesFromUploads(ResultDTO<LegalLandfillPointCloudFileDTO>? resultGetEntity)
-        {           
-            string fileName = resultGetEntity.Data.Id + Path.GetExtension(resultGetEntity.Data.FileName);
-            string currentFilePathUpload = Path.Combine(_webHostEnvironment.WebRootPath, resultGetEntity.Data.FilePath, fileName);
-            string currentLandfillFilesDir = Path.Combine(_webHostEnvironment.WebRootPath, resultGetEntity.Data.FilePath);
-
-            if (System.IO.Directory.Exists(currentLandfillFilesDir))
-            {
-                string[] files = Directory.GetFiles(currentLandfillFilesDir);
-                if (files.Length == 1)
-                {
-                    if (System.IO.File.Exists(currentFilePathUpload))
-                    {
-                        System.IO.File.Delete(currentFilePathUpload);
-                        Directory.Delete(currentLandfillFilesDir, true);
-                    }
-                }
-                else
-                {
-                    if (System.IO.File.Exists(currentFilePathUpload))
-                    {
-                        System.IO.File.Delete(currentFilePathUpload);
-                    }
-                }
-            }
-        }
-        private async Task DeleteFilesFromConverts(ResultDTO<LegalLandfillPointCloudFileDTO>? resultGetEntity)
-        {
-            var pointCloudConvertFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts");
-            string currentFolderOfConvertedFilePath = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudConvertFolder.Data, resultGetEntity.Data.LegalLandfillId.ToString(), resultGetEntity.Data.Id.ToString());
-            string currentLandfillFilesConvertedDir = Path.Combine(_webHostEnvironment.WebRootPath, pointCloudConvertFolder.Data, resultGetEntity.Data.LegalLandfillId.ToString());
-
-            if (System.IO.Directory.Exists(currentLandfillFilesConvertedDir))
-            {
-                string[] subDir = Directory.GetDirectories(currentLandfillFilesConvertedDir);
-                if (subDir.Length == 1)
-                {
-                    string subDirName = new DirectoryInfo(subDir[0]).Name;
-                    if (subDirName == resultGetEntity.Data.Id.ToString())
-                    {
-                        Directory.Delete(currentLandfillFilesConvertedDir, true);
-                    }
-                }
-                else
-                {
-                    if (System.IO.Directory.Exists(currentFolderOfConvertedFilePath))
-                    {
-                        Directory.Delete(currentFolderOfConvertedFilePath, true);
-                    }
-                }
-            }
-        }
     }
 }

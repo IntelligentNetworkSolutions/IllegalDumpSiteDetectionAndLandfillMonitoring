@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
+using CliWrap;
+using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories.LegalLandfillManagementRepositories;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
 using Entities.LegalLandfillsManagementEntites;
 using MainApp.BL.Services.LegalLandfillManagementServices;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NetTopologySuite.Operation.Distance;
@@ -13,6 +16,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace Tests.MainAppBLTests.Services
 {
@@ -222,6 +226,325 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Update failed", result.ErrMsg);
         }
 
+        [Fact]
+        public async Task ReadAndDeleteDiffWasteVolumeComparisonFile_FileDoesNotExist_ReturnsFail()
+        {
+            // Arrange
+            string filePath = "non_existing_file.tif";
 
+            // Act
+            var result = await _service.ReadAndDeleteDiffWasteVolumeComparisonFile(filePath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+        }
+
+        [Fact]
+        public async Task ReadAndDeleteDiffWasteVolumeComparisonFile_FileExistsButCannotOpen_ReturnsFail()
+        {
+            // Arrange
+            string filePath = "test_file.tif";
+            File.Create(filePath).Dispose();
+
+            // Act
+            var result = await _service.ReadAndDeleteDiffWasteVolumeComparisonFile(filePath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+
+            // Clean up
+            File.Delete(filePath);
+        }
+
+        [Fact]
+        public async Task UploadFile_ValidFile_ReturnsOk()
+        {
+            // Arrange
+            string uploadFolder = "test_uploads";
+            string fileName = "testfile.txt";
+            Directory.CreateDirectory(uploadFolder);
+
+            var fileMock = new Mock<IFormFile>();
+            var content = "Hello World!";
+            var fileNameOnDisk = fileName;
+            var memoryStream = new MemoryStream();
+            var writer = new StreamWriter(memoryStream);
+            writer.Write(content);
+            writer.Flush();
+            memoryStream.Position = 0;
+
+            fileMock.Setup(f => f.FileName).Returns(fileNameOnDisk);
+            fileMock.Setup(f => f.Length).Returns(memoryStream.Length);
+            fileMock.Setup(f => f.OpenReadStream()).Returns(memoryStream);
+            fileMock.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), default)).Returns((Stream stream, CancellationToken _) => memoryStream.CopyToAsync(stream));
+
+            // Act
+            var result = await _service.UploadFile(fileMock.Object, uploadFolder, fileName);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(Path.Combine(uploadFolder, fileName), result.Data);
+            Assert.True(File.Exists(result.Data));
+
+            // Clean up
+            File.Delete(result.Data);
+            Directory.Delete(uploadFolder);
+        }
+            
+        [Fact]
+        public async Task UploadFile_InvalidPath_ReturnsExceptionFail()
+        {
+            // Arrange
+            string invalidUploadFolder = "<>:\"/\\|?*";
+            string fileName = "testfile.txt";
+
+            var fileMock = new Mock<IFormFile>();
+            var content = "Hello World!";
+            var memoryStream = new MemoryStream();
+            var writer = new StreamWriter(memoryStream);
+            writer.Write(content);
+            writer.Flush();
+            memoryStream.Position = 0;
+
+            fileMock.Setup(f => f.FileName).Returns(fileName);
+            fileMock.Setup(f => f.Length).Returns(memoryStream.Length);
+            fileMock.Setup(f => f.OpenReadStream()).Returns(memoryStream);
+            fileMock.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), default)).Returns((Stream stream, CancellationToken _) => memoryStream.CopyToAsync(stream));
+
+            // Act
+            var result = await _service.UploadFile(fileMock.Object, invalidUploadFolder, fileName);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+            Assert.Null(result.Data);
+        }
+
+        [Fact]
+        public async Task EditFileInUploads_AppSettingsFail_ReturnsFail()
+        {
+            // Arrange
+            string webRootPath = "mockWebRootPath";
+            string filePath = "mockFilePath";
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), FileName = "mockFile.txt", LegalLandfillId = Guid.NewGuid() };
+
+            var appSettingResult = ResultDTO<string>.Fail("Failed to get setting");
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(appSettingResult);
+
+            // Act
+            var result = await _service.EditFileInUploads(webRootPath, filePath, dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to get setting", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditFileInUploads_AppSettingsNull_ReturnsFail()
+        {
+            // Arrange
+            string webRootPath = "mockWebRootPath";
+            string filePath = "mockFilePath";
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), FileName = "mockFile.txt", LegalLandfillId = Guid.NewGuid() };
+
+            var appSettingResult = ResultDTO<string>.Ok(null);
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(appSettingResult);
+
+            // Act
+            var result = await _service.EditFileInUploads(webRootPath, filePath, dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Point cloud upload folder path is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditFileConverts_AppSettingsFail_ReturnsFail()
+        {
+            // Arrange
+            string webRootPath = "mockWebRootPath";
+            var oldLegalLandfillId = Guid.NewGuid();
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), LegalLandfillId = Guid.NewGuid() };
+
+            var appSettingResult = ResultDTO<string>.Fail("Failed to get setting");
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(appSettingResult);
+
+            // Act
+            var result = await _service.EditFileConverts(webRootPath, oldLegalLandfillId, dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to get setting", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditFileConverts_AppSettingsNull_ReturnsFail()
+        {
+            // Arrange
+            string webRootPath = "mockWebRootPath";
+            var oldLegalLandfillId = Guid.NewGuid();
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), LegalLandfillId = Guid.NewGuid() };
+
+            var appSettingResult = ResultDTO<string>.Ok(null);
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(appSettingResult);
+
+            // Act
+            var result = await _service.EditFileConverts(webRootPath, oldLegalLandfillId, dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Point cloud upload folder path is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CheckSupportingFiles_AppSettingsFail_ReturnsFail()
+        {
+            // Arrange
+            string fileUploadExtension = ".las";
+            var appSettingResult = ResultDTO<string>.Fail("Failed to get supported extensions");
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("SupportedPointCloudFileExtensions", It.IsAny<string>()))
+                .ReturnsAsync(appSettingResult);
+
+            // Act
+            var result = await _service.CheckSupportingFiles(fileUploadExtension);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to get supported extensions", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CheckSupportingFiles_AppSettingsNull_ReturnsFail()
+        {
+            // Arrange
+            string fileUploadExtension = ".las";
+            var appSettingResult = ResultDTO<string>.Ok(null);
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("SupportedPointCloudFileExtensions", It.IsAny<string>()))
+                .ReturnsAsync(appSettingResult);
+
+            // Act
+            var result = await _service.CheckSupportingFiles(fileUploadExtension);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("No data for supported file extensions", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CheckSupportingFiles_UnsupportedExtension_ReturnsFail()
+        {
+            // Arrange
+            string fileUploadExtension = ".xyz";
+            var supportedExtensions = ".las, .laz";
+            var appSettingResult = ResultDTO<string>.Ok(supportedExtensions);
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("SupportedPointCloudFileExtensions", It.IsAny<string>()))
+                .ReturnsAsync(appSettingResult);
+
+            // Act
+            var result = await _service.CheckSupportingFiles(fileUploadExtension);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal($"Not supported file extension. Supported extensions are {supportedExtensions}", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateDiffWasteVolumeComparisonFile_NullFilePaths_ReturnsFail()
+        {
+            // Arrange
+            var orderedList = new List<LegalLandfillPointCloudFileDTO>
+            {
+                new LegalLandfillPointCloudFileDTO { FilePath = null, Id = Guid.NewGuid() },
+                new LegalLandfillPointCloudFileDTO { FilePath = "pathB", Id = Guid.NewGuid() }
+            };
+            string webRootPath = "webRootPath";
+
+            // Act
+            var result = await _service.CreateDiffWasteVolumeComparisonFile(orderedList, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("File path/s is/are null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateDiffWasteVolumeComparisonFile_MissingAppSettings_ReturnsFail()
+        {
+            // Arrange
+            var orderedList = new List<LegalLandfillPointCloudFileDTO>
+            {
+                new LegalLandfillPointCloudFileDTO { FilePath = "pathA", Id = Guid.NewGuid() },
+                new LegalLandfillPointCloudFileDTO { FilePath = "pathB", Id = Guid.NewGuid() }
+            };
+            string webRootPath = "webRootPath";
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("PythonExeAbsPath", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Fail("Failed to get PythonExeAbsPath"));
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("GdalCalcAbsPath", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Fail("Failed to get GdalCalcAbsPath"));
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("OutputDiffFolderPath", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Fail("Failed to get OutputDiffFolderPath"));
+
+            // Act
+            var result = await _service.CreateDiffWasteVolumeComparisonFile(orderedList, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Can not get some of the application settings", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateDiffWasteVolumeComparisonFile_NullAppSettingsData_ReturnsFail()
+        {
+            // Arrange
+            var orderedList = new List<LegalLandfillPointCloudFileDTO>
+            {
+                new LegalLandfillPointCloudFileDTO { FilePath = "pathA", Id = Guid.NewGuid() },
+                new LegalLandfillPointCloudFileDTO { FilePath = "pathB", Id = Guid.NewGuid() }
+            };
+            string webRootPath = "webRootPath";
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("PythonExeAbsPath", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok(null));
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("GdalCalcAbsPath", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok(null));
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("OutputDiffFolderPath", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok(null));
+
+            // Act
+            var result = await _service.CreateDiffWasteVolumeComparisonFile(orderedList, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Some of the paths are null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateDiffWasteVolumeComparisonFile_ExceptionThrown_ReturnsExceptionFail()
+        {
+            // Arrange
+            var orderedList = new List<LegalLandfillPointCloudFileDTO>
+            {
+                new LegalLandfillPointCloudFileDTO { FilePath = "pathA", Id = Guid.NewGuid() },
+                new LegalLandfillPointCloudFileDTO { FilePath = "pathB", Id = Guid.NewGuid() }
+            };
+            string webRootPath = "webRootPath";
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("PythonExeAbsPath", It.IsAny<string>()))
+                .ThrowsAsync(new Exception("Test Exception"));
+
+            // Act
+            var result = await _service.CreateDiffWasteVolumeComparisonFile(orderedList, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Test Exception", result.ErrMsg);
+        }
     }
 }

@@ -83,6 +83,36 @@
     "Value": ".las, .laz",
     "Description": "Supported extensions for point cloud file",
     "DataType": "String"
+  },
+  {
+    "Key": "GdalCalcAbsPath",
+    "Value": "C:\\Users\\INS\\miniconda3\\envs\\waste_comparison_env\\Scripts\\gdal_calc.py",
+    "Description": "Gdal Calc From Environment Abs Path",
+    "DataType": "String"
+  },
+  {
+    "Key": "OutputDiffFolderPath",
+    "Value": "Uploads\\LegalLandfillUploads\\TempDiffWasteVolumeComparisonUploads",
+    "Description": "Output Diff Folder Path",
+    "DataType": "String"
+  },
+  {
+    "Key": "PdalExePath",
+    "Value": "C:\\Users\\INS\\miniconda3\\envs\\waste_comparison_env\\Library\\bin\\pdal.exe",
+    "Description": "Pdal exe path",
+    "DataType": "String"
+  },
+  {
+    "Key": "PdalPipelineTemplate",
+    "Value": "[ \"{INPUT_FILE}\", { \"filename\": \"{OUTPUT_FILE}\", \"gdaldriver\": \"GTiff\", \"output_type\": \"max\", \"resolution\": \"0.5\", \"nodata\": -9999, \"type\": \"writers.gdal\" } ]",
+    "Description": "Pdal Pipeline Template",
+    "DataType": "String"
+  },
+  {
+    "Key": "PythonExeAbsPath",
+    "Value": "C:\\Users\\INS\\miniconda3\\envs\\waste_comparison_env\\python.exe",
+    "Description": "Python Exe From Environment Abs Path",
+    "DataType": "String"
   }
 
 
