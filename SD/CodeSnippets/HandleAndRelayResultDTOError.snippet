@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CodeSnippets xmlns="http://schemas.microsoft.com/VisualStudio/2005/CodeSnippet">
+	<CodeSnippet Format="1.0.0">
+		<Header>
+			<Title>
+				Handle and Relay a ResultDTO on Error - Code Snippet
+			</Title>
+			<Description>
+				A code snippet for generating code for checking failiure or exception failiure of a ResultDTO Object.
+			</Description>
+			<Author>
+				Bodan Gjozinski
+			</Author>
+			<Shortcut>
+				reshan
+			</Shortcut>
+		</Header>
+		<Snippet>
+			<Declarations>
+				<Literal>
+					<ID>
+						ResultDTOType
+					</ID>
+					<ToolTip>
+						The Type of the ResultDTO being handled, ex: ResultDTO, ResultDTO[Dataset] but with the other smaller bigger signs (xml stuff) ...
+					</ToolTip>
+					<Default>
+						ResultDTO
+					</Default>
+				</Literal>
+				<Literal>
+					<ID>
+						ResultDTOObject
+					</ID>
+					<ToolTip>
+						The Object of type ResultDTO being handled, ex: result, resultDTO, getDatasetResult ...
+					</ToolTip>
+					<Default>
+						resultDTO
+					</Default>
+				</Literal>
+				<Literal>
+					<ID>
+						ErrorMessage
+					</ID>
+					<ToolTip>
+						What is the Error Message to return
+					</ToolTip>
+					<Default>
+						<![CDATA[
+							$ResultDTOObject$.ErrMsg!
+						]]>
+					</Default>
+				</Literal>
+			</Declarations>
+			<Code Language="CSharp">
+				<![CDATA[
+					if ($ResultDTOObject$.IsSuccess == false && $ResultDTOType$.HandleError($ResultDTOObject$))
+						return $ResultDTOType$.Fail($ErrorMessage$);
+				]]>
+			</Code>
+		</Snippet>
+	</CodeSnippet>
+</CodeSnippets>

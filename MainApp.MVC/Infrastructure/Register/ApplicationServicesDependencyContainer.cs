@@ -38,6 +38,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ILayoutService, LayoutService>();
             services.TryAddScoped<IForgotResetPasswordService, ForgotResetPasswordService>();
             services.TryAddScoped<IMailService, MailService>();
+            services.TryAddScoped<ICocoUtilsService, CocoUtilsService>();
             services.TryAddScoped<IDatasetService, DatasetService>();
             services.TryAddScoped<IDatasetClassesService, DatasetClassesService>();
             services.TryAddScoped<IDatasetImagesService, DatasetImagesService>();
