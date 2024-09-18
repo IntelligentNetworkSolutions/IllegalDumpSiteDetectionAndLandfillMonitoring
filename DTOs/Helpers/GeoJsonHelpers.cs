@@ -29,6 +29,35 @@ namespace DTOs.Helpers
             return geometry;
         }
 
+        public static Polygon ConvertBoundingBoxToPolygon(List<float> bbox)
+        {
+            // Validate that the bounding box list has exactly 4 elements
+            if (bbox == null || bbox.Count != 4)
+                throw new ArgumentException("Bounding box must contain exactly 4 elements: [x, y, width, height].");
+
+            // Extract bbox values
+            float x = bbox[0];
+            float y = bbox[1];
+            float width = bbox[2];
+            float height = bbox[3];
+
+            // Define the four corners of the bounding box
+            List<Coordinate> coordinates = new List<Coordinate>
+            {
+                new Coordinate(x, y),             // Top-left corner (x, y)
+                new Coordinate(x + width, y),     // Top-right corner (x + width, y)
+                new Coordinate(x + width, y + height), // Bottom-right corner (x + width, y + height)
+                new Coordinate(x, y + height),    // Bottom-left corner (x, y + height)
+                new Coordinate(x, y)              // Closing the polygon (back to top-left corner)
+            };
+
+            // Create and return the polygon using the coordinates
+            GeometryFactory geometryFactory = new GeometryFactory();
+            Polygon polygon = geometryFactory.CreatePolygon(coordinates.ToArray());
+
+            return polygon;
+        }
+
         public static List<string> GeometryListToGeoJson(List<Polygon> geom)
         {
             List<string> geoJsons = new();

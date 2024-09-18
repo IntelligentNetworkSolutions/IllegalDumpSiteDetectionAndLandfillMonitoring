@@ -1,4 +1,6 @@
-﻿namespace DTOs.ObjectDetection.API.CocoFormatDTOs
+﻿using Newtonsoft.Json;
+
+namespace DTOs.ObjectDetection.API.CocoFormatDTOs
 {
     public record CocoDatasetDTO
     {

@@ -45,157 +45,213 @@ namespace DAL.Repositories
         #region Create
         public virtual async Task<ResultDTO> Create(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
-            await _dbContext.Set<TEntity>().AddAsync(entity);
-            if (saveChanges)
+            if (entity is null)
+                return ResultDTO.Fail("Invalid entity, is null");
+
+            try
             {
-                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                if (!resSave.IsSuccess)
-                    return ResultDTO.Fail(resSave.ErrMsg);
+                await _dbContext.Set<TEntity>().AddAsync(entity);
+                if (saveChanges)
+                {
+                    ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                    if (resSave.IsSuccess == false)
+                        return ResultDTO.Fail(resSave.ErrMsg!);
+
+                    return ResultDTO.Ok();
+                }
 
                 return ResultDTO.Ok();
             }
-
-            return ResultDTO.Ok();
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         public virtual async Task<ResultDTO<TEntity>> CreateAndReturnEntity(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
-            await _dbContext.Set<TEntity>().AddAsync(entity);
-            if (saveChanges)
+            if (entity is null)
+                return ResultDTO<TEntity>.Fail("Invalid entity, is null");
+
+            try
             {
-                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                if (!resSave.IsSuccess)
-                    return ResultDTO<TEntity>.Fail(resSave.ErrMsg);
+                await _dbContext.Set<TEntity>().AddAsync(entity);
+                if (saveChanges)
+                {
+                    ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                    if (resSave.IsSuccess == false)
+                        return ResultDTO<TEntity>.Fail(resSave.ErrMsg!);
+
+                    return ResultDTO<TEntity>.Ok(entity);
+                }
 
                 return ResultDTO<TEntity>.Ok(entity);
             }
-
-            return ResultDTO<TEntity>.Ok(entity);
+            catch (Exception ex)
+            {
+                return ResultDTO<TEntity>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         public virtual async Task<ResultDTO> CreateRange(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
-            await _dbContext.Set<TEntity>().AddRangeAsync(entities);
-            if (saveChanges)
+            if (entities is null || entities.Count() == 0)
+                return ResultDTO.Fail("Invalid entities, enumerable is null or empty");
+
+            try
             {
-                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                if (!resSave.IsSuccess)
-                    return ResultDTO.Fail(resSave.ErrMsg);
+                await _dbContext.Set<TEntity>().AddRangeAsync(entities);
+                if (saveChanges)
+                {
+                    ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                    if (resSave.IsSuccess == false)
+                        return ResultDTO.Fail(resSave.ErrMsg!);
+
+                    return ResultDTO.Ok();
+                }
 
                 return ResultDTO.Ok();
             }
-
-            return ResultDTO.Ok();
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
         #endregion
 
         #region Update
         public virtual async Task<ResultDTO> Update(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
-            _dbContext.Set<TEntity>().Update(entity);
-            if (saveChanges)
+            if (entity is null)
+                return ResultDTO.Fail("Invalid entity, is null");
+
+            try
             {
-                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                if (!resSave.IsSuccess)
-                    return ResultDTO.Fail(resSave.ErrMsg);
+                _dbContext.Set<TEntity>().Update(entity);
+                if (saveChanges)
+                {
+                    ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                    if (resSave.IsSuccess == false)
+                        return ResultDTO.Fail(resSave.ErrMsg!);
+
+                    return ResultDTO.Ok();
+                }
 
                 return ResultDTO.Ok();
             }
-
-            return ResultDTO.Ok();
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         public virtual async Task<ResultDTO> UpdateRange(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
-            _dbContext.Set<TEntity>().UpdateRange(entities);
-            if (saveChanges)
+            if (entities is null || entities.Count() == 0)
+                return ResultDTO.Fail("Invalid entities, enumerable is null or empty");
+
+            try
             {
-                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                if (!resSave.IsSuccess)
-                    return ResultDTO.Fail(resSave.ErrMsg);
+                _dbContext.Set<TEntity>().UpdateRange(entities);
+                if (saveChanges)
+                {
+                    ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                    if (resSave.IsSuccess == false)
+                        return ResultDTO.Fail(resSave.ErrMsg!);
+
+                    return ResultDTO.Ok();
+                }
 
                 return ResultDTO.Ok();
             }
-
-            return ResultDTO.Ok();
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         public virtual async Task<ResultDTO<TEntity>> UpdateAndReturnEntity(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
-            _dbContext.Set<TEntity>().Update(entity);
-            if (saveChanges)
+            if (entity is null)
+                return ResultDTO<TEntity>.Fail("Invalid entity, is null");
+
+            try
             {
-                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                if (!resSave.IsSuccess)
-                    return ResultDTO<TEntity>.Fail(resSave.ErrMsg);
+                _dbContext.Set<TEntity>().Update(entity);
+                if (saveChanges)
+                {
+                    ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                    if (resSave.IsSuccess == false)
+                        return ResultDTO<TEntity>.Fail(resSave.ErrMsg!);
+
+                    return ResultDTO<TEntity>.Ok(entity);
+                }
 
                 return ResultDTO<TEntity>.Ok(entity);
             }
-
-            return ResultDTO<TEntity>.Ok(entity);
+            catch (Exception ex)
+            {
+                return ResultDTO<TEntity>.ExceptionFail(ex.Message, ex);
+            }
         }
         #endregion
 
         #region Delete
         public virtual async Task<ResultDTO> Delete(TEntity entity, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
-            switch (entity)
+            try
             {
-                case null:
-                    throw new ArgumentNullException(nameof(entity));
+                switch (entity)
+                {
+                    case null:
+                        throw new ArgumentNullException(nameof(entity));
 
-                // TODO: Add
-                //case ISoftDeletedEntity softDeletedEntity:
-                //    softDeletedEntity.IsActive = false;
-                //    await UpdateEntityAsync(entity, saveChanges);
-                //    break;
+                    default:
+                        _dbContext.Set<TEntity>().Remove(entity);
+                        break;
+                }
 
-                default:
-                    _dbContext.Set<TEntity>().Remove(entity);
-                    break;
-            }
+                if (saveChanges)
+                {
+                    ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                    if (resSave.IsSuccess == false)
+                        return ResultDTO.Fail(resSave.ErrMsg!);
 
-            if (saveChanges)
-            {
-                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                if (!resSave.IsSuccess)
-                    return ResultDTO.Fail(resSave.ErrMsg);
+                    return ResultDTO.Ok();
+                }
 
                 return ResultDTO.Ok();
             }
-
-            return ResultDTO.Ok();
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         public virtual async Task<ResultDTO> DeleteRange(IEnumerable<TEntity> entities, bool saveChanges = true, CancellationToken cancellationToken = default)
         {
-            if (entities == null)
-                throw new ArgumentNullException(nameof(entities));
+            if (entities is null || entities.Count() == 0)
+                return ResultDTO.Fail("Invalid entities, enumerable is null or empty");
 
-            // TODO: Add
-            //if (entities.OfType<ISoftDeletedEntity>().Any())
-            //{
-            //    foreach (var entity in entities)
-            //    {
-            //        if (entity is ISoftDeletedEntity softDeletedEntity)
-            //        {
-            //            softDeletedEntity.IsActive = false;
-            //            await UpdateEntityAsync(entity, saveChanges);
-            //        }
-            //    }
-            //}
-            _dbContext.Set<TEntity>().RemoveRange(entities);
-
-            if (saveChanges)
+            try
             {
-                ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                if (!resSave.IsSuccess)
-                    return ResultDTO.Fail(resSave.ErrMsg);
+                _dbContext.Set<TEntity>().RemoveRange(entities);
+
+                if (saveChanges)
+                {
+                    ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
+                    if (resSave.IsSuccess == false)
+                        return ResultDTO.Fail(resSave.ErrMsg!);
+
+                    return ResultDTO.Ok();
+                }
 
                 return ResultDTO.Ok();
             }
-
-            return ResultDTO.Ok();
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
         #endregion
 

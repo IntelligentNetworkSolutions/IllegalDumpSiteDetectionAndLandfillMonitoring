@@ -1,19 +1,13 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories.DatasetRepositories;
-using DAL.Repositories.DatasetRepositories;
 using DTOs.MainApp.BL.DatasetDTOs;
-using Entities;
 using Entities.DatasetEntities;
+using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Services.DatasetServices;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppBLTests.Services
 {
@@ -26,6 +20,7 @@ namespace Tests.MainAppBLTests.Services
         private readonly Mock<IImageAnnotationsRepository> _mockImageAnnotationsRepository;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
+        private readonly Mock<ICocoUtilsService> _mockCocoUtilsService;
         private readonly DatasetService _datasetService;
 
         public DatasetServiceTests()
@@ -37,6 +32,7 @@ namespace Tests.MainAppBLTests.Services
             _mockImageAnnotationsRepository = new Mock<IImageAnnotationsRepository>();
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
             _mockMapper = new Mock<IMapper>();
+            _mockCocoUtilsService = new Mock<ICocoUtilsService>();
                         
             var mockDatasetDatasetClassRepository = new Mock<IDataset_DatasetClassRepository>();
             var mockDatasetImagesRepository = new Mock<IDatasetImagesRepository>();
@@ -50,10 +46,9 @@ namespace Tests.MainAppBLTests.Services
                 mockDatasetImagesRepository.Object,
                 mockImageAnnotationsRepository.Object,
                 _mockAppSettingsAccessor.Object,
-                _mockMapper.Object
+                _mockMapper.Object,
+                _mockCocoUtilsService.Object
             );
-
-
         }
 
         [Fact]

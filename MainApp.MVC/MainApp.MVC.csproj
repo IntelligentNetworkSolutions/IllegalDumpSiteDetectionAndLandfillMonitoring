@@ -4,9 +4,8 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<UserSecretsId>a520fc9d-5549-472b-91e2-3e6cc8667a55</UserSecretsId>
-		<Configuration Condition=" '$(Configuration)' == 'Debug' ">Debug</Configuration>
-		<Configuration Condition=" '$(Configuration)' == 'Release' ">Release</Configuration>
+		<Configuration Condition=" '$(Configuration)' == 'Development' ">Development</Configuration>
+		<Configuration Condition=" '$(Configuration)' == 'Production' ">Production</Configuration>
 		<Configuration Condition=" '$(Configuration)' == 'Staging' ">Staging</Configuration>
 	</PropertyGroup>
 
@@ -55,14 +54,15 @@
 	<ItemGroup>
 		<None Include="wwwroot\Templates\ResetPasswordTemplate.html" />
 		<None Include="web.config" />
-		<None Include="web.$(Configuration).config" Condition="Exists('web.$(Configuration).config')" />
+		<!--<None Include="web.$(Configuration).config" Condition="Exists('web.$(Configuration).config')" />-->
 	</ItemGroup>
 
 	<Target Name="TransformWebConfig" AfterTargets="AfterPublish">
 		<TransformXml
-			Source="web.$(Configuration).config"
-			Transform="web.$(Configuration).config"
-			Destination="$(PublishDir)web.config" />
+		  Source="$(PublishDir)web.config"
+		  Transform="web.$(Configuration).config"
+		  Destination="$(PublishDir)web.config"
+		  Condition="Exists('web.$(Configuration).config')" />
 	</Target>
 
 </Project>

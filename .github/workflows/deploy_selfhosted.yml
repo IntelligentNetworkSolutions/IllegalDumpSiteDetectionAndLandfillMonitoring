@@ -1,43 +1,49 @@
 name: deploy_selfhosted
-
 on:
   workflow_dispatch: # This event allows manual triggering
-
 jobs:
   build-and-deploy:
     runs-on: arhitectvirt
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      
+    # Check if the workflow is running on the 'staging_configs' branch in PowerShell
+    - name: Ensure running on 'staging_configs' branch
+      run: |
+        if ($env:GITHUB_REF -ne 'refs/heads/staging_configs') {
+          Write-Host "This workflow can only run on the 'staging_configs' branch."
+          exit 1
+        }
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '8.0.x'
-
+        
     - name: Install .NET dependencies
       run: dotnet restore
-
+      
     - name: Build
-      run: dotnet build --configuration Release --no-restore
-
+      run: dotnet build --configuration Debug --no-restore
+      
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '20.x' # Ensures Node.js >= 20.0.0
         cache: 'npm'
-
+        
     - name: Install npm dependencies and run postinstall
       run: npm install
       working-directory: ./MainApp.MVC
-
+      
     - name: Add delay to ensure filesystem sync
       run: Start-Sleep -Seconds 25
-
-    - name: Publish with Staging Environment
-      run: dotnet publish --configuration Release --output publish_output --property:EnvironmentName=Staging
-
+      
+    - name: Publish
+      run: dotnet publish --output publish_output -p:PublishProfile=Development
+      #run: dotnet publish --output publish_output -p:PublishProfile=Staging
+      
     - name: Copy vendor directory to publish output
       run: |        
         if (-Not (Test-Path -Path "./MainApp.MVC/wwwroot/vendor")) {
@@ -48,36 +54,42 @@ jobs:
           New-Item -ItemType Directory -Force -Path "./publish_output/wwwroot/vendor"
         }
         Copy-Item -Path "./MainApp.MVC/wwwroot/vendor\*" -Destination "./publish_output/wwwroot/vendor" -Recurse -Force
-
+        
     # - name: Stop App Pool
     #  run: Stop-WebAppPool -Name "WasteSniffer"
-
     - name: Clear destination folder
       run: |
         if (Test-Path -Path "C:\continous_delivery\waste_sniffer") {
           Remove-Item -Path "C:\continous_delivery\waste_sniffer\*" -Recurse -Force
         }
-
+        
     - name: Deploy to folder
       run: |
         if (-Not (Test-Path -Path "C:\continous_delivery\waste_sniffer")) {
           New-Item -ItemType Directory -Force -Path "C:\continous_delivery\waste_sniffer"
         }
         Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_sniffer" -Recurse -Force
-
-    - name: Run database migrations and seed data
+        
+    - name: Run Migrations and Seed Database
       run: |
-        cd "C:\continuous_delivery\waste_sniffer"
-        dotnet ./MainApp.MVC.dll /seed /runMigrations
-
+        Start-Process -FilePath "dotnet" -ArgumentList "./MainApp.MVC.dll", "/seed", "/runMigrations" -WorkingDirectory "C:/continous_delivery/waste_sniffer" -RedirectStandardOutput "output.log" -NoNewWindow
+        $process = Get-Process dotnet -ErrorAction SilentlyContinue
+        while ($process -and !(Select-String -Path "output.log" -Pattern "Done seeding database." -Quiet)) {
+          Start-Sleep -Seconds 1
+          $process = Get-Process dotnet -ErrorAction SilentlyContinue
+        }
+        if ($process) {
+          Stop-Process -Id $process.Id -Force
+        }
+        Get-Content "output.log"
+      
     # - name: Start App Pool
     #   run: Start-WebAppPool -Name "WasteSniffer"
-
     - name: Notify success
       if: success()
       run: |
         echo "Deployment to C:\continous_delivery\waste_sniffer was successful!"
-
+        
     - name: Notify failure
       if: failure()
       run: |
