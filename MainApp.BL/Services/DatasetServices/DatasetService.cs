@@ -239,12 +239,12 @@ namespace MainApp.BL.Services.DatasetServices
             var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
             var allDataset_DatasetClasses = await _datasetDatasetClassRepository.GetAll(includeProperties: "DatasetClass,Dataset") ?? throw new Exception("Object not found");
 
-            var allDatasetImages = await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetDbData.Id) ?? throw new Exception("Object not found");
+            var allDatasetImages = await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetDbData.Id, includeProperties: "ImageAnnotations") ?? throw new Exception("Object not found");
             var allDatasetImagesData = allDatasetImages.Data ?? throw new Exception("Object not found");
             var enabledImagesList = allDatasetImagesData.Where(x => x.IsEnabled == true).ToList() ?? throw new Exception("Object not found");
             var allImageAnnotationsList = await _imageAnnotationsRepository.GetAll() ?? throw new Exception("Object not found");
             var allEnabledImagesHaveAnnotations = enabledImagesList.Any() ?
-                            enabledImagesList.All(x => allImageAnnotationsList.Data.Where(x => x.DatasetImageId == x.Id).Select(x => x.DatasetImageId).Any(a => a == x.Id)) : false;
+                            enabledImagesList.All(x => allImageAnnotationsList.Data.Where(m => m.DatasetImageId == x.Id).Select(x => x.DatasetImageId).Any(a => a == x.Id)) : false;
             var nubmerOfImagesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100);
             var nubmerOfClassesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1);
             var insertedClasses = allDataset_DatasetClasses.Data?.Where(x => x.DatasetId == datasetDbData.Id).Select(x => x.DatasetClass).ToList() ?? throw new Exception("Object not found");

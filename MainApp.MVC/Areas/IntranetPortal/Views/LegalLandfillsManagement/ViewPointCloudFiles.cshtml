@@ -206,7 +206,8 @@
                             });
                         }
                         else {
-                            $("#wasteVolumeDiffAnalysisModalBody").empty();                           
+                            $("#wasteVolumeDiffAnalysisModalBody").empty();
+                            
                             var html = `<div class="info-box">
                                             <span class="info-box-icon bg-secondary"><i class="fas fa-chart-bar"></i></span>
                                             <div class="info-box-content">
@@ -227,7 +228,7 @@
                                                     <b>Total:</b>
                                                     <br>
                                                     <label class="btn btn-default text-center text-sm border border-dark">
-                                                        <span class="text-sm">${data.data.difference} m³</span>
+                                                        <span class="text-sm">${data.data.difference.toFixed(2)} m³</span>
                                                     </label>
                                                 </span>                                               
                                             </div>

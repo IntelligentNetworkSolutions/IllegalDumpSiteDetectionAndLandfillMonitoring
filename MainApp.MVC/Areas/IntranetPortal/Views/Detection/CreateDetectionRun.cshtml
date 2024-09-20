@@ -188,32 +188,41 @@
             formData.append('imgFile', imgFile);
             formData.append('imgName', imgFileName);
 
-            // for (let [key, value] of formData.entries()) {
-            //     console.log(key, value);
-            // }
-
-            // Ajax
             $.ajax({
                 type: "POST",
                 url: '@Url.Action("StartDetectionRun", "Detection", new { area = "IntranetPortal" })',
                 processData: false,
                 contentType: false,
                 data: formData,
-                success: function (data) {
-                    console.log('success');
-                    console.log(data);
-                    if (hasValue(data) === false || hasValue(data.data) === false) {
+                success: function (data) {                   
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            removeOverlayByQuerySelector('.card-body');
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        } 
+                        else {
+                            removeOverlayByQuerySelector('.card-body');
+                            location.href = '@Url.Action("Index", "Map", new { area = "IntranetPortal" })' + '?detectionRunId=' + data.data.item1;
+                        }
+                    }
+                    else {
+                        removeOverlayByQuerySelector('.card-body');
                         Swal.fire({
-                            text: 'Detection Run Completed Successfully',
+                            text: `@DbResHtml.T("No data received", "Resources")`,
                             confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                             allowOutsideClick: false,
-                            icon: "success"
-                        })
+                            icon: "error"
+                        });
                     }
 
-                    removeOverlayByQuerySelector('.card-body');
 
-                    location.href = '@Url.Action("Index", "Map", new { area = "IntranetPortal" })' + '?detectionRunId=' + data.data.item1;
+
+
                     // Get the checkbox element by its ID
                     //var checkbox = document.getElementById('chbIsCompleted');
                     // Temporarily enable the checkbox to modify its state

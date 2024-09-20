@@ -348,9 +348,9 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
                     dataset.GetGeoTransform(geoTransform);
                     double pixelWidth = geoTransform[1];
 
-                    wasteVolumeDiffrenceFormula = (width * pixelWidth * (statisticsValidPercentValue / 100)) *
+                    wasteVolumeDiffrenceFormula = ((width * pixelWidth * (statisticsValidPercentValue / 100)) *
                                                           (height * pixelWidth * (statisticsValidPercentValue / 100)) *
-                                                          statisticsMeanValue;
+                                                          statisticsMeanValue) * -1;
 
                 }
 
