@@ -46,6 +46,9 @@ using DAL.Interfaces.Repositories.DetectionRepositories;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using DAL.ApplicationStorage.SeedDatabase;
 using Microsoft.Extensions.Hosting;
+using Hangfire;
+using Hangfire.PostgreSql;
+using MainApp.MVC.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables(prefix: "ASPNETCORE_");
@@ -155,6 +158,11 @@ services.AddAuthorization(options => new AuthorizationOptions()
 services.AddHttpContextAccessor();
 services.AddApplicationServices();
 services.AddInfrastructureServices();
+
+// Add Hangfire services
+services.RegisterHangfireServices(configuration);
+// Add the processing hangfire server as IHostedService
+services.AddHangfireProcessingServer();
 
 // TODO: look over
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);
@@ -338,6 +346,11 @@ if (applicationStartMode == ApplicationStartModes.PublicPortal)
     });
 }
 
+
+if (applicationStartMode == ApplicationStartModes.IntranetPortal)
+{
+    app.ConfigureHangfireDashboardAndJobs();
+}
 app.Run();
 
 void SeedDatabase(bool? runMigrations, bool? loadModules, List<string> modulesToLoad)
