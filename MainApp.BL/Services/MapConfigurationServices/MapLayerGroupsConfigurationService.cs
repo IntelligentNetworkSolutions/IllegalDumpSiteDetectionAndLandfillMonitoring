@@ -1,11 +1,10 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.MapConfigurationRepositories;
+using DTOs.MainApp.BL.MapConfigurationDTOs;
+using Entities.MapConfigurationEntities;
 using MainApp.BL.Interfaces.Services.MapConfigurationServices;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using SD;
 
 namespace MainApp.BL.Services.MapConfigurationServices
 {
@@ -13,27 +12,159 @@ namespace MainApp.BL.Services.MapConfigurationServices
     {
         private readonly IMapLayerGroupsConfigurationRepository _mapLayerGroupsConfigRepository;
         private readonly IMapper _mapper;
-        public MapLayerGroupsConfigurationService(IMapLayerGroupsConfigurationRepository mapLayerGroupsConfigRepository, IMapper mapper)
+        private readonly ILogger<MapLayersConfigurationService> _logger;
+        public MapLayerGroupsConfigurationService(IMapLayerGroupsConfigurationRepository mapLayerGroupsConfigRepository, IMapper mapper, ILogger<MapLayersConfigurationService> logger)
         {
             _mapLayerGroupsConfigRepository = mapLayerGroupsConfigRepository;
             _mapper = mapper;
+            _logger = logger;
         }
-        #region Read
-        #region Get MapLayerGroupsConfig/es
 
+        #region Read
+        #region Get MapConfigLayers
+
+        public async Task<ResultDTO<List<MapLayerGroupConfigurationDTO>>> GetAllMapLayerGroupConfigurations()
+        {
+            try
+            {
+                ResultDTO<IEnumerable<MapLayerGroupConfiguration>> resultGetAllEntities = await _mapLayerGroupsConfigRepository.GetAll(includeProperties: "MapLayerConfigurations");
+
+                if (resultGetAllEntities.IsSuccess == false && resultGetAllEntities.HandleError())
+                {
+                    return ResultDTO<List<MapLayerGroupConfigurationDTO>>.Fail(resultGetAllEntities.ErrMsg!);
+                }
+
+                List<MapLayerGroupConfigurationDTO> dtos = _mapper.Map<List<MapLayerGroupConfigurationDTO>>(resultGetAllEntities.Data);
+
+                return ResultDTO<List<MapLayerGroupConfigurationDTO>>.Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex.Message, ex);
+
+                return ResultDTO<List<MapLayerGroupConfigurationDTO>>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO<MapLayerGroupConfigurationDTO>> GetAllGroupLayersById(Guid mapLayerGroupConfigurationId)
+        {
+            try
+            {
+                ResultDTO<MapLayerGroupConfiguration?> resultGetEntity = await _mapLayerGroupsConfigRepository.GetById(mapLayerGroupConfigurationId, includeProperties: "MapLayerConfigurations");
+
+                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                {
+                    return ResultDTO<MapLayerGroupConfigurationDTO>.Fail(resultGetEntity.ErrMsg!);
+                }
+
+                MapLayerGroupConfigurationDTO dto = _mapper.Map<MapLayerGroupConfigurationDTO>(resultGetEntity.Data);
+
+                return ResultDTO<MapLayerGroupConfigurationDTO>.Ok(dto);
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex.Message, ex);
+
+                return ResultDTO<MapLayerGroupConfigurationDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO<MapLayerGroupConfigurationDTO>> GetMapLayerGroupConfigurationById(Guid mapLayerGroupConfigurationId)
+        {
+            try
+            {
+                ResultDTO<MapLayerGroupConfiguration?> resultGetEntity = await _mapLayerGroupsConfigRepository.GetById(mapLayerGroupConfigurationId);
+
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                {
+                    return ResultDTO<MapLayerGroupConfigurationDTO>.Fail(resultGetEntity.ErrMsg!);
+                }
+
+                MapLayerGroupConfigurationDTO dto = _mapper.Map<MapLayerGroupConfigurationDTO>(resultGetEntity.Data);
+
+                return ResultDTO<MapLayerGroupConfigurationDTO>.Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+                return ResultDTO<MapLayerGroupConfigurationDTO>.ExceptionFail(ex.Message, ex);
+            }
+
+        }
         #endregion
         #endregion
 
         #region Create
+        public async Task<ResultDTO<MapLayerGroupConfigurationDTO>> CreateMapLayerGroupConfiguration(MapLayerGroupConfigurationDTO mapLayerGroupConfigurationDTO)
+        {
+            try
+            {
+                MapLayerGroupConfiguration entity = _mapper.Map<MapLayerGroupConfiguration>(mapLayerGroupConfigurationDTO);
 
+                ResultDTO<MapLayerGroupConfiguration> resultCreate = await _mapLayerGroupsConfigRepository.CreateAndReturnEntity(entity);
+                if (!resultCreate.IsSuccess && resultCreate.HandleError())
+                {
+                    return ResultDTO<MapLayerGroupConfigurationDTO>.Fail(resultCreate.ErrMsg!);
+                }
+
+                MapLayerGroupConfigurationDTO returnEntity = _mapper.Map<MapLayerGroupConfigurationDTO>(resultCreate.Data);
+
+                return ResultDTO<MapLayerGroupConfigurationDTO>.Ok(returnEntity);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<MapLayerGroupConfigurationDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
         #endregion
 
         #region Update
+        public async Task<ResultDTO> EditMapLayerGroupConfiguration(MapLayerGroupConfigurationDTO mapLayerGroupConfigurationDTO)
+        {
+            try
+            {
+                MapLayerGroupConfiguration mapConfigurationEntity = _mapper.Map<MapLayerGroupConfiguration>(mapLayerGroupConfigurationDTO);
 
+                ResultDTO resultCreate = await _mapLayerGroupsConfigRepository.Update(mapConfigurationEntity);
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
+                {
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
         #endregion
 
         #region Delete
+        public async Task<ResultDTO> DeleteMapLayerGroupConfiguration(MapLayerGroupConfigurationDTO mapLayerGroupConfigurationDTO)
+        {
+            try
+            {
+                MapLayerGroupConfiguration mapConfigurationEntity = _mapper.Map<MapLayerGroupConfiguration>(mapLayerGroupConfigurationDTO);
 
+                ResultDTO resultCreate = await _mapLayerGroupsConfigRepository.Delete(mapConfigurationEntity);
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
+                {
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
         #endregion
     }
 }

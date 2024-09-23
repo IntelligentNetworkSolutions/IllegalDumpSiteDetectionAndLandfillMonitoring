@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SD.Helpers;
 using System.Collections.ObjectModel;
-using System.Data.SqlTypes;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using SD.Helpers;
 
 namespace SD
 {
@@ -72,6 +66,7 @@ namespace SD
         public static readonly Module HistoricData = new Module { Value = "HistoricData", Title = "Historic Data", Description = "Historic Data" };
         public static readonly Module Detection = new Module { Value = "Detection", Title = "Detection", Description = "Detection" };
         public static readonly Module LegalLandfillManagement = new Module { Value = "LegalLandfillManagement", Title = "Legal Landfill Management", Description = "Legal Landfill Management" };
+        public static readonly Module MapConfiguration = new Module { Value = "MapConfiguration", Title = "Map Configuration", Description = "Map Configuration" };
 
 
     }
