@@ -7,16 +7,16 @@ namespace MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement
     public class LegalLandfillWasteImportViewModel
     {
         public Guid Id { get; set; }
-        public DateTime ImportedOn { get; set; } = DateTime.UtcNow;
+        public DateTime ImportedOn { get; set; }
         public int ImportExportStatus { get; set; }
         public double? Capacity { get; set; }
         public double? Weight { get; set; }
         public bool IsEnabled { get; set; }
         public string? CreatedById { get; set; }
-        public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedOn { get; set; }
         public UserDTO? CreatedBy { get; set; }
 
-        public Guid LegalLandfillTruckId { get; set; }
+        public Guid? LegalLandfillTruckId { get; set; }
         public virtual LegalLandfillTruckDTO? LegalLandfillTruck { get; set; }
         public virtual List<LegalLandfillTruckDTO>? LegalLandfillTrucks { get; set; }
 

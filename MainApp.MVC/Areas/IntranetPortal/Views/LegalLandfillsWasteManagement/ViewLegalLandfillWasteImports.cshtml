@@ -30,6 +30,7 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
+                        <div class="row justify-content-between">
                         @if (User.HasAuthClaim(SD.AuthClaims.AddLegalLandfillWasteImports))
                         {
                             <a asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="CreateLegalLandfillWasteImport" class="mb-1 btn bg-gradient-primary float-left">
@@ -39,7 +40,72 @@
                         }
                         <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
                             <i class="fas fa-file-alt"></i>
-                        </button>
+                            </button>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Filter Options</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <label>Date From <i class="fas fa-calendar-alt" data-toggle="tooltip" title="Select the starting date"></i></label>
+                                        <input type="text" id="dateFrom" class="form-control datepicker" placeholder="DD.MM.YYYY" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>Date To <i class="fas fa-calendar-alt" data-toggle="tooltip" title="Select the ending date"></i></label>
+                                        <input type="text" id="dateTo" class="form-control datepicker" placeholder="DD.MM.YYYY" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>Waste Type <i class="fas fa-recycle" data-toggle="tooltip" title="Select waste types"></i></label>
+                                        <select id="wasteTypeFilter" class="form-control select2" multiple>
+                                            @foreach (var wasteType in Model.Select(x => x.LegalLandfillWasteType).DistinctBy(x => x.Name))
+                                            {
+                                                <option value="@wasteType.Name">@wasteType.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>Truck <i class="fas fa-truck" data-toggle="tooltip" title="Select trucks"></i></label>
+                                        <select id="truckFilter" class="form-control select2" multiple>
+                                            @if (Model != null)
+                                            {
+                                                @foreach (var truck in Model.Where(x => x.LegalLandfillTruck != null)
+                                               .Select(x => x.LegalLandfillTruck)
+                                               .DistinctBy(t => t.Name))
+                                                {
+                                                    <option value="@truck?.Name">@truck?.Name</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>Import/Export <i class="fas fa-exchange-alt" data-toggle="tooltip" title="Select import or export"></i></label>
+                                        <select id="importExportFilter" class="form-control select2">
+                                            <option value="">All</option>
+                                            <option value="1">Import</option>
+                                            <option value="-1">Export</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>Landfill <i class="fas fa-building" data-toggle="tooltip" title="Select landfills"></i></label>
+                                        <select id="landfillFilter" class="form-control select2" multiple>
+                                            @foreach (var landfill in Model.Select(l => l.LegalLandfill).DistinctBy(l => l.Name))
+                                            {
+                                                <option value="@landfill.Name">@landfill.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 align-self-end">
+                                        <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
+                                        <button id="resetFilters" class="btn btn-secondary ml-2">Reset Filters</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        </div>
+
                         <div class="mt-5">
                             <table id="legalLandfillsTable" class="table table-sm table-bordered table-striped">
                                 <thead>
@@ -72,8 +138,8 @@
                                             </td>
                                             <td>@item.LegalLandfillWasteType.Name</td>
                                             <td>@item.LegalLandfill.Name</td>
-                                            <td>@item.LegalLandfillTruck.Name</td>
-                                            <td>@item.LegalLandfillTruck.Registration</td>
+                                            <td>@item.LegalLandfillTruck?.Name</td>
+                                            <td>@item.LegalLandfillTruck?.Registration</td>
                                             <td>
                                                 @if (item.Weight.HasValue)
                                                 {
@@ -136,35 +202,99 @@
             var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
             var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
         }
-            $(document).ready(function () {
-                $('#legalLandfillsTable').DataTable({
-                    paging: true,
-                    pageLength: 100,
-                    "columnDefs": [
-                        { "width": "20%", "targets": 2 }
-                    ],
-                    "language": {
-                        "url": "@langPath"
-                    },
-                    dom: 'Bfrtip',
-                    buttons: [
-                        {
-                            extend: 'excelHtml5',
-                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
-                            text: '<i class="fas fa-file-alt"></i>',
-                            titleAttr: "Export to excel",
-                            filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
-                            exportOptions: {
-                                columns: ':not(.notexport)'
-                            }
-                        }
-                    ]
-                });
 
-                $("#exportToExcelButton").click(function () {
-                    $(".export-to-excel-button").click();
-                });
-            });
+$(document).ready(function () {
+    $('.select2').select2();
+    $('[data-toggle="tooltip"]').tooltip();
+
+    var table = $('#legalLandfillsTable').DataTable({
+        paging: true,
+        pageLength: 100,
+        columnDefs: [{ width: "20%", targets: 2 }],
+        language: { url: "@langPath" },
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+                text: '<i class="fas fa-file-alt"></i>',
+                titleAttr: "Export to excel",
+                filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
+                exportOptions: { columns: ':not(.notexport)' }
+            }
+        ]
+    });
+
+    $("#exportToExcelButton").click(function () {
+        table.button('.export-to-excel-button').trigger();
+    });
+
+        $('.datepicker').datepicker({
+        dateFormat: 'dd.mm.yy',
+        onSelect: function() {
+            $(this).datepicker("hide"); 
+        }
+    });
+
+$('#applyFilters').on('click', function () {
+    var dateFrom = $('#dateFrom').val();
+    var dateTo = $('#dateTo').val();
+    var wasteTypeValues = $('#wasteTypeFilter').val();
+    var truckValues = $('#truckFilter').val();
+    var importExportValue = $('#importExportFilter').val();
+    var landfillValues = $('#landfillFilter').val();
+
+    $.fn.dataTable.ext.search.pop();
+
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        var rowDateParts = data[8].split('.'); 
+        var rowDate = new Date(rowDateParts[2], rowDateParts[1] - 1, rowDateParts[0]);
+
+        var fromDate = dateFrom ? new Date(dateFrom.split('.').reverse().join('-')) : null; 
+        var toDate = dateTo ? new Date(dateTo.split('.').reverse().join('-')) : null;
+
+        if (fromDate && !toDate) { 
+            if (rowDate < fromDate) return false; 
+        }
+        if (!fromDate && toDate) {
+            if (rowDate > toDate) return false; 
+        }
+        if (fromDate && toDate) { 
+            if (rowDate < fromDate || rowDate > toDate) return false; 
+        }
+
+        if (wasteTypeValues && wasteTypeValues.length > 0 && !wasteTypeValues.includes(data[1])) return false;
+        if (truckValues && truckValues.length > 0 && !truckValues.includes(data[3])) return false;
+        if (importExportValue && importExportValue !== "" && (data[0] === "Import" ? 1 : (data[0] === "Export" ? -1 : null)) !== parseInt(importExportValue)) return false;
+        if (landfillValues && landfillValues.length > 0 && !landfillValues.includes(data[2])) return false;
+
+        return true;
+    });
+
+    table.draw();
+});
+
+
+
+
+    // Reset Filters Button Click Event
+    $('#resetFilters').on('click', function () {
+        $('#dateFrom').val('');
+        $('#dateTo').val('');
+        $('#wasteTypeFilter').val(null).trigger('change');
+        $('#truckFilter').val(null).trigger('change');
+        $('#importExportFilter').val('');
+        $('#landfillFilter').val(null).trigger('change');
+
+        // Clear DataTable search filters
+        $.fn.dataTable.ext.search.pop();
+
+        // Redraw the table with all data
+        table.draw();
+    });
+});
+
+
 
 
         function deleteLandfillWasteImportConfirmed() {

@@ -30,7 +30,7 @@ namespace DAL.EnitityConfigurations.LegalLandfillsManagementEntites
             builder.HasOne(e => e.LegalLandfill)
                 .WithMany()
                 .HasForeignKey(e => e.LegalLandfillId)
-                .OnDelete(DeleteBehavior.Cascade); // Maybe restrict ?
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configuring required relationship with LegalLandfillWasteType
             builder.HasOne(e => e.LegalLandfillWasteType)

@@ -65,7 +65,7 @@
 
                             <div class="form-group">
                                 <label asp-for="LegalLandfillTruckId" class="control-label">@DbResHtml.T("Truck:", "Resources")</label>
-                                @Html.DropDownListFor(x => x.LegalLandfillTruckId, new SelectList(Model.LegalLandfillTrucks, "Id", "Name"), "", new { @class = "form-control", style = "width: 100%;", id = "insertedTruck", required = "required" })
+                                @Html.DropDownListFor(x => x.LegalLandfillTruckId, new SelectList(Model.LegalLandfillTrucks, "Id", "Name"), "", new { @class = "form-control", style = "width: 100%;", id = "insertedTruck" })
                                 <span asp-validation-for="LegalLandfillTruckId" class="text-danger"></span>
                             </div>
                             <div class="form-group">

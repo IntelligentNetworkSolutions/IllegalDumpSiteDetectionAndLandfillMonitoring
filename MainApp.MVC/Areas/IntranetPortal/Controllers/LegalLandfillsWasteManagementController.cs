@@ -516,9 +516,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 LegalLandfillWasteTypeId = viewModel.LegalLandfillWasteTypeId,
                 Capacity = viewModel.Capacity,
                 Weight = viewModel.Weight,
-                CreatedOn = viewModel.CreatedOn,
+                CreatedOn = DateTime.UtcNow,
                 CreatedById = viewModel.CreatedById,
-                ImportedOn = viewModel.ImportedOn,
+                ImportedOn = DateTime.UtcNow,
             };
 
             if (dto is null)

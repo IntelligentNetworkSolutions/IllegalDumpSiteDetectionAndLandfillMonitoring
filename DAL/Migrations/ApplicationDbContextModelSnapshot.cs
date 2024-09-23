@@ -736,7 +736,7 @@ namespace DAL.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("legal_landfill_id");
 
-                    b.Property<Guid>("LegalLandfillTruckId")
+                    b.Property<Guid?>("LegalLandfillTruckId")
                         .HasColumnType("uuid")
                         .HasColumnName("legal_landfill_truck_id");
 
@@ -1542,7 +1542,6 @@ namespace DAL.Migrations
                         .WithMany()
                         .HasForeignKey("LegalLandfillTruckId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
                         .HasConstraintName("fk_legal_landfill_waste_imports_legal_landfill_trucks_legal_la~");
 
                     b.HasOne("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteType", "LegalLandfillWasteType")
