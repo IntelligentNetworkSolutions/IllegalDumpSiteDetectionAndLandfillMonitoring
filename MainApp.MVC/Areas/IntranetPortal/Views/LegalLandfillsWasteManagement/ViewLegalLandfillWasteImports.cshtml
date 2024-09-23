@@ -32,10 +32,6 @@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.AddLegalLandfillWasteImports))
                         {
-@*                               <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal"  data-target="#addLegalLandfillWasteImportModal" >
-                                  <i class="fas fa-plus"></i>
-                                  @DbResHtml.T("Add Legal Landfill Waste Import", "Resources")
-                              </button> *@
                             <a asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="CreateLegalLandfillWasteImport" class="mb-1 btn bg-gradient-primary float-left">
                                 <i class="fas fa-plus"></i>
                                 @DbResHtml.T("Add Legal Landfill Waste Import", "Resources")
@@ -140,35 +136,6 @@
             var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
             var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
         }
-            // $(document).ready(function () {
-            //     $('#legalLandfillsTable').DataTable({
-            //         paging: true,
-            //         pageLength: 100,
-            //         "columnDefs": [
-            //             { "width": "20%", "targets": 2 }
-            //         ],
-            //         "language": {
-            //             "url": "@langPath"
-            //         },
-            //         dom: 'Bfrtip',
-            //         buttons: [
-            //             {
-            //                 extend: 'excelHtml5',
-            //                 className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
-            //                 text: '<i class="fas fa-file-alt"></i>',
-            //                 titleAttr: "Export to excel",
-            //                 filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
-            //                 exportOptions: {
-            //                     columns: ':not(.notexport)'
-            //                 }
-            //             }
-            //         ]
-            //     });
-
-            //     $("#exportToExcelButton").click(function () {
-            //         $(".export-to-excel-button").click();
-            //     });
-            // });
             $(document).ready(function () {
                 $('#legalLandfillsTable').DataTable({
                     paging: true,
