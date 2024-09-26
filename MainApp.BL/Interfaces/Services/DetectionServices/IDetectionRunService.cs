@@ -1,11 +1,4 @@
 ﻿using DTOs.MainApp.BL.DetectionDTOs;
-using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
 using Entities.DetectionEntities;
 using SD;
@@ -29,5 +22,13 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
             (string absoluteImagePath, DetectionRunFinishedResponse detectionRunFinishedResponse);
         Task<ResultDTO<List<DetectedDumpSite>>> CreateDetectedDumpsSitesFromDetectionRun
             (Guid detectionRunId, DetectionRunFinishedResponse detectedDumpSitesProjectedResponse);
+
+        //Images
+        Task<ResultDTO<List<DetectionInputImageDTO>>> GetAllImages();
+        Task<ResultDTO> CreateDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO);
+        Task<ResultDTO> EditDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO);
+        Task<ResultDTO> DeleteDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO);
+        Task<ResultDTO<List<DetectionRunDTO>>> GetDetectionInputImageByDetectionRunId(Guid detectionInputImageId);
+        Task<ResultDTO<DetectionInputImageDTO>> GetDetectionInputImageById(Guid detectionInputImageId);
     }
 }

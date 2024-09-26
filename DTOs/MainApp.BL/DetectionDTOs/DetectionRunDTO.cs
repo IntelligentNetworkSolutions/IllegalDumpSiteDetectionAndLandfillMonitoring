@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DTOs.MainApp.BL.DetectionDTOs
+﻿namespace DTOs.MainApp.BL.DetectionDTOs
 {
     public class DetectionRunDTO
     {
@@ -15,8 +9,8 @@ namespace DTOs.MainApp.BL.DetectionDTOs
 
         public bool IsCompleted { get; set; } = false;
 
-        public string? ImagePath { get; set; }
-        public string? ImageFileName { get; set; }
+        public Guid? DetectionInputImageId { get; set; }
+        public virtual DetectionInputImageDTO? DetectionInputImage { get; set; }
 
         public string? CreatedById { get; set; }
         public DateTime? CreatedOn { get; set; }

@@ -1,17 +1,11 @@
 ﻿using AutoMapper;
-using CliWrap;
-using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
-using DTOs.ObjectDetection.API.Responses.DetectionRun;
-using Humanizer;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
 using MainApp.MVC.Filters;
 using MainApp.MVC.Helpers;
 using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using SD;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
@@ -145,7 +139,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 return ResultDTO.Fail(resultCheckForFiles.ErrMsg!);
             }
-            if(resultCheckForFiles.Data == null)
+            if (resultCheckForFiles.Data == null)
             {
                 return ResultDTO.Fail("Data is null");
             }
@@ -300,9 +294,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 var pdalAbsPath = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("PdalExePath", string.Empty);
                 var pipelineJsonTemplate = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("PdalPipelineTemplate", string.Empty);
 
-                if((!pointCloudUploadFolder.IsSuccess && pointCloudUploadFolder.HandleError()) || 
-                    (!pointCloudConvertFolder.IsSuccess && pointCloudConvertFolder.HandleError()) || 
-                    (!potreeConverterFilePath.IsSuccess && potreeConverterFilePath.HandleError()) || 
+                if ((!pointCloudUploadFolder.IsSuccess && pointCloudUploadFolder.HandleError()) ||
+                    (!pointCloudConvertFolder.IsSuccess && pointCloudConvertFolder.HandleError()) ||
+                    (!potreeConverterFilePath.IsSuccess && potreeConverterFilePath.HandleError()) ||
                     (!pdalAbsPath.IsSuccess && pdalAbsPath.HandleError()) ||
                     (!pipelineJsonTemplate.IsSuccess && pipelineJsonTemplate.HandleError()))
                 {
@@ -377,7 +371,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
         }
-               
+
         //[HttpPost]
         //[HasAuthClaim(nameof(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))]
         //public async Task<ResultDTO<string>> ProcessSelectedFiles([FromBody] List<Guid> selectedFiles)
@@ -487,7 +481,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (selectedFiles == null || selectedFiles.Count == 0)
             {
                 var errorPath = _configuration["ErrorViewsPath:Error"];
-                if(errorPath == null)
+                if (errorPath == null)
                 {
                     return BadRequest();
                 }
@@ -693,7 +687,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             };
 
             return ResultDTO<WasteVolumeComparisonDTO>.Ok(dto);
-        }    
+        }
 
     }
 }

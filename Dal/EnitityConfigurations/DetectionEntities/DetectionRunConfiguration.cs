@@ -14,12 +14,18 @@ namespace DAL.EnitityConfigurations.DetectionEntities
             builder.Property(dr => dr.IsCompleted).IsRequired();
 
             // Define properties for storing paths
-            builder.Property(dr => dr.ImagePath).IsRequired();
             builder.Property(ia => ia.CreatedOn).HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
 
             // Define fields related to user creation
             builder.Property(dr => dr.CreatedById).IsRequired();
             builder.Property(dr => dr.CreatedOn).IsRequired();
+
+            // Configure the relationship with DetectionInputImage
+            builder.HasOne(dr => dr.DetectionInputImage)
+                .WithMany()
+                .HasForeignKey(dr => dr.DetectionInputImageId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
 
             // Configure the relationship with ApplicationUser
             builder.HasOne(dr => dr.CreatedBy)

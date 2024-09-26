@@ -1,10 +1,5 @@
 ﻿using DTOs.MainApp.BL;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.ViewModels.DetectionTests
 {
@@ -66,33 +61,33 @@ namespace Tests.MainAppMVCTests.ViewModels.DetectionTests
             Assert.Equal(isCompleted, viewModel.IsCompleted);
         }
 
-        [Fact]
-        public void ImagePathProperty_ShouldSetAndGetCorrectValue()
-        {
-            // Arrange
-            var imagePath = "path/to/image.png";
-            var viewModel = new DetectionRunViewModel
-            {
-                ImagePath = imagePath
-            };
+        //[Fact]
+        //public void ImagePathProperty_ShouldSetAndGetCorrectValue()
+        //{
+        //    // Arrange
+        //    var imagePath = "path/to/image.png";
+        //    var viewModel = new DetectionRunViewModel
+        //    {
+        //        ImagePath = imagePath
+        //    };
 
-            // Act & Assert
-            Assert.Equal(imagePath, viewModel.ImagePath);
-        }
+        //    // Act & Assert
+        //    Assert.Equal(imagePath, viewModel.ImagePath);
+        //}
 
-        [Fact]
-        public void ImageFileNameProperty_ShouldSetAndGetCorrectValue()
-        {
-            // Arrange
-            var imageFileName = "image.png";
-            var viewModel = new DetectionRunViewModel
-            {
-                ImageFileName = imageFileName
-            };
+        //[Fact]
+        //public void ImageFileNameProperty_ShouldSetAndGetCorrectValue()
+        //{
+        //    // Arrange
+        //    var imageFileName = "image.png";
+        //    var viewModel = new DetectionRunViewModel
+        //    {
+        //        ImageFileName = imageFileName
+        //    };
 
-            // Act & Assert
-            Assert.Equal(imageFileName, viewModel.ImageFileName);
-        }
+        //    // Act & Assert
+        //    Assert.Equal(imageFileName, viewModel.ImageFileName);
+        //}
 
         [Fact]
         public void CreatedByIdProperty_ShouldSetAndGetCorrectValue()

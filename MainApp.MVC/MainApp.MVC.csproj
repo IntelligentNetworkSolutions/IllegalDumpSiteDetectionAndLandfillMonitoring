@@ -31,7 +31,6 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.1" />
 		<PackageReference Include="Westwind.Globalization" Version="3.1.7" />
 		<PackageReference Include="Westwind.Globalization.AspnetCore" Version="3.1.7" />
 		<PackageReference Include="X.PagedList" Version="8.4.7" />
@@ -59,10 +58,7 @@
 	</ItemGroup>
 
 	<Target Name="TransformWebConfig" AfterTargets="AfterPublish">
-		<TransformXml
-			Source="web.$(Configuration).config"
-			Transform="web.$(Configuration).config"
-			Destination="$(PublishDir)web.config" />
+		<TransformXml Source="web.$(Configuration).config" Transform="web.$(Configuration).config" Destination="$(PublishDir)web.config" />
 	</Target>
 
 </Project>

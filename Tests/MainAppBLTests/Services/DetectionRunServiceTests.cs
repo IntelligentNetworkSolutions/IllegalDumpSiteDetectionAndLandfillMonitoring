@@ -1,22 +1,15 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.DetectionRepositories;
-using DTOs.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
 using Entities.DetectionEntities;
-using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Services.DetectionServices;
 using Microsoft.DotNet.Scaffolding.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppBLTests.Services
 {
@@ -24,6 +17,7 @@ namespace Tests.MainAppBLTests.Services
     {
         private readonly Mock<IDetectionRunsRepository> _mockDetectionRunsRepository;
         private readonly Mock<IDetectedDumpSitesRepository> _mockDetectedDumSiteRepositoryRepository;
+        private readonly Mock<IDetectionInputImageRepository> _mockDetectionInputImageRepository;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<ILogger<DetectionRunService>> _mockLogger;
@@ -34,6 +28,7 @@ namespace Tests.MainAppBLTests.Services
         {
             _mockDetectionRunsRepository = new Mock<IDetectionRunsRepository>();
             _mockDetectedDumSiteRepositoryRepository = new Mock<IDetectedDumpSitesRepository>();
+            _mockDetectionInputImageRepository = new Mock<IDetectionInputImageRepository>();
             _mockMapper = new Mock<IMapper>();
             _mockLogger = new Mock<ILogger<DetectionRunService>>();
             _mockFileSystem = new Mock<IFileSystem>();
@@ -46,12 +41,13 @@ namespace Tests.MainAppBLTests.Services
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:TrainedModelConfigFileRelPath"]).Returns("trained_model_config_file_rel_path");
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:TrainedModelModelFileRelPath"]).Returns("trained_model_model_file_rel_path");
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:DetectionResultDummyDatasetClassId"]).Returns("detection_result_dummy_dataset_class_id");
-           
+
             _service = new DetectionRunService(_mockDetectionRunsRepository.Object,
                                                _mockMapper.Object,
                                                _mockLogger.Object,
                                                _mockConfiguration.Object,
-                                               _mockDetectedDumSiteRepositoryRepository.Object);
+                                               _mockDetectedDumSiteRepositoryRepository.Object,
+                                                _mockDetectionInputImageRepository.Object);
         }
 
         [Fact]
@@ -59,7 +55,7 @@ namespace Tests.MainAppBLTests.Services
         {
             // Arrange
             var detectionRuns = new List<DetectionRun>();
-            _mockDetectionRunsRepository.Setup(repo => repo.GetAll(null,null,false,null,null))
+            _mockDetectionRunsRepository.Setup(repo => repo.GetAll(null, null, false, null, null))
                                         .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Ok(detectionRuns));
 
             // Act
@@ -88,8 +84,8 @@ namespace Tests.MainAppBLTests.Services
         public async Task GetSelectedDetectionRunsIncludingDetectedDumpSites_ReturnsListOfDetectionRunDTO()
         {
             // Arrange
-            var selectedDetectionRunsIds = new List<Guid>(); 
-            var detectionRuns = new List<DetectionRun>(); 
+            var selectedDetectionRunsIds = new List<Guid>();
+            var detectionRuns = new List<DetectionRun>();
             _mockDetectionRunsRepository.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, null, null))
                                         .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Ok(detectionRuns));
 
@@ -358,6 +354,407 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal($"{nameof(absoluteImagePath)} is null or empty", result.ErrMsg);
         }
 
+        #region DetectionInputImageTests
 
+        [Fact]
+        public async Task GetAllImages_ShouldReturnListOfDetectionInputImageDTO()
+        {
+            // Arrange
+            var images = new List<DetectionInputImage> { new DetectionInputImage { Id = Guid.NewGuid() } };
+            var mappedDtos = new List<DetectionInputImageDTO> { new DetectionInputImageDTO { Id = Guid.NewGuid() } };
+
+            var repoResult = ResultDTO<IEnumerable<DetectionInputImage>>.Ok(images);
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetAll(null, null, false, "CreatedBy", null))
+                .ReturnsAsync(repoResult);
+
+            _mockMapper
+                .Setup(m => m.Map<List<DetectionInputImageDTO>>(It.IsAny<IEnumerable<DetectionInputImage>>()))
+                .Returns(mappedDtos);
+
+            // Act
+            var result = await _service.GetAllImages();
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(mappedDtos.Count, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetAllImages_RepositoryFails_ShouldReturnFailResult()
+        {
+            // Arrange
+            var repoResult = ResultDTO<IEnumerable<DetectionInputImage>>.Fail("Error occurred");
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetAll(null, null, false, "CreatedBy", null))
+                .ReturnsAsync(repoResult);
+
+            // Act
+            var result = await _service.GetAllImages();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error occurred", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllImages_ExceptionThrown_ShouldReturnExceptionFailResult()
+        {
+            // Arrange
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetAll(null, null, false, "CreatedBy", null))
+                .ThrowsAsync(new Exception("Some exception"));
+
+            // Act
+            var result = await _service.GetAllImages();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Some exception", result.ErrMsg);
+        }
+        [Fact]
+        public async Task GetDetectionInputImageById_ValidId_ReturnsDetectionInputImageDTO()
+        {
+            // Arrange
+            var inputImageId = Guid.NewGuid();
+            var imageEntity = new DetectionInputImage { Id = inputImageId };
+            var imageDto = new DetectionInputImageDTO { Id = inputImageId };
+
+            var repoResult = ResultDTO<DetectionInputImage?>.Ok(imageEntity);
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetById(inputImageId, false, "CreatedBy"))
+                .ReturnsAsync(repoResult);
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImage>()))
+                .Returns(imageDto);
+
+            // Act
+            var result = await _service.GetDetectionInputImageById(inputImageId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(imageDto.Id, result.Data.Id);
+        }
+
+        [Fact]
+        public async Task GetDetectionInputImageById_InvalidId_ShouldReturnFailResult()
+        {
+            // Arrange
+            var inputImageId = Guid.NewGuid();
+
+            var repoResult = ResultDTO<DetectionInputImage?>.Fail("Image not found");
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetById(inputImageId, false, "CreatedBy"))
+                .ReturnsAsync(repoResult);
+
+            // Act
+            var result = await _service.GetDetectionInputImageById(inputImageId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Image not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionInputImageById_ExceptionThrown_ShouldReturnExceptionFailResult()
+        {
+            // Arrange
+            var inputImageId = Guid.NewGuid();
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetById(inputImageId, false, "CreatedBy"))
+                .ThrowsAsync(new Exception("Some exception"));
+
+            // Act
+            var result = await _service.GetDetectionInputImageById(inputImageId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Some exception", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateDetectionInputImage_ValidDTO_ReturnsSuccessResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Create(inputImageEntity, true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _service.CreateDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateDetectionInputImage_RepositoryReturnsFail_ReturnsFailResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Create(inputImageEntity, true, default))
+                .ReturnsAsync(ResultDTO.Fail("Creation failed"));
+
+            // Act
+            var result = await _service.CreateDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Creation failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateDetectionInputImage_ThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Create(inputImageEntity, true, default))
+                .ThrowsAsync(new Exception("Exception occurred"));
+
+            // Act
+            var result = await _service.CreateDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Exception occurred", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionInputImage_ValidDTO_ReturnsSuccessResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Delete(inputImageEntity, true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _service.DeleteDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionInputImage_RepositoryReturnsFail_ReturnsFailResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Delete(inputImageEntity, true, default))
+                .ReturnsAsync(ResultDTO.Fail("Deletion failed"));
+
+            // Act
+            var result = await _service.DeleteDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Deletion failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionInputImage_ThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Delete(inputImageEntity, true, default))
+                .ThrowsAsync(new Exception("Exception occurred"));
+
+            // Act
+            var result = await _service.DeleteDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Exception occurred", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDetectionInputImage_ValidDTO_ReturnsSuccessResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Update(inputImageEntity, true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _service.EditDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDetectionInputImage_RepositoryReturnsFail_ReturnsFailResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Update(inputImageEntity, true, default))
+                .ReturnsAsync(ResultDTO.Fail("Update failed"));
+
+            // Act
+            var result = await _service.EditDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Update failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDetectionInputImage_ThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
+            var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
+
+            _mockMapper
+                .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
+                .Returns(inputImageEntity);
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.Update(inputImageEntity, true, default))
+                .ThrowsAsync(new Exception("Exception occurred"));
+
+            // Act
+            var result = await _service.EditDetectionInputImage(inputImageDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Exception occurred", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionInputImageByDetectionRunId_ValidId_ReturnsSuccessResultWithDTOs()
+        {
+            // Arrange
+            var detectionInputImageId = Guid.NewGuid();
+            var detectionRunEntities = new List<DetectionRun>
+                {
+                    new DetectionRun { Id = Guid.NewGuid(), DetectionInputImageId = detectionInputImageId },
+                    new DetectionRun { Id = Guid.NewGuid(), DetectionInputImageId = detectionInputImageId }
+                };
+            var detectionRunDTOs = new List<DetectionRunDTO>
+                {
+                    new DetectionRunDTO { Id = detectionRunEntities[0].Id },
+                    new DetectionRunDTO { Id = detectionRunEntities[1].Id }
+                };
+
+            Expression<Func<DetectionRun, bool>> filter = x => x.DetectionInputImageId == detectionInputImageId;
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Ok(detectionRunEntities));
+
+            _mockMapper
+                .Setup(m => m.Map<List<DetectionRunDTO>>(detectionRunEntities))
+                .Returns(detectionRunDTOs);
+
+            // Act
+            var result = await _service.GetDetectionInputImageByDetectionRunId(detectionInputImageId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(detectionRunDTOs.Count, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetDetectionInputImageByDetectionRunId_RepositoryReturnsFail_ReturnsFailResult()
+        {
+            // Arrange
+            var detectionInputImageId = Guid.NewGuid();
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Fail("Data retrieval failed"));
+
+            // Act
+            var result = await _service.GetDetectionInputImageByDetectionRunId(detectionInputImageId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Data retrieval failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionInputImageByDetectionRunId_ThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var detectionInputImageId = Guid.NewGuid();
+            Expression<Func<DetectionRun, bool>> filter = x => x.DetectionInputImageId == detectionInputImageId;
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, null, null))
+                .ThrowsAsync(new Exception("Exception occurred"));
+
+            // Act
+            var result = await _service.GetDetectionInputImageByDetectionRunId(detectionInputImageId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Exception occurred", result.ErrMsg);
+        }
+
+
+        #endregion
     }
 }
+
+
+

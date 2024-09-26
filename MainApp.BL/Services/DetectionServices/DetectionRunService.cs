@@ -5,19 +5,13 @@ using DAL.Interfaces.Repositories.DetectionRepositories;
 using DTOs.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
-using DTOs.MainApp.BL.MapConfigurationDTOs;
 using Entities.DetectionEntities;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using OSGeo.GDAL;
 using SD;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Office2019.Presentation;
-using DTOs.MainApp.BL.DatasetDTOs;
 
 namespace MainApp.BL.Services.DetectionServices
 {
@@ -25,6 +19,7 @@ namespace MainApp.BL.Services.DetectionServices
     {
         private readonly IDetectionRunsRepository _detectionRunRepository;
         private readonly IDetectedDumpSitesRepository _detectedDumpSitesRepository;
+        private readonly IDetectionInputImageRepository _detectionInputImageRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<DetectionRunService> _logger;
         private readonly IConfiguration _configuration;
@@ -42,9 +37,10 @@ namespace MainApp.BL.Services.DetectionServices
 
         private string DetectionResultDummyDatasetClassId = string.Empty;
 
-        public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository)
+        public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository)
         {
             _detectionRunRepository = detectionRunRepository;
+            _detectionInputImageRepository = detectionInputImageRepository;
             _mapper = mapper;
             _logger = logger;
             _configuration = configuration;
@@ -103,7 +99,7 @@ namespace MainApp.BL.Services.DetectionServices
                 return ResultDTO<List<DetectionRunDTO>>.ExceptionFail(ex.Message, ex);
             }
         }
-        
+
         public async Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRunsIncludingDetectedDumpSites()
         {
             try
@@ -132,7 +128,7 @@ namespace MainApp.BL.Services.DetectionServices
             {
                 // DetectedDumpSites might throw error
                 ResultDTO<IEnumerable<DetectionRun>> resultGetAllEntites =
-                    await _detectionRunRepository.GetAll(filter: x=> selectedDetectionRunsIds.Contains(x.Id),includeProperties: "CreatedBy,DetectedDumpSites");
+                    await _detectionRunRepository.GetAll(filter: x => selectedDetectionRunsIds.Contains(x.Id), includeProperties: "CreatedBy,DetectedDumpSites");
 
                 if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
                     return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntites.ErrMsg!);
@@ -150,8 +146,8 @@ namespace MainApp.BL.Services.DetectionServices
 
         public async Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds)
         {
-            var list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds) ?? throw new Exception("Object not found");
-            
+            List<DetectionRun> list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds) ?? throw new Exception("Object not found");
+
             var groupedDumpSites = list.Select(detectionRun => new
             {
                 DetectionRun = detectionRun,
@@ -279,12 +275,12 @@ namespace MainApp.BL.Services.DetectionServices
                 if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
                     return ResultDTO.Fail(resultGetEntity.ErrMsg!);
 
-                if(resultGetEntity.Data is null)
+                if (resultGetEntity.Data is null)
                     return ResultDTO.Fail($"No Detection Run found with ID: {detectionRunDTO.Id}");
 
                 DetectionRun detectionRunEntity = resultGetEntity.Data!;
                 detectionRunEntity.IsCompleted = true;
-                
+
                 ResultDTO resultUpdate = await _detectionRunRepository.Update(detectionRunEntity);
                 if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())
                     return ResultDTO.Fail(resultUpdate.ErrMsg!);
@@ -307,7 +303,7 @@ namespace MainApp.BL.Services.DetectionServices
 
                 string detectionCommand =
                     GeneratePythonDetectionCommandByType(
-                        imageToRunDetectionOnPath: detectionRunDTO.ImagePath,
+                        imageToRunDetectionOnPath: detectionRunDTO.DetectionInputImage.ImagePath,
                         trainedModelConfigPath: TrainedModelConfigFileRelPath,
                         trainedModelModelPath: TrainedModelModelFileRelPath,
                         isSmallImage: true, hasGPU: false);
@@ -375,7 +371,7 @@ namespace MainApp.BL.Services.DetectionServices
             if (string.IsNullOrEmpty(absoluteImagePath))
                 return ResultDTO<DetectionRunFinishedResponse>.Fail($"{nameof(absoluteImagePath)} is null or empty");
 
-            if(detectionRunFinishedResponse is null)
+            if (detectionRunFinishedResponse is null)
                 return ResultDTO<DetectionRunFinishedResponse>.Fail($"{nameof(detectionRunFinishedResponse)} is null");
 
             if (detectionRunFinishedResponse.bboxes is null || detectionRunFinishedResponse.bboxes.Length == 0)
@@ -423,9 +419,9 @@ namespace MainApp.BL.Services.DetectionServices
 
                 return ResultDTO<DetectionRunFinishedResponse>.Ok(updatedResponse);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                if(gdalDataset is not null)
+                if (gdalDataset is not null)
                     gdalDataset.Dispose();
 
                 _logger.LogError(ex.Message, ex);
@@ -476,5 +472,135 @@ namespace MainApp.BL.Services.DetectionServices
 
             return ResultDTO<List<DetectedDumpSite>>.Ok(detectedDumpSitesEntities);
         }
+
+        //Images
+        #region DetectionInputImage
+        public async Task<ResultDTO<List<DetectionInputImageDTO>>> GetAllImages()
+        {
+            try
+            {
+                ResultDTO<IEnumerable<DetectionInputImage>> resultGetEntities = await _detectionInputImageRepository.GetAll(includeProperties: "CreatedBy");
+                if (resultGetEntities.IsSuccess is false && resultGetEntities.HandleError())
+                {
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
+                }
+                List<DetectionInputImageDTO> dtos = _mapper.Map<List<DetectionInputImageDTO>>(resultGetEntities.Data);
+                return ResultDTO<List<DetectionInputImageDTO>>.Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<List<DetectionInputImageDTO>>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO<DetectionInputImageDTO>> GetDetectionInputImageById(Guid detectionInputImageId)
+        {
+            try
+            {
+                ResultDTO<DetectionInputImage?> resultGetEntity = await _detectionInputImageRepository.GetById(detectionInputImageId, includeProperties: "CreatedBy");
+
+                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                {
+                    return ResultDTO<DetectionInputImageDTO>.Fail(resultGetEntity.ErrMsg!);
+                }
+
+                DetectionInputImageDTO dto = _mapper.Map<DetectionInputImageDTO>(resultGetEntity.Data);
+                return ResultDTO<DetectionInputImageDTO>.Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<DetectionInputImageDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO> CreateDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO)
+        {
+            try
+            {
+                DetectionInputImage detectionInputImageEntity = _mapper.Map<DetectionInputImage>(detectionInputImageDTO);
+
+                ResultDTO resultCreate = await _detectionInputImageRepository.Create(detectionInputImageEntity);
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
+                {
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO> DeleteDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO)
+        {
+            try
+            {
+                DetectionInputImage detectionInputImageEntity = _mapper.Map<DetectionInputImage>(detectionInputImageDTO);
+
+                ResultDTO resultCreate = await _detectionInputImageRepository.Delete(detectionInputImageEntity);
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
+                {
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO> EditDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO)
+        {
+            try
+            {
+                DetectionInputImage detectionInputImageEntity = _mapper.Map<DetectionInputImage>(detectionInputImageDTO);
+
+                ResultDTO resultCreate = await _detectionInputImageRepository.Update(detectionInputImageEntity);
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
+                {
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO<List<DetectionRunDTO>>> GetDetectionInputImageByDetectionRunId(Guid detectionInputImageId)
+        {
+            try
+            {
+                ResultDTO<IEnumerable<DetectionRun>> resultGetAllEntites = await _detectionRunRepository.GetAll(filter: x => x.DetectionInputImageId == detectionInputImageId);
+
+                if (!resultGetAllEntites.IsSuccess && resultGetAllEntites.HandleError())
+                {
+                    return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntites.ErrMsg!);
+                }
+
+                List<DetectionRunDTO> dtos = _mapper.Map<List<DetectionRunDTO>>(resultGetAllEntites.Data);
+                return ResultDTO<List<DetectionRunDTO>>.Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<List<DetectionRunDTO>>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+
+
+        #endregion
     }
 }
