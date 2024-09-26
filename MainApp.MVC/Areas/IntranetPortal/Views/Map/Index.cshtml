@@ -24,6 +24,8 @@
                 @await Component.InvokeAsync("MeasureAreaTool")
                 @await Component.InvokeAsync("GoToCoordinatesTool")
                 @await Component.InvokeAsync("HistoricData", new { detectionRunId = Model})
+                @await Component.InvokeAsync("DetectionIgnoreZonesTool")
+                
             </div>
         </div>
     </div>

@@ -326,9 +326,12 @@ namespace SD
             FromModule = Modules.LegalLandfillManagement,
             Description = "View Waste Volume Differential Analysis"
         };
-        
-
-
+        public static readonly AuthClaim ManageDetectionIgnoreZones = new AuthClaim
+        {
+            Value = "14:1",
+            FromModule = Modules.MapToolDetectionIgnoreZones,
+            Description = "Manage Detection Ignore Zones"
+        };
     } 
 }
 
