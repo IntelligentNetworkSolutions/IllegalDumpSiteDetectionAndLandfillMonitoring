@@ -48,9 +48,9 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IMapLayerGroupsConfigurationService, MapLayerGroupsConfigurationService>();
             services.TryAddScoped<IDetectionRunService, DetectionRunService>();
             services.TryAddScoped<IImageAnnotationsService, ImageAnnotationsService>();
-            services.TryAddScoped<IDetectionRunService, DetectionRunService>();
             services.TryAddScoped<ILegalLandfillService, LegalLandfillService>();
             services.TryAddScoped<ILegalLandfillPointCloudFileService, LegalLandfillPointCloudFileService>();
+            services.TryAddScoped<IDetectionIgnoreZoneService, DetectionIgnoreZoneService>();
 
             return services;
         }

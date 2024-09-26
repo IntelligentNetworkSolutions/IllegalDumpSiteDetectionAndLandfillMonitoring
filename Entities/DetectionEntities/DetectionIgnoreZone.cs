@@ -9,6 +9,7 @@ namespace Entities.DetectionEntities
     {
         public string Name { get; set; }
         public string? Description { get; set; }
+        public bool IsEnabled { get; set; }
 
         [JsonIgnore]
         [Column(TypeName = "geometry(Polygon)")]

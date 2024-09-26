@@ -40,10 +40,10 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
             services.TryAddScoped<IDbInitializer, DbInitializer>();
             services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
-            services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
             services.TryAddScoped<ILegalLandfillRepository, LegalLandfillRepository>();
             services.TryAddScoped<ILegalLandfillPointCloudFileRepository, LegalLandfillPointCloudFileRepository>();
-
+            services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();
+            
             return services;
         }
     }
