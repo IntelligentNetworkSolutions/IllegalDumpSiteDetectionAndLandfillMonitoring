@@ -373,3 +373,4 @@ FodyWeavers.xsd
 /MainApp.MVC/wwwroot/detection-runs/input-images
 /MainApp.MVC/wwwroot/detection-runs/outputs/visualized-images
 /MainApp.MVC/wwwroot/Uploads/
+/MainApp.MVC/wwwroot/detection/input-images
