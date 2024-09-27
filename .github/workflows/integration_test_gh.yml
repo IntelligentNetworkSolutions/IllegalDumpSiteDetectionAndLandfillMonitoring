@@ -13,18 +13,18 @@ jobs:
 
     services:
       postgres:
-        image: postgis/postgis:16-3.4
+        image: postgres
         env:
-          POSTGRES_DB: waste_detection_test_v3
+          POSTGRES_DB: waste_detection_test_integration
           POSTGRES_PASSWORD: admin
           POSTGRES_USER: postgres
-        ports:
-          - 5434:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5434:5432
 
     steps:
     - uses: actions/checkout@v3
@@ -40,7 +40,7 @@ jobs:
     - name: Run Integration Tests
       run: dotnet test --filter "Category=Integration" --logger "trx;LogFileName=integration-test-results.trx"
       env:
-        TestConnectionString: "Host=localhost;Port=5434;Database=waste_detection_test_v3;Username=postgres;Password=admin;Pooling=true;"
+        TestConnectionString: "Host=localhost;Port=5434;Database=waste_detection_test_integration;Username=postgres;Password=admin;Pooling=true;"
 
     - name: Upload TRX report
       uses: actions/upload-artifact@v3
