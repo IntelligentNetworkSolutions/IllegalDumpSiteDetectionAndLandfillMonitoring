@@ -120,5 +120,59 @@ namespace Tests.SDTests.Classes
             Assert.True(ResultDTO<int>.HandleError(resultDTO));
         }
         #endregion
+
+        #region Extensions
+        // Test HandleError for non-generic ResultDTO
+        [Fact]
+        public void HandleError_ShouldReturnTrue_WhenExObjIsNull_ForResultDTO()
+        {
+            // Arrange
+            var resultDTO = new ResultDTO(true, null, null);
+
+            // Act
+            var result = resultDTO.HandleError();
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void HandleError_ShouldThrowException_WhenExObjIsNotNull_ForResultDTO()
+        {
+            // Arrange
+            var exception = new InvalidOperationException("Test exception");
+            var resultDTO = new ResultDTO(false, null, exception);
+
+            // Act & Assert
+            var ex = Assert.Throws<InvalidOperationException>(() => resultDTO.HandleError());
+            Assert.Equal("Test exception", ex.Message);
+        }
+
+        // Test HandleError for generic ResultDTO<DataType>
+        [Fact]
+        public void HandleError_ShouldReturnTrue_WhenExObjIsNull_ForResultDTO_Generic()
+        {
+            // Arrange
+            var resultDTO = new ResultDTO<string>(true, "Test Data", null, null);
+
+            // Act
+            var result = resultDTO.HandleError();
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void HandleError_ShouldThrowException_WhenExObjIsNotNull_ForResultDTO_Generic()
+        {
+            // Arrange
+            var exception = new InvalidOperationException("Test exception");
+            var resultDTO = new ResultDTO<string>(false, null, "Error occurred", exception);
+
+            // Act & Assert
+            var ex = Assert.Throws<InvalidOperationException>(() => resultDTO.HandleError());
+            Assert.Equal("Test exception", ex.Message);
+        }
+        #endregion
     }
 }

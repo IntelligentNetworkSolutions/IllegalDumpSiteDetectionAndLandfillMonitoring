@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DAL.ApplicationStorage;
 using DAL.Interfaces.Repositories;
 using Entities.Intefaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
 using SD;
 
 namespace DAL.Repositories
@@ -54,7 +52,7 @@ namespace DAL.Repositories
                 if (saveChanges)
                 {
                     ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                    if (resSave.IsSuccess == false)
+                    if (resSave.IsSuccess == false && ResultDTO<int>.HandleError(resSave))
                         return ResultDTO.Fail(resSave.ErrMsg!);
 
                     return ResultDTO.Ok();
@@ -79,7 +77,7 @@ namespace DAL.Repositories
                 if (saveChanges)
                 {
                     ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                    if (resSave.IsSuccess == false)
+                    if (resSave.IsSuccess == false && ResultDTO<int>.HandleError(resSave))
                         return ResultDTO<TEntity>.Fail(resSave.ErrMsg!);
 
                     return ResultDTO<TEntity>.Ok(entity);
@@ -104,7 +102,7 @@ namespace DAL.Repositories
                 if (saveChanges)
                 {
                     ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                    if (resSave.IsSuccess == false)
+                    if (resSave.IsSuccess == false && ResultDTO<int>.HandleError(resSave))
                         return ResultDTO.Fail(resSave.ErrMsg!);
 
                     return ResultDTO.Ok();
@@ -131,7 +129,7 @@ namespace DAL.Repositories
                 if (saveChanges)
                 {
                     ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                    if (resSave.IsSuccess == false)
+                    if (resSave.IsSuccess == false && ResultDTO<int>.HandleError(resSave))
                         return ResultDTO.Fail(resSave.ErrMsg!);
 
                     return ResultDTO.Ok();
@@ -156,7 +154,7 @@ namespace DAL.Repositories
                 if (saveChanges)
                 {
                     ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                    if (resSave.IsSuccess == false)
+                    if (resSave.IsSuccess == false && ResultDTO<int>.HandleError(resSave))
                         return ResultDTO.Fail(resSave.ErrMsg!);
 
                     return ResultDTO.Ok();
@@ -181,7 +179,7 @@ namespace DAL.Repositories
                 if (saveChanges)
                 {
                     ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                    if (resSave.IsSuccess == false)
+                    if (resSave.IsSuccess == false && ResultDTO<int>.HandleError(resSave))
                         return ResultDTO<TEntity>.Fail(resSave.ErrMsg!);
 
                     return ResultDTO<TEntity>.Ok(entity);
@@ -204,7 +202,7 @@ namespace DAL.Repositories
                 switch (entity)
                 {
                     case null:
-                        throw new ArgumentNullException(nameof(entity));
+                        return ResultDTO.Fail("Invalid entity, is null");
 
                     default:
                         _dbContext.Set<TEntity>().Remove(entity);
@@ -214,7 +212,7 @@ namespace DAL.Repositories
                 if (saveChanges)
                 {
                     ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                    if (resSave.IsSuccess == false)
+                    if (resSave.IsSuccess == false && ResultDTO<int>.HandleError(resSave))
                         return ResultDTO.Fail(resSave.ErrMsg!);
 
                     return ResultDTO.Ok();
@@ -240,7 +238,7 @@ namespace DAL.Repositories
                 if (saveChanges)
                 {
                     ResultDTO<int> resSave = await SaveChangesAsync(cancellationToken);
-                    if (resSave.IsSuccess == false)
+                    if (resSave.IsSuccess == false && ResultDTO<int>.HandleError(resSave))
                         return ResultDTO.Fail(resSave.ErrMsg!);
 
                     return ResultDTO.Ok();
@@ -395,7 +393,6 @@ namespace DAL.Repositories
 
             return includeType.GetProperties().Any(p => p.PropertyType == thenIncludeType);
         }
-
 
         public virtual async Task<ResultDTO<TEntity?>> GetFirstOrDefault(Expression<Func<TEntity, bool>>? filter = null, bool track = false, string? includeProperties = null)
         {
