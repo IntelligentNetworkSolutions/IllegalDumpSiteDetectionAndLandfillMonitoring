@@ -357,7 +357,10 @@
                     }
                 },
                 error: function (req, status, error) {
-                    ajaxErrorHandlingAlert("error", req.status);
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
                 }
             });
         }
