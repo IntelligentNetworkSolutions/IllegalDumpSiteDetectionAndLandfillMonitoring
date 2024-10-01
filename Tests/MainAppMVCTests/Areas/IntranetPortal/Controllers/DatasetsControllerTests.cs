@@ -312,10 +312,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var datasetId = Guid.NewGuid();
-            _mockDatasetService.Setup(s => s.DeleteDataset(datasetId))
-                .ReturnsAsync(new ResultDTO<int>(true, 1, null, null));
-            _mockDatasetService.Setup(s => s.GetAllDatasets())
-                .ReturnsAsync(new List<DatasetDTO>());
+            _mockDatasetService.Setup(s => s.DeleteDatasetCompletelyIncluded(datasetId))
+                .ReturnsAsync(ResultDTO.Ok());
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages"))
                 .ReturnsAsync(new ResultDTO<string>(true, "DatasetImages", null, null));
             _mockWebHostEnvironment.Setup(e => e.WebRootPath).Returns("wwwroot");
@@ -328,6 +326,24 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonData = JObject.FromObject(result.Value);
             Assert.Equal("Successfully deleted dataset", jsonData["responseSuccess"]["Value"].ToString());
         }
-                
+
+
+
+        //[Fact]
+        //public async Task ImportDataset_ValidCocoFormattedDirectoryAtPath_ReturnsDataset()
+        //{
+        //    // Arrange - Arrange your objects, create and set ImportDataset_ValidCocoFormattedDirectoryAtPath them up as necessary.
+        //    string pathToCocoFormattedDirectory = "";
+
+        //    _mockDatasetService.Setup(s => s.ImportDatasetCocoFormatedAtDirectoryPath(pathToCocoFormattedDirectory))
+        //        .ReturnsAsync(pathToCocoFormattedDirectory);
+
+        //    // Act - Act on an object ValidCocoFormattedDirectoryAtPath.
+
+
+        //    // Assert - Assert that something is as expected ReturnsDataset.
+
+        //}
+
     }
 }

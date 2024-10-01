@@ -376,79 +376,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
 
-        }
-               
-        //[HttpPost]
-        //[HasAuthClaim(nameof(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))]
-        //public async Task<ResultDTO<string>> ProcessSelectedFiles([FromBody] List<Guid> selectedFiles)
-        //{
-
-        //    if (selectedFiles == null)
-        //    {
-        //        return ResultDTO<string>.Fail("No files selected");
-        //    }
-        //    TempData["SelectedFiles"] = JsonConvert.SerializeObject(selectedFiles);
-        //    if (selectedFiles == null || !selectedFiles.Any())
-        //    {
-        //        return ResultDTO<string>.Fail("No files selected");
-        //    }
-
-        //    var redirectUrl = Url.Action("Preview", "LegalLandfillsManagement", new { Area = "IntranetPortal" });
-        //    if (redirectUrl == null)
-        //    {
-        //        return ResultDTO<string>.Fail("Redirect url is null");
-        //    }
-        //    return ResultDTO<string>.Ok(redirectUrl);
-        //}
-
-        //[HttpGet]
-        //[HasAuthClaim(nameof(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))]
-        //public async Task<IActionResult> Preview()
-        //{
-        //    var selectedFilesJson = TempData["SelectedFiles"] as string;
-        //    if (selectedFilesJson == null)
-        //    {
-        //        var errorPath = _configuration["ErrorViewsPath:Error"];
-        //        return Redirect(errorPath);
-        //    }
-
-        //    var selectedFiles = JsonConvert.DeserializeObject<List<Guid>>(selectedFilesJson);
-        //    if (selectedFiles == null)
-        //    {
-        //        var errorPath = _configuration["ErrorViewsPath:Error"];
-        //        return Redirect(errorPath);
-        //    }
-
-        //    List<PreviewViewModel> listVM = [];
-        //    foreach (var item in selectedFiles)
-        //    {
-        //        var resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(item);
-        //        if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
-        //        {
-        //            var errorPath = _configuration["ErrorViewsPath:Error404"];
-        //            return Redirect(errorPath);
-        //        }
-        //        if (resultGetEntity.Data == null)
-        //        {
-        //            var errorPath = _configuration["ErrorViewsPath:Error404"];
-        //            return Redirect(errorPath);
-        //        }
-
-        //        string? fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resultGetEntity.Data.FileName);
-
-        //        PreviewViewModel vm = new()
-        //        {
-        //            FileId = resultGetEntity.Data.Id,
-        //            LandfillId = resultGetEntity.Data.LegalLandfillId,
-        //            FileName = fileNameWithoutExtension ?? resultGetEntity.Data.FileName
-        //        };
-        //        listVM.Add(vm);
-        //    }
-
-        //    return View(listVM);
-        //}
-
-
+        }               
+       
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))]
         public ResultDTO<string> ProcessSelectedFiles([FromBody] List<Guid> selectedFiles)

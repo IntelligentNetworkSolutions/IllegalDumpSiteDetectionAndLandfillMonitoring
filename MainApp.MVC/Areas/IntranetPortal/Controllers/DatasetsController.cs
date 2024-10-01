@@ -177,27 +177,30 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
 
-            var isDatasetDeleted = await _datasetService.DeleteDataset(datasetId);
-            var listOfAllDatasets = await _datasetService.GetAllDatasets() ?? throw new Exception("Datasets not found");
-            var childrenDatasetsList = listOfAllDatasets.Where(x => x.ParentDatasetId == datasetId).ToList() ?? throw new Exception("Object not found");
-            if (isDatasetDeleted.IsSuccess == true && isDatasetDeleted.Data == 1 && string.IsNullOrEmpty(isDatasetDeleted.ErrMsg))
+            try
             {
-                var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
+                ResultDTO deleteDatasetCompletelyIncludedResult = await _datasetService.DeleteDatasetCompletelyIncluded(datasetId);
+                if (deleteDatasetCompletelyIncludedResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetCompletelyIncludedResult))
+                    return Json(new { responseError = DbResHtml.T(deleteDatasetCompletelyIncludedResult.ErrMsg!, "Resources") });
+
+                ResultDTO<string?> datasetImagesFolder =
+                    await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
                 string folderPath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetId.ToString());
                 if (Directory.Exists(folderPath))
                     Directory.Delete(folderPath, true);
 
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset", "Resources") });
             }
-
-            if (!string.IsNullOrEmpty(isDatasetDeleted.ErrMsg))
-                return Json(new { responseError = DbResHtml.T(isDatasetDeleted.ErrMsg, "Resources") });
-
-            return Json(new { responseError = DbResHtml.T("Some error occured", "Resources") });
+            catch(Exception ex)
+            {
+                // TODO: ADD Logger
+                return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
+            }
         }
 
         // TODO: Change AuthClaim
 
+        #region Import / Export COCO Dataset
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
         public async Task<IActionResult> ExportDataset(Guid datasetId)
@@ -205,17 +208,51 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
 
-            ResultDTO<CocoDatasetDTO> resultExportDatasetAsCoco =
-                await _datasetService.ExportDatasetAsCOCOFormat(datasetId);
-            if (resultExportDatasetAsCoco.IsSuccess == false)
-                return Json(new { responseError = DbResHtml.T(resultExportDatasetAsCoco.ErrMsg, "Resources") });
-
-            return Json(new
+            try
             {
-                responseSuccess = DbResHtml.T("Successfully Exported Dataset in COCO Format", "Resources"),
-                COCODataset = resultExportDatasetAsCoco.Data
-            });
+                ResultDTO<CocoDatasetDTO> resultExportDatasetAsCoco =
+                    await _datasetService.ExportDatasetAsCOCOFormat(datasetId);
+                if (resultExportDatasetAsCoco.IsSuccess == false)
+                    return Json(new { responseError = DbResHtml.T(resultExportDatasetAsCoco.ErrMsg, "Resources") });
+
+                return Json(new
+                {
+                    responseSuccess = DbResHtml.T("Successfully Exported Dataset in COCO Format", "Resources"),
+                    COCODataset = resultExportDatasetAsCoco.Data
+                });
+            }
+            catch (Exception ex)
+            {
+                // TODO: ADD Logger
+                return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
+            }
         }
+
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
+        public async Task<IActionResult> ImportDataset(string cocoDatasetDirectoryPath)
+        {
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+
+            try
+            {
+                ResultDTO<DatasetDTO> importDatasetResult =
+                    await _datasetService.ImportDatasetCocoFormatedAtDirectoryPath("Test Dataset with Save Images v12", cocoDatasetDirectoryPath,
+                                                                                    userId, _webHostEnvironment.WebRootPath);
+                if (importDatasetResult.IsSuccess == false && ResultDTO<DatasetDTO>.HandleError(importDatasetResult))
+                    return Json(new { responseError = DbResHtml.T(importDatasetResult.ErrMsg!, "Resources") });
+
+                return Json(new { importDatasetResult.Data });
+            }
+            catch (Exception ex)
+            {
+                // TODO: ADD Logger
+                return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
+            }
+        }
+        #endregion
 
         #region Dataset Classes
         [HttpPost]

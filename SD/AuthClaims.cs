@@ -399,6 +399,12 @@ namespace SD
             Description = "Edit Legal Landfill Waste Imports"
         };
 
+        public static readonly AuthClaim ManageDetectionIgnoreZones = new AuthClaim
+        {
+            Value = "15:1",
+            FromModule = Modules.MapToolDetectionIgnoreZones,
+            Description = "Manage Detection Ignore Zones"
+        };
     } 
 }
 
