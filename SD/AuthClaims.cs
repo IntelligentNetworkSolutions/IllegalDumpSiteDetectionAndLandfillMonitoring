@@ -326,9 +326,82 @@ namespace SD
             FromModule = Modules.LegalLandfillManagement,
             Description = "View Waste Volume Differential Analysis"
         };
+		public static readonly AuthClaim AddLegalLandfillTruck = new AuthClaim
+		{
+			Value = "14:1",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Add Legal Landfill Truck"
+		};		
+        public static readonly AuthClaim EditLegalLandfillTruck = new AuthClaim
+		{
+			Value = "14:2",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Edit Legal Landfill Truck"
+		};
+		public static readonly AuthClaim DeleteLegalLandfillTruck = new AuthClaim
+		{
+			Value = "14:3",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Delete Legal Landfill Truck"
+		};
+		public static readonly AuthClaim ViewLegalLandfillTrucks = new AuthClaim
+		{
+			Value = "14:4",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "View Legal Landfill Trucks"
+		};
+		public static readonly AuthClaim AddLegalLandfillWasteType= new AuthClaim
+		{
+			Value = "14:5",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Add Legal Landfill Waste Type"
+		};
+		public static readonly AuthClaim EditLegalLandfillWasteType = new AuthClaim
+		{
+			Value = "14:6",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Edit Legal Landfill Waste Type"
+		};
+		public static readonly AuthClaim DeleteLegalLandfillWasteType = new AuthClaim
+		{
+			Value = "14:7",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Delete Legal Landfill Waste Type"
+		};
+        public static readonly AuthClaim ViewLegalLandfillWasteTypes = new AuthClaim
+        {
+            Value = "14:8",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "View Legal Landfill Waste Types"
+        };
+        public static readonly AuthClaim ViewLegalLandfillWasteImports = new AuthClaim
+        {
+            Value = "14:9",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "View Legal Landfill Waste Imports"
+        };
+        public static readonly AuthClaim AddLegalLandfillWasteImports = new AuthClaim
+        {
+            Value = "14:10",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Add Legal Landfill Waste Imports"
+        };
+        public static readonly AuthClaim DeleteLegalLandfillWasteImports = new AuthClaim
+        {
+            Value = "14:11",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Delete Legal Landfill Waste Imports"
+        };
+        public static readonly AuthClaim EditLegalLandfillWasteImports = new AuthClaim
+        {
+            Value = "14:12",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Edit Legal Landfill Waste Imports"
+        };
+
         public static readonly AuthClaim ManageDetectionIgnoreZones = new AuthClaim
         {
-            Value = "14:1",
+            Value = "15:1",
             FromModule = Modules.MapToolDetectionIgnoreZones,
             Description = "Manage Detection Ignore Zones"
         };

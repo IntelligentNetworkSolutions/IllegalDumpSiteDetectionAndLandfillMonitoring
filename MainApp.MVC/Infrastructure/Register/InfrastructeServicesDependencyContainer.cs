@@ -42,8 +42,10 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
             services.TryAddScoped<ILegalLandfillRepository, LegalLandfillRepository>();
             services.TryAddScoped<ILegalLandfillPointCloudFileRepository, LegalLandfillPointCloudFileRepository>();
-            services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();
-            
+            services.TryAddScoped<ILegalLandfillTruckRepository, LegalLandfillTruckRepository>();
+            services.TryAddScoped<ILegalLandfillWasteImportRepository, LegalLandfillWasteImportRepository>();
+            services.TryAddScoped<ILegalLandfillWasteTypeRepository, LegalLandfillWasteTypeRepository>();
+            services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();            
             return services;
         }
     }
