@@ -4,6 +4,9 @@
 @using SD.Helpers
 @model IEnumerable<DetectionInputImageViewModel>
 
+@{
+    ViewData["Title"] = @DbResHtml.T("Detection input images", "Resources");
+}
 <div class="content-header bg-gradient-white border-bottom mb-4">
     <div class="container-fluid">
         <div class="row">
@@ -26,9 +29,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
-                    @*   <div class="card-header bg-dark text-white">
-                    <h3 class="card-title">@DbResHtml.T("Detection Runs", "Resources")</h3>
-                    </div> *@
+
                     <div class="card-body">
                         <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addImageModal">
                                 <i class="fas fa-plus"></i>
@@ -37,50 +38,52 @@
                         <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
                             <i class="fas fa-file-alt"></i>
                         </button>
-                        <table id="detectionRunsTable" class="table table-sm table-bordered table-striped">
-                            <thead>
-                                <tr>
-                                    <th>
-                                        @DbResHtml.T("Name", "Resources")
-                                    </th>
-                                    <th>
-                                        @DbResHtml.T("Description", "Resources")
-                                    </th>
-                                    <th>
-                                        @DbResHtml.T("Date Taken", "Resources")
-                                    </th>
-                                    <th>
-                                        @DbResHtml.T("Created By", "Resources")
-                                    </th>
-                                    <th>
-                                        @DbResHtml.T("Created On", "Resources")
-                                    </th>
-                                    <th class="notexport">
-                                        @DbResHtml.T("Action", "Resources")
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in Model)
-                                {
+                        <div class="mt-5">
+                            <table id="detectionInputImagesTable" class="table table-sm table-bordered table-striped">
+                                <thead>
                                     <tr>
-                                        <td>@item.Name</td>
-                                        <td>@item.Description</td>
-                                        <td>@item.DateTaken?.ToString("dd.MM.yyy")</td>
-                                        <td>@item.CreatedBy?.UserName</td>
-                                        <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
-                                        <td>
+                                        <th>
+                                            @DbResHtml.T("Name", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Description", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Date Taken", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Created By", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Created On", "Resources")
+                                        </th>
+                                        <th class="notexport">
+                                            @DbResHtml.T("Action", "Resources")
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.Name</td>
+                                            <td>@item.Description</td>
+                                            <td>@item.DateTaken?.ToString("dd.MM.yyy")</td>
+                                            <td>@item.CreatedBy?.UserName</td>
+                                            <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
+                                            <td>
                                                 <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editDetectionInputImageModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
                                                     <i class="fas fa-edit"></i>
                                                 </button>
                                                 <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" id="@item.Id" onclick="deleteDetectionInputImageModalFunction('@item.Id')" title="@DbResHtml.T("Delete", "Resources")">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -110,24 +113,42 @@
                     buttons: [
                         {
                             extend: 'excelHtml5',
-                            className: 'btn bg-gradient-success border-0',
+                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
                             text: '<i class="fas fa-file-alt"></i>',
                             titleAttr: "Export to excel",
-                            filename: "Detection Runs - @DateTime.Now.ToString("dd.MM.yyyy")",
+                            filename: "Detection input images - @DateTime.Now.ToString("dd.MM.yyyy")",
                             exportOptions: {
                                 columns: ':not(.notexport)'
                             }
                         }
                     ]
                 });
+                $("#exportToExcelButton").click(function () {
+                    $(".export-to-excel-button").click();
+                });
             });
 
         function addImage() {
+            var file = $("#addImageFileInput").get(0).files[0];
+            if (($("#addImageNameInput").val() === undefined || $("#addImageNameInput").val() === '')
+                || ($("#addImageDescriptionInput").val() === undefined || $("#addImageDescriptionInput").val() === '')
+                || ($("#addImageDateTakenInput").val() === undefined || $("#addImageDateTakenInput").val() === '')
+                || !file
+            ){
+                
+                Swal.fire({
+                    text: '@DbResHtml.T("All fields are required", "Resources")',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                    allowOutsideClick: false,
+                    icon: "error"
+                });
+                return;
+            }
             var formData = new FormData();
             formData.append("Name", $("#addImageNameInput").val());
             formData.append("Description", $("#addImageDescriptionInput").val());
             formData.append("DateTaken", $("#addImageDateTakenInput").val());
-            var file = $("#addImageFileInput").get(0).files[0];
+            
             if (file) {
                 formData.append("file", file);
             }
@@ -454,9 +475,9 @@
             <div class="modal-content">
                 <div class="modal-header bg-gradient-primary">
                     <h4 class="modal-title">@DbResHtml.T("Upload New Image", "Resources")</h4>
-                    @*                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-                </button> *@
+                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">

@@ -128,7 +128,7 @@ namespace MainApp.BL.Services.DetectionServices
             {
                 // DetectedDumpSites might throw error
                 ResultDTO<IEnumerable<DetectionRun>> resultGetAllEntites =
-                    await _detectionRunRepository.GetAll(filter: x => selectedDetectionRunsIds.Contains(x.Id), includeProperties: "CreatedBy,DetectedDumpSites");
+                    await _detectionRunRepository.GetAll(filter: x => selectedDetectionRunsIds.Contains(x.Id), includeProperties: "CreatedBy,DetectedDumpSites,DetectionInputImage");
 
                 if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
                     return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntites.ErrMsg!);
@@ -480,6 +480,25 @@ namespace MainApp.BL.Services.DetectionServices
             try
             {
                 ResultDTO<IEnumerable<DetectionInputImage>> resultGetEntities = await _detectionInputImageRepository.GetAll(includeProperties: "CreatedBy");
+                if (resultGetEntities.IsSuccess is false && resultGetEntities.HandleError())
+                {
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
+                }
+                List<DetectionInputImageDTO> dtos = _mapper.Map<List<DetectionInputImageDTO>>(resultGetEntities.Data);
+                return ResultDTO<List<DetectionInputImageDTO>>.Ok(dtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<List<DetectionInputImageDTO>>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO<List<DetectionInputImageDTO>>> GetSelectedInputImagesById(List<Guid> selectedImagesIds)
+        {
+            try
+            {
+                ResultDTO<IEnumerable<DetectionInputImage>> resultGetEntities = await _detectionInputImageRepository.GetAll(filter: x => selectedImagesIds.Contains(x.Id),includeProperties: "CreatedBy");
                 if (resultGetEntities.IsSuccess is false && resultGetEntities.HandleError())
                 {
                     return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);

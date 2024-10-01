@@ -72,6 +72,7 @@ namespace SD
         public static readonly Module HistoricData = new Module { Value = "HistoricData", Title = "Historic Data", Description = "Historic Data" };
         public static readonly Module Detection = new Module { Value = "Detection", Title = "Detection", Description = "Detection" };
         public static readonly Module LegalLandfillManagement = new Module { Value = "LegalLandfillManagement", Title = "Legal Landfill Management", Description = "Legal Landfill Management" };
+        public static readonly Module MapToolDetectionInputImages = new Module { Value = "MapToolDetectionInputImages", Title = "Map Tool Detection Input Images", Description = "Map Tool Detection Input Images" };
 
 
     }

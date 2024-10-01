@@ -326,8 +326,13 @@ namespace SD
             FromModule = Modules.LegalLandfillManagement,
             Description = "View Waste Volume Differential Analysis"
         };
+        public static readonly AuthClaim ViewDetectionInputImages = new AuthClaim
+        {
+            Value = "15:1",
+            FromModule = Modules.MapToolDetectionInputImages,
+            Description = "View Detection Input Images"
+        };
         
-
 
     } 
 }

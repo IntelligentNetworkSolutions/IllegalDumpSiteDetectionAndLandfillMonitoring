@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
@@ -22,6 +23,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IUserManagementService> _mockUserManagementService;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<IWebHostEnvironment> _mockWebHostEnvironment;
+        private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
         private readonly DetectionController _controller;
 
         public DetectionControllerTests()
@@ -31,6 +33,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockUserManagementService = new Mock<IUserManagementService>();
             _mockConfiguration = new Mock<IConfiguration>();
             _mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
+            _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
 
             _mockConfiguration.Setup(c => c["AppSettings:MMDetection:BaseSaveMMDetectionDirectoryAbsPath"])
                 .Returns(@"C:\vs_code_workspaces\mmdetection\mmdetection\ins_development");
@@ -44,6 +47,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 _mockConfiguration.Object,
                 _mockMapper.Object,
                 _mockWebHostEnvironment.Object,
+                _mockAppSettingsAccessor.Object,
                 _mockDetectionRunService.Object);
         }
 
@@ -465,7 +469,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal("User not found", result.ErrMsg);
+            Assert.Equal("User id not found", result.ErrMsg);
         }
 
         //[Fact]

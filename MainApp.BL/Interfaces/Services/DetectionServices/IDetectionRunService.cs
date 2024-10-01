@@ -30,5 +30,6 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
         Task<ResultDTO> DeleteDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO);
         Task<ResultDTO<List<DetectionRunDTO>>> GetDetectionInputImageByDetectionRunId(Guid detectionInputImageId);
         Task<ResultDTO<DetectionInputImageDTO>> GetDetectionInputImageById(Guid detectionInputImageId);
+        Task<ResultDTO<List<DetectionInputImageDTO>>> GetSelectedInputImagesById(List<Guid> selectedImagesIds);
     }
 }

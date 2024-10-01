@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using DAL.Interfaces.Helpers;
+using DocumentFormat.OpenXml.Spreadsheet;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
@@ -21,17 +23,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IAppSettingsAccessor _appSettingsAccessor;
 
         private string _baseDetectionRunInputImagesSaveDirectoryPath = "detection-runs\\input-images";
         private string _baseDetectionRunCopyVisualizedOutputImagesDirectoryPathMVC = "detection-runs\\outputs\\visualized-images";
         private string _baseSaveMMDetectionDirectoryAbsPath = "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\ins_development";
 
-        public DetectionController(IUserManagementService userManagementService, IConfiguration configuration, IMapper mapper, IWebHostEnvironment webHostEnvironment, IDetectionRunService detectionRunService)
+        public DetectionController(IUserManagementService userManagementService, IConfiguration configuration, IMapper mapper, IWebHostEnvironment webHostEnvironment, IAppSettingsAccessor appSettingsAccessor,IDetectionRunService detectionRunService)
         {
             _userManagementService = userManagementService;
             _configuration = configuration;
             _mapper = mapper;
             _webHostEnvironment = webHostEnvironment;
+            _appSettingsAccessor = appSettingsAccessor;
             _detectionRunService = detectionRunService;
 
             string? baseSaveMMDetectionDirectoryAbsPath =
@@ -414,8 +418,17 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO.Fail(error);
             }
 
-            string saveDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "detection", "input-images");
+            var detectionInputImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImagesFolder", "Uploads\\DetectionUploads\\InputImages");
+            if (!detectionInputImagesFolder.IsSuccess && detectionInputImagesFolder.HandleError()){
+                return ResultDTO.Fail("Can not get the application settings");
+            }
 
+            if(string.IsNullOrEmpty(detectionInputImagesFolder.Data))
+            {
+                return ResultDTO.Fail("Image folder path not found");
+            }
+            // string saveDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "detection", "input-images");
+            string saveDirectory = Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImagesFolder.Data);
             if (!Directory.Exists(saveDirectory))
             {
                 Directory.CreateDirectory(saveDirectory);
@@ -432,9 +445,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
 
                 detectionInputImageViewModel.ImageFileName = fileName;
-                detectionInputImageViewModel.ImagePath = Path.Combine("detection", "input-images", fileName);
+                // detectionInputImageViewModel.ImagePath = Path.Combine("detection", "input-images", fileName);
+                detectionInputImageViewModel.ImagePath = string.Format("{0}\\{1}", detectionInputImagesFolder.Data, fileName);
             }
             var userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return ResultDTO.Fail("User id not found");
+            }
             var currUserDTO = await _userManagementService.GetUserById(userId);
 
             if (currUserDTO is null)
@@ -462,19 +480,23 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         [HttpPost]
         public async Task<ResultDTO> EditDetectionImageInput(DetectionInputImageViewModel detectionInputImageViewModel)
-        {
+        {           
+            if (!ModelState.IsValid)
+            {
+                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ResultDTO.Fail(error);
+            }
+
             var id = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(id))
+            {
+                return ResultDTO.Fail("User id not found");
+            }
             var appUser = await _userManagementService.GetUserById(id);
             if (appUser == null)
             {
                 var error = DbResHtml.T("User not found", "Resources");
                 return ResultDTO.Fail(error.ToString());
-            }
-
-            if (!ModelState.IsValid)
-            {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
             }
 
             detectionInputImageViewModel.UpdatedById = appUser.Id;
@@ -534,7 +556,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO.Fail(resultDelete.ErrMsg!);
             }
 
-            string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", detectionInputImageViewModel.ImagePath ?? string.Empty);
+            //string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", detectionInputImageViewModel.ImagePath ?? string.Empty);
+            string imagePath = Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImageViewModel.ImagePath!);
             if (System.IO.File.Exists(imagePath))
             {
                 try
@@ -565,6 +588,47 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             }
             return ResultDTO<DetectionInputImageDTO>.Ok(resultGetEntity.Data);
+        }
+
+
+
+        [HttpGet]
+        public async Task<ResultDTO<List<DetectionInputImageDTO>>> GetAllDetectionInputImages()
+        {
+            ResultDTO<List<DetectionInputImageDTO>> resultGetEntities = await _detectionRunService.GetAllImages();
+
+            if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
+            {
+                return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
+            }
+
+            if (resultGetEntities.Data == null)
+            {
+                return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images are not found");
+            }
+            return ResultDTO<List<DetectionInputImageDTO>>.Ok(resultGetEntities.Data);
+        }
+
+        [HttpPost]
+        public async Task<ResultDTO<List<DetectionInputImageDTO>>> GetSelectedDetectionInputImages(List<Guid> selectedImagesIds)
+        {
+            ResultDTO<List<DetectionInputImageDTO>> resultGetEntities = await _detectionRunService.GetSelectedInputImagesById(selectedImagesIds);
+
+            if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
+            {
+                return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
+            }
+
+            if (resultGetEntities.Data == null)
+            {
+                return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images are not found");
+            }
+
+            foreach (var item in resultGetEntities.Data)
+            {
+                item.ImagePath = "/" + item.ImagePath?.Replace("\\", "/");
+            }
+            return ResultDTO<List<DetectionInputImageDTO>>.Ok(resultGetEntities.Data);
         }
     }
 }
