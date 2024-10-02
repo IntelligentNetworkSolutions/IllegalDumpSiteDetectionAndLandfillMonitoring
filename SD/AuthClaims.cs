@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
+﻿using System.Collections.ObjectModel;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SD
 {
@@ -109,7 +104,7 @@ namespace SD
             Value = "2:1",
             FromModule = Modules.AuditLog,
             Description = "Audit Log: View Audit Log"
-        };      
+        };
         public static readonly AuthClaim Admin = new AuthClaim
         {
             Value = "3:1",
@@ -326,16 +321,168 @@ namespace SD
             FromModule = Modules.LegalLandfillManagement,
             Description = "View Waste Volume Differential Analysis"
         };
-        public static readonly AuthClaim ViewDetectionInputImages = new AuthClaim
+		public static readonly AuthClaim AddLegalLandfillTruck = new AuthClaim
+		{
+			Value = "14:1",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Add Legal Landfill Truck"
+		};		
+        public static readonly AuthClaim EditLegalLandfillTruck = new AuthClaim
+		{
+			Value = "14:2",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Edit Legal Landfill Truck"
+		};
+		public static readonly AuthClaim DeleteLegalLandfillTruck = new AuthClaim
+		{
+			Value = "14:3",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Delete Legal Landfill Truck"
+		};
+		public static readonly AuthClaim ViewLegalLandfillTrucks = new AuthClaim
+		{
+			Value = "14:4",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "View Legal Landfill Trucks"
+		};
+		public static readonly AuthClaim AddLegalLandfillWasteType= new AuthClaim
+		{
+			Value = "14:5",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Add Legal Landfill Waste Type"
+		};
+		public static readonly AuthClaim EditLegalLandfillWasteType = new AuthClaim
+		{
+			Value = "14:6",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Edit Legal Landfill Waste Type"
+		};
+		public static readonly AuthClaim DeleteLegalLandfillWasteType = new AuthClaim
+		{
+			Value = "14:7",
+			FromModule = Modules.LegalLandfillWasteManagement,
+			Description = "Delete Legal Landfill Waste Type"
+		};
+        public static readonly AuthClaim ViewLegalLandfillWasteTypes = new AuthClaim
+        {
+            Value = "14:8",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "View Legal Landfill Waste Types"
+        };
+        public static readonly AuthClaim ViewLegalLandfillWasteImports = new AuthClaim
+        {
+            Value = "14:9",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "View Legal Landfill Waste Imports"
+        };
+        public static readonly AuthClaim AddLegalLandfillWasteImports = new AuthClaim
+        {
+            Value = "14:10",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Add Legal Landfill Waste Imports"
+        };
+        public static readonly AuthClaim DeleteLegalLandfillWasteImports = new AuthClaim
+        {
+            Value = "14:11",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Delete Legal Landfill Waste Imports"
+        };
+        public static readonly AuthClaim EditLegalLandfillWasteImports = new AuthClaim
+        {
+            Value = "14:12",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Edit Legal Landfill Waste Imports"
+        };
+        public static readonly AuthClaim ViewMapConfigurations = new AuthClaim
         {
             Value = "15:1",
+            FromModule = Modules.MapConfiguration,
+            Description = "View Map Configurations"
+        };
+        public static readonly AuthClaim EditMapConfigurations = new AuthClaim
+        {
+            Value = "15:2",
+            FromModule = Modules.MapConfiguration,
+            Description = "Edit Map Configurations"
+        };
+        public static readonly AuthClaim DeleteMapConfigurations = new AuthClaim
+        {
+            Value = "15:3",
+            FromModule = Modules.MapConfiguration,
+            Description = "Delete Map Configurations"
+        };
+        public static readonly AuthClaim AddMapConfigurations = new AuthClaim
+        {
+            Value = "15:4",
+            FromModule = Modules.MapConfiguration,
+            Description = "Add Map Configurations"
+        };
+        public static readonly AuthClaim ViewMapLayerConfigurations = new AuthClaim
+        {
+            Value = "15:5",
+            FromModule = Modules.MapConfiguration,
+            Description = "View Map Layer Configurations"
+        };
+        public static readonly AuthClaim EditMapLayerConfigurations = new AuthClaim
+        {
+            Value = "15:6",
+            FromModule = Modules.MapConfiguration,
+            Description = "Edit Map Layer Configurations"
+        };
+        public static readonly AuthClaim DeleteMapLayerConfigurations = new AuthClaim
+        {
+            Value = "15:7",
+            FromModule = Modules.MapConfiguration,
+            Description = "Delete Map Layer Configurations"
+        };
+        public static readonly AuthClaim AddMapLayerConfigurations = new AuthClaim
+        {
+            Value = "15:8",
+            FromModule = Modules.MapConfiguration,
+            Description = "Add Map Layer Configurations"
+        };
+        public static readonly AuthClaim ViewMapLayerGroupConfigurations = new AuthClaim
+        {
+            Value = "15:9",
+            FromModule = Modules.MapConfiguration,
+            Description = "View Map Layer Group Configurations"
+        };
+        public static readonly AuthClaim EditMapLayerGroupConfigurations = new AuthClaim
+        {
+            Value = "15:10",
+            FromModule = Modules.MapConfiguration,
+            Description = "Edit Map Layer Group Configurations"
+        };
+        public static readonly AuthClaim DeleteMapLayerGroupConfigurations = new AuthClaim
+        {
+            Value = "15:11",
+            FromModule = Modules.MapConfiguration,
+            Description = "Delete Map Layer Group Configurations"
+        };
+        public static readonly AuthClaim AddMapLayerGroupConfigurations = new AuthClaim
+        {
+            Value = "15:12",
+            FromModule = Modules.MapConfiguration,
+            Description = "Add Map Layer Group Configurations"
+        };
+
+
+        public static readonly AuthClaim ViewDetectionInputImages = new AuthClaim
+        {
+            Value = "16:1",
             FromModule = Modules.MapToolDetectionInputImages,
             Description = "View Detection Input Images"
         };
         
 
+        public static readonly AuthClaim ManageDetectionIgnoreZones = new AuthClaim
+        {
+            Value = "17:1",
+            FromModule = Modules.MapToolDetectionIgnoreZones,
+            Description = "Manage Detection Ignore Zones"
+        };
     } 
 }
 
 
-     
+

@@ -1,0 +1,727 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.MapConfiguration
+@using Microsoft.AspNetCore.Localization
+@using SD.Helpers
+@model IEnumerable<MapConfigurationViewModel>
+
+@{
+    ViewData["Title"] = @DbResHtml.T("Map Configurations", "Resources");
+    var mapLayerGroupConfigurations = Model.SelectMany(m => m.MapLayerGroupConfigurations).ToList();
+
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">
+                    @DbResHtml.T("Add, edit, delete and view maps, add groups and layers.", "Resources")
+                </small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        @if (User.HasAuthClaim(SD.AuthClaims.AddMapConfigurations))
+                        {
+                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addMapConfigurationsModal">
+                                <i class="fas fa-plus"></i>
+                                @DbResHtml.T("Add Map Configuration", "Resources")
+                            </button>
+                        }
+                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+                        <div class="mt-5">
+                            <table id="mapConfigurationTable" class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            @DbResHtml.T("Map Name", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Projection", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Default Resolution", "Resources")
+                                        </th>
+                                        <th class="notexport">
+                                            @DbResHtml.T("Action", "Resources")
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.MapName</td>
+                                            <td>@item.Projection</td>
+                                            <td>@item.DefaultResolution</td>
+                                            <td>
+                                                @if (User.HasAuthClaim(SD.AuthClaims.EditMapConfigurations))
+                                                {
+                                                    <a href="@Url.Action("EditMapConfiguration", "MapConfiguration", new { mapId = @item.Id })"
+                                                       class="mb-1 btn bg-gradient-warning text-white btn-xs"
+                                                       title="@DbResHtml.T("Edit", "Resources")">
+                                                        <i class="fas fa-edit"></i> 
+                                                    </a>
+                                                    }
+                                                @if (User.HasAuthClaim(SD.AuthClaims.DeleteMapConfigurations))
+                                                {
+                                                    <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteMapConfigurationModalFunction('@item.Id')" title=@DbResHtml.T("Delete", "Resources")>
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                                @if (User.HasAuthClaim(SD.AuthClaims.AddMapLayerGroupConfigurations))
+                                                {
+@*                                                     <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addMapLayerGroupConfigurationModal" onclick="openMapLayerGroupConfigurationModal('@item.MapName', '@item.Id')" title=@DbResHtml.T("Add Map Layer Group Configuration", "Resources")>
+                                                        <i class="fas fa-plus"></i>
+                                                    </button> *@
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+            $(document).ready(function () {
+                $('#mapConfigurationTable').DataTable({
+                    paging: true,
+                    pageLength: 100,
+                    "columnDefs": [
+                        { "width": "20%", "targets": 2 }
+                    ],
+                    "language": {
+                        "url": "@langPath"
+                    },
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+                            text: '<i class="fas fa-file-alt"></i>',
+                            titleAttr: "Export to excel",
+                            filename: "Map Configration - @DateTime.Now.ToString("dd.MM.yyyy")",
+                            exportOptions: {
+                                columns: ':not(.notexport)'
+                            }
+                        }
+                    ]
+                });
+
+                $("#exportToExcelButton").click(function () {
+                    $(".export-to-excel-button").click();
+                });
+            });
+
+
+        function editMapConfiguration() {
+            var id = $("#editId").val();
+            var mapName = $("#editMapName").val();
+            var projection = $("#editProjection").val();
+            var tileGridJs = $("#editTileGridJs").val();
+            var centerX = $("#editCenterX").val();
+            var centerY = $("#editCenterY").val();
+            var minX = $("#editMinX").val();
+            var minY = $("#editMinY").val();
+            var maxX = $("#editMaxX").val();
+            var maxY = $("#editMaxY").val();
+            var resolutions = $("#editResolutions").val();
+            var defaultResolution = $("#editDefaultResolution").val();
+            var createdById = $("#editCreatedById").val();
+
+            var mapConfigurationViewModel = {
+                Id: id,
+                MapName: mapName,
+                Projection: projection,
+                TileGridJs: tileGridJs,
+                CenterX: centerX,
+                CenterY: centerY,
+                MinX: minX,
+                MinY: minY,
+                MaxX: maxX,
+                MaxY: maxY,
+                Resolutions: resolutions,
+                DefaultResolution: defaultResolution,
+                CreatedById: createdById,
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditMapConfiguration", "MapConfiguration", new { Area = "IntranetPortal" })",
+                data: {
+                    mapConfigurationViewModel: mapConfigurationViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully edited map configuration", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function editMapConfigurationModalFunction(mapConfigurationId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetMapConfigurationById", "MapConfiguration", new { Area = "IntranetPortal" })",
+                data: {
+                    mapConfigurationId: mapConfigurationId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#editMapConfigurationModalBody").html("");
+
+                            $("#editMapConfigurationModalBody").append(
+                                '<div>'
+                                + `<input type="text" id="editId" hidden>`
+                                + `<input type="text" id="editCreatedById" hidden>`
+                                + `<label class="form-control-label" for="editMapName">@DbResHtml.T("Map Name:", "Resources")</label><input class="form-control" type="text" id="editMapName" />`
+                                + `<label class="form-control-label mt-3" for="editProjection">@DbResHtml.T("Projection:", "Resources")</label><input class="form-control" type="text" id="editProjection" />`
+                                + `<label class="form-control-label mt-3" for="editTileGridJs">@DbResHtml.T("TileGridJs:", "Resources")</label><textarea class="form-control" id="editTileGridJs"></textarea>`
+                                + `<label class="form-control-label mt-3" for="editCenterX">@DbResHtml.T("Center X:", "Resources")</label><input class="form-control" type="number" id="editCenterX" />`
+                                + `<label class="form-control-label mt-3" for="editCenterY">@DbResHtml.T("Center Y:", "Resources")</label><input class="form-control" type="number" id="editCenterY" />`
+                                + `<label class="form-control-label mt-3" for="editMinX">@DbResHtml.T("Min X:", "Resources")</label><input class="form-control" type="number" id="editMinX" />`
+                                + `<label class="form-control-label mt-3" for="editMinY">@DbResHtml.T("Min Y:", "Resources")</label><input class="form-control" type="number" id="editMinY" />`
+                                + `<label class="form-control-label mt-3" for="editMaxX">@DbResHtml.T("Max X:", "Resources")</label><input class="form-control" type="number" id="editMaxX" />`
+                                + `<label class="form-control-label mt-3" for="editMaxY">@DbResHtml.T("Max Y:", "Resources")</label><input class="form-control" type="number" id="editMaxY" />`
+                                + `<label class="form-control-label mt-3" for="editResolutions">@DbResHtml.T("Resolutions:", "Resources")</label><textarea class="form-control" id="editResolutions"></textarea>`
+                                + `<label class="form-control-label mt-3" for="editDefaultResolution">@DbResHtml.T("Default Resolution:", "Resources")</label><input class="form-control" type="text" id="editDefaultResolution" />`
+                                + '</div>'
+                            );
+
+                            $("#editId").val(data.data.id);
+                            $("#editCreatedById").val(data.data.createdById);
+                            $("#editMapName").val(data.data.mapName);
+                            $("#editProjection").val(data.data.projection);
+                            $("#editTileGridJs").val(data.data.tileGridJs);
+                            $("#editCenterX").val(data.data.centerX);
+                            $("#editCenterY").val(data.data.centerY);
+                            $("#editMinX").val(data.data.minX);
+                            $("#editMinY").val(data.data.minY);
+                            $("#editMaxX").val(data.data.maxX);
+                            $("#editMaxY").val(data.data.maxY);
+                            $("#editResolutions").val(data.data.resolutions);
+                            $("#editDefaultResolution").val(data.data.defaultResolution);
+
+
+                            $('#editMapConfigurationModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+        function addMapConfigurationConfirmed() {
+
+            var mapConfigurationViewModel = {
+                MapName: $("#addMapName").val(),
+                Projection: $("#addProjection").val(),
+                TileGridJs: $("#addTileGridJs").val(),
+                CenterX: parseFloat($("#addCenterX").val()),
+                CenterY: parseFloat($("#addCenterY").val()),
+                MinX: parseFloat($("#addMinX").val()),
+                MinY: parseFloat($("#addMinY").val()),
+                MaxX: parseFloat($("#addMaxX").val()),
+                MaxY: parseFloat($("#addMaxY").val()),
+                Resolutions: $("#addResolutions").val(),
+                DefaultResolution: parseFloat($("#addDefaultResolution").val()),
+            };
+
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("CreateMapConfiguration", "MapConfiguration", new { Area = "IntranetPortal" })",
+                data: {
+                    mapConfigurationViewModel: mapConfigurationViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully added map configuration", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+        function deleteMapConfiguration() {
+            var id = $("#deleteId").val();
+            var mapName = $("#deleteMapName").val();
+            var projection = $("#deleteProjection").val();
+            var tileGridJs = $("#deleteTileGridJs").val();
+            var centerX = $("#deleteCenterX").val();
+            var centerY = $("#deleteCenterY").val();
+            var minX = $("#deleteMinX").val();
+            var minY = $("#deleteMinY").val();
+            var maxX = $("#deleteMaxX").val();
+            var maxY = $("#deleteMaxY").val();
+            var resolutions = $("#deleteResolutions").val();
+            var defaultResolution = $("#deleteDefaultResolution").val();
+            var createdById = $("#deleteCreatedById").val();
+
+            var mapConfigurationViewModel = {
+                Id: id,
+                MapName: mapName,
+                Projection: projection,
+                TileGridJs: tileGridJs,
+                CenterX: centerX,
+                CenterY: centerY,
+                MinX: minX,
+                MinY: minY,
+                MaxX: maxX,
+                MaxY: maxY,
+                Resolutions: resolutions,
+                DefaultResolution: defaultResolution,
+                CreatedById: createdById,
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteMapConfiguration", "MapConfiguration", new { Area = "IntranetPortal" })",
+                data: {
+                    mapConfigurationViewModel: mapConfigurationViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully deleted map configuration", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function deleteMapConfigurationModalFunction(mapConfigurationId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetMapConfigurationById", "MapConfiguration", new { Area = "IntranetPortal" })",
+                data: {
+                    mapConfigurationId: mapConfigurationId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#deleteMapConfigurationModalBody").html("");
+
+                            $("#deleteMapConfigurationModalBody").append(
+                                '<div>'
+                                + '<input type="text" id="deleteId" hidden/>'
+                                + '<input type="text" id="deleteCreatedById" hidden/>'
+                                + '<input type="text" id="deleteMapName" hidden/>'
+                                + '<input type="text" id="deleteProjection" hidden/>'
+                                + '<input type="text" id="deleteTileGridJs" hidden/>'
+                                + '<input type="text" id="deleteCenterX" hidden/>'
+                                + '<input type="text" id="deleteCenterY" hidden/>'
+                                + '<input type="text" id="deleteMinX" hidden/>'
+                                + '<input type="text" id="deleteMinY" hidden/>'
+                                + '<input type="text" id="deleteMaxX" hidden/>'
+                                + '<input type="text" id="deleteMaxY" hidden/>'
+                                + '<input type="text" id="deleteResolutions" hidden/>'
+                                + '<input type="text" id="deleteDefaultResolution" hidden/>'
+
+                                + '<table class="table table-striped my-4 w-100">'
+                                + '<thead>'
+                                + '<tr>'
+                                + '<th>@DbResHtml.T("Map Name", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Projection", "Resources")</th>'
+                                + '<th>@DbResHtml.T("TileGridJs", "Resources")</th>'
+                                + '<th>@DbResHtml.T("CenterX", "Resources")</th>'
+                                + '<th>@DbResHtml.T("CenterY", "Resources")</th>'
+                                + '<th>@DbResHtml.T("MinX", "Resources")</th>'
+                                + '<th>@DbResHtml.T("MinY", "Resources")</th>'
+                                + '<th>@DbResHtml.T("MaxX", "Resources")</th>'
+                                + '<th>@DbResHtml.T("MaxY", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Resolutions", "Resources")</th>'
+                                + '<th>@DbResHtml.T("DefaultResolution", "Resources")</th>'
+                                + '</tr>'
+                                + '</thead>'
+                                + '<tbody>'
+                                + '<tr>'
+                                + `<td>${data.data.mapName}</td>`
+                                + `<td>${data.data.projection}</td>`
+                                + `<td>${data.data.tileGridJs}</td>`
+                                + `<td>${data.data.centerX}</td>`
+                                + `<td>${data.data.centerY}</td>`
+                                + `<td>${data.data.minX}</td>`
+                                + `<td>${data.data.minY}</td>`
+                                + `<td>${data.data.maxX}</td>`
+                                + `<td>${data.data.maxY}</td>`
+                                + `<td>${data.data.resolutions}</td>`
+                                + `<td>${data.data.defaultResolution}</td>`
+                                + '</tr>'
+                                + '</tbody>'
+                                + '</table>'
+                                + '</div>'
+                            );
+
+                            $("#deleteId").val(data.data.id);
+                            $("#deleteCreatedById").val(data.data.createdById);
+                            $("#deleteMapName").val(data.data.mapName);
+                            $("#deleteProjection").val(data.data.projection);
+                            $("#deleteTileGridJs").val(data.data.tileGridJs);
+                            $("#deleteCenterX").val(data.data.centerX);
+                            $("#deleteCenterY").val(data.data.centerY);
+                            $("#deleteMinX").val(data.data.minX);
+                            $("#deleteMinY").val(data.data.minY);
+                            $("#deleteMaxX").val(data.data.maxX);
+                            $("#deleteMaxY").val(data.data.maxY);
+                            $("#deleteResolutions").val(data.data.resolutions);
+                            $("#deleteDefaultResolution").val(data.data.defaultResolution);
+
+
+                            $('#deleteMapConfigurationModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+    </script>
+}
+@section BodyArea {
+    <!-- Modal for Add Map Configuration -->
+    <div class="modal fade" id="addMapConfigurationsModal" tabindex="-1" role="dialog" aria-labelledby="addMapConfigurationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("Create Map Configuration", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="modal-body" id="addMapConfigurationModalBody">
+                            <form id="mapConfigurationForm" onsubmit="addMapConfigurationConfirmed(); return false;">
+                                <div class="form-group">
+                                    <label for="#addMapName">@DbResHtml.T("Map Name:", "Resources")</label>
+                                    <input type="text" class="form-control" id="addMapName" name="MapName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="addProjection">@DbResHtml.T("Projection:", "Resources")</label>
+                                    <select class="form-control" id="addProjection" name="Projection">
+                                        <option value="EPSG:3857">EPSG:3857</option>
+                                        <option value="EPSG:4326">EPSG:4326</option>
+                                        <option value="EPSG:6316">EPSG:6316</option>
+                                        <option value="EPSG:6870">EPSG:6870</option>
+                                        <option value="EPSG:32634">EPSG:32634</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="addTileGridJs">@DbResHtml.T("Tile Grid Js:", "Resources")</label>
+                                    <textarea class="form-control" id="addTileGridJs" name="TileGridJs" required style="min-height: 200px"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="addCenterX">@DbResHtml.T("CenterX:", "Resources")</label>
+                                    <input type="number" class="form-control" id="addCenterX" name="CenterX" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="addCenterY">@DbResHtml.T("CenterY:", "Resources")</label>
+                                    <input type="number" class="form-control" id="addCenterY" name="CenterY" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="addMinX">@DbResHtml.T("MinX:", "Resources")</label>
+                                    <input type="number" class="form-control" id="addMinX" name="MinX" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="addMinY">@DbResHtml.T("MinY:", "Resources")</label>
+                                    <input type="number" class="form-control" id="addMinY" name="MinY" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="addMaxX">@DbResHtml.T("MaxX:", "Resources")</label>
+                                    <input type="number" class="form-control" id="addMaxX" name="MaxX" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="addMaxY">@DbResHtml.T("MaxY:", "Resources")</label>
+                                    <input type="number" class="form-control" id="addMaxY" name="MaxY" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="addResolutions">@DbResHtml.T("Resolutions:", "Resources")</label>
+                                    <textarea class="form-control" id="addResolutions" name="Resolutions" style="min-height: 200px" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="addDefaultResolution">@DbResHtml.T("Default Resolution:", "Resources")</label>
+                                    <input type="number" class="form-control" id="addDefaultResolution" name="DefaultResolution" required />
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn bg-gradient-primary">@DbResHtml.T("Create", "Resources")</button>
+                                    <button type="button" class="btn bg-gradient-secondary" data-dismiss="modal">@DbResHtml.T("Back to List", "Resources")</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="modal-body">
+                            @* <div class="card-header">Create form explanation:</div> *@
+                            @* <div class="card-body"> *@
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">Map Name</label>
+                                <p>Fill the map name with the name of the map.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">Projection</label>
+                                <p>Fill the projection with the map's projection.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 232px">
+                                <label class="control-label">Tile Grid Js</label>
+                                <p>Fill the Tile Grid Js field with the JavaScript for the map grid.</p><br />
+                                <p>Example:</p><br>
+                                <p>ol.tilegrid.TileGrid({extent: [%MINX%, %MINY%, %MAXX%, %MAXY%], resolutions: [%RESOLUTIONS%]})</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">CenterX</label>
+                                <p>Fill CenterX with a number representing the X coordinate.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">CenterY</label>
+                                <p>Fill CenterY with a number representing the Y coordinate.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">MinX</label>
+                                <p>Fill MinX with a number for the minimum X coordinate.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">MinY</label>
+                                <p>Fill MinY with a number for the minimum Y coordinate.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">MaxX</label>
+                                <p>Fill MaxX with a number for the maximum X coordinate.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">MaxY</label>
+                                <p>Fill MaxY with a number for the maximum Y coordinate.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 232px">
+                                <label class="control-label">Resolutions</label>
+                                <p>
+                                    Fill the Resolutions field with a list of numbers.<br>
+                                    Example:
+                                </p>
+                                <p>70.00014000028002, 35.00007000014001, 17.920035840071687, 8.960017920035844, 4.480008960017922, 2.240004480008961,</p>
+                                <p>1.1200022400044805, 0.5600011200022402, 0.2800005600011201, 0.14000028000056006</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Default Resolution</label>
+                                <p>Fill the Default Resolution field with the default map resolution.</p>
+                                <p>
+                                    Example:<br>
+                                    8.960017920035844
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editMapConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-warning text-white">
+                    <h5 class="modal-title">@DbResHtml.T("Edit Map Configuration", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="editMapConfigurationModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="editMapConfiguration()" data-dismiss="modal" aria-label="Edit">
+                        <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteMapConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-danger">
+                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this map configuration ?", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="deleteMapConfigurationModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteMapConfiguration()" data-dismiss="modal" aria-label="Delete">
+                        <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+

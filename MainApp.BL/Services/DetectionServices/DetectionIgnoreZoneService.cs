@@ -21,7 +21,7 @@ namespace MainApp.BL.Services.DetectionServices
             _logger = logger;
         }
 
-        public async Task<ResultDTO<List<DetectionIgnoreZoneDTO>>> GetAllIgnoreZonesDTOs() 
+        public async Task<ResultDTO<List<DetectionIgnoreZoneDTO>>> GetAllIgnoreZonesDTOs()
         {
             try
             {
@@ -39,6 +39,26 @@ namespace MainApp.BL.Services.DetectionServices
             {
                 _logger.LogError(ex.Message, ex);
                 return ResultDTO<List<DetectionIgnoreZoneDTO>>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        public async Task<ResultDTO<DetectionIgnoreZoneDTO?>> GetIgnoreZoneById(Guid id)
+        {
+            try
+            {
+                ResultDTO<DetectionIgnoreZone?> resultGetEntity = await _detectionIgnoreZonesRepository.GetById(id, includeProperties: "CreatedBy");
+                if(resultGetEntity.IsSuccess == false && !resultGetEntity.HandleError())
+                {
+                    return ResultDTO<DetectionIgnoreZoneDTO?>.Fail(resultGetEntity.ErrMsg!);
+                }
+
+                DetectionIgnoreZoneDTO dto = _mapper.Map<DetectionIgnoreZoneDTO>(resultGetEntity.Data);
+                return ResultDTO<DetectionIgnoreZoneDTO?>.Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<DetectionIgnoreZoneDTO?>.ExceptionFail(ex.Message, ex);
             }
         }
 
@@ -85,6 +105,14 @@ namespace MainApp.BL.Services.DetectionServices
                     await _detectionIgnoreZonesRepository.GetById(ignoreZone.Id, track: true);
                 if (resultGetById.IsSuccess == false && resultGetById.HandleError())
                     return ResultDTO.Fail(resultGetById.ErrMsg!);
+                   
+                if(dto.Geom == null)
+                {
+                    dto.Geom = resultGetById.Data?.Geom;
+                }
+                dto.CreatedOn = resultGetById.Data?.CreatedOn;
+                dto.CreatedById = resultGetById.Data?.CreatedById;
+                _mapper.Map(dto, resultGetById.Data);               
 
                 ResultDTO resultUpdate = await _detectionIgnoreZonesRepository.Update(resultGetById.Data!);
                 if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())
@@ -124,7 +152,7 @@ namespace MainApp.BL.Services.DetectionServices
 
                 return resultDelete;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
                 return ResultDTO.ExceptionFail(ex.Message, ex);
@@ -132,3 +160,4 @@ namespace MainApp.BL.Services.DetectionServices
         }
     }
 }
+

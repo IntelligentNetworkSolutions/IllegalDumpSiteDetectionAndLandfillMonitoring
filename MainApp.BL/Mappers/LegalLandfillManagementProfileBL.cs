@@ -17,6 +17,9 @@ namespace MainApp.BL.Mappers
         {
             CreateMap<LegalLandfillDTO, LegalLandfill>().ReverseMap();
             CreateMap<LegalLandfillPointCloudFileDTO, LegalLandfillPointCloudFile>().ReverseMap();
+            CreateMap<LegalLandfillTruckDTO, LegalLandfillTruck>().ReverseMap();
+            CreateMap<LegalLandfillWasteTypeDTO, LegalLandfillWasteType>().ReverseMap();
+            CreateMap<LegalLandfillWasteImportDTO, LegalLandfillWasteImport>().ReverseMap();
         }
     }
 }

@@ -4,9 +4,8 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<UserSecretsId>a520fc9d-5549-472b-91e2-3e6cc8667a55</UserSecretsId>
-		<Configuration Condition=" '$(Configuration)' == 'Debug' ">Debug</Configuration>
-		<Configuration Condition=" '$(Configuration)' == 'Release' ">Release</Configuration>
+		<Configuration Condition=" '$(Configuration)' == 'Development' ">Development</Configuration>
+		<Configuration Condition=" '$(Configuration)' == 'Production' ">Production</Configuration>
 		<Configuration Condition=" '$(Configuration)' == 'Staging' ">Staging</Configuration>
 	</PropertyGroup>
 
@@ -18,6 +17,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.14" />
+		<PackageReference Include="Hangfire.PostgreSql" Version="1.20.9" />
 		<PackageReference Include="Magick.NET-Q16-AnyCPU" Version="13.6.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.2" />
@@ -31,6 +32,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.1" />
 		<PackageReference Include="Westwind.Globalization" Version="3.1.7" />
 		<PackageReference Include="Westwind.Globalization.AspnetCore" Version="3.1.7" />
 		<PackageReference Include="X.PagedList" Version="8.4.7" />
@@ -54,11 +56,15 @@
 	<ItemGroup>
 		<None Include="wwwroot\Templates\ResetPasswordTemplate.html" />
 		<None Include="web.config" />
-		<None Include="web.$(Configuration).config" Condition="Exists('web.$(Configuration).config')" />
+		<!--<None Include="web.$(Configuration).config" Condition="Exists('web.$(Configuration).config')" />-->
 	</ItemGroup>
 
 	<Target Name="TransformWebConfig" AfterTargets="AfterPublish">
-		<TransformXml Source="web.$(Configuration).config" Transform="web.$(Configuration).config" Destination="$(PublishDir)web.config" />
+		<TransformXml
+		  Source="$(PublishDir)web.config"
+		  Transform="web.$(Configuration).config"
+		  Destination="$(PublishDir)web.config"
+		  Condition="Exists('web.$(Configuration).config')" />
 	</Target>
 
 </Project>

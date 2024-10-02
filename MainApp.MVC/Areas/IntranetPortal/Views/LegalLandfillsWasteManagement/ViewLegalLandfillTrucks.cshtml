@@ -1,0 +1,680 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement
+@using Microsoft.AspNetCore.Localization
+@using SD.Helpers
+@model IEnumerable<LegalLandfillTruckViewModel>
+
+@{
+    ViewData["Title"] = @DbResHtml.T("Legal landfills Truck list", "Resources");
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Add, edit, delete and view all legal landfill trucks", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        @if (User.HasAuthClaim(SD.AuthClaims.AddLegalLandfillTruck))
+                        {
+                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addLegalLandfillTruckModal">
+                                <i class="fas fa-plus"></i>
+                                @DbResHtml.T("Add Legal Landfill Truck", "Resources")
+                            </button>
+                        }
+                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+                        <div class="mt-5">
+                            <table id="legalLandfillsTable" class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>@DbResHtml.T("Name", "Resources")</th>
+                                        <th>@DbResHtml.T("Description", "Resources")</th>
+                                        <th>@DbResHtml.T("UnladenWeight", "Resources")</th>
+                                        <th>@DbResHtml.T("PayloadWeight", "Resources")</th>
+                                        <th>@DbResHtml.T("Capacity", "Resources")</th>
+                                        <th>@DbResHtml.T("Registration", "Resources")</th>
+                                        <th>@DbResHtml.T("Actions", "Resources")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.Name</td>
+                                            <td>@item.Description</td>
+                                            <td>@item.UnladenWeight?.ToString("N2")</td>   
+                                            <td>@item.PayloadWeight?.ToString("N2")</td>   
+                                            <td>@item.Capacity?.ToString("N2")</td> 
+                                            <td>@item.Registration</td>
+                                            <td>
+                                                @if (User.HasAuthClaim(SD.AuthClaims.EditLegalLandfillTruck))
+                                                {
+                                                    <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editLegalLandfillTruckModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                }
+                                                @if (User.HasAuthClaim(SD.AuthClaims.DeleteLegalLandfillTruck))
+                                                {
+                                                    <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteLegalLandfillTruckModalFunction('@item.Id')" title="@DbResHtml.T("Delete Legal Landfill Truck", "Resources")">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+            // $(document).ready(function () {
+            //     $('#legalLandfillsTable').DataTable({
+            //         paging: true,
+            //         pageLength: 100,
+            //         "columnDefs": [
+            //             { "width": "20%", "targets": 2 }
+            //         ],
+            //         "language": {
+            //             "url": "@langPath"
+            //         },
+            //         dom: 'Bfrtip',
+            //         buttons: [
+            //             {
+            //                 extend: 'excelHtml5',
+            //                 className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+            //                 text: '<i class="fas fa-file-alt"></i>',
+            //                 titleAttr: "Export to excel",
+            //                 filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
+            //                 exportOptions: {
+            //                     columns: ':not(.notexport)'
+            //                 }
+            //             }
+            //         ]
+            //     });
+
+            //     $("#exportToExcelButton").click(function () {
+            //         $(".export-to-excel-button").click();
+            //     });
+            // });
+            $(document).ready(function () {
+                $('#legalLandfillsTable').DataTable({
+                    paging: true,
+                    pageLength: 100,
+                    "columnDefs": [
+                        { "width": "20%", "targets": 2 },
+                        { "width": "15%", "targets": 3 },  
+                        { "width": "15%", "targets": 4 },  
+                        { "width": "15%", "targets": 5 }   
+                    ],
+                    "language": {
+                        "url": "@langPath"
+                    },
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+                            text: '<i class="fas fa-file-alt"></i>',
+                            titleAttr: "Export to excel",
+                            filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
+                            exportOptions: {
+                                columns: ':not(.notexport)'
+                            }
+                        }
+                    ]
+                });
+
+                $("#exportToExcelButton").click(function () {
+                    $(".export-to-excel-button").click();
+                });
+            });
+
+
+        function deleteLandfillTruckConfirmed() {
+
+            const id = $("#txtDeleteId").val();
+            const name = $("#txtDeleteName").val();
+            const description = $("#txtDeleteDescription").val();
+            const capacity = $("#txtDeleteCapacity").val();
+            const unladenWeight = $("#txtDeleteUnladenWeight").val();
+            const payloadWeight = $("#txtDeletePayloadWeight").val();
+            const registration = $("#txtDeleteRegistration").val();
+
+            var legalLandfillTruckViewModel = {
+                id: id,
+                Name: name,
+                Description: description,
+                Capacity: capacity,
+                UnladenWeight: unladenWeight,
+                PayloadWeight: payloadWeight,
+                Registration: registration
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteLegalLandfillTruckConfirmed", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    legalLandfillTruckViewModel: legalLandfillTruckViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully deleted legal landfill truck", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function deleteLegalLandfillTruckModalFunction(legalLandfillTruckId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetLegalLandfillTruckById", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    legalLandfillTruckId: legalLandfillTruckId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#deleteLegalLandfillTruckModalBody").html("");
+
+                            $("#deleteLegalLandfillTruckModalBody").append(
+                                '<div>'
+                                + '<input type="text" id="txtDeleteId" hidden/>'
+                                + '<input type="text" id="txtDeleteName" hidden/>'
+                                + '<input type="text" id="txtDeleteDescription" hidden/>'
+                                + '<input type="text" id="txtDeleteCapacity" hidden/>'
+                                + '<input type="text" id="txtDeleteUnladenWeight" hidden/>'
+                                + '<input type="text" id="txtDeletePayloadWeight" hidden/>'
+                                + '<input type="text" id="txtDeleteRegistration" hidden/>'
+
+                                + '<table class="table table-striped my-4 w-100">'
+                                + '<thead>'
+                                + '<tr>'
+                                + '<th>@DbResHtml.T("Name", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Description", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Capacity", "Resources")</th>'
+                                + '<th>@DbResHtml.T("UnladenWeight", "Resources")</th>'
+                                + '<th>@DbResHtml.T("PayloadWeight", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Registration", "Resources")</th>'
+                                + '</tr>'
+                                + '</thead>'
+                                + '<tbody>'
+                                + '<tr>'
+                                + `<td>${data.data.name}</td>`
+                                + `<td>${data.data.description}</td>`
+                                + `<td>${data.data.capacity}</td>`
+                                + `<td>${data.data.unladenWeight}</td>`
+                                + `<td>${data.data.payloadWeight}</td>`
+                                + `<td>${data.data.registration}</td>`
+                                + '</tr>'
+                                + '</tbody>'
+                                + '</table>'
+                                + '</div>'
+                            );
+
+                            $(`#txtDeleteId`).val(data.data.id);
+                            $(`#txtDeleteName`).val(data.data.name);
+                            $(`#txtDeleteDescription`).val(data.data.description);
+                            $(`#txtDeleteCapacity`).val(data.data.capacity);
+                            $(`#txtDeleteUnladenWeight`).val(data.data.unladenWeight);
+                            $(`#txtDeletePayloadWeight`).val(data.data.payloadWeight);
+                            $(`#txtDeleteRegistration`).val(data.data.registration);
+
+                            $('#deleteLegalLandfillTruckModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+        function disableLandfillTruck() {
+    const id = $("#txtDeleteId").val();
+    const name = $("#txtDeleteName").val();
+    const description = $("#txtDeleteDescription").val();
+    const capacity = $("#txtDeleteCapacity").val();
+    const unladenWeight = $("#txtDeleteUnladenWeight").val();
+    const payloadWeight = $("#txtDeletePayloadWeight").val();
+    const registration = $("#txtDeleteRegistration").val();
+
+    var legalLandfillTruckViewModel = {
+        id: id,
+        Name: name,
+        Description: description,
+        Capacity: capacity,
+        UnladenWeight: unladenWeight,
+        PayloadWeight: payloadWeight,
+        Registration: registration
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "@Url.Action("DisableLegalLandfillTruckConfirmed", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
+        data: {
+            legalLandfillTruckViewModel: legalLandfillTruckViewModel
+        },
+        success: function (data) {
+            if (data != undefined || data != null) {
+                if (data.isSuccess == false && data.errMsg != null) {
+                    Swal.fire({
+                        text: `${data.errMsg}`,
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                } else {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Successfully disabled legal landfill truck", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "success"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            location.reload();
+                        }
+                    });
+                }
+            } else {
+                Swal.fire({
+                    text: `@DbResHtml.T("No data received", "Resources")`,
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                    allowOutsideClick: false,
+                    icon: "error"
+                });
+            }
+        },
+        error: function (req, status, error) {
+            Swal.fire({
+                text: '@DbResHtml.T("Error occurred", "Resources")',
+                icon: "error"
+            });
+        }
+    });
+}
+
+        function editLegalLandfillTruckConfirmed() {
+            const id = $("#txtEditId").val();
+            const name = $("#txtEditName").val();
+            const description = $("#txtEditDescription").val();
+            const capacity = $("#txtEditCapacity").val();
+            const unladenWeight = $("#txtEditUnladenWeight").val();
+            const payloadWeight = $("#txtEditPayloadWeight").val();
+            const registration = $("#txtEditRegistration").val();
+
+            if (description == '' || name == '' || registration == '') {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Name, Descripiton and Registration are required properties", "Resources")"
+                });
+                return;
+            }
+
+            if (capacity == '' && unladenWeight == '' && payloadWeight == '') {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Capacity, Unladen Weight and Payload Weight must be provided.", "Resources")"
+                });
+                return;
+            }
+
+            var legalLandfillTruckViewModel = {
+                Id: id,
+                Name: name,
+                Description: description,
+                Capacity: capacity,
+                UnladenWeight: unladenWeight,
+                PayloadWeight: payloadWeight,
+                Registration: registration
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditLegalLandfillTruckConfirmed", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    legalLandfillTruckViewModel: legalLandfillTruckViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully edited legal landfill truck", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function editLegalLandfillTruckModalFunction(legalLandfillTruckId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetLegalLandfillTruckById", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    legalLandfillTruckId: legalLandfillTruckId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#editLegalLandfillTruckModalBody").html("");
+
+                            $("#editLegalLandfillTruckModalBody").append(
+                                '<div>'
+                                + `<input type="text" hidden id="txtEditId">`
+                                + `<label class="form-control-label" for="txtEditName">@DbResHtml.T("Name:", "Resources")</label><input class="form-control" type="text" id="txtEditName" />`
+                                + `<label class="form-control-label mt-3" for="txtEditDescription">@DbResHtml.T("Description:", "Resources")</label><input class="form-control" type="text" id="txtEditDescription" />`
+                                + `<label class="form-control-label mt-3" for="txtEditRegistration">@DbResHtml.T("Registration:", "Resources")</label><input class="form-control" type="text" id="txtEditRegistration" />`
+                                + `<label class="form-control-label mt-3" for="txtEditUnladenWeight">@DbResHtml.T("Unladen Weight:(kg)", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditUnladenWeight" />`
+                                + `<label class="form-control-label mt-3" for="txtEditPayloadWeight">@DbResHtml.T("Payload Weight:(kg)", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditPayloadWeight" />`
+                                + `<label class="form-control-label mt-3" for="txtEditCapacity">@DbResHtml.T("Capacity(m3):", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditCapacity" />`
+                                + '</div>'
+                            );
+
+                            $(`#txtEditId`).val(data.data.id);
+                            $(`#txtEditName`).val(data.data.name);
+                            $(`#txtEditDescription`).val(data.data.description);
+                            $(`#txtEditRegistration`).val(data.data.registration);
+                            $(`#txtEditUnladenWeight`).val(data.data.unladenWeight);
+                            $(`#txtEditPayloadWeight`).val(data.data.payloadWeight);
+                            $(`#txtEditCapacity`).val(data.data.capacity);
+
+                            $('#editLegalLandfillTruckModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+        function addLegalLandfillTruckConfirmed() {
+            const name = $("#addLegalLandfillTruckNameInput").val();
+            const description = $("#addLegalLandfillTruckDescriptionInput").val();
+            const capacity = $("#addLegalLandfillTruckCapacityInput").val();
+            const unladenWeight = $("#addLegalLandfillTruckUnladenWeightInput").val();
+            const payloadWeight = $("#addLegalLandfillTruckPayloadWeightInput").val();
+            const registration = $("#addLegalLandfillTruckRegistrationInput").val();
+
+            if (name == '' || description == '' || registration == '') {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Name, Description and Registration are required properties", "Resources")"
+                });
+                return;
+            }
+
+            if (capacity == '' && unladenWeight == '' && payloadWeight == '') {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Capacity, Unladen Weight and Payload Weight must be provided.", "Resources")"
+                });
+                return;
+            }
+
+            var legalLandfillTruckViewModel = {
+                Name: name,
+                Description: description,
+                Capacity: capacity,
+                UnladenWeight: unladenWeight,
+                PayloadWeight: payloadWeight,
+                Registration: registration
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("CreateLegalLandfillTruckConfirmed", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
+                data: {
+                    legalLandfillTruckViewModel: legalLandfillTruckViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully added legal landfill truck", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occurred", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+
+    </script>
+}
+ @section BodyArea {
+    <div class="modal" id="deleteLegalLandfillTruckModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-danger">
+                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this legal landfill truck?", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="deleteLegalLandfillTruckModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteLandfillTruckConfirmed()" data-dismiss="modal" aria-label="Delete">
+                        <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                    </button>
+                    <button type="button" class="mb-1 btn bg-gradient-warning" onclick="disableLandfillTruck()" data-dismiss="modal" aria-label="Delete">
+                        <span aria-hidden="true"> @DbResHtml.T("Disable", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="editLegalLandfillTruckModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-warning text-white">
+                    <h5 class="modal-title">@DbResHtml.T("Edit Legal Landfill Truck", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="editLegalLandfillTruckModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="editLegalLandfillTruckConfirmed()" data-dismiss="modal" aria-label="Edit">
+                        <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div> 
+
+    <div class="modal" id="addLegalLandfillTruckModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("New Legal Landfill Truck", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="addLegalLandfillTruckModalBody" class="modal-body">
+                    <div class="form-group">
+                        <label class="form-control-label" for="#addLegalLandfillTruckNameInput">@DbResHtml.T("Name:", "Resources")</label>
+                        <input type="text" name="Name" class="form-control" id="addLegalLandfillTruckNameInput" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label mt-3" for="#addLegalLandfillTruckDescriptionInput">@DbResHtml.T("Description:", "Resources")</label>
+                        <input type="text" name="Description" class="form-control" id="addLegalLandfillTruckDescriptionInput" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label mt-3" for="#addLegalLandfillTruckRegistrationInput">@DbResHtml.T("Registration:", "Resources")</label>
+                        <input type="text" name="Registration" class="form-control" id="addLegalLandfillTruckRegistrationInput" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label mt-3" for="#addLegalLandfillTruckCapacityInput">@DbResHtml.T("Capacity (in m3):", "Resources")</label>
+                        <input type="number" step="0.01" name="Capacity" class="form-control" id="addLegalLandfillTruckCapacityInput" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label mt-3" for="#addLegalLandfillTruckUnladenWeightInput">@DbResHtml.T("Unladen Weight (in kilograms):", "Resources")</label>
+                        <input type="number" step="0.01" name="UnladenWeight" class="form-control" id="addLegalLandfillTruckUnladenWeightInput" />
+                    </div>                    <div class="form-group">
+                        <label class="form-control-label mt-3" for="#addLegalLandfillTruckPayloadWeightInput">@DbResHtml.T("Payload Weight (in kilograms):", "Resources")</label>
+                        <input type="number" step="0.01" name="PayloadWeight" class="form-control" id="addLegalLandfillTruckPayloadWeightInput" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-primary" onclick="addLegalLandfillTruckConfirmed()" data-dismiss="modal" aria-label="Add">
+                        <span aria-hidden="true"> @DbResHtml.T("Add", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+} 

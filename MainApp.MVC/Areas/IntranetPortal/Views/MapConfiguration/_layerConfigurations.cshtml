@@ -1,0 +1,602 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.MapConfiguration
+@using Microsoft.AspNetCore.Localization
+@using SD.Helpers
+@model IEnumerable<MapLayerConfigurationViewModel>
+
+@{
+    var mapName = ViewData["MapName"];
+    var mapId = ViewData["MapId"];
+}
+
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-th-list mr-1"></i>
+                        <font style="vertical-align: inherit;">
+                            <font style="vertical-align: inherit;">Layer configurations</font>
+                        </font>
+                        <a class="float-right" data-tool="card-collapse" data-toggle="collapse" href="#mapLayerConfigurationsCollapse" role="button" aria-expanded="true" aria-controls="mapLayerConfigurationsCollapse">
+                            <em class="fa fa-minus"></em>
+                        </a>
+                    </div>
+                    <div id="mapLayerConfigurationsCollapse" class="collapse show">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="float-lg-left">
+                                        <div class="dataTables_length" id="layers-grid_length" style="display: flex; align-items: center;">
+                                            <label class="d-flex" style="margin: 0;">
+                                                Show
+                                                <select name="layers-grid_length" aria-controls="layers-grid" class="custom-select custom-select-sm form-control form-control-sm" style="margin: 0 10px;">
+                                                    <option value="2">2</option>
+                                                    <option value="5">5</option>
+                                                    <option value="7">7</option>
+                                                    <option value="10">10</option>
+                                                    <option value="15">15</option>
+                                                    <option value="20">20</option>
+                                                    <option value="50">50</option>
+                                                    <option value="100">100</option>
+                                                </select>
+                                                items
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-5">
+                                <table id="mapLayerConfigurationTable" class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>@DbResHtml.T("Layer Name", "Resources")</th>
+                                            <th>@DbResHtml.T("Order", "Resources")</th>
+                                            <th>@DbResHtml.T("Show in layer switcher", "Resources")</th>
+                                            <th class="notexport">@DbResHtml.T("Action", "Resources")</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model)
+                                        {
+                                            <tr>
+                                                <td>@item.LayerName</td>
+                                                <td>@item.Order</td>
+                                                <td>Layer Switcher</td>
+                                                <td>
+
+                                                    <button class="btn btn-sm btn-primary edit-button" data-id="@item.Id" onclick="editMapLayerConfigurationModalFunction('@item.Id')"title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                        Edit
+                                                    </button>
+                                                    <button class="btn btn-sm btn-danger delete-button" data-id="@item.Id" onclick="deleteMapLayerConfigurationModalFunction('@item.Id')" title="Delete">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+
+                                </table>
+                                <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addMapLayerConfigurationModal" onclick="openMapLayerConfigurationModal('@mapName','@mapId')" title="@DbResHtml.T("Add Map Layer Group Configuration", "Resources")">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+
+
+
+$(document).ready(function () {
+    $('#mapLayerConfigurationTable').DataTable({
+        paging: true,
+        ordering: true,
+        pageLength: 10,
+        lengthMenu: [2, 5, 7, 10, 15, 20, 50, 100],
+        columnDefs: [{ width: "20%", targets: 2 }],
+        order: [[1, 'asc']],
+        language: { url: "@langPath" },
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+                text: '<i class="fas fa-file-alt"></i>',
+                titleAttr: "Export to excel",
+                filename: "Map Layer Configuration - @DateTime.Now.ToString("dd.MM.yyyy")",
+                exportOptions: { columns: ':not(.notexport)' }
+            }
+        ]
+    });
+});
+function addMapLayerConfigurationModal() {
+    var mapLayerConfigurationViewModel = {
+        MapName: $("#addMapConfigurationName").val(),
+        MapConfigurationId: $("#addMapConfigurationId").val(),
+        LayerName: $("#addLayerName").val(),
+        LayerTitleJson: $("#addLayerTitleJson").val(),
+        LayerDescriptionJson: $("#addLayerDescriptionJson").val(),
+        Order: $("#addOrder").val(),
+        LayerJs: $("#addLayerJs").val(),
+    };
+
+    $.ajax({
+        type: "POST",
+        url: "@Url.Action("AddMapLayerConfiguration", "MapConfiguration", "IntranetPortal")",
+        data: {
+            mapLayerConfigurationViewModel: mapLayerConfigurationViewModel
+        },
+        success: function (data) {
+            if (data && data.data) {
+                if (!data.isSuccess && data.errMsg) {
+                    Swal.fire({
+                        text: data.errMsg,
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                } else {
+                    var table = $('#mapLayerConfigurationTable').DataTable();
+                    table.row.add([
+                        data.data.layerName,
+                        data.data.order, 
+                        'Layer Switcher', 
+                        `<button class="btn btn-sm btn-primary edit-button" data-id="${data.data.id}" onclick="editMapLayerConfigurationModalFunction('${data.data.id}')" title="Edit">
+                            <i class="fas fa-edit"></i> Edit
+                         </button>
+                         <button class="btn btn-sm btn-danger delete-button" data-id="${data.data.id}" onclick="deleteMapLayerConfigurationModalFunction('${data.data.id}')" title="Delete">
+                            <i class="fas fa-trash-alt"></i> Delete
+                         </button>` 
+                    ]).draw();
+
+                    Swal.fire({
+                        text: '@DbResHtml.T("Successfully added map layer configuration", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "success"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $("#addMapLayerConfigurationModal").modal('hide'); 
+                            $("#addLayerForm")[0].reset(); 
+                        }
+                    });
+                }
+            } else {
+                Swal.fire({
+                    text: '@DbResHtml.T("No data received", "Resources")',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                    allowOutsideClick: false,
+                    icon: "error"
+                });
+            }
+        },
+        error: function (req, status, error) {
+            Swal.fire({
+                text: '@DbResHtml.T("Error occurred", "Resources")',
+                icon: "error"
+            });
+        }
+    });
+}
+
+            function deleteMapLayerConfiguration() {
+                var id = $("#deleteId").val();
+                var mapLayerConfigurationViewModel = {
+                    Id: id,
+                    LayerName: $("#deleteLayerName").val(),
+                    LayerTitleJson: $("#deleteLayerTitleJson").val(),
+                    LayerDescriptionJson: $("#deleteLayerDescriptionJson").val(),
+                    Order: $("#deleteOrder").val(),
+                    LayerJs: $("#deleteLayerJs").val(),
+                };
+
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("DeleteMapLayerConfiguration", "MapConfiguration", "IntranetPortal" )",
+                    data: {
+                        mapLayerConfigurationViewModel: mapLayerConfigurationViewModel
+                    },
+                    success: function (data) {
+                        if (data.isSuccess) {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully deleted map layer configuration", "Resources")',
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    var table = $('#mapLayerConfigurationTable').DataTable();
+                                    table.row($('button[data-id="' + id + '"]').parents('tr')).remove().draw(); 
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                text: data.errMsg || '@DbResHtml.T("Error occurred", "Resources")',
+                                icon: "error"
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            text: '@DbResHtml.T("Error occurred", "Resources")',
+                            icon: "error"
+                        });
+                    }
+                });
+            }
+
+
+
+            function deleteMapLayerConfigurationModalFunction(mapLayerConfigurationId) {
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("GetMapLayerConfigurationById", "MapConfiguration", "IntranetPortal" )",
+                    data: {
+                            mapLayerConfigurationId: mapLayerConfigurationId
+                    },
+                    success: function (data) {
+                        if (data != undefined || data != null) {
+                            if (data.isSuccess == false && data.errMsg != null) {
+                                Swal.fire({
+                                    text: `${data.errMsg}`,
+                                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                    allowOutsideClick: false,
+                                    icon: "error"
+                                });
+                            }
+                            else {
+                                $("#deleteMapLayerConfigurationModalBody").html("");
+
+                                $("#deleteMapLayerConfigurationModalBody").append(
+                                    '<div>'
+                                    + '<input type="text" id="deleteId" hidden/>'
+                                    + '<input type="text" id="deleteLayerName" hidden/>'
+                                    + '<input type="text" id="deleteLayerTitleJson" hidden/>'
+                                    + '<input type="text" id="deleteLayerDescriptionJson" hidden/>'
+                                    + '<input type="text" id="deleteOrder" hidden/>'
+                                    + '<input type="text" id="deleteLayerJs" hidden/>'
+  
+
+                                    + '<table class="table table-striped my-4 w-100">'
+                                    + '<thead>'
+                                    + '<tr>'
+                                    + '<th>@DbResHtml.T("Layer name", "Resources")</th>'
+                                    + '<th>@DbResHtml.T("Layer Title Json", "Resources")</th>'
+                                    + '<th>@DbResHtml.T("Layer Description Json", "Resources")</th>'
+                                    + '<th>@DbResHtml.T("Order", "Resources")</th>'
+                                    + '<th>@DbResHtml.T("LayerJs", "Resources")</th>'
+                                    + '</tr>'
+                                    + '</thead>'
+                                    + '<tbody>'
+                                    + '<tr>'
+                                    + `<td>${data.data.layerName}</td>`
+                                    + `<td>${data.data.layerTitleJson}</td>`
+                                    + `<td>${data.data.layerDescriptionJson}</td>`
+                                    + `<td>${data.data.order}</td>`
+                                    + `<td>${data.data.layerJs}</td>`
+                                    + '</tr>'
+                                    + '</tbody>'
+                                    + '</table>'
+                                    + '</div>'
+                                );
+
+                                $("#deleteId").val(data.data.id);
+                                $("#deleteLayerName").val(data.data.layerName);
+                                $("#deleteLayerTitleJson").val(data.data.layerTitleJson);
+                                $("#deleteLayerDescriptionJson").val(data.data.layerDescriptionJson);
+                                $("#deleteOrder").val(data.data.order);
+                                $("#deleteLayerJs").val(data.data.layerJs);
+
+
+                                $('#deleteMapLayerConfigurationModal').modal('show');
+                            }
+                        }
+                        else {
+                            Swal.fire({
+                                text: `@DbResHtml.T("No data received", "Resources")`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                    },
+                    error: function (req, status, error) {
+                        ajaxErrorHandlingAlert("error", req.status);
+                    }
+                });
+            }
+
+function editMapLayerConfiguration(mapId) {
+    var id = $("#editId").val();
+    var createdById = $("#editCreatedById").val();
+    var mapConfigurationId = mapId;
+    var layerName = $("#editLayerName").val();
+    var layerTitleJson = $("#editLayerTitleJson").val();
+    var layerDescriptionJson = $("#editLayerDescriptionJson").val();
+    var order = $("#editOrder").val();
+    var layerJs = $("#editLayerJs").val();
+
+    var mapLayerConfigurationViewModel = {
+        Id: id,
+        LayerName: layerName,
+        LayerTitleJson: layerTitleJson,
+        LayerDescriptionJson: layerDescriptionJson,
+        Order: order,
+        LayerJs: layerJs,
+        CreatedById: createdById,
+        MapConfigurationId: mapConfigurationId
+    };
+
+    $.ajax({
+        type: "POST",
+        url: "@Url.Action("EditMapLayerConfiguration", "MapConfiguration","IntranetPortal" )",
+        data: {
+            mapLayerConfigurationViewModel: mapLayerConfigurationViewModel
+        },
+        success: function (data) {
+            if (data != undefined || data != null) {
+                if (data.isSuccess == false && data.errMsg != null) {
+                    Swal.fire({
+                        text: `${data.errMsg}`,
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                } else {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Successfully edited map layer configuration", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "success"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            var table = $('#mapLayerConfigurationTable').DataTable();
+                            var row = $('button[data-id="' + id + '"]').parents('tr');
+                            table.row(row).data([
+                                layerName,
+                                order,
+                                'Layer Switcher',
+                                `<button class="btn btn-sm btn-primary edit-button" data-id="${id}" onclick="editMapLayerConfigurationModalFunction('${id}')" title="Edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-button" data-id="${id}" onclick="deleteMapLayerConfigurationModalFunction('${id}')" title="Delete">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>`
+                            ]).draw(false);
+                        }
+                    });
+                }
+            } else {
+                Swal.fire({
+                    text: '@DbResHtml.T("No data received", "Resources")',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                    allowOutsideClick: false,
+                    icon: "error"
+                });
+            }
+        },
+        error: function (req, status, error) {
+            Swal.fire({
+                text: '@DbResHtml.T("Error occurred", "Resources")',
+                icon: "error"
+            });
+        }
+    });
+}
+
+        function editMapLayerConfigurationModalFunction(mapLayerConfigurationId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetMapLayerConfigurationById", "MapConfiguration", "IntranetPortal")",
+                data: {
+                    mapLayerConfigurationId: mapLayerConfigurationId,
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#editMapLayerConfigurationModalBody").html("");
+
+                            $("#editMapLayerConfigurationModalBody").append(
+                                '<div>'
+                                + `<input type="text" id="editId" hidden>`
+                                + `<input type="text" id="editCreatedById" hidden>`
+                                + `<input type="text" id="editMapConfigurationId" hidden>`
+                                + `<label class="form-control-label" for="editLayerName">@DbResHtml.T("Layer Name:", "Resources")</label><input class="form-control" type="text" id="editLayerName" />`
+                                + `<label class="form-control-label mt-3" for="editLayerTitleJson">@DbResHtml.T("Layer Title Json:", "Resources")</label><input class="form-control" type="text" id="editLayerTitleJson" />`
+                                + `<label class="form-control-label mt-3" for="editLayerDescriptionJson">@DbResHtml.T("TileGridJs:", "Resources")</label><input class="form-control" type="text" id="editLayerDescriptionJson" />`
+                                + `<label class="form-control-label mt-3" for="editOrder">@DbResHtml.T("Layer Order:", "Resources")</label><input class="form-control" type="number" id="editOrder" />`
+                                + `<label class="form-control-label mt-3" for="editLayerJs">@DbResHtml.T("LayerJs:", "Resources")</label><textarea class="form-control" id="editLayerJs"></textarea>`
+                                + '</div>'
+                            );
+
+                            $("#editId").val(data.data.id);
+                            $("#editmapConfigurationId").val(data.data.mapConfigurationId);
+                            $("#editCreatedById").val(data.data.createdById);
+                            $("#editLayerName").val(data.data.layerName);
+                            $("#editLayerTitleJson").val(data.data.layerTitleJson);
+                            $("#editLayerDescriptionJson").val(data.data.layerDescriptionJson);
+                            $("#editOrder").val(data.data.order);
+                            $("#editLayerJs").val(data.data.layerJs);
+
+                            $('#editMapLayerConfigurationModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+    </script>
+
+
+    <div class="modal fade" id="addMapLayerConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="addMapLayerConfigurationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("Create Map Layer Configuration", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="modal-body" id="addMapLayerConfigurationModalBody">
+                            <form id="mapLayerConfigurationForm" onsubmit="addMapLayerConfigurationModal(); return false;">
+                                <div class="card-header">Create form for creating new layer:</div>
+                                <input hidden id="addMapConfigurationId" name="MapConfigurationId">
+                                <div class="form-group">
+                                    <label for="addMapConfigurationName">@DbResHtml.T("Map Name:", "Resources")</label>
+                                    <input type="text" class="form-control" id="addMapConfigurationName" name="MapName" required readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="addLayerName">@DbResHtml.T("Layer Name:", "Resources")</label>
+                                    <input type="text" class="form-control" id="addLayerName" name="LayerName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="addLayerTitleJson">@DbResHtml.T("Layer Title Json:", "Resources")</label>
+                                    <input type="text" class="form-control" id="addLayerTitleJson" name="LayerTitleJson">
+                                </div>
+                                <div class="form-group">
+                                    <label for="addLayerDescriptionJson">@DbResHtml.T("Layer Description Json:", "Resources")</label>
+                                    <input type="text" class="form-control" id="addLayerDescriptionJson" name="LayerDescriptionJson">
+                                </div>
+                                <div class="form-group">
+                                    <label for="addOrder">@DbResHtml.T(" Order:", "Resources")</label>
+                                    <input type="number" class="form-control" id="addOrder" name="Order">
+                                </div>
+                                <div class="form-group">
+                                    <label for="addLayerJs">@DbResHtml.T("LayerJs", "Resources")</label>
+                                    <textarea class="form-control" id="addLayerJs" name="AddLayerJs" style="min-height: 200px" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn bg-gradient-primary">@DbResHtml.T("Create", "Resources")</button>
+                                    <button type="button" class="btn bg-gradient-secondary" data-dismiss="modal">@DbResHtml.T("Back to List", "Resources")</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="modal-body">
+                            <div class="card-header">Create form for creating new layer explanation:</div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">Map Name</label>
+                                <p>Fill the map name with the name of the map.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">Layer Name</label>
+                                <p>Fill Layer Name with the name of the layer.</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">Layer Title Json</label>
+                                <p>Fill Group Title Json field. <br /> Example {"en":"Test Layer", "mk":"Тест Група"}</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">Layer Description Json</label>
+                                <p>Fill Group Description Json field. <br \> Example {"en":"Test Layer Decription", "mk":"Тест Група Опис"}</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">Order</label>
+                                <p>Fill Group Order for order. This is number field</p>
+                            </div>
+                            <div class="form-group" style="min-height: 70px">
+                                <label class="control-label">LayerJs</label>
+                                <p>
+                                    Layer Js
+                                    Fill Layer Js field.
+                                    ol.layer.Tile({
+                                    name: '%NAME%',
+                                    projection: '%PROJECTION%',
+                                    title: '%TITLE%',
+                                    order:%ORDER%,
+                                    source: new ol.source.TileWMS({
+                                    url: 'https://%SERVER%/geoserver/wms?',
+                                    params: {
+                                    'LAYERS': 'layer name',
+                                    'VERSION': '1.3.0',
+                                    'FORMAT': 'image/png'
+                                    },
+                                    tileGrid: new %TILEGRID%
+                                    })
+                                    })
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<div class="modal" id="deleteMapLayerConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-danger">
+                <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this map layer configuration ?", "Resources")</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="deleteMapLayerConfigurationModalBody" class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteMapLayerConfiguration()" data-dismiss="modal" aria-label="Delete">
+                    <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="editMapLayerConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-danger">
+                <h5 class="modal-title">@DbResHtml.T("Are you sure you want to edit this map layer configuration ?", "Resources")</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="editMapLayerConfigurationModalBody" class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="mb-1 btn bg-gradient-danger" onclick="editMapLayerConfiguration('@mapId')" data-dismiss="modal" aria-label="edit">
+                    <span aria-hidden="true"> @DbResHtml.T("edit", "Resources")</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* } *@

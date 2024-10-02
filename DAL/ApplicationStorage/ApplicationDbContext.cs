@@ -58,6 +58,9 @@ namespace DAL.ApplicationStorage
         #region LegalLandfillsManagement
         public virtual DbSet<LegalLandfill> LegalLandfills { get; set; }
         public virtual DbSet<LegalLandfillPointCloudFile> LegalLandfillPointCloudFiles { get; set; }
+        public virtual DbSet<LegalLandfillTruck> LegalLandfillTrucks { get; set; }
+        public virtual DbSet<LegalLandfillWasteType> LegalLandfillWasteTypes { get; set; }
+        public virtual DbSet<LegalLandfillWasteImport> LegalLandfillWasteImports { get; set; }
         #endregion
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

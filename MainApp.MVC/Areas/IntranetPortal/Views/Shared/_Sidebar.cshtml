@@ -4,7 +4,7 @@
 @inject ModulesAndAuthClaimsHelper modulesAndAuthClaims
 
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
-    <a asp-area="IntranetPortal" asp-controller="Map" asp-action="Index" class="brand-link bg-success border-bottom">
+    <a asp-area="IntranetPortal" asp-controller="Map" asp-action="Index" class="brand-link bg-gradient-success border-bottom">
         <img src="~/logo.png" alt=" @DbResHtml.T("Waste detection", "Resources")" class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-light"> @DbResHtml.T("Waste detection", "Resources")</span>
     </a>
@@ -20,26 +20,59 @@
                         </p>
                     </a>
                 </li>
-                @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasets))
+                @if(User.HasAuthClaim(SD.AuthClaims.ViewDatasets) && User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
                 {
                     <li class="nav-item">
-                        <a asp-action="Index" asp-controller="Datasets" asp-area="IntranetPortal" id="NavlinkDatasets"  class="nav-link" title="@DbResHtml.T("Datasets", "Resources")">
-                            <i class="fas fa-server"></i> &nbsp;&nbsp;
+                        <a href="#" class="nav-link" id="NavlinkClasses">
+                            <i class="fas fa-boxes"></i> &nbsp;&nbsp;
                             <p>
-                                @DbResHtml.T("Datasets", "Resources")
+                                @DbResHtml.T("Classes", "Resources")
+                                <i class="fas fa-angle-left right"></i>
                             </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-action="Index" asp-controller="Datasets" asp-area="IntranetPortal" class="nav-link" id="NavlinkDatasets"
+                                   title="@DbResHtml.T("Datasets list", "Resources")">
+                                    <i class="fas fa-coins"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Datasets list", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-action="Index" asp-controller="DatasetClasses" asp-area="IntranetPortal" class="nav-link" id="NavlinkDatasetClasses"
+                                   title="@DbResHtml.T("Dataset classes", "Resources")">
+                                    <i class="fas fa-cubes"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Dataset classes", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 }
-                @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasets) && User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
                 {
                     <li class="nav-item">
-                        <a asp-action="Index" asp-controller="DatasetClasses" asp-area="IntranetPortal" id="NavlinkDatasetClasses" class="nav-link" title="@DbResHtml.T("Dataset Classes", "Resources")">
-                            <i class="fas fa-chart-bar"></i> &nbsp;&nbsp;
+                        <a href="#" class="nav-link" id="NavlinkTraining">
+                            <i class="fas fa-dumbbell"></i> &nbsp;&nbsp;
                             <p>
-                                @DbResHtml.T("Dataset Classes", "Resources")
+                                @DbResHtml.T("Training", "Resources")
+                                <i class="fas fa-angle-left right"></i>
                             </p>
                         </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-action="Index" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
+                                   title="@DbResHtml.T("Training runs", "Resources")">
+                                    <i class="fas fa-paper-plane"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Training runs", "Resources")
+                                    </p>
+                                </a>
+                            </li>                           
+                        </ul>
                     </li>
                 }
                 @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
@@ -112,6 +145,33 @@
                                     </p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a asp-action="ViewLegalLandfillTrucks" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                   title="@DbResHtml.T("Legal Landfill Landfill Trucks", "Resources")">
+                                    <i class="fas fa-truck"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Legal Landfill Trucks", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-action="ViewLegalLandfillWasteTypes" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                   title="@DbResHtml.T("Legal Landfill Landfill Waste Types", "Resources")">
+                                    <i class="fas fa-trash"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Legal Landfill Waste Types", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-action="ViewLegalLandfillWasteImports" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                   title="@DbResHtml.T("Legal Landfill Landfill Waste Imports", "Resources")">
+                                    <i class="fas fa-dolly"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Legal Landfill Waste Imports", "Resources")
+                                    </p>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 }
@@ -136,6 +196,18 @@
                                 <a href="/LocalizationAdmin" title="@DbResHtml.T("Localization", "Resources")" class="nav-link">
                                     <i class="fas fa-sm fa-globe"></i>
                                     <p><small> @DbResHtml.T("Localization", "Resources")</small></p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/hangfire" title="@DbResHtml.T("Hangfire", "Resources")" class="nav-link">
+                                    <i class="fas fa-h-square"></i>
+                                    <p><small> @DbResHtml.T("Hangfire", "Resources")</small></p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-area="IntranetPortal" asp-controller="MapConfiguration" asp-action="Index" title="@DbResHtml.T("Map Configurations", "Resources")" class="nav-link">
+                                    <i class="fas fa-sm fa-map"></i>
+                                    <p><small> @DbResHtml.T("Map Configurations", "Resources")</small></p>
                                 </a>
                             </li>
                         </ul>

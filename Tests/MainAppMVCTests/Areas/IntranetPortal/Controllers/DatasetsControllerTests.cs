@@ -305,10 +305,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var datasetId = Guid.NewGuid();
-            _mockDatasetService.Setup(s => s.DeleteDataset(datasetId))
-                .ReturnsAsync(new ResultDTO<int>(true, 1, null, null));
-            _mockDatasetService.Setup(s => s.GetAllDatasets())
-                .ReturnsAsync(new List<DatasetDTO>());
+            _mockDatasetService.Setup(s => s.DeleteDatasetCompletelyIncluded(datasetId))
+                .ReturnsAsync(ResultDTO.Ok());
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages"))
                 .ReturnsAsync(new ResultDTO<string>(true, "DatasetImages", null, null));
             _mockWebHostEnvironment.Setup(e => e.WebRootPath).Returns("wwwroot");
