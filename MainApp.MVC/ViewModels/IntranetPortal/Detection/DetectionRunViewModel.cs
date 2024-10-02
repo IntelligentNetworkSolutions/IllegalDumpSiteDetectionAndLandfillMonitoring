@@ -1,5 +1,4 @@
-﻿using DTOs.MainApp.BL.DetectionDTOs;
-using DTOs.MainApp.BL;
+﻿using DTOs.MainApp.BL;
 
 namespace MainApp.MVC.ViewModels.IntranetPortal.Detection
 {
@@ -12,8 +11,8 @@ namespace MainApp.MVC.ViewModels.IntranetPortal.Detection
 
         public bool IsCompleted { get; set; } = false;
 
-        public string? ImagePath { get; set; }
-        public string? ImageFileName { get; set; }
+        public string? DetectionInputImageId { get; set; }
+        public virtual DetectionInputImageViewModel? DetectionInputImage { get; set; }
 
         public string? CreatedById { get; set; }
         public DateTime? CreatedOn { get; set; }

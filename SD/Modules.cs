@@ -1,6 +1,12 @@
-﻿using SD.Helpers;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data.SqlTypes;
+using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
+using SD.Helpers;
 
 namespace SD
 {
@@ -69,6 +75,7 @@ namespace SD
         public static readonly Module MapToolDetectionIgnoreZones = new Module { Value = "MapToolDetectionIgnoreZones", Title = "Map Tool Detection Ignore Zones", Description = "Map Tool Detection Ignore Zones" };
         public static readonly Module LegalLandfillWasteManagement = new Module { Value = "LegalLandfillWasteManagement", Title = "Legal Landfill Waste Management", Description = "Legal Landfill Waste Management" };
         public static readonly Module MapConfiguration = new Module { Value = "MapConfiguration", Title = "Map Configuration", Description = "Map Configuration" };
+        public static readonly Module MapToolDetectionInputImages = new Module { Value = "MapToolDetectionInputImages", Title = "Map Tool Detection Input Images", Description = "Map Tool Detection Input Images" };
 
 
     }

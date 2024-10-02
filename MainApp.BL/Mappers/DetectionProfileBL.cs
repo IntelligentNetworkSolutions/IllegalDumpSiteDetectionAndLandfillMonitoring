@@ -11,6 +11,7 @@ namespace MainApp.BL.Mappers
             CreateMap<DetectedDumpSiteDTO, DetectedDumpSite>().ReverseMap();
             CreateMap<DetectionRunDTO, DetectionRun>().ForMember(dest => dest.CreatedBy, opt => opt.Ignore()).ReverseMap();
             CreateMap<DetectionIgnoreZoneDTO, DetectionIgnoreZone>().ReverseMap();
+            CreateMap<DetectionInputImageDTO, DetectionInputImage>().ReverseMap();
         }
     }
 }

@@ -51,6 +51,7 @@ namespace DAL.ApplicationStorage
         public virtual DbSet<DetectionRun> DetectionRuns { get; set; }
         public virtual DbSet<DetectedDumpSite> DetectedDumpSites { get; set; }
         public virtual DbSet<DetectionIgnoreZone> DetectionIgnoreZones { get; set; }
+        public virtual DbSet<DetectionInputImage> DetectionInputImages { get; set; }
 
         #endregion
 

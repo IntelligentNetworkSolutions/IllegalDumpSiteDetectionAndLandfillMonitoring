@@ -524,6 +524,67 @@ namespace DAL.Migrations
                     b.ToTable("detection_ignore_zones", (string)null);
                 });
 
+            modelBuilder.Entity("Entities.DetectionEntities.DetectionInputImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by_id");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_on")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
+
+                    b.Property<DateTime>("DateTaken")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_taken")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("ImageFileName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_file_name");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_path");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("UpdatedById")
+                        .HasColumnType("text")
+                        .HasColumnName("updated_by_id");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_on");
+
+                    b.HasKey("Id")
+                        .HasName("pk_detection_input_images");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("detection_input_images");
+                });
+
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
                 {
                     b.Property<Guid>("Id")
@@ -546,15 +607,9 @@ namespace DAL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<string>("ImageFileName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("image_file_name");
-
-                    b.Property<string>("ImagePath")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("image_path");
+                    b.Property<Guid>("DetectionInputImageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("detection_input_image_id");
 
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("boolean")
@@ -570,7 +625,9 @@ namespace DAL.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("detection_runs", (string)null);
+                    b.HasIndex("DetectionInputImageId");
+
+                    b.ToTable("detection_runs");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>
@@ -1490,6 +1547,26 @@ namespace DAL.Migrations
                     b.Navigation("CreatedBy");
                 });
 
+            modelBuilder.Entity("Entities.DetectionEntities.DetectionInputImage", b =>
+                {
+                    b.HasOne("Entities.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_detection_input_images_asp_net_users_created_by_id");
+
+                    b.HasOne("Entities.ApplicationUser", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_detection_input_images_asp_net_users_updated_by_id");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("UpdatedBy");
+                });
+
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
                 {
                     b.HasOne("Entities.ApplicationUser", "CreatedBy")
@@ -1499,7 +1576,16 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_detection_runs_asp_net_users_created_by_id");
 
+                    b.HasOne("Entities.DetectionEntities.DetectionInputImage", "DetectionInputImage")
+                        .WithMany()
+                        .HasForeignKey("DetectionInputImageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_detection_runs_detection_input_images_detection_input_image~");
+
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("DetectionInputImage");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>

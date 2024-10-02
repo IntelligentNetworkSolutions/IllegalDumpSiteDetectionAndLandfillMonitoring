@@ -151,7 +151,19 @@
 
         //mapVars.mapLayersFromConfig = @@ Html.Raw(Model.LayersJavaScript);
 
-        mapVars.mapLayersFromConfig = [new ol.layer.Group({
+        mapVars.mapLayersFromConfig = [
+            new ol.layer.Group({
+                title: 'Detection run images',
+                name: 'DetectionRunImages',
+                order: -1,
+                opacity: 1,
+                visible: true,
+                openInLayerSwitcher: true,
+                displayInLayerSwitcher: false,
+                fold: 'open',
+                layers: new ol.Collection([])
+            }),
+            new ol.layer.Group({
             title: 'Drone Imagery',
             order: 1,
             opacity: 1,
@@ -292,7 +304,8 @@
                         })
                     })
                 ])
-            })]; 
+            })
+          ]; 
 
         var mapLayers = [];
 

@@ -123,7 +123,16 @@
     }
 
     function triggerShowOnMap() {
-        let selectedDetectionRunsIds = getSelectedDetectionRunIds();       
+        let selectedDetectionRunsIds = getSelectedDetectionRunIds();
+        if (selectedDetectionRunsIds.length === 0) {
+            Swal.fire({
+                text: '@DbResHtml.T("No detection run/s selected", "Resources")',
+                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',               
+                allowOutsideClick: false,
+                icon: "warning"
+            });
+            return;
+        }
         $.ajax({
             type: "POST",
             url: "@Url.Action("ShowDumpSitesOnMap", "Detection", new { Area = "IntranetPortal" })",
@@ -145,6 +154,7 @@
                         }
                     });
 
+                   
                     var historicDataLayerGroup = new ol.layer.Group({
                         title: 'Historic Data',
                         order: 3,
@@ -157,6 +167,37 @@
 
                     var extent = ol.extent.createEmpty();
                     response.data.forEach(function (detectionRun,index) {
+                        var detectionRunImagesGroupLayer = mapVars.findLayerByName('DetectionRunImages');
+                        if (detectionRunImagesGroupLayer) {
+                            var layers = detectionRunImagesGroupLayer.getLayers().getArray();
+                            var exitingLayer = layers.find(function (layer) {
+                                return layer.get('imgId') === detectionRun.detectionInputImage.id;
+                            });
+                            
+                            if (!exitingLayer) {
+                                const source = new ol.source.GeoTIFF({
+                                    sources: [
+                                        {
+                                            url: "/" + detectionRun.detectionInputImage.imagePath.replace(/\\/g, '/')
+                                        },
+                                    ],
+                                });
+
+                                var newLayer = new ol.layer.WebGLTile({
+                                    source: source,
+                                    name: detectionRun.detectionInputImage.name,
+                                    imgId: detectionRun.detectionInputImage.id,
+                                    projection: mapVars.projection,
+                                    title: detectionRun.detectionInputImage.name,
+                                    order: index + 1,
+                                    visible: true
+                                })
+
+                                detectionRunImagesGroupLayer.getLayers().push(newLayer);
+                                detectionRunImagesGroupLayer.set('displayInLayerSwitcher', true);
+                            }
+                            
+                        }
                         if (detectionRun.detectedDumpSites && detectionRun.detectedDumpSites.length > 0) {
                             var vectorSource = new ol.source.Vector(); 
 
@@ -174,7 +215,7 @@
                                 source: vectorSource,
                                 title: detectionRun.name,
                                 order: index + 1,
-                                visible: true,
+                                visible: true, 
                                 style: new ol.style.Style({
                                     fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' }),
                                     stroke: new ol.style.Stroke({

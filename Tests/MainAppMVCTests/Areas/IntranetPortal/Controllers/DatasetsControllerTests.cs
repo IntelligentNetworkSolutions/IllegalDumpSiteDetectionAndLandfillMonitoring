@@ -9,17 +9,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Controller;
 using Moq;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -107,7 +100,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(parentDataset);
 
             // Act
-            var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;       
+            var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
             var data = JObject.FromObject(result.Value);
 
             // Assert
@@ -241,7 +234,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
             Assert.Equal("Successfully published dataset", jsonData["responseSuccess"]["Value"].ToString());
-        }              
+        }
 
         [Fact]
         public async Task Index_ReturnsViewResult_WithListOfDatasets()
@@ -326,24 +319,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonData = JObject.FromObject(result.Value);
             Assert.Equal("Successfully deleted dataset", jsonData["responseSuccess"]["Value"].ToString());
         }
-
-
-
-        //[Fact]
-        //public async Task ImportDataset_ValidCocoFormattedDirectoryAtPath_ReturnsDataset()
-        //{
-        //    // Arrange - Arrange your objects, create and set ImportDataset_ValidCocoFormattedDirectoryAtPath them up as necessary.
-        //    string pathToCocoFormattedDirectory = "";
-
-        //    _mockDatasetService.Setup(s => s.ImportDatasetCocoFormatedAtDirectoryPath(pathToCocoFormattedDirectory))
-        //        .ReturnsAsync(pathToCocoFormattedDirectory);
-
-        //    // Act - Act on an object ValidCocoFormattedDirectoryAtPath.
-
-
-        //    // Assert - Assert that something is as expected ReturnsDataset.
-
-        //}
 
     }
 }

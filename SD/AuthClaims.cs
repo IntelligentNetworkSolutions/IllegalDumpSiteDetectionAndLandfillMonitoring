@@ -467,10 +467,17 @@ namespace SD
         };
 
 
+        public static readonly AuthClaim ViewDetectionInputImages = new AuthClaim
+        {
+            Value = "16:1",
+            FromModule = Modules.MapToolDetectionInputImages,
+            Description = "View Detection Input Images"
+        };
+        
 
         public static readonly AuthClaim ManageDetectionIgnoreZones = new AuthClaim
         {
-            Value = "16:1",
+            Value = "17:1",
             FromModule = Modules.MapToolDetectionIgnoreZones,
             Description = "Manage Detection Ignore Zones"
         };

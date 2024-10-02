@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DAL.ApplicationStorage;
+﻿using DAL.ApplicationStorage;
 using DAL.Interfaces.Repositories.DetectionRepositories;
-using DAL.Repositories.MapConfigurationRepositories;
 using Entities.DetectionEntities;
-using Entities.MapConfigurationEntities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DAL.Repositories.DetectionRepositories
 {
@@ -31,7 +26,7 @@ namespace DAL.Repositories.DetectionRepositories
         {
             try
             {
-                var list = await _db.DetectionRuns.Include(x => x.CreatedBy).Include(x => x.DetectedDumpSites).ThenInclude(x => x.DatasetClass).ToListAsync();
+                var list = await _db.DetectionRuns.Include(x => x.CreatedBy).Include(x => x.DetectionInputImage).Include(x => x.DetectedDumpSites).ThenInclude(x => x.DatasetClass).ToListAsync();
                 if (list == null)
                 {
                     return new List<DetectionRun>();

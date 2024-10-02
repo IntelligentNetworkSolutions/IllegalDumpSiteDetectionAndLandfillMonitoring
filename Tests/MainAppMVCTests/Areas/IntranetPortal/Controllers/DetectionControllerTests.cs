@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
@@ -10,12 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using SD;
 using Services.Interfaces.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -27,6 +23,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IUserManagementService> _mockUserManagementService;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<IWebHostEnvironment> _mockWebHostEnvironment;
+        private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
         private readonly DetectionController _controller;
 
         public DetectionControllerTests()
@@ -36,6 +33,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockUserManagementService = new Mock<IUserManagementService>();
             _mockConfiguration = new Mock<IConfiguration>();
             _mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
+            _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
 
             _mockConfiguration.Setup(c => c["AppSettings:MMDetection:BaseSaveMMDetectionDirectoryAbsPath"])
                 .Returns(@"C:\vs_code_workspaces\mmdetection\mmdetection\ins_development");
@@ -49,6 +47,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 _mockConfiguration.Object,
                 _mockMapper.Object,
                 _mockWebHostEnvironment.Object,
+                _mockAppSettingsAccessor.Object,
                 _mockDetectionRunService.Object);
         }
 
@@ -291,6 +290,274 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.Empty(result);
         }
-        
+
+        #region InputImages
+
+        [Fact]
+        public async Task ViewAllImages_ReturnsViewWithImages_WhenServiceReturnsSuccess()
+        {
+            // Arrange
+            var dtoList = new List<DetectionInputImageDTO> { new DetectionInputImageDTO() };
+            var vmList = new List<DetectionInputImageViewModel> { new DetectionInputImageViewModel() };
+
+            _mockDetectionRunService
+                .Setup(service => service.GetAllImages())
+                .ReturnsAsync(ResultDTO<List<DetectionInputImageDTO>>.Ok(dtoList));
+
+            _mockMapper
+                .Setup(m => m.Map<List<DetectionInputImageViewModel>>(dtoList))
+                .Returns(vmList);
+
+            // Act
+            var result = await _controller.ViewAllImages();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<List<DetectionInputImageViewModel>>(viewResult.ViewData.Model);
+            Assert.Equal(vmList.Count, model.Count);
+        }
+
+        [Fact]
+        public async Task ViewAllImages_RedirectsToErrorView_WhenServiceReturnsFailure()
+        {
+            // Arrange
+            var errorPath = "/Error";
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns(errorPath);
+
+            _mockDetectionRunService
+                .Setup(service => service.GetAllImages())
+                .ReturnsAsync(ResultDTO<List<DetectionInputImageDTO>>.Fail("Error occurred"));
+
+            // Act
+            var result = await _controller.ViewAllImages();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal(errorPath, redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task ViewAllImages_ReturnsBadRequest_WhenErrorPathIsNull()
+        {
+            // Arrange
+            _mockDetectionRunService
+                .Setup(service => service.GetAllImages())
+                .ReturnsAsync(ResultDTO<List<DetectionInputImageDTO>>.Fail("Error occurred"));
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns((string)null);
+
+            // Act
+            var result = await _controller.ViewAllImages();
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task GetDetectionInputImageById_ReturnsFailResult_WhenServiceReturnsFailure()
+        {
+            // Arrange
+            var detectionInputImageId = Guid.NewGuid();
+            _mockDetectionRunService
+                .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
+                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Fail("Error occurred"));
+
+            // Act
+            var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error occurred", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionInputImageById_ReturnsFailResult_WhenDataIsNull()
+        {
+            // Arrange
+            var detectionInputImageId = Guid.NewGuid();
+            _mockDetectionRunService
+                .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
+                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(null));
+
+            // Act
+            var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Image Input is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionInputImageById_ReturnsOkResult_WhenServiceReturnsSuccess()
+        {
+            // Arrange
+            var detectionInputImageId = Guid.NewGuid();
+            var detectionInputImageDTO = new DetectionInputImageDTO { Id = detectionInputImageId };
+
+            _mockDetectionRunService
+                .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
+                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(detectionInputImageDTO));
+
+            // Act
+            var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(detectionInputImageDTO, result.Data);
+        }
+
+        //[Fact]
+        //public async Task EditDetectionImageInput_WithValidModel_ReturnsOkResult()
+        //{
+        //    // Arrange
+        //    var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+        //    var dto = new DetectionInputImageDTO { Id = viewModel.Id };
+        //    var userId = "test-user-id";
+
+        //    _mockMapper.Setup(m => m.Map<DetectionInputImageDTO>(viewModel)).Returns(dto);
+        //    _mockDetectionRunService.Setup(s => s.EditDetectionInputImage(dto)).ReturnsAsync(ResultDTO.Ok());
+
+
+        //    // Act
+        //    var result = await _controller.EditDetectionImageInput(viewModel);
+
+        //    // Assert
+        //    Assert.True(result.IsSuccess);
+        //}
+
+        //[Fact]
+        //public async Task EditDetectionImageInput_WithMappingFailure_ReturnsFailResult()
+        //{
+        //    // Arrange
+        //    var userId = "test-user-id";
+        //    var viewModel = new DetectionInputImageViewModel();
+
+        //    _mockMapper.Setup(m => m.Map<DetectionInputImageDTO>(viewModel)).Returns((DetectionInputImageDTO)null)
+        //        ;
+        //    _controller.ControllerContext = new ControllerContext
+        //    {
+        //        HttpContext = new DefaultHttpContext
+        //        {
+        //            User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new("UserId", userId) }))
+        //        }
+        //    };
+
+        //    // Act
+        //    var result = await _controller.EditDetectionImageInput(viewModel);
+
+        //    // Assert
+        //    Assert.False(result.IsSuccess);
+        //    Assert.Contains("Mapping failed", result.ErrMsg);
+        //}
+
+        [Fact]
+        public async Task EditDetectionImageInput_UserNotAuthenticated_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity()
+                    )
+                }
+            };
+            // Act
+            var result = await _controller.EditDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("User id not found", result.ErrMsg);
+        }
+
+        //[Fact]
+        //public async Task EditDetectionImageInput_WithInvalidModel_ReturnsFailResult()
+        //{
+        //    // Arrange
+        //    var userId = "test-user-id";
+        //    var viewModel = new DetectionInputImageViewModel();
+
+        //    _controller.ModelState.AddModelError("Name", "Name is required");
+
+        //    _controller.ControllerContext = new ControllerContext
+        //    {
+        //        HttpContext = new DefaultHttpContext
+        //        {
+        //            User = new ClaimsPrincipal(new ClaimsIdentity([new("UserId", userId)]))
+        //        }
+        //    };
+
+
+        //    // Act
+        //    var result = await _controller.EditDetectionImageInput(viewModel);
+
+        //    // Assert
+        //    Assert.False(result.IsSuccess);
+        //    Assert.Contains("Name is required", result.ErrMsg);
+        //}
+
+        //[Fact]
+        //public async Task EditDetectionImageInput_ServiceReturnsFailure_ReturnsFailResult()
+        //{
+        //    // Arrange
+        //    var userId = "test-user-id";
+        //    var viewModel = new DetectionInputImageViewModel();
+        //    var dto = new DetectionInputImageDTO();
+
+        //    _controller.ControllerContext = new ControllerContext
+        //    {
+        //        HttpContext = new DefaultHttpContext
+        //        {
+        //            User = new ClaimsPrincipal(new ClaimsIdentity([new("UserId", userId)]))
+        //        }
+        //    };
+
+        //    _mockMapper.Setup(m => m.Map<DetectionInputImageDTO>(viewModel)).Returns(dto);
+        //    _mockDetectionRunService.Setup(s => s.EditDetectionInputImage(dto))
+        //        .ReturnsAsync(ResultDTO.Fail("Edit failed"));
+
+        //    // Act
+        //    var result = await _controller.EditDetectionImageInput(viewModel);
+
+        //    // Assert
+        //    Assert.False(result.IsSuccess);
+        //    Assert.Equal("Edit failed", result.ErrMsg);
+        //}
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_WithInvalidModel_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            _controller.ModelState.AddModelError("Id", "Id is required");
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Id is required", result.ErrMsg);
+        }
+
+        //[Fact]
+        //public async Task DeleteDetectionImageInput_MappingFailure_ReturnsFailResult()
+        //{
+        //    // Arrange
+        //    var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+        //    _mockMapper.Setup(m => m.Map<DetectionInputImageDTO>(viewModel)).Returns((DetectionInputImageDTO)null);
+
+        //    // Act
+        //    var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+        //    // Assert
+        //    Assert.False(result.IsSuccess);
+        //    Assert.Contains("Mapping failed", result.ErrMsg);
+        //}
+
+
+        #endregion
+
     }
 }

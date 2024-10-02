@@ -1,10 +1,5 @@
-﻿using DTOs.MainApp.BL.DetectionDTOs;
-using DTOs.MainApp.BL;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DTOs.MainApp.BL;
+using DTOs.MainApp.BL.DetectionDTOs;
 
 namespace Tests.DTOsTests.MainAppBL.DetectionDTOsTests
 {
@@ -18,8 +13,8 @@ namespace Tests.DTOsTests.MainAppBL.DetectionDTOsTests
             var name = "Test Run";
             var description = "Test Run Description";
             var isCompleted = true;
-            var imagePath = "/images/test.png";
-            var imageFileName = "test.png";
+            //var imagePath = "/images/test.png";
+            //var imageFileName = "test.png";
             var createdById = "user123";
             var createdOn = DateTime.UtcNow;
             var createdBy = new UserDTO();
@@ -32,8 +27,8 @@ namespace Tests.DTOsTests.MainAppBL.DetectionDTOsTests
                 Name = name,
                 Description = description,
                 IsCompleted = isCompleted,
-                ImagePath = imagePath,
-                ImageFileName = imageFileName,
+                //ImagePath = imagePath,
+                //ImageFileName = imageFileName,
                 CreatedById = createdById,
                 CreatedOn = createdOn,
                 CreatedBy = createdBy,
@@ -45,8 +40,8 @@ namespace Tests.DTOsTests.MainAppBL.DetectionDTOsTests
             Assert.Equal(name, dto.Name);
             Assert.Equal(description, dto.Description);
             Assert.Equal(isCompleted, dto.IsCompleted);
-            Assert.Equal(imagePath, dto.ImagePath);
-            Assert.Equal(imageFileName, dto.ImageFileName);
+            //Assert.Equal(imagePath, dto.ImagePath);
+            //Assert.Equal(imageFileName, dto.ImageFileName);
             Assert.Equal(createdById, dto.CreatedById);
             Assert.Equal(createdOn, dto.CreatedOn);
             Assert.Equal(createdBy, dto.CreatedBy);
@@ -64,8 +59,8 @@ namespace Tests.DTOsTests.MainAppBL.DetectionDTOsTests
             Assert.Null(dto.Name);
             Assert.Null(dto.Description);
             Assert.False(dto.IsCompleted);
-            Assert.Null(dto.ImagePath);
-            Assert.Null(dto.ImageFileName);
+            //Assert.Null(dto.ImagePath);
+            //Assert.Null(dto.ImageFileName);
             Assert.Null(dto.CreatedById);
             Assert.Null(dto.CreatedOn);
             Assert.Null(dto.CreatedBy);

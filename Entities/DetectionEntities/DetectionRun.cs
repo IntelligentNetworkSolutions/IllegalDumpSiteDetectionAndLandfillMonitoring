@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Entities.Intefaces;
+﻿using Entities.Intefaces;
 
 namespace Entities.DetectionEntities
 {
@@ -10,8 +9,8 @@ namespace Entities.DetectionEntities
 
         public bool IsCompleted { get; set; } = false;
 
-        public string ImagePath { get; set; }
-        public string ImageFileName { get; set; }
+        public Guid DetectionInputImageId { get; set; }
+        public virtual DetectionInputImage? DetectionInputImage { get; set; }
 
         public string CreatedById { get; set; }
         public DateTime CreatedOn { get; set; }

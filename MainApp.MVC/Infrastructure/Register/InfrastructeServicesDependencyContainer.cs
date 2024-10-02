@@ -1,20 +1,17 @@
-﻿using DAL.Interfaces.Repositories.DatasetRepositories;
-using DAL.Interfaces.Repositories.MapConfigurationRepositories;
+﻿using DAL.ApplicationStorage.SeedDatabase;
 using DAL.Interfaces.Repositories;
-using DAL.Repositories.DatasetRepositories;
-using DAL.Repositories.MapConfigurationRepositories;
-using DAL.Repositories;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Services.Interfaces.Services;
-using Services;
+using DAL.Interfaces.Repositories.DatasetRepositories;
 using DAL.Interfaces.Repositories.DetectionRepositories;
-using DAL.Repositories.DetectionRepositories;
-using DAL.ApplicationStorage.SeedDatabase;
-using MainApp.BL.Interfaces.Services.DetectionServices;
-using MainApp.BL.Services.DetectionServices;
-using Microsoft.AspNetCore.Identity;
 using DAL.Interfaces.Repositories.LegalLandfillManagementRepositories;
+using DAL.Interfaces.Repositories.MapConfigurationRepositories;
+using DAL.Repositories;
+using DAL.Repositories.DatasetRepositories;
+using DAL.Repositories.DetectionRepositories;
 using DAL.Repositories.LegalLandfillManagementRepositories;
+using DAL.Repositories.MapConfigurationRepositories;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Services;
+using Services.Interfaces.Services;
 
 namespace MainApp.MVC.Infrastructure.Register
 {
@@ -46,6 +43,8 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ILegalLandfillWasteImportRepository, LegalLandfillWasteImportRepository>();
             services.TryAddScoped<ILegalLandfillWasteTypeRepository, LegalLandfillWasteTypeRepository>();
             services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();            
+            services.TryAddScoped<IDetectionInputImageRepository, DetectionInputImageRepository>();
+
             return services;
         }
     }
