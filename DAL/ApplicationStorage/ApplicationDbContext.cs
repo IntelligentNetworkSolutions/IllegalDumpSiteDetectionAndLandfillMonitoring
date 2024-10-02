@@ -43,6 +43,7 @@ namespace DAL.ApplicationStorage
 
         #region Training
         public virtual DbSet<TrainingRun> TrainingRuns { get; set; }
+        public virtual DbSet<TrainingRunTrainParams> TrainingRunTrainParams { get; set; }
         public virtual DbSet<TrainedModel> TrainedModels { get; set; }
         public virtual DbSet<TrainedModelStatistics> TrainedModelStatistics { get; set; }
         #endregion

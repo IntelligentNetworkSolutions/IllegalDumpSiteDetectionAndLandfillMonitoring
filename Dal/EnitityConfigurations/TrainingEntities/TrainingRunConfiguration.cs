@@ -31,6 +31,12 @@ namespace DAL.EnitityConfigurations.TrainingEntities
                    .HasForeignKey(tr => tr.BaseModelId)
                    .OnDelete(DeleteBehavior.SetNull); // Set null on delete
 
+            // TrainingRunTrainParams relationship
+            builder.HasOne(tr => tr.TrainParams)
+                   .WithOne(tp => tp.TrainingRun)
+                   .HasForeignKey<TrainingRun>(tr => tr.TrainParamsId)
+                   .OnDelete(DeleteBehavior.SetNull);
+
             // Configuring user-related properties
             builder.Property(tr => tr.CreatedById).IsRequired();
             builder.Property(ia => ia.CreatedOn).HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
