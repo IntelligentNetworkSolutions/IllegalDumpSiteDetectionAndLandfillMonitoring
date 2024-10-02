@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240930234114_AddTrainRunConfigPathAndParamsTbl")]
+    partial class AddTrainRunConfigPathAndParamsTbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -524,67 +527,6 @@ namespace DAL.Migrations
                     b.ToTable("detection_ignore_zones");
                 });
 
-            modelBuilder.Entity("Entities.DetectionEntities.DetectionInputImage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("CreatedById")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("created_by_id");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_on")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
-
-                    b.Property<DateTime>("DateTaken")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date_taken")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("ImageFileName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("image_file_name");
-
-                    b.Property<string>("ImagePath")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("image_path");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<string>("UpdatedById")
-                        .HasColumnType("text")
-                        .HasColumnName("updated_by_id");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_on");
-
-                    b.HasKey("Id")
-                        .HasName("pk_detection_input_images");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("UpdatedById");
-
-                    b.ToTable("detection_input_images");
-                });
-
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
                 {
                     b.Property<Guid>("Id")
@@ -607,9 +549,15 @@ namespace DAL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<Guid>("DetectionInputImageId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("detection_input_image_id");
+                    b.Property<string>("ImageFileName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_file_name");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_path");
 
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("boolean")
@@ -624,8 +572,6 @@ namespace DAL.Migrations
                         .HasName("pk_detection_runs");
 
                     b.HasIndex("CreatedById");
-
-                    b.HasIndex("DetectionInputImageId");
 
                     b.ToTable("detection_runs");
                 });
@@ -717,132 +663,6 @@ namespace DAL.Migrations
                     b.HasIndex("LegalLandfillId");
 
                     b.ToTable("legal_landfill_point_cloud_files");
-                });
-
-            modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillTruck", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<double?>("Capacity")
-                        .HasColumnType("double precision")
-                        .HasColumnName("capacity");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_enabled");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<double?>("PayloadWeight")
-                        .HasColumnType("double precision")
-                        .HasColumnName("payload_weight");
-
-                    b.Property<string>("Registration")
-                        .HasColumnType("text")
-                        .HasColumnName("registration");
-
-                    b.Property<double?>("UnladenWeight")
-                        .HasColumnType("double precision")
-                        .HasColumnName("unladen_weight");
-
-                    b.HasKey("Id")
-                        .HasName("pk_legal_landfill_trucks");
-
-                    b.ToTable("legal_landfill_trucks");
-                });
-
-            modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteImport", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<double?>("Capacity")
-                        .HasColumnType("double precision")
-                        .HasColumnName("capacity");
-
-                    b.Property<string>("CreatedById")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("created_by_id");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_on")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
-
-                    b.Property<int>("ImportExportStatus")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1)
-                        .HasColumnName("import_export_status");
-
-                    b.Property<DateTime>("ImportedOn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("imported_on");
-
-                    b.Property<Guid>("LegalLandfillId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("legal_landfill_id");
-
-                    b.Property<Guid?>("LegalLandfillTruckId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("legal_landfill_truck_id");
-
-                    b.Property<Guid>("LegalLandfillWasteTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("legal_landfill_waste_type_id");
-
-                    b.Property<double?>("Weight")
-                        .HasColumnType("double precision")
-                        .HasColumnName("weight");
-
-                    b.HasKey("Id")
-                        .HasName("pk_legal_landfill_waste_imports");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("LegalLandfillId");
-
-                    b.HasIndex("LegalLandfillTruckId");
-
-                    b.HasIndex("LegalLandfillWasteTypeId");
-
-                    b.ToTable("legal_landfill_waste_imports");
-                });
-
-            modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_legal_landfill_waste_types");
-
-                    b.ToTable("legal_landfill_waste_types");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>
@@ -1588,26 +1408,6 @@ namespace DAL.Migrations
                     b.Navigation("CreatedBy");
                 });
 
-            modelBuilder.Entity("Entities.DetectionEntities.DetectionInputImage", b =>
-                {
-                    b.HasOne("Entities.ApplicationUser", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_detection_input_images_asp_net_users_created_by_id");
-
-                    b.HasOne("Entities.ApplicationUser", "UpdatedBy")
-                        .WithMany()
-                        .HasForeignKey("UpdatedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_detection_input_images_asp_net_users_updated_by_id");
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("UpdatedBy");
-                });
-
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
                 {
                     b.HasOne("Entities.ApplicationUser", "CreatedBy")
@@ -1617,16 +1417,7 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_detection_runs_asp_net_users_created_by_id");
 
-                    b.HasOne("Entities.DetectionEntities.DetectionInputImage", "DetectionInputImage")
-                        .WithMany()
-                        .HasForeignKey("DetectionInputImageId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_detection_runs_detection_input_images_detection_input_image~");
-
                     b.Navigation("CreatedBy");
-
-                    b.Navigation("DetectionInputImage");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>
@@ -1651,44 +1442,6 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_legal_landfill_point_cloud_files_legal_landfills_legal_land~");
 
                     b.Navigation("LegalLandfill");
-                });
-
-            modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteImport", b =>
-                {
-                    b.HasOne("Entities.ApplicationUser", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_legal_landfill_waste_imports_asp_net_users_created_by_id");
-
-                    b.HasOne("Entities.LegalLandfillsManagementEntites.LegalLandfill", "LegalLandfill")
-                        .WithMany()
-                        .HasForeignKey("LegalLandfillId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_legal_landfill_waste_imports_legal_landfills_legal_landfill~");
-
-                    b.HasOne("Entities.LegalLandfillsManagementEntites.LegalLandfillTruck", "LegalLandfillTruck")
-                        .WithMany()
-                        .HasForeignKey("LegalLandfillTruckId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_legal_landfill_waste_imports_legal_landfill_trucks_legal_la~");
-
-                    b.HasOne("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteType", "LegalLandfillWasteType")
-                        .WithMany()
-                        .HasForeignKey("LegalLandfillWasteTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_legal_landfill_waste_imports_legal_landfill_waste_types_legal_~");
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("LegalLandfill");
-
-                    b.Navigation("LegalLandfillTruck");
-
-                    b.Navigation("LegalLandfillWasteType");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>

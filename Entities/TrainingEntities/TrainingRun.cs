@@ -18,6 +18,9 @@ namespace Entities.TrainingEntities
         public Guid? BaseModelId { get; set; } = null;
         public virtual TrainedModel? BaseModel { get; set; }
 
+        public Guid? TrainParamsId { get; set; }
+        public TrainingRunTrainParams? TrainParams { get; set; }
+
         public string CreatedById { get; set; }
         public DateTime CreatedOn { get; set; }
         public virtual ApplicationUser? CreatedBy { get; set; }

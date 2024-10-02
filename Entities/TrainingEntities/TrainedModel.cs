@@ -6,6 +6,7 @@ namespace Entities.TrainingEntities
     public class TrainedModel : BaseEntity<Guid>, ICreatedByUser
     {
         public string Name { get; set; }
+        public string ModelConfigPath { get; set; }
         public string ModelFilePath { get; set; }
 
         public bool IsPublished { get; set; } = false;
