@@ -1,7 +1,9 @@
 ﻿using System.Linq.Expressions;
+using System.Reflection;
 using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories.DatasetRepositories;
+using DocumentFormat.OpenXml.Wordprocessing;
 using DTOs.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
@@ -9,6 +11,7 @@ using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using SD;
 
 namespace MainApp.BL.Services.DatasetServices
@@ -20,6 +23,7 @@ namespace MainApp.BL.Services.DatasetServices
         private readonly IDataset_DatasetClassRepository _datasetDatasetClassRepository;
         private readonly IDatasetImagesRepository _datasetImagesRepository;
         private readonly IImageAnnotationsRepository _imageAnnotationsRepository;
+        private readonly ICocoUtilsService _cocoUtilsService;
 
         private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IMapper _mapper;
@@ -30,7 +34,8 @@ namespace MainApp.BL.Services.DatasetServices
                               IDatasetImagesRepository datasetImagesRepository,
                               IImageAnnotationsRepository imageAnnotationsRepository,
                               IAppSettingsAccessor appSettingsAccessor,
-                              IMapper mapper)
+                              IMapper mapper,
+                              ICocoUtilsService cocoUtilsService)
         {
             _datasetsRepository = datasetsRepository;
             _datasetClassesRepository = datasetClassesRepository;
@@ -39,6 +44,7 @@ namespace MainApp.BL.Services.DatasetServices
             _imageAnnotationsRepository = imageAnnotationsRepository;
             _appSettingsAccessor = appSettingsAccessor;
             _mapper = mapper;
+            _cocoUtilsService = cocoUtilsService;
         }
 
         #region Read
@@ -233,12 +239,12 @@ namespace MainApp.BL.Services.DatasetServices
             var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
             var allDataset_DatasetClasses = await _datasetDatasetClassRepository.GetAll(includeProperties: "DatasetClass,Dataset") ?? throw new Exception("Object not found");
 
-            var allDatasetImages = await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetDbData.Id) ?? throw new Exception("Object not found");
+            var allDatasetImages = await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetDbData.Id, includeProperties: "ImageAnnotations") ?? throw new Exception("Object not found");
             var allDatasetImagesData = allDatasetImages.Data ?? throw new Exception("Object not found");
             var enabledImagesList = allDatasetImagesData.Where(x => x.IsEnabled == true).ToList() ?? throw new Exception("Object not found");
             var allImageAnnotationsList = await _imageAnnotationsRepository.GetAll() ?? throw new Exception("Object not found");
             var allEnabledImagesHaveAnnotations = enabledImagesList.Any() ?
-                            enabledImagesList.All(x => allImageAnnotationsList.Data.Where(x => x.DatasetImageId == x.Id).Select(x => x.DatasetImageId).Any(a => a == x.Id)) : false;
+                            enabledImagesList.All(x => allImageAnnotationsList.Data.Where(m => m.DatasetImageId == x.Id).Select(x => x.DatasetImageId).Any(a => a == x.Id)) : false;
             var nubmerOfImagesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100);
             var nubmerOfClassesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1);
             var insertedClasses = allDataset_DatasetClasses.Data?.Where(x => x.DatasetId == datasetDbData.Id).Select(x => x.DatasetClass).ToList() ?? throw new Exception("Object not found");
@@ -306,6 +312,67 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
+        public async Task<ResultDTO> DeleteDatasetCompletelyIncluded(Guid datasetId)
+        {
+            if (datasetId.Equals(Guid.Empty))
+                return ResultDTO.Fail("Invalid Dataset Id");
+
+            ResultDTO<Dataset?> getDatasetIncludeThenAllResult =
+                        await _datasetsRepository.GetByIdIncludeThenAll(datasetId, track: true,
+                            includeProperties:
+                            [
+                                (d => d.ParentDataset, null),
+                                (d => d.DatasetClasses, [ddc => ((Dataset_DatasetClass)ddc).DatasetClass, dc => ((DatasetClass)dc).ParentClass, ]),
+                                (d => d.DatasetImages, [di => ((DatasetImage)di).ImageAnnotations,]),
+                                (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations]),
+                                (d => d.DatasetImages, 
+                                    [ di => ((DatasetImage)di).ImageAnnotations,
+                                        ia => ((ImageAnnotation)ia).DatasetClass, 
+                                        dc => ((DatasetClass)dc).Datasets
+                                    ]),
+                            ]);
+
+            if (getDatasetIncludeThenAllResult.IsSuccess == false && ResultDTO<Dataset?>.HandleError(getDatasetIncludeThenAllResult))
+                return ResultDTO.Fail(getDatasetIncludeThenAllResult.ErrMsg!);
+
+            if (getDatasetIncludeThenAllResult.Data is null)
+                return ResultDTO.Fail("Error getting Dataset");
+
+            Dataset dataset = getDatasetIncludeThenAllResult.Data;
+
+            ICollection<Dataset_DatasetClass> datasetDatasetClasses = dataset.DatasetClasses;
+            ICollection<DatasetImage> datasetImages = dataset.DatasetImages;
+            IOrderedEnumerable<ImageAnnotation> annotations = datasetImages.SelectMany(image => image.ImageAnnotations)
+                                                                            .OrderBy(annotation => annotation.CreatedOn);
+
+            // Delete Annotations
+            ResultDTO deleteDatasetImageAnnotationsResult = await _imageAnnotationsRepository.DeleteRange(annotations, false);
+            if (deleteDatasetImageAnnotationsResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetImageAnnotationsResult))
+                return ResultDTO.Fail(deleteDatasetImageAnnotationsResult.ErrMsg!);
+
+            // Delete Images
+            ResultDTO deleteDatasetImagesResult = await _datasetImagesRepository.DeleteRange(datasetImages, false);
+            if (deleteDatasetImagesResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetImagesResult))
+                return ResultDTO.Fail(deleteDatasetImagesResult.ErrMsg!);
+
+            // Delete Dataset_DatasetClasses
+            ResultDTO deleteDatasetDatasetClassesResult = await _datasetDatasetClassRepository.DeleteRange(datasetDatasetClasses, false);
+            if (deleteDatasetDatasetClassesResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetDatasetClassesResult))
+                return ResultDTO.Fail(deleteDatasetDatasetClassesResult.ErrMsg!);
+
+            // Delete Dataset
+            ResultDTO deleteDatasetResult = await _datasetsRepository.Delete(getDatasetIncludeThenAllResult.Data, false);
+            if (deleteDatasetResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetResult))
+                return ResultDTO.Fail(deleteDatasetResult.ErrMsg!);
+
+            // Save Changes after everything is marked for deletion
+            ResultDTO<int> saveChangesResult = await _datasetsRepository.SaveChangesAsync();
+            if (saveChangesResult.IsSuccess == false && ResultDTO<int>.HandleError(saveChangesResult))
+                return ResultDTO.Fail(saveChangesResult.ErrMsg!);
+
+            return ResultDTO.Ok();
+        }
+
         public async Task<ResultDTO<int>> DeleteDataset(Guid datasetId)
         {
             var datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
@@ -343,7 +410,6 @@ namespace MainApp.BL.Services.DatasetServices
         #endregion
 
         #region Export
-
         private ResultDTO<DatasetFullIncludeDTO> GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
             (Dataset datasetIncluded, bool includeDisabledImages = true, bool includeDisabledAnnotations = true)
         {
@@ -458,8 +524,23 @@ namespace MainApp.BL.Services.DatasetServices
                 if (resultDatasetIncludeThenAll.Data is null)
                     return ResultDTO<CocoDatasetDTO>.Fail("Error getting Dataset");
 
+                return await ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(resultDatasetIncludeThenAll.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<CocoDatasetDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        private async Task<ResultDTO<CocoDatasetDTO>> ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(Dataset dataset)
+        {
+            if (dataset is null)
+                return ResultDTO<CocoDatasetDTO>.Fail("Dataset is null");
+
+            try
+            {
                 ResultDTO<DatasetFullIncludeDTO> resultGetDatasetFullIncludeDTO =
-                    GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(datasetIncluded: resultDatasetIncludeThenAll.Data,
+                    GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(datasetIncluded: dataset,
                                                                                 includeDisabledImages: false,
                                                                                 includeDisabledAnnotations: false);
                 if (resultGetDatasetFullIncludeDTO.IsSuccess == false)
@@ -524,6 +605,309 @@ namespace MainApp.BL.Services.DatasetServices
             {
                 return ResultDTO<CocoDatasetDTO>.ExceptionFail(ex.Message, ex);
             }
+        }
+        #endregion
+
+        #region Import
+        public string GetWwwRootOrSaveDirectory(string? saveDir)
+        {
+            if (string.IsNullOrEmpty(saveDir) == false)
+                return saveDir;
+
+            string? applicationPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            if (string.IsNullOrEmpty(applicationPath))
+                return Path.Combine("\\", "wwwroot");
+
+            return Path.Combine(applicationPath, "wwwroot");
+        }
+
+        public async Task<ResultDTO<DatasetDTO>> ImportDatasetCocoFormatedAtDirectoryPath(string datasetName, string cocoDirPath, string userId, string? saveDir = null)
+        {
+            string? datasetImgUploadAbsDir = null;
+            try
+            {
+                string saveRoot = GetWwwRootOrSaveDirectory(saveDir);
+                
+                ResultDTO<CocoDatasetDTO> getCocoDatasetResult =
+                    await _cocoUtilsService.GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(cocoDirPath);
+                if ((getCocoDatasetResult.IsSuccess == false && ResultDTO<CocoDatasetDTO>.HandleError(getCocoDatasetResult)) 
+                    || getCocoDatasetResult.Data is null)
+                    return ResultDTO<DatasetDTO>.Fail(getCocoDatasetResult.ErrMsg!);
+
+                CocoDatasetDTO cocoDataset = getCocoDatasetResult.Data;
+                
+                Guid datasetEntityId = Guid.NewGuid();
+
+                if (string.IsNullOrEmpty(userId))
+                    return ResultDTO<DatasetDTO>.Fail("Invalid User Id");
+
+                string datasetNameCalc = string.IsNullOrEmpty(datasetName) == false
+                                        ? datasetName
+                                        : "CocoDataset-" + DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+                string datasetDescription = cocoDataset.Info is not null && string.IsNullOrEmpty(cocoDataset.Info.Description) == false
+                                            ? cocoDataset.Info.Description
+                                            : "Coco Dataset Imported at: " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+
+                Dataset datasetEntity = new Dataset()
+                {
+                    Id = datasetEntityId,
+                    Name = datasetName,
+                    Description = datasetDescription,
+                    IsPublished = false,
+
+                    CreatedBy = null,
+                    CreatedById = userId,
+                    CreatedOn = DateTime.UtcNow,
+                    UpdatedBy = null,
+                    UpdatedById = userId,
+                    UpdatedOn = DateTime.UtcNow,
+
+                    // TODO: Implement
+                    ParentDataset = null,
+                    ParentDatasetId = null,
+                    AnnotationsPerSubclass = false,
+                };
+
+                List<DatasetClass> datasetClassEntities = new List<DatasetClass>();
+                List<Dataset_DatasetClass> datasetDatasetClassesEntities = new List<Dataset_DatasetClass>();
+                Dictionary<int, Guid> cocoCategoriesToDatasetClassDict = new Dictionary<int, Guid>();
+                Dictionary<int, Guid> cocoCategoriesToDatasetDatasetClassDict = new Dictionary<int, Guid>();
+
+                foreach (CocoCategoryDTO category in cocoDataset.Categories)
+                {
+                    DatasetClass datasetClassEntity = new DatasetClass()
+                    {
+                        Id = Guid.NewGuid(),
+                        ClassName = category.Name,
+
+                        CreatedOn = DateTime.Now,
+                        CreatedBy = null,
+                        CreatedById = userId,
+
+                        // TODO: Implement
+                        ParentClass = null,
+                        ParentClassId = null,
+                    };
+                    datasetClassEntities.Add(datasetClassEntity);
+                    cocoCategoriesToDatasetClassDict.Add(category.Id, datasetClassEntity.Id);
+
+                    Dataset_DatasetClass datasetDatasetClassEntity = new Dataset_DatasetClass()
+                    {
+                        Id = Guid.NewGuid(),
+                        Dataset = datasetEntity,
+                        DatasetId = datasetEntityId,
+                        DatasetClassValue = category.Id,
+                        DatasetClass = datasetClassEntity,
+                        DatasetClassId = datasetClassEntity.Id,
+                    };
+                    datasetDatasetClassesEntities.Add(datasetDatasetClassEntity);
+                    cocoCategoriesToDatasetDatasetClassDict.Add(category.Id, datasetDatasetClassEntity.Id);
+                }
+
+                // Assign Dataset Classes
+                datasetEntity.DatasetClasses = datasetDatasetClassesEntities;
+
+                // Dataset Images
+                List<DatasetImage> datasetImages = new List<DatasetImage>();
+                Dictionary<int, Guid> cocoImagesToDatasetImagesDict = new Dictionary<int, Guid>();
+
+                // Create Dataset Images Directory 
+                ResultDTO<string> getImagesDirRelPathResult = await GetDatasetImagesDirectoryRelativePathByDatasetId(datasetEntityId);
+                if (getImagesDirRelPathResult.IsSuccess == false)
+                    return ResultDTO<DatasetDTO>.Fail(getImagesDirRelPathResult.ErrMsg!);
+
+                string datasetImgUploadRelDir = getImagesDirRelPathResult.Data!;
+
+                ResultDTO<string> getImagesDirAbsPathResult = await GetDatasetImagesDirectoryAbsolutePathByDatasetId(saveRoot, datasetEntityId);
+                if(getImagesDirAbsPathResult.IsSuccess == false)
+                    return ResultDTO<DatasetDTO>.Fail(getImagesDirAbsPathResult.ErrMsg!);
+
+                datasetImgUploadAbsDir = getImagesDirAbsPathResult.Data!;
+                if (Directory.Exists(datasetImgUploadAbsDir) == false)
+                    Directory.CreateDirectory(datasetImgUploadAbsDir);
+                
+                foreach (CocoImageDTO img in cocoDataset.Images)
+                {
+                    Guid datasetImageId = Guid.NewGuid();
+                    DatasetImage datasetImage = new DatasetImage()
+                    {
+                        Id = datasetImageId,
+                        DatasetId = datasetEntityId,
+                        IsEnabled = false,
+
+                        Name = Path.GetFileNameWithoutExtension(img.FileName),
+                        FileName = datasetImageId.ToString() + Path.GetExtension(img.FileName),
+                        ImagePath = "\\" + datasetImgUploadRelDir + "\\",
+                        ThumbnailPath = "\\" + datasetImgUploadRelDir + "\\",
+
+                        CreatedBy = null,
+                        CreatedById = userId,
+                        CreatedOn = DateTime.UtcNow,
+                        UpdatedBy = null,
+                        UpdatedById = userId,
+                        UpdatedOn = DateTime.UtcNow,
+                    };
+
+                    cocoImagesToDatasetImagesDict.Add(img.Id, datasetImage.Id);
+                    datasetImages.Add(datasetImage);
+                    
+                    ResultDTO copyImageResult = 
+                        CopyImageFromSourcePathToDestinationPath(
+                            Path.Combine(cocoDirPath, img.FileName), 
+                            Path.Combine(datasetImgUploadAbsDir, datasetImageId.ToString() + Path.GetExtension(img.FileName)));
+                    if (copyImageResult.IsSuccess == false)
+                        continue;
+                    // TODO: REVIEW !!!
+                }
+
+                // Annotations
+                List<ImageAnnotation> imageAnnotations = new List<ImageAnnotation>();
+                foreach (CocoAnnotationDTO cocoAnnotation in cocoDataset.Annotations)
+                {
+                    ImageAnnotation imageAnnotationEntity = new ImageAnnotation()
+                    {
+                        Id = Guid.NewGuid(),
+                        IsEnabled = false,
+
+                        Geom = GeoJsonHelpers.ConvertBoundingBoxToPolygon(cocoAnnotation.Bbox),
+
+                        DatasetClassId = cocoCategoriesToDatasetClassDict.GetValueOrDefault(cocoAnnotation.CategoryId),
+                        DatasetClass = null,
+
+                        DatasetImageId = cocoImagesToDatasetImagesDict.GetValueOrDefault(cocoAnnotation.ImageId),
+                        DatasetImage = null,
+
+                        CreatedBy = null,
+                        CreatedById = userId,
+                        CreatedOn = DateTime.UtcNow,
+                        UpdatedBy = null,
+                        UpdatedById = userId,
+                        UpdatedOn = DateTime.UtcNow,
+                    };
+                    imageAnnotations.Add(imageAnnotationEntity);
+                }
+
+                // Assign Annotations to Images
+                foreach(DatasetImage datasetImage in datasetImages)
+                {
+                    List<ImageAnnotation> datasetImageAnnotations =
+                        imageAnnotations.Where(ann => ann.DatasetImageId == datasetImage.Id).ToList();
+                    datasetImage.ImageAnnotations = datasetImageAnnotations;
+                }
+
+                datasetEntity.DatasetImages = datasetImages;
+
+                ResultDTO createDatasetResult = await _datasetsRepository.Create(datasetEntity);
+                if (createDatasetResult.IsSuccess == false)
+                    return ResultDTO<DatasetDTO>.Fail(createDatasetResult.ErrMsg!);
+
+                DatasetDTO? datasetDTO = _mapper.Map<DatasetDTO>(datasetEntity);
+                if(datasetDTO is null)
+                    return ResultDTO<DatasetDTO>.Fail("Failed mapping to Dataset DTO");
+
+                return ResultDTO<DatasetDTO>.Ok(datasetDTO);
+            }
+            catch (Exception ex)
+            {
+                if (string.IsNullOrEmpty(datasetImgUploadAbsDir) == false)
+                    await DeleteAllFilesInDatasetDirectoryAtWwwRoot(datasetImgUploadAbsDir);
+
+                return ResultDTO<DatasetDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+        #endregion
+
+        #region Utils
+        public async Task<ResultDTO> DeleteAllFilesInDatasetDirectoryAtWwwRoot(string deleteDirectoryPath)
+        {
+            if (string.IsNullOrEmpty(deleteDirectoryPath))
+                return ResultDTO.Fail("Invalid Directory Path");
+
+            try
+            {
+                IEnumerable<string> files = Directory.EnumerateFiles(deleteDirectoryPath);
+                // Get all files in the directory
+                foreach (string filePath in files)
+                    File.Delete(filePath);
+             
+                return ResultDTO.Ok();
+            }
+            catch (IOException ioExp)
+            {
+                return ResultDTO.ExceptionFail(ioExp.Message, ioExp);
+            }
+        }
+
+        public ResultDTO CopyImageFromSourcePathToDestinationPath(string sourceFilePath, string destinationFilePath)
+        {
+            try
+            {
+                // Ensure that the target does not exist.
+                if (File.Exists(destinationFilePath))
+                    File.Delete(destinationFilePath);
+
+                // Copy the file.
+                File.Copy(sourceFilePath, destinationFilePath);
+
+                return ResultDTO.Ok();
+            }
+            catch (IOException ioExp)
+            {
+                return ResultDTO.ExceptionFail(ioExp.Message, ioExp);
+            }
+        }
+
+        public async Task<ResultDTO<string>> GetDatasetImagesDirectoryRelativePathByDatasetId(Guid datasetId)
+        {
+            ResultDTO<string?> getDatasetImagesDirResult =
+                await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
+            if (getDatasetImagesDirResult.IsSuccess == false || string.IsNullOrEmpty(getDatasetImagesDirResult.Data))
+                return ResultDTO<string>.Fail("Error getting base Dataset Images Directory");
+
+            string thePath = Path.Combine(getDatasetImagesDirResult.Data, datasetId.ToString());
+            return ResultDTO<string>.Ok(thePath);
+        }
+
+        public async Task<ResultDTO<string>> GetDatasetImagesDirectoryAbsolutePathByDatasetId(string wwwRoot, Guid datasetId)
+        {
+            if (string.IsNullOrEmpty(wwwRoot))
+                return ResultDTO<string>.Fail("Invalid wwwRoot Path");
+
+            ResultDTO<string> getDatasetRelativePathResult = await GetDatasetImagesDirectoryRelativePathByDatasetId(datasetId);
+            if (getDatasetRelativePathResult.IsSuccess == false || string.IsNullOrEmpty(getDatasetRelativePathResult.Data))
+                return ResultDTO<string>.Fail(getDatasetRelativePathResult.ErrMsg!);
+
+            string thePath = Path.Combine(wwwRoot, getDatasetRelativePathResult.Data);
+            return ResultDTO<string>.Ok(thePath);
+        }
+
+        public async Task<ResultDTO<string>> GetDatasetImageRelativePathByDatasetIdAndFileName(Guid datasetId, string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return ResultDTO<string>.Fail("Invalid File Name");
+
+            ResultDTO<string> getDatasetRelativePathResult = await GetDatasetImagesDirectoryRelativePathByDatasetId(datasetId);
+            if (getDatasetRelativePathResult.IsSuccess == false || string.IsNullOrEmpty(getDatasetRelativePathResult.Data))
+                return ResultDTO<string>.Fail(getDatasetRelativePathResult.ErrMsg!);
+
+            string thePath = Path.Combine(getDatasetRelativePathResult.Data, fileName);
+
+            return ResultDTO<string>.Ok(thePath);
+        }
+
+        public async Task<ResultDTO<string>> GetDatasetImageAbsolutePathByDatasetIdAndFileName(string wwwRoot, Guid datasetId, string fileName)
+        {
+            if(string.IsNullOrEmpty(wwwRoot))
+                return ResultDTO<string>.Fail("Invalid wwwRoot Path");
+
+            ResultDTO<string> getDatasetImageRelativePathResult = await GetDatasetImageRelativePathByDatasetIdAndFileName(datasetId, fileName);
+            if(getDatasetImageRelativePathResult.IsSuccess == false || string.IsNullOrEmpty(getDatasetImageRelativePathResult.Data))
+                return ResultDTO<string>.Fail(getDatasetImageRelativePathResult.ErrMsg!);
+
+            string thePath = Path.Combine(wwwRoot, getDatasetImageRelativePathResult.Data);
+
+            return ResultDTO<string>.Ok(thePath);
         }
         #endregion
     }

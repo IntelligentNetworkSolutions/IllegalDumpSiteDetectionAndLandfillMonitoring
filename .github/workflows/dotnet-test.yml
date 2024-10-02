@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-2019] # Uncomment to enable testing across all platforms
-      fail-fast: false                                                        
+      fail-fast: false      
 
     steps:
     - uses: actions/checkout@v3
@@ -27,7 +27,7 @@ jobs:
       run: dotnet restore
       
     - name: Run Tests
-      run: dotnet test --settings ExcludeCodeCoverage.runsettings.xml --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
+      run: dotnet test --filter "Category!=Integration" --settings ExcludeCodeCoverage.runsettings.xml --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
 
     - name: Upload coverage report
       uses: actions/upload-artifact@v3

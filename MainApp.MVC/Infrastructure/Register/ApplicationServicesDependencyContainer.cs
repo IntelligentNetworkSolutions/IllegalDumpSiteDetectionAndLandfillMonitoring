@@ -38,6 +38,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ILayoutService, LayoutService>();
             services.TryAddScoped<IForgotResetPasswordService, ForgotResetPasswordService>();
             services.TryAddScoped<IMailService, MailService>();
+            services.TryAddScoped<ICocoUtilsService, CocoUtilsService>();
             services.TryAddScoped<IDatasetService, DatasetService>();
             services.TryAddScoped<IDatasetClassesService, DatasetClassesService>();
             services.TryAddScoped<IDatasetImagesService, DatasetImagesService>();
@@ -47,9 +48,12 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IMapLayerGroupsConfigurationService, MapLayerGroupsConfigurationService>();
             services.TryAddScoped<IDetectionRunService, DetectionRunService>();
             services.TryAddScoped<IImageAnnotationsService, ImageAnnotationsService>();
-            services.TryAddScoped<IDetectionRunService, DetectionRunService>();
             services.TryAddScoped<ILegalLandfillService, LegalLandfillService>();
             services.TryAddScoped<ILegalLandfillPointCloudFileService, LegalLandfillPointCloudFileService>();
+            services.TryAddScoped<ILegalLandfillWasteTypeService, LegalLandfillWasteTypeService>();
+            services.TryAddScoped<ILegalLandfillWasteImportService, LegalLandfillWasteImportService>();
+            services.TryAddScoped<ILegalLandfillTruckService, LegalLandfillTruckService>();
+            services.TryAddScoped<IDetectionIgnoreZoneService, DetectionIgnoreZoneService>();
 
             return services;
         }

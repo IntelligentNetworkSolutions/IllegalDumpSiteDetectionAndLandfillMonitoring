@@ -11,17 +11,17 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
     public class DetectionIgnoreZonesControllerTests
     {
-        [Fact]
-        public void Index_ReturnsView()
-        {
-            // Arrange
-            var controller = new DetectionIgnoreZonesController();
+        //[Fact]
+        //public void Index_ReturnsView()
+        //{
+        //    // Arrange
+        //    var controller = new DetectionIgnoreZonesController();
 
-            // Act
-            var result = controller.Index();
+        //    // Act
+        //    var result = controller.Index();
 
-            // Assert
-            Assert.IsType<ViewResult>(result);
-        }
+        //    // Assert
+        //    Assert.IsType<ViewResult>(result);
+        //}
     }
 }

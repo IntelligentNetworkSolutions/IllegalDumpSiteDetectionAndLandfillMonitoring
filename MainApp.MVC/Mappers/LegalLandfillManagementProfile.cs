@@ -11,6 +11,9 @@ namespace MainApp.MVC.Mappers
         {
             CreateMap<LegalLandfillDTO, LegalLandfillViewModel>().ReverseMap();
             CreateMap<LegalLandfillPointCloudFileDTO, LegalLandfillPointCloudFileViewModel>().ReverseMap();
+            CreateMap<LegalLandfillTruckDTO, LegalLandfillTruckViewModel>().ReverseMap();
+            CreateMap<LegalLandfillWasteTypeDTO, LegalLandfillWasteTypeViewModel>().ReverseMap();
+            CreateMap<LegalLandfillWasteImportDTO, LegalLandfillWasteImportViewModel>().ReverseMap();
         }
     }
 }
