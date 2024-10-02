@@ -1,15 +1,10 @@
 ﻿using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
     public class MapControllerTests
-    {  
+    {
         [Fact]
         public void Index_ReturnsViewResult_WithNullGuid()
         {

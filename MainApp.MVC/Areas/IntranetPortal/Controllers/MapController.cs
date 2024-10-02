@@ -2,7 +2,7 @@
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
-    [Area("IntranetPortal")]
+    [Area(areaName: "IntranetPortal")]
     public class MapController : Controller
     {
         // A TEST MAP CONTROLLER
