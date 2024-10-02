@@ -556,7 +556,119 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         //    Assert.Contains("Mapping failed", result.ErrMsg);
         //}
 
+        [Fact]
+        public async Task GetAllDetectionInputImages_ReturnsOkResult_WhenImagesExist()
+        {
+            // Arrange
+            var images = new List<DetectionInputImageDTO> { new DetectionInputImageDTO { Id = Guid.NewGuid(), ImagePath = "path1" } };
+            var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Ok(images);
 
+            _mockDetectionRunService.Setup(service => service.GetAllImages())
+                .ReturnsAsync(resultDto);
+
+            // Act
+            var result = await _controller.GetAllDetectionInputImages();
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(images, result.Data);
+        }
+
+        [Fact]
+        public async Task GetAllDetectionInputImages_ReturnsFailResult_WhenImagesNotFound()
+        {
+            // Arrange
+            var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Ok(null);
+
+            _mockDetectionRunService.Setup(service => service.GetAllImages())
+                .ReturnsAsync(resultDto);
+
+            // Act
+            var result = await _controller.GetAllDetectionInputImages();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Detection input images are not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllDetectionInputImages_ReturnsFailResult_WhenServiceFails()
+        {
+            // Arrange
+            var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Fail("Service failure");
+
+            _mockDetectionRunService.Setup(service => service.GetAllImages())
+                .ReturnsAsync(resultDto);
+
+            // Act
+            var result = await _controller.GetAllDetectionInputImages();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Service failure", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetSelectedDetectionInputImages_ReturnsOkResult_WhenImagesExist()
+        {
+            // Arrange
+            var selectedImageIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+            var images = new List<DetectionInputImageDTO>
+            {
+                new DetectionInputImageDTO { Id = selectedImageIds[0], ImagePath = "path1" },
+                new DetectionInputImageDTO { Id = selectedImageIds[1], ImagePath = "path2" }
+            };
+            var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Ok(images);
+
+            _mockDetectionRunService.Setup(service => service.GetSelectedInputImagesById(selectedImageIds))
+                .ReturnsAsync(resultDto);
+
+            // Act
+            var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(images, result.Data);
+            Assert.All(result.Data, item => Assert.Contains("/", item.ImagePath)); 
+        }
+
+        [Fact]
+        public async Task GetSelectedDetectionInputImages_ReturnsFailResult_WhenImagesNotFound()
+        {
+            // Arrange
+            var selectedImageIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+            var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Ok(null);
+
+            _mockDetectionRunService.Setup(service => service.GetSelectedInputImagesById(selectedImageIds))
+                .ReturnsAsync(resultDto);
+
+            // Act
+            var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Detection input images are not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetSelectedDetectionInputImages_ReturnsFailResult_WhenServiceFails()
+        {
+            // Arrange
+            var selectedImageIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+            var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Fail("Service failure");
+
+            _mockDetectionRunService.Setup(service => service.GetSelectedInputImagesById(selectedImageIds))
+                .ReturnsAsync(resultDto);
+
+            // Act
+            var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Service failure", result.ErrMsg);
+        }
         #endregion
 
     }
