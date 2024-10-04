@@ -1,11 +1,4 @@
 ﻿using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.MainApp.BL;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using SD;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
@@ -28,7 +21,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #endregion
 
         #region Delete
-        Task<ResultDTO<int>> DeleteDatasetImage(Guid datasetImageId);
+        Task<ResultDTO<int>> DeleteDatasetImage(Guid datasetImageId, bool deleteAnnotations);
         #endregion
     }
 }

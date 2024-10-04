@@ -1,8 +1,6 @@
 ﻿using DAL.ApplicationStorage;
 using DAL.ApplicationStorage.SeedDatabase.TestSeedData;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-using System;
 
 public class TestDatabaseFixture : IDisposable
 {
@@ -13,7 +11,7 @@ public class TestDatabaseFixture : IDisposable
     public TestDatabaseFixture()
     {
         _connectionString = Environment.GetEnvironmentVariable("TestConnectionString") ??
-            "Host=localhost;Port=5434;Database=waste_detection_test_v10;Username=postgres;Password=admin;Pooling=true;";
+            "Host=localhost;Port=5434;Database=waste_detection_migrated_v4;Username=postgres;Password=postgres;Pooling=true;";
 
         DbContextFactory = new ApplicationDbContextFactory();
 
@@ -39,7 +37,7 @@ public class TestDatabaseFixture : IDisposable
             DatasetImagesSeedData.SeedData(dbContext is null ? DbContext : dbContext);
             ImageAnnotationsSeedData.SeedData(dbContext is null ? DbContext : dbContext);
 
-            if(dbContext is null)
+            if (dbContext is null)
                 DbContext.SaveChanges();
             else
                 dbContext.SaveChanges();

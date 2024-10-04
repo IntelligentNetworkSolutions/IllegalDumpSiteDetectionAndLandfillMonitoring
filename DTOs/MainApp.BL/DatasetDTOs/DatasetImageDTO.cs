@@ -24,5 +24,6 @@ namespace DTOs.MainApp.BL.DatasetDTOs
         public string? UpdatedById { get; init; }
         public DateTime? UpdatedOn { get; init; }
         public UserDTO? UpdatedBy { get; init; }
+        public bool IsAnnotated { get; set; }
     }
 }

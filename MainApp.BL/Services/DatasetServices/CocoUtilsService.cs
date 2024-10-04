@@ -1,8 +1,8 @@
-﻿using SD;
-using DTOs.ObjectDetection.API;
+﻿using DTOs.ObjectDetection.API;
 using DTOs.ObjectDetection.API.CocoFormatDTOs;
-using Newtonsoft.Json;
 using MainApp.BL.Interfaces.Services.DatasetServices;
+using Newtonsoft.Json;
+using SD;
 
 namespace MainApp.BL.Services.DatasetServices
 {
@@ -116,11 +116,11 @@ namespace MainApp.BL.Services.DatasetServices
             return ResultDTO.Ok();
         }
 
-        public async Task<ResultDTO<CocoDatasetDTO>> GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(string uploadDirPath)
+        public async Task<ResultDTO<CocoDatasetDTO>> GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(string uploadDirPath, bool allowUnannotatedImages = false)
         {
             try
             {
-                ResultDTO isValidCocoFormatedDatasetResult = IsValidCocoFormatedUploadDirectory(uploadDirPath, false, true, true);
+                ResultDTO isValidCocoFormatedDatasetResult = IsValidCocoFormatedUploadDirectory(uploadDirPath, mustHaveAnnotations: false, true, true);
                 if (isValidCocoFormatedDatasetResult.IsSuccess == false)
                     return ResultDTO<CocoDatasetDTO>.Fail(isValidCocoFormatedDatasetResult.ErrMsg!);
 
@@ -147,8 +147,11 @@ namespace MainApp.BL.Services.DatasetServices
                 if (cocoDataset.Annotations.Count == 0)
                     return ResultDTO<CocoDatasetDTO>.Fail($"No Annotations were Parsed from the Annotation file at path: {annotationsFile} in directory : {uploadDirPath}");
 
-                if (AreAllAnnotationsForPresentImageIdsInAnnotationFile(cocoDataset) == false)
-                    return ResultDTO<CocoDatasetDTO>.Fail($"Non Matching parsed Annotation Image Ids with parsed Image Ids from the Annotation file at path: {annotationsFile} in directory : {uploadDirPath}");
+                if (allowUnannotatedImages is false)
+                {
+                    if (AreAllAnnotationsForPresentImageIdsInAnnotationFile(cocoDataset) == false)
+                        return ResultDTO<CocoDatasetDTO>.Fail($"Non Matching parsed Annotation Image Ids with parsed Image Ids from the Annotation file at path: {annotationsFile} in directory : {uploadDirPath}");
+                }
 
                 if (cocoDataset.Categories.Count == 0)
                     return ResultDTO<CocoDatasetDTO>.Fail($"No Categories were Parsed from the Annotation file at path: {annotationsFile} in directory : {uploadDirPath}");
@@ -180,7 +183,7 @@ namespace MainApp.BL.Services.DatasetServices
                 return false;
 
             string[] imageFileNames = imagePaths.Select(path => Path.GetFileName(path)).ToArray();
-            foreach(CocoImageDTO cocoImage in dataset.Images)
+            foreach (CocoImageDTO cocoImage in dataset.Images)
                 if (imageFileNames.Contains(cocoImage.FileName) == false)
                     return false;
 
@@ -197,7 +200,7 @@ namespace MainApp.BL.Services.DatasetServices
                 return false;
 
             bool hasAnnotationsFile = false;
-            foreach(var filePath in filePaths)
+            foreach (var filePath in filePaths)
             {
                 if (Path.GetExtension(filePath) != ".json")
                     break;
@@ -227,7 +230,7 @@ namespace MainApp.BL.Services.DatasetServices
                                 && CocoTerminology.allowedAnnotationsFileNamesConcatenated.Contains(Path.GetFileNameWithoutExtension(path)));
 
         public string? GetAnnotationFilePathInAllowedFormats(string[] filePaths)
-            => filePaths.FirstOrDefault(path 
+            => filePaths.FirstOrDefault(path
                 => CocoTerminology.allowedAnnotationsFileNamesConcatenated.Contains(Path.GetFileNameWithoutExtension(path)));
     }
 }

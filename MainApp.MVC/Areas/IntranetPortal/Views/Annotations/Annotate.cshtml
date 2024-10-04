@@ -77,16 +77,13 @@
                     </div>
                     <div class="card-body p-3">
                         <div class="row">
-
                             @{
-                                var nextImageUrl = Model.NextImage != null ? Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = Model.NextImage.Id }) : "";
-                                var nextDisabled = Model.NextImage == null ? "disabled" : "";
-                                var prevImageUrl = Model.PreviousImage != null ? Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = Model.PreviousImage.Id }) : "";
-                                var prevDisabled = Model.PreviousImage == null ? "disabled" : "";
+                                var nextImageUrl = Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = Model.NextImage.Id });
+                                var prevImageUrl = Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = Model.PreviousImage.Id });
                             }
 
                             <div class="col text-center">
-                                <a class="btn btn-default @prevDisabled" title="@DbResHtml.T("Previous Image", "Resources")" href="@prevImageUrl">
+                                <a class="btn btn-default" title="@DbResHtml.T("Previous Image", "Resources")" href="@prevImageUrl">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </div>
@@ -94,7 +91,7 @@
                                 @Model.CurrentImagePositionInDataset / @Model.TotalImagesCount
                             </div>
                             <div class="col text-center">
-                                <a class="btn btn-default @nextDisabled" title="@DbResHtml.T("Next Image", "Resources")" href="@nextImageUrl">
+                                <a class="btn btn-default" title="@DbResHtml.T("Next Image", "Resources")" href="@nextImageUrl">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </div>
@@ -828,17 +825,15 @@
     updateImageStatusLabels();
 
     function enableDisableDatasetImage() {
-        let imgEnabled = false;
-        const selectedRadio = document.querySelector('input[name="img_status"]:checked');
-        if (selectedRadio)
-            imgEnabled = selectedRadio.value
+        const toggleStatus = document.getElementById('toggleStatus');
+        let imgEnabled = toggleStatus.checked;
 
         let model = {
             Id: '@Model.DatasetImage.Id',
             DatasetId: '@Model.Dataset.Id',
             IsEnabled: imgEnabled,
             Name: '@Model.DatasetImage.Name'
-        }
+        };
 
         $.ajax({
             type: "POST",
@@ -848,7 +843,7 @@
             },
             success: function (data) {
                 console.log(data);
-                if (data.responseSuccess !== null || data.responseSuccess !== undefined) {
+                if (data.responseSuccess) {
                     Swal.fire({
                         text: `${data.responseSuccess.value}`,
                         confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
@@ -856,39 +851,25 @@
                         icon: "success"
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            location.reload();
+                            updateImageStatusLabels();
                         }
                     });
                 } else {
-                    if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
-                        Swal.fire({
-                            text: `${data.responseErrorAlreadyPublished.value}`,
-                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-                            allowOutsideClick: false,
-                            icon: "error"
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
-                            }
-                        });
-                    } else {
+                    if (data.responseError) {
                         Swal.fire({
                             text: `${data.responseError.value}`,
                             icon: "error"
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                location.reload();
-                            }
                         });
                     }
                 }
             },
             error: function (req, status, error) {
                 Swal.fire({
-                    text: "Error occured",
+                    text: "Error occurred",
                     icon: "error"
                 });
             }
         });
     }
+
 </script>
