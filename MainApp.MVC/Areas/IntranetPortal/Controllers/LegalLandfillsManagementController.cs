@@ -145,7 +145,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 return ResultDTO.Fail(resultCheckForFiles.ErrMsg!);
             }
-            if(resultCheckForFiles.Data == null)
+            if (resultCheckForFiles.Data == null)
             {
                 return ResultDTO.Fail("Data is null");
             }
@@ -300,9 +300,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 var pdalAbsPath = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("PdalExePath", string.Empty);
                 var pipelineJsonTemplate = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("PdalPipelineTemplate", string.Empty);
 
-                if((!pointCloudUploadFolder.IsSuccess && pointCloudUploadFolder.HandleError()) || 
-                    (!pointCloudConvertFolder.IsSuccess && pointCloudConvertFolder.HandleError()) || 
-                    (!potreeConverterFilePath.IsSuccess && potreeConverterFilePath.HandleError()) || 
+                if ((!pointCloudUploadFolder.IsSuccess && pointCloudUploadFolder.HandleError()) ||
+                    (!pointCloudConvertFolder.IsSuccess && pointCloudConvertFolder.HandleError()) ||
+                    (!potreeConverterFilePath.IsSuccess && potreeConverterFilePath.HandleError()) ||
                     (!pdalAbsPath.IsSuccess && pdalAbsPath.HandleError()) ||
                     (!pipelineJsonTemplate.IsSuccess && pipelineJsonTemplate.HandleError()))
                 {
@@ -416,7 +416,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (selectedFiles == null || selectedFiles.Count == 0)
             {
                 var errorPath = _configuration["ErrorViewsPath:Error"];
-                if(errorPath == null)
+                if (errorPath == null)
                 {
                     return BadRequest();
                 }
@@ -622,7 +622,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             };
 
             return ResultDTO<WasteVolumeComparisonDTO>.Ok(dto);
-        }    
+        }
 
     }
 }

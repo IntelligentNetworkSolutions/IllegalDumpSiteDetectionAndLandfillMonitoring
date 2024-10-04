@@ -1,10 +1,5 @@
-﻿using Entities.DetectionEntities;
-using Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Entities;
+using Entities.DetectionEntities;
 
 namespace Tests.EntitiesTests.DetectionEntities
 {
@@ -53,27 +48,27 @@ namespace Tests.EntitiesTests.DetectionEntities
             Assert.True(detectionRun.IsCompleted);
         }
 
-        [Fact]
-        public void DetectionRun_ShouldSetAndGetImagePath()
-        {
-            var detectionRun = new DetectionRun();
-            var imagePath = "/images/test.jpg";
+        //[Fact]
+        //public void DetectionRun_ShouldSetAndGetImagePath()
+        //{
+        //    var detectionRun = new DetectionRun();
+        //    var imagePath = "/images/test.jpg";
 
-            detectionRun.ImagePath = imagePath;
+        //    detectionRun.ImagePath = imagePath;
 
-            Assert.Equal(imagePath, detectionRun.ImagePath);
-        }
+        //    Assert.Equal(imagePath, detectionRun.ImagePath);
+        //}
 
-        [Fact]
-        public void DetectionRun_ShouldSetAndGetImageFileName()
-        {
-            var detectionRun = new DetectionRun();
-            var imageFileName = "test.jpg";
+        //[Fact]
+        //public void DetectionRun_ShouldSetAndGetImageFileName()
+        //{
+        //    var detectionRun = new DetectionRun();
+        //    var imageFileName = "test.jpg";
 
-            detectionRun.ImageFileName = imageFileName;
+        //    detectionRun.ImageFileName = imageFileName;
 
-            Assert.Equal(imageFileName, detectionRun.ImageFileName);
-        }
+        //    Assert.Equal(imageFileName, detectionRun.ImageFileName);
+        //}
 
         [Fact]
         public void DetectionRun_ShouldSetAndGetCreatedById()
@@ -108,6 +103,6 @@ namespace Tests.EntitiesTests.DetectionEntities
             Assert.Equal(createdBy, detectionRun.CreatedBy);
         }
 
-      
+
     }
 }

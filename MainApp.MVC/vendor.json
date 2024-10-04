@@ -19,6 +19,7 @@
   "node_modules/potree-npm/libs",
   "node_modules/potree-npm/pointclouds",
   "node_modules/potree-npm/resources",
-  "node_modules/potree-npm/src"
+  "node_modules/potree-npm/src",
+  "node_modules/geotiff"
 
 ]

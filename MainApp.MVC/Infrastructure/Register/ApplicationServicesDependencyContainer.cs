@@ -1,28 +1,21 @@
-﻿using DAL.Interfaces.Repositories.DatasetRepositories;
-using DAL.Interfaces.Repositories.MapConfigurationRepositories;
-using DAL.Interfaces.Repositories;
-using DAL.Repositories.DatasetRepositories;
-using DAL.Repositories.MapConfigurationRepositories;
-using DAL.Repositories;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Services.Interfaces.Services;
-using Services;
-using DAL.Helpers;
+﻿using DAL.Helpers;
 using DAL.Interfaces.Helpers;
-using MainApp.BL.Interfaces.Services.DatasetServices;
-using MainApp.BL.Interfaces.Services.MapConfigurationServices;
-using MainApp.BL.Interfaces.Services;
-using MainApp.BL.Services.DatasetServices;
-using MainApp.BL.Services.MapConfigurationServices;
-using MainApp.BL.Services;
-using MainApp.MVC.Helpers;
-using Services.Interfaces;
 using MailSend;
 using MailSend.Interfaces;
+using MainApp.BL.Interfaces.Services;
+using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Interfaces.Services.DetectionServices;
-using MainApp.BL.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
+using MainApp.BL.Interfaces.Services.MapConfigurationServices;
+using MainApp.BL.Services;
+using MainApp.BL.Services.DatasetServices;
+using MainApp.BL.Services.DetectionServices;
 using MainApp.BL.Services.LegalLandfillManagementServices;
+using MainApp.BL.Services.MapConfigurationServices;
+using MainApp.MVC.Helpers;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Services;
+using Services.Interfaces;
 
 namespace MainApp.MVC.Infrastructure.Register
 {
@@ -50,6 +43,9 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IImageAnnotationsService, ImageAnnotationsService>();
             services.TryAddScoped<ILegalLandfillService, LegalLandfillService>();
             services.TryAddScoped<ILegalLandfillPointCloudFileService, LegalLandfillPointCloudFileService>();
+            services.TryAddScoped<ILegalLandfillWasteTypeService, LegalLandfillWasteTypeService>();
+            services.TryAddScoped<ILegalLandfillWasteImportService, LegalLandfillWasteImportService>();
+            services.TryAddScoped<ILegalLandfillTruckService, LegalLandfillTruckService>();
             services.TryAddScoped<IDetectionIgnoreZoneService, DetectionIgnoreZoneService>();
 
             return services;

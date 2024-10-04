@@ -1,12 +1,5 @@
-﻿using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.MainApp.BL;
+﻿using DTOs.MainApp.BL.MapConfigurationDTOs;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTOs.MainApp.BL.MapConfigurationDTOs;
 
 namespace MainApp.BL.Interfaces.Services.MapConfigurationServices
 {
@@ -14,20 +7,23 @@ namespace MainApp.BL.Interfaces.Services.MapConfigurationServices
     {
         #region Read
         #region Get Mapconfig/es
-        Task<MapConfigurationDTO> GetMapConfigurationByName(string mapName);      
+        Task<MapConfigurationDTO> GetMapConfigurationByName(string mapName);
+        Task<ResultDTO<List<MapConfigurationDTO>>> GetAllMapConfigurations();
+        Task<ResultDTO<MapConfigurationDTO>> GetMapConfigurationById(Guid mapConfigurationId);
         #endregion
         #endregion
 
         #region Create
-       
+        Task<ResultDTO> CreateMapConfiguration(MapConfigurationDTO mapConfigurationDTO);
         #endregion
 
         #region Update
-       
+        Task<ResultDTO> EditMapConfiguration(MapConfigurationDTO mapConfigurationDTO);
+
         #endregion
 
         #region Delete
-      
+        Task<ResultDTO> DeleteMapConfiguration(MapConfigurationDTO mapConfigurationDTO);
         #endregion
     }
 }

@@ -1,0 +1,359 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.MapConfiguration
+@using Microsoft.AspNetCore.Localization
+@using SD.Helpers
+@model MapConfigurationViewModel
+
+ 
+@{
+    ViewData["Title"] = @DbResHtml.T("Map Configurations", "Resources");
+
+
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/MapConfiguration/editMapConfiguration.css">
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">
+                    @DbResHtml.T("Add, edit, delete and view maps, add groups and layers.", "Resources")
+                </small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+
+                        @if (User.HasAuthClaim(SD.AuthClaims.EditMapConfigurations))
+                        {
+                         <div class="form-group row float-right">
+                            <button type="submit" class="btn bg-gradient-primary mr-5" id="saveButton">@DbResHtml.T("Save", "Resources")</button>
+                            <a class="btn bg-gradient-secondary" href="/IntranetPortal/MapConfiguration">@DbResHtml.T("Back to List", "Resources")</a>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="card card-primary">
+
+        <div class="card-header">
+            <i class="fas fa-info mr-1"></i>Map configuration info<a class="float-right" data-tool="card-collapse" data-toggle="collapse" href="#mapConfigurationsCollapse" role="button" aria-expanded="true" aria-controls="mapConfigurationsCollapse">
+                <em class="fa fa-minus" id="collapseIcon"></em>
+            </a>
+
+        </div>
+        <div id="mapConfigurationsCollapse" class="collapse show">
+
+        <div class="card-body">
+            <form asp-controller="MapConfiguration" asp-action="EditMapConfiguration" asp-area="IntranetPortal" id="mapConfigurationForm" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <input hidden asp-for="Id" />
+                <input hidden asp-for="CreatedById" />
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="MapName" class="form-control-label pt-2 float-right">@DbResHtml.T("Map Name:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input asp-for="MapName" class="form-control" type="text" required>
+                                <span asp-validation-for="MapName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                @* <label class="control-label">Map Name</label> *@
+                                <div class="explanation bg-gray-light no-margin">Fill the map name with the name of the map.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label class="form-control-label pt-2 float-right" asp-for="Projection">@DbResHtml.T("Projection:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <select class="form-control" asp-for="Projection">
+                                    <option value="EPSG:3857">EPSG:3857</option>
+                                    <option value="EPSG:4326">EPSG:4326</option>
+                                </select>
+                                <span asp-validation-for="Projection" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">Fill the projection with the map's projection.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="TileGridJs" class="form-control-label pt-2 float-right">@DbResHtml.T("Tile Grid Js:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <textarea asp-for="TileGridJs" class="form-control" style="min-height:200px" required></textarea>
+                                <span asp-validation-for="TileGridJs" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">
+                                <p>Fill the Tile Grid Js field with the JavaScript for the map grid.</p><br />
+                                <p>Example:</p><br>
+                                <p>ol.tilegrid.TileGrid({extent: [%MINX%, %MINY%, %MAXX%, %MAXY%], resolutions: [%RESOLUTIONS%]})</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="CenterX" class="form-control-label pt-2 float-right">@DbResHtml.T("CenterX:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input asp-for="CenterX" class="form-control" type="number" required>
+                                <span asp-validation-for="CenterX" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">
+                                    Fill CenterX with a number representing the X coordinate.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="CenterY" class="form-control-label pt-2 float-right">@DbResHtml.T("CenterY:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input asp-for="CenterY" class="form-control" type="number" required>
+                                <span asp-validation-for="CenterY" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">
+                                    Fill CenterY with a number representing the Y coordinate.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="MinX" class="form-control-label pt-2 float-right">@DbResHtml.T("MinX:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input asp-for="MinX" class="form-control" type="number" required>
+                                <span asp-validation-for="MinX" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">
+                                    Fill MinX with a number for the minimum X coordinate.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="MinY" class="form-control-label pt-2 float-right">@DbResHtml.T("MinY:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input asp-for="MinY" class="form-control" type="number" required>
+                                <span asp-validation-for="MinY" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">
+                                    Fill MinY with a number for the minimum Y coordinate.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="MaxX" class="form-control-label pt-2 float-right">@DbResHtml.T("MaxX:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input asp-for="MaxX" class="form-control" type="number" required>
+                                <span asp-validation-for="MaxX" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">
+                                    Fill MaxX with a number for the Maximum Y coordinate.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>                
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="MaxY" class="form-control-label pt-2 float-right">@DbResHtml.T("MaxY:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input asp-for="MaxY" class="form-control" type="number" required>
+                                <span asp-validation-for="MaxY" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">
+                                    Fill MaxY with a number for the Maximum Y coordinate.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                        <label asp-for="Resolutions" class="form-control-label pt-2 float-right">@DbResHtml.T("Resolutions:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <textarea asp-for="Resolutions" class="form-control" style="min-height:200px" required></textarea>
+                                <span asp-validation-for="Resolutions" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="explanation bg-gray-light no-margin">
+                                    <p>
+                                        Fill the Resolutions field with a list of numbers.<br>
+                                        Example:
+                                    </p>
+                                    <p>70.00014000028002, 35.00007000014001, 17.920035840071687, 8.960017920035844, 4.480008960017922, 2.240004480008961,</p>
+                                    <p>1.1200022400044805, 0.5600011200022402, 0.2800005600011201, 0.14000028000056006</p>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-md-3">
+                            <label asp-for="DefaultResolution" class="form-control-label pt-2 float-right">@DbResHtml.T("Default Resolution:", "Resources")</label>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                    <textarea asp-for="DefaultResolution" class="form-control" required></textarea>
+                                    <span asp-validation-for="DefaultResolution" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                    <div class="explanation bg-gray-light no-margin">
+                                    <p>Fill the Default Resolution field with the default map resolution. <br /> Example: <br />8.960017920035844</p>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="CreatedById" name="CreatedById" />
+            </form>
+        </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("_layerConfigurations", Model.MapLayerConfigurations, new ViewDataDictionary(ViewData) { { "MapName", Model.MapName }, { "MapId", Model.Id } });
+@await Html.PartialAsync("_groupConfigurations", Model.MapLayerGroupConfigurations, new ViewDataDictionary(ViewData) { { "MapName", Model.MapName }, { "MapId", Model.Id } });
+
+
+
+@section Scripts {
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+
+            $(document).ready(function () {
+                $("#mapConfigurationForm").on("submit", function (e) {
+                    e.preventDefault();
+
+                    var form = $(this);
+                    var url = form.attr('action');
+                    var formData = form.serialize();
+
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        data: formData,
+                        success: function (response) {
+                            if (response.isSuccess) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Success!',
+                                    text: 'Your changes have been saved.',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    window.location.href = '/IntranetPortal/MapConfiguration/Index';
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: response.errMsg || 'An error occurred while processing your request.',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        },
+                        error: function () {
+                            // Handle error
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'There was an error submitting the form. Please try again.',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    });
+                });
+                $('#saveButton').click(function () {
+                    $('#mapConfigurationForm').submit();
+                });
+            });
+
+            //MapLayers
+
+        function openMapLayerConfigurationModal(mapName, mapId) {
+            $('#addMapConfigurationName').val(mapName);
+            $('#addMapConfigurationId').val(mapId);
+            $('#addMapLayerConfigurationModal').modal('show');
+        };
+
+    </script>
+}
+

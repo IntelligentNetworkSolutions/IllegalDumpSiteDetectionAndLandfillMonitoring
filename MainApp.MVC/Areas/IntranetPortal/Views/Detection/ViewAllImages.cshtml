@@ -1,0 +1,554 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.Detection
+@using Microsoft.AspNetCore.Localization
+@using SD.Helpers
+@model IEnumerable<DetectionInputImageViewModel>
+
+@{
+    ViewData["Title"] = @DbResHtml.T("Detection input images", "Resources");
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("View, add, edit, delete all detection input images", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+
+                    <div class="card-body">
+                        <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addImageModal">
+                                <i class="fas fa-plus"></i>
+                                @DbResHtml.T("Add Input Image", "Resources")
+                            </button>
+                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+                        <div class="mt-5">
+                            <table id="detectionInputImagesTable" class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            @DbResHtml.T("Name", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Description", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Date Taken", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Created By", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Created On", "Resources")
+                                        </th>
+                                        <th class="notexport">
+                                            @DbResHtml.T("Action", "Resources")
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.Name</td>
+                                            <td>@item.Description</td>
+                                            <td>@item.DateTaken?.ToString("dd.MM.yyy")</td>
+                                            <td>@item.CreatedBy?.UserName</td>
+                                            <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
+                                            <td>
+                                                <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editDetectionInputImageModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" id="@item.Id" onclick="deleteDetectionInputImageModalFunction('@item.Id')" title="@DbResHtml.T("Delete", "Resources")">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@section Scripts {
+    <script>
+
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+            $(document).ready(function () {
+                $('#detectionInputImagesTable').DataTable({
+                    paging: true,
+                    pageLength: 100,
+                    "language": {
+                        "url": "@langPath"
+                    },
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+                            text: '<i class="fas fa-file-alt"></i>',
+                            titleAttr: "Export to excel",
+                            filename: "Detection input images - @DateTime.Now.ToString("dd.MM.yyyy")",
+                            exportOptions: {
+                                columns: ':not(.notexport)'
+                            }
+                        }
+                    ]
+                });
+                $("#exportToExcelButton").click(function () {
+                    $(".export-to-excel-button").click();
+                });
+            });
+
+        function addImage() {
+            var file = $("#addImageFileInput").get(0).files[0];
+            if (($("#addImageNameInput").val() === undefined || $("#addImageNameInput").val() === '')
+                || ($("#addImageDescriptionInput").val() === undefined || $("#addImageDescriptionInput").val() === '')
+                || ($("#addImageDateTakenInput").val() === undefined || $("#addImageDateTakenInput").val() === '')
+                || !file
+            ){
+                
+                Swal.fire({
+                    text: '@DbResHtml.T("All fields are required", "Resources")',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                    allowOutsideClick: false,
+                    icon: "error"
+                });
+                return;
+            }
+            var formData = new FormData();
+            formData.append("Name", $("#addImageNameInput").val());
+            formData.append("Description", $("#addImageDescriptionInput").val());
+            formData.append("DateTaken", $("#addImageDateTakenInput").val());
+            
+            if (file) {
+                formData.append("file", file);
+            }
+
+            $(".btn-primary").attr("disabled", true);
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("AddImage", "Detection", "IntranetPortal")",
+                data: formData,
+                processData: false, // Important for file upload
+                contentType: false, // Important for file upload
+                xhr: function () {
+                    var xhr = new XMLHttpRequest();
+                    xhr.upload.onprogress = function (event) {
+                        if (event.lengthComputable) {
+                            var percentComplete = Math.round((event.loaded / event.total) * 100);
+                            // Update the progress bar
+                            $("#uploadProgressBar").css("width", percentComplete + "%").attr("aria-valuenow", percentComplete).text(percentComplete + "%");
+                        }
+                    };
+                    return xhr;
+                },
+                success: function (data) {
+                    if (data.isSuccess) {
+                        Swal.fire({
+                            icon: "success",
+                            text: '@DbResHtml.T("Image uploaded successfully", "Resources")',
+                            confirmButtonText: '@DbResHtml.T("OK", "Resources")'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload(); // Reload the page to show the new image
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            text: data.errMsg,
+                            confirmButtonText: '@DbResHtml.T("OK", "Resources")'
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: "error",
+                        text: '@DbResHtml.T("An error occurred during the image upload", "Resources")'
+                    });
+                },
+                complete: function () {
+                    // Re-enable the upload button after completion
+                    $(".btn-primary").attr("disabled", false);
+                }
+            });
+        }
+
+        function deleteDetectionInputImage() {
+            var id = $("#txtDeleteId").val();
+            var name = $("#txtDeleteName").val();
+            var description = $("#txtDeleteDescription").val();
+            var imagePath = $("#txtDeleteImagePath").val();
+
+            var detectionInputImageViewModel = {
+                Id: id,
+                Name: name,
+                Description: description,
+                ImagePath: imagePath
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteDetectionImageInput", "Detection", "IntranetPortal")",
+                data: {
+                    detectionInputImageViewModel: detectionInputImageViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully deleted image input", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function deleteDetectionInputImageModalFunction(detectionInputImageId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetDetectionInputImageById", "Detection", "IntranetPortal")",
+                data: {
+                    detectionInputImageId: detectionInputImageId
+                },
+                success: function (data) {
+                    console.log(data)
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#deleteDetectionInputImageModalBody").html("");
+
+                            $("#deleteDetectionInputImageModalBody").append(
+                                '<div>'
+                                + '<input type="text" id="txtDeleteId" hidden/>'
+                                + '<input type="text" id="txtDeleteName" hidden/>'
+                                + '<input type="text" id="txtDeleteDescription" hidden/>'
+                                + '<input type="text" id="txtDeleteImagePath" hidden/>'
+                                + '<table class="table table-striped my-4 w-100">'
+                                + '<thead>'
+                                + '<tr>'
+                                + '<th>@DbResHtml.T("Name", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Description", "Resources")</th>'
+                                + '</tr>'
+                                + '</thead>'
+                                + '<tbody>'
+                                + '<tr>'
+                                + `<td>${data.data.name}</td>`
+                                + `<td>${data.data.description}</td>`
+                                + '</tr>'
+                                + '</tbody>'
+                                + '</table>'
+                                + '</div>'
+                            );
+
+                            $(`#txtDeleteId`).val(data.data.id);
+                            $(`#txtDeleteName`).val(data.data.name);
+                            $(`#txtDeleteDescription`).val(data.data.description);
+                            $(`#txtDeleteImagePath`).val(data.data.imagePath);
+
+
+                            $('#deleteDetectionInputImageModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+
+        function editDetectionInputImage() {
+            var id = $("#textEditId").val();
+            var name = $("#txtEditName").val();
+            var description = $("#txtEditDescription").val();
+            var createdById = $("#txtEditCreatedById").val();
+            var imagePath = $("#txtEditImagePath").val();
+            var imageFileName = $("#txtEditImageFileName").val();
+            var dateTaken = $("#txtEditImageDateTaken").val();
+            var createdOn = $("#txtEditCreatedOn").val();
+
+            if (description == '' || name == '') {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Name and descripiton are required properties", "Resources")"
+                });
+                return;
+            }
+
+            var detectionInputImageViewModel = {
+                Id: id,
+                Name: name,
+                Description: description,
+                CreatedById: createdById,
+                ImagePath: imagePath,
+                ImageFileName: imageFileName,
+                DateTaken: dateTaken,
+                CreatedOn: createdOn
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditDetectionImageInput", "Detection", "IntranetPortal")",
+                data: {
+                    detectionInputImageViewModel: detectionInputImageViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully edited detection input image", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function editDetectionInputImageModalFunction(detectionInputImageId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetDetectionInputImageById", "Detection", "IntranetPortal")",
+                data: {
+                    detectionInputImageId: detectionInputImageId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#editDetectionInputImageModalBody").html("");
+
+                            $("#editDetectionInputImageModalBody").append(
+                                '<div>'
+                                + `<input type="text" hidden id="textEditId">`
+                                + `<input type="text" hidden id="textEditCreatedById">`
+                                + `<input type="text" hidden id="txtEditImagePath">`
+                                + `<input type="text" hidden id="txtEditImageFileName">`
+                                + `<input type="text" hidden id="txtEditImageDateTaken">`
+                                + `<input type="text" hidden id="txtEditCreatedOn">`
+                                + `<input type="text" hidden id="txtEditCreatedById">`
+                                + `<label class="form-control-label" for="txtEditName">@DbResHtml.T("Name:", "Resources")</label><input class="form-control" type="text" id="txtEditName" />`
+                                + `<label class="form-control-label mt-3" for="txtEditDescription">@DbResHtml.T("Description:", "Resources")</label><input class="form-control" type="text" id="txtEditDescription" />`
+                                + '</div>'
+                            );
+
+                            $(`#textEditId`).val(data.data.id);
+                            $(`#txtEditName`).val(data.data.name);
+                            $(`#txtEditDescription`).val(data.data.description);
+                            $(`#txtEditCreatedById`).val(data.data.createdById);
+                            $(`#txtEditImagePath`).val(data.data.imagePath);
+                            $(`#txtEditImageFileName`).val(data.data.imageFileName);
+                            $(`#txtEditImageDateTaken`).val(data.data.dateTaken);
+                            $(`#txtEditCreatedOn`).val(data.data.dateTaken);
+
+                            $('#editDetectionInputImageModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+    </script>
+}
+
+@section BodyArea{
+    <div class="modal fade" id="addImageModal" tabindex="-1" role="dialog" aria-labelledby="addImageModalTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("Upload New Image", "Resources")</h4>
+                     <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-control-label" for="addImageNameInput">@DbResHtml.T("Image Name:", "Resources")</label>
+                        <input type="text" name="Name" class="form-control" id="addImageNameInput" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" for="addImageDescriptionInput">@DbResHtml.T("Description:", "Resources")</label>
+                        <input type="text" name="Description" class="form-control" id="addImageDescriptionInput" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" for="addImageDateTakenInput">@DbResHtml.T("Date Taken:", "Resources")</label>
+                        <input type="date" name="DateTaken" class="form-control" id="addImageDateTakenInput" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" for="addImageFileInput">@DbResHtml.T("Image File:", "Resources")</label>
+                        <input type="file" name="ImageFile" class="form-control" id="addImageFileInput" accept="image/*" required />
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div class="progress">
+                        <div id="uploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="addImage()">
+                        @DbResHtml.T("Upload", "Resources")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal" id="deleteDetectionInputImageModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-danger">
+                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this detection image input?", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="deleteDetectionInputImageModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteDetectionInputImage()" data-dismiss="modal" aria-label="Delete">
+                        <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="editDetectionInputImageModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-warning text-white">
+                    <h5 class="modal-title">@DbResHtml.T("Edit", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="editDetectionInputImageModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="editDetectionInputImage()" data-dismiss="modal" aria-label="Edit">
+                        <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

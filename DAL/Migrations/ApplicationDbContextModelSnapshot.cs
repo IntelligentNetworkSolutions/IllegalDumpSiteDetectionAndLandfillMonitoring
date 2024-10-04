@@ -52,7 +52,7 @@ namespace DAL.Migrations
                     b.HasKey("Key")
                         .HasName("pk_application_settings");
 
-                    b.ToTable("application_settings", (string)null);
+                    b.ToTable("application_settings");
                 });
 
             modelBuilder.Entity("Entities.ApplicationUser", b =>
@@ -188,7 +188,7 @@ namespace DAL.Migrations
                     b.HasKey("AuditLogId")
                         .HasName("pk_audit_log");
 
-                    b.ToTable("audit_log", (string)null);
+                    b.ToTable("audit_log");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.Dataset", b =>
@@ -250,7 +250,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("datasets", (string)null);
+                    b.ToTable("datasets");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetClass", b =>
@@ -287,7 +287,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("ParentClassId");
 
-                    b.ToTable("dataset_classes", (string)null);
+                    b.ToTable("dataset_classes");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.DatasetImage", b =>
@@ -354,7 +354,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("dataset_images", (string)null);
+                    b.ToTable("dataset_images");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.Dataset_DatasetClass", b =>
@@ -383,7 +383,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DatasetId");
 
-                    b.ToTable("datasets_dataset_classes", (string)null);
+                    b.ToTable("datasets_dataset_classes");
                 });
 
             modelBuilder.Entity("Entities.DatasetEntities.ImageAnnotation", b =>
@@ -442,7 +442,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("image_annotations", (string)null);
+                    b.ToTable("image_annotations");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectedDumpSite", b =>
@@ -477,7 +477,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("DetectionRunId");
 
-                    b.ToTable("detected_dump_sites", (string)null);
+                    b.ToTable("detected_dump_sites");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectionIgnoreZone", b =>
@@ -507,21 +507,82 @@ namespace DAL.Migrations
                         .HasColumnType("geometry(Polygon)")
                         .HasColumnName("geom");
 
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_enabled");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");
-
-                    b.Property<bool>("isEnabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_enabled");
 
                     b.HasKey("Id")
                         .HasName("pk_detection_ignore_zones");
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("detection_ignore_zones", (string)null);
+                    b.ToTable("detection_ignore_zones");
+                });
+
+            modelBuilder.Entity("Entities.DetectionEntities.DetectionInputImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by_id");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_on")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
+
+                    b.Property<DateTime>("DateTaken")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_taken")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("ImageFileName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_file_name");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_path");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("UpdatedById")
+                        .HasColumnType("text")
+                        .HasColumnName("updated_by_id");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_on");
+
+                    b.HasKey("Id")
+                        .HasName("pk_detection_input_images");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.ToTable("detection_input_images");
                 });
 
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
@@ -546,15 +607,9 @@ namespace DAL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<string>("ImageFileName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("image_file_name");
-
-                    b.Property<string>("ImagePath")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("image_path");
+                    b.Property<Guid>("DetectionInputImageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("detection_input_image_id");
 
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("boolean")
@@ -570,7 +625,9 @@ namespace DAL.Migrations
 
                     b.HasIndex("CreatedById");
 
-                    b.ToTable("detection_runs", (string)null);
+                    b.HasIndex("DetectionInputImageId");
+
+                    b.ToTable("detection_runs");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>
@@ -601,7 +658,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("intranet_portal_users_tokens", (string)null);
+                    b.ToTable("intranet_portal_users_tokens");
                 });
 
             modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfill", b =>
@@ -624,7 +681,7 @@ namespace DAL.Migrations
                     b.HasKey("Id")
                         .HasName("pk_legal_landfills");
 
-                    b.ToTable("legal_landfills", (string)null);
+                    b.ToTable("legal_landfills");
                 });
 
             modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillPointCloudFile", b =>
@@ -659,7 +716,133 @@ namespace DAL.Migrations
 
                     b.HasIndex("LegalLandfillId");
 
-                    b.ToTable("legal_landfill_point_cloud_files", (string)null);
+                    b.ToTable("legal_landfill_point_cloud_files");
+                });
+
+            modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillTruck", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<double?>("Capacity")
+                        .HasColumnType("double precision")
+                        .HasColumnName("capacity");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_enabled");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<double?>("PayloadWeight")
+                        .HasColumnType("double precision")
+                        .HasColumnName("payload_weight");
+
+                    b.Property<string>("Registration")
+                        .HasColumnType("text")
+                        .HasColumnName("registration");
+
+                    b.Property<double?>("UnladenWeight")
+                        .HasColumnType("double precision")
+                        .HasColumnName("unladen_weight");
+
+                    b.HasKey("Id")
+                        .HasName("pk_legal_landfill_trucks");
+
+                    b.ToTable("legal_landfill_trucks");
+                });
+
+            modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteImport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<double?>("Capacity")
+                        .HasColumnType("double precision")
+                        .HasColumnName("capacity");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("created_by_id");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_on")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
+
+                    b.Property<int>("ImportExportStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("import_export_status");
+
+                    b.Property<DateTime>("ImportedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("imported_on");
+
+                    b.Property<Guid>("LegalLandfillId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("legal_landfill_id");
+
+                    b.Property<Guid?>("LegalLandfillTruckId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("legal_landfill_truck_id");
+
+                    b.Property<Guid>("LegalLandfillWasteTypeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("legal_landfill_waste_type_id");
+
+                    b.Property<double?>("Weight")
+                        .HasColumnType("double precision")
+                        .HasColumnName("weight");
+
+                    b.HasKey("Id")
+                        .HasName("pk_legal_landfill_waste_imports");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("LegalLandfillId");
+
+                    b.HasIndex("LegalLandfillTruckId");
+
+                    b.HasIndex("LegalLandfillWasteTypeId");
+
+                    b.ToTable("legal_landfill_waste_imports");
+                });
+
+            modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_legal_landfill_waste_types");
+
+                    b.ToTable("legal_landfill_waste_types");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>
@@ -743,7 +926,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_configurations", (string)null);
+                    b.ToTable("map_configurations");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapLayerConfiguration", b =>
@@ -815,7 +998,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_layer_configurations", (string)null);
+                    b.ToTable("map_layer_configurations");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapLayerGroupConfiguration", b =>
@@ -885,7 +1068,7 @@ namespace DAL.Migrations
 
                     b.HasIndex("UpdatedById");
 
-                    b.ToTable("map_layer_group_configurations", (string)null);
+                    b.ToTable("map_layer_group_configurations");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainedModel", b =>
@@ -918,6 +1101,11 @@ namespace DAL.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_published");
 
+                    b.Property<string>("ModelConfigPath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("model_config_path");
+
                     b.Property<string>("ModelFilePath")
                         .IsRequired()
                         .HasColumnType("text")
@@ -948,7 +1136,7 @@ namespace DAL.Migrations
                     b.HasIndex("TrainingRunId")
                         .IsUnique();
 
-                    b.ToTable("trained_models", (string)null);
+                    b.ToTable("trained_models");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainedModelStatistics", b =>
@@ -992,7 +1180,7 @@ namespace DAL.Migrations
                     b.HasIndex("TrainedModelId")
                         .IsUnique();
 
-                    b.ToTable("trained_model_statistics", (string)null);
+                    b.ToTable("trained_model_statistics");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainingRun", b =>
@@ -1030,6 +1218,10 @@ namespace DAL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<Guid?>("TrainParamsId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("train_params_id");
+
                     b.Property<Guid?>("TrainedModelId")
                         .HasColumnType("uuid")
                         .HasColumnName("trained_model_id");
@@ -1043,7 +1235,39 @@ namespace DAL.Migrations
 
                     b.HasIndex("DatasetId");
 
-                    b.ToTable("training_runs", (string)null);
+                    b.ToTable("training_runs");
+                });
+
+            modelBuilder.Entity("Entities.TrainingEntities.TrainingRunTrainParams", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int?>("BatchSize")
+                        .HasColumnType("integer")
+                        .HasColumnName("batch_size");
+
+                    b.Property<int?>("NumEpochs")
+                        .HasColumnType("integer")
+                        .HasColumnName("num_epochs");
+
+                    b.Property<int?>("NumFrozenStages")
+                        .HasColumnType("integer")
+                        .HasColumnName("num_frozen_stages");
+
+                    b.Property<Guid>("TrainingRunId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("training_run_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_training_run_train_params");
+
+                    b.HasIndex("TrainingRunId")
+                        .IsUnique();
+
+                    b.ToTable("training_run_train_params");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1364,6 +1588,26 @@ namespace DAL.Migrations
                     b.Navigation("CreatedBy");
                 });
 
+            modelBuilder.Entity("Entities.DetectionEntities.DetectionInputImage", b =>
+                {
+                    b.HasOne("Entities.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_detection_input_images_asp_net_users_created_by_id");
+
+                    b.HasOne("Entities.ApplicationUser", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_detection_input_images_asp_net_users_updated_by_id");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("UpdatedBy");
+                });
+
             modelBuilder.Entity("Entities.DetectionEntities.DetectionRun", b =>
                 {
                     b.HasOne("Entities.ApplicationUser", "CreatedBy")
@@ -1373,7 +1617,16 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_detection_runs_asp_net_users_created_by_id");
 
+                    b.HasOne("Entities.DetectionEntities.DetectionInputImage", "DetectionInputImage")
+                        .WithMany()
+                        .HasForeignKey("DetectionInputImageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_detection_runs_detection_input_images_detection_input_image~");
+
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("DetectionInputImage");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>
@@ -1398,6 +1651,44 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_legal_landfill_point_cloud_files_legal_landfills_legal_land~");
 
                     b.Navigation("LegalLandfill");
+                });
+
+            modelBuilder.Entity("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteImport", b =>
+                {
+                    b.HasOne("Entities.ApplicationUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_legal_landfill_waste_imports_asp_net_users_created_by_id");
+
+                    b.HasOne("Entities.LegalLandfillsManagementEntites.LegalLandfill", "LegalLandfill")
+                        .WithMany()
+                        .HasForeignKey("LegalLandfillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_legal_landfill_waste_imports_legal_landfills_legal_landfill~");
+
+                    b.HasOne("Entities.LegalLandfillsManagementEntites.LegalLandfillTruck", "LegalLandfillTruck")
+                        .WithMany()
+                        .HasForeignKey("LegalLandfillTruckId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_legal_landfill_waste_imports_legal_landfill_trucks_legal_la~");
+
+                    b.HasOne("Entities.LegalLandfillsManagementEntites.LegalLandfillWasteType", "LegalLandfillWasteType")
+                        .WithMany()
+                        .HasForeignKey("LegalLandfillWasteTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_legal_landfill_waste_imports_legal_landfill_waste_types_legal_~");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("LegalLandfill");
+
+                    b.Navigation("LegalLandfillTruck");
+
+                    b.Navigation("LegalLandfillWasteType");
                 });
 
             modelBuilder.Entity("Entities.MapConfigurationEntities.MapConfiguration", b =>
@@ -1553,6 +1844,18 @@ namespace DAL.Migrations
                     b.Navigation("Dataset");
                 });
 
+            modelBuilder.Entity("Entities.TrainingEntities.TrainingRunTrainParams", b =>
+                {
+                    b.HasOne("Entities.TrainingEntities.TrainingRun", "TrainingRun")
+                        .WithOne("TrainParams")
+                        .HasForeignKey("Entities.TrainingEntities.TrainingRunTrainParams", "TrainingRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_training_runs_training_run_train_params_train_params_id1");
+
+                    b.Navigation("TrainingRun");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1656,6 +1959,8 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainingRun", b =>
                 {
+                    b.Navigation("TrainParams");
+
                     b.Navigation("TrainedModel");
                 });
 #pragma warning restore 612, 618

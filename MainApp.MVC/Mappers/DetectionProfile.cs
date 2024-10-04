@@ -1,9 +1,6 @@
 ﻿using AutoMapper;
-using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.MainApp.BL;
-using MainApp.MVC.ViewModels.IntranetPortal.Dataset;
-using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using DTOs.MainApp.BL.DetectionDTOs;
+using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 
 namespace MainApp.MVC.Mappers
 {
@@ -13,6 +10,7 @@ namespace MainApp.MVC.Mappers
         {
             CreateMap<DetectionRunDTO, DetectionRunViewModel>().ReverseMap();
             CreateMap<DetectedDumpSiteDTO, DetectedDumpSiteViewModel>().ReverseMap();
+            CreateMap<DetectionInputImageDTO, DetectionInputImageViewModel>().ReverseMap();
 
         }
     }
