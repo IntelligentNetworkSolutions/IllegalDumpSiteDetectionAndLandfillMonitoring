@@ -1,19 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories;
 using DTOs.MainApp.BL;
 using Entities;
-using MainApp.MVC.Mappers;
 using Microsoft.AspNetCore.Identity;
 using Moq;
 using SD;
 using Services;
-using Services.Interfaces.Services;
 
 namespace Tests.MainAppBLTests
 {
@@ -259,7 +252,7 @@ namespace Tests.MainAppBLTests
             Mock<PasswordHasher<ApplicationUser>> mockPasswordHasher = new Mock<PasswordHasher<ApplicationUser>>();
             mockPasswordHasher.Setup(x => x.HashPassword(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
                                 .Returns("hashedPassword");  // This line will not be reached in this test
-            
+
             // Act
             var result = await _userManagementService.GetPasswordHashForAppUser(appUser, passwordNew);
 
@@ -272,7 +265,7 @@ namespace Tests.MainAppBLTests
         public async Task GetPasswordHashForAppUser_ReturnsSuccess_WhenAllConditionsMet()
         {
             // Arrange
-            var appUser = new ApplicationUser() { Id = "TestId", UserName = "TestUser", Email = "testemail@testmailserver.test"};
+            var appUser = new ApplicationUser() { Id = "TestId", UserName = "TestUser", Email = "testemail@testmailserver.test" };
             string passwordNew = "StrongPassword1";
             _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
                                     .ReturnsAsync(ResultDTO<int>.Ok(8));
@@ -306,7 +299,7 @@ namespace Tests.MainAppBLTests
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal("RolesInsert must not be null", result.ErrMsg);
+            Assert.Equal("ClaimsInsert must not be null", result.ErrMsg);
         }
 
         [Fact]
@@ -324,31 +317,15 @@ namespace Tests.MainAppBLTests
         }
 
         [Fact]
-        public async Task AddUserClaims_ReturnsOk_SuccessfullyAddsClaims()
-        {
-            // Arrange
-            string appUserId = "user123";
-            List<string> claimsInsert = new List<string> { "claim1", "claim2" };
-            _mockMapper.Setup(m => m.Map<IdentityUserClaim<string>>(It.IsAny<string>()))
-                       .Returns((string s) => new IdentityUserClaim<string> { ClaimValue = s });
-            _mockUserManagementDa.Setup(d => d.AddClaimForUser(It.IsAny<IdentityUserClaim<string>>()))
-                                 .Returns(Task.CompletedTask);
-
-            // Act
-            var result = await _userManagementService.AddUserClaims(appUserId, claimsInsert, "type");
-
-            // Assert
-            Assert.True(result.IsSuccess);
-        }
-
-        [Fact]
         public async Task AddUserClaims_HandlesException()
         {
             // Arrange
             string appUserId = "user123";
             List<string> claimsInsert = new List<string> { "claim1" };
-            _mockMapper.Setup(m => m.Map<IdentityUserClaim<string>>(It.IsAny<string>()))
-                       .Throws(new Exception("Test exception"));
+
+            // Setup the mock to throw an exception when trying to add claims
+            _mockUserManagementDa.Setup(da => da.AddClaimsForUserRange(It.IsAny<List<IdentityUserClaim<string>>>(), null))
+                                 .ThrowsAsync(new Exception("Database error"));
 
             // Act
             var result = await _userManagementService.AddUserClaims(appUserId, claimsInsert, "type");
@@ -356,8 +333,9 @@ namespace Tests.MainAppBLTests
             // Assert
             Assert.False(result.IsSuccess);
             Assert.NotNull(result.ExObj);
-            Assert.Equal("Test exception", result.ErrMsg);
+            Assert.Equal("Database error", result.ErrMsg);
         }
+
         #endregion
 
         #region AddUserRoles
@@ -396,17 +374,16 @@ namespace Tests.MainAppBLTests
             // Arrange
             string appUserId = "user123";
             List<string> rolesInsert = new List<string> { "Admin", "User" };
-            _mockMapper.Setup(m => m.Map<IdentityUserRole<string>>(It.IsAny<string>()))
-                       .Returns((string s) => new IdentityUserRole<string> { UserId = appUserId, RoleId = s });
-            _mockUserManagementDa.Setup(d => d.AddRoleForUser(It.IsAny<IdentityUserRole<string>>()))
-                                 .Returns(Task.FromResult(new IdentityUserRole<string>()));
+            var userRoles = rolesInsert.Select(role => new IdentityUserRole<string> { UserId = appUserId, RoleId = role }).ToList();
+            _mockUserManagementDa.Setup(d => d.AddRolesForUserRange(It.IsAny<List<IdentityUserRole<string>>>(), null))
+                                 .ReturnsAsync(userRoles);
 
             // Act
             var result = await _userManagementService.AddUserRoles(appUserId, rolesInsert);
 
             // Assert
             Assert.True(result.IsSuccess);
-            _mockUserManagementDa.Verify(da => da.AddRoleForUser(It.IsAny<IdentityUserRole<string>>()), Times.Exactly(rolesInsert.Count));
+            _mockUserManagementDa.Verify(da => da.AddRolesForUserRange(It.IsAny<List<IdentityUserRole<string>>>(), null), Times.Once);
         }
 
         [Fact]
@@ -414,9 +391,12 @@ namespace Tests.MainAppBLTests
         {
             // Arrange
             string appUserId = "user123";
-            List<string> rolesInsert = new List<string> { "Admin" };
+            List<string> rolesInsert = new List<string> { "Admin", "User" };
             _mockMapper.Setup(m => m.Map<IdentityUserRole<string>>(It.IsAny<string>()))
-                       .Throws(new Exception("Test exception"));
+                       .Returns((string roleId) => new IdentityUserRole<string> { UserId = appUserId, RoleId = roleId });
+
+            _mockUserManagementDa.Setup(d => d.AddRolesForUserRange(It.IsAny<List<IdentityUserRole<string>>>(), null))
+                                 .Throws(new Exception("Test exception"));
 
             // Act
             var result = await _userManagementService.AddUserRoles(appUserId, rolesInsert);

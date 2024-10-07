@@ -1,11 +1,11 @@
-﻿using System.Linq.Expressions;
-using DAL.ApplicationStorage;
+﻿using DAL.ApplicationStorage;
 using DAL.ApplicationStorage.SeedDatabase.TestSeedData;
 using DAL.Repositories.DatasetRepositories;
 using Entities.DatasetEntities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using SD;
+using System.Linq.Expressions;
 
 namespace Tests.DalTests.Repositories.DatasetRepositories
 {
@@ -25,8 +25,13 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             dbContext.AuditDisabled = true;
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
-            Dataset newDataset = new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset", 
-                                                Description = "Testing DAL", CreatedById = UserSeedData.FirstUser.Id };
+            Dataset newDataset = new Dataset
+            {
+                Id = Guid.NewGuid(),
+                Name = "Test Dataset",
+                Description = "Testing DAL",
+                CreatedById = UserSeedData.FirstUser.Id
+            };
 
             // Act
             ResultDTO result = await new DatasetsRepository(dbContext).Create(newDataset);
@@ -63,7 +68,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             dbContext.AuditDisabled = true;
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
-            
+
             // Simulate failure by adding same Id (assuming the save will fail)
             Dataset newDataset = new()
             {
@@ -111,8 +116,13 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             dbContext.AuditDisabled = true;
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
-            Dataset newDataset = new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset", 
-                                                Description = "Testing DAL", CreatedById = UserSeedData.FirstUser.Id };
+            Dataset newDataset = new Dataset
+            {
+                Id = Guid.NewGuid(),
+                Name = "Test Dataset",
+                Description = "Testing DAL",
+                CreatedById = UserSeedData.FirstUser.Id
+            };
 
             // Act
             ResultDTO<Dataset> result = await new DatasetsRepository(dbContext).CreateAndReturnEntity(newDataset);
@@ -152,14 +162,14 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             dbContext.AuditDisabled = true;
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
-            
+
             // Simulate failure by adding same Id (assuming the save will fail)
-            Dataset newDataset = new() 
-            { 
-                Id = DatasetsSeedData.FirstDataset.Id, 
-                Name = "Test Dataset", 
-                Description = "Testing DAL", 
-                CreatedById = UserSeedData.FirstUser.Id 
+            Dataset newDataset = new()
+            {
+                Id = DatasetsSeedData.FirstDataset.Id,
+                Name = "Test Dataset",
+                Description = "Testing DAL",
+                CreatedById = UserSeedData.FirstUser.Id
             };
 
             // Act
@@ -200,10 +210,10 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             dbContext.AuditDisabled = true;
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
-            List<Dataset> datasets = [ new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset 1", 
+            List<Dataset> datasets = [ new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset 1",
                                             Description = "Testing DAL 1", CreatedById = UserSeedData.FirstUser.Id },
-                                        new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset 2", 
-                                            Description = "Testing DAL 2", CreatedById = UserSeedData.FirstUser.Id } 
+                                        new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset 2",
+                                            Description = "Testing DAL 2", CreatedById = UserSeedData.FirstUser.Id }
                                         ];
 
             // Act
@@ -252,9 +262,9 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
             // Simulate failure by adding same Id (assuming the save will fail)
-            List<Dataset> datasets = [ new Dataset { Id = DatasetsSeedData.FirstDataset.Id, Name = "Test Dataset 1", 
+            List<Dataset> datasets = [ new Dataset { Id = DatasetsSeedData.FirstDataset.Id, Name = "Test Dataset 1",
                                             Description = "Testing DAL 1", CreatedById = UserSeedData.FirstUser.Id },
-                                        new Dataset { Id = DatasetsSeedData.SecondDataset.Id, Name = "Test Dataset 2", 
+                                        new Dataset { Id = DatasetsSeedData.SecondDataset.Id, Name = "Test Dataset 2",
                                             Description = "Testing DAL 2", CreatedById = UserSeedData.FirstUser.Id }
                                         ];
 
@@ -266,7 +276,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             Assert.False(string.IsNullOrEmpty(result.ErrMsg));
             transaction.Rollback();
         }
-        
+
         [Fact]
         public async Task CreateRange_ShouldThrowException_WhenDatabaseOperationFails()
         {
@@ -276,7 +286,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
             DatasetsRepository repository = new(dbContext);
-            List<Dataset> invalidDatasets = [ new Dataset { Id = Guid.Empty, Name = null }, new Dataset { Id = Guid.Empty, Name = null } ];
+            List<Dataset> invalidDatasets = [new Dataset { Id = Guid.Empty, Name = null }, new Dataset { Id = Guid.Empty, Name = null }];
 
             // Act
             ResultDTO result = await repository.CreateRange(invalidDatasets);
@@ -300,8 +310,13 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             DatasetsRepository repository = new DatasetsRepository(dbContext);
             _fixture.SeedDatabase(dbContext);
-            Dataset updatedDataset = new() { Id = Guid.NewGuid(), Name = "Updated Dataset",
-                                                Description = "Testing DAL", CreatedById = UserSeedData.FirstUser.Id };
+            Dataset updatedDataset = new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Updated Dataset",
+                Description = "Testing DAL",
+                CreatedById = UserSeedData.FirstUser.Id
+            };
             await dbContext.Datasets.AddAsync(updatedDataset);
             await dbContext.SaveChangesAsync();
 
@@ -393,8 +408,13 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
             DatasetsRepository repository = new(dbContext);
-            Dataset updatedDataset = new() { Id = Guid.NewGuid(), Name = "Updated Dataset",
-                                                Description = "Testing DAL", CreatedById = UserSeedData.FirstUser.Id };
+            Dataset updatedDataset = new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Updated Dataset",
+                Description = "Testing DAL",
+                CreatedById = UserSeedData.FirstUser.Id
+            };
             await dbContext.Datasets.AddAsync(updatedDataset);
             await dbContext.SaveChangesAsync();
             // Act
@@ -472,9 +492,9 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
 
             // Assert
             Assert.True(result.IsSuccess);
-            Dataset? updatedFirstDataset = 
+            Dataset? updatedFirstDataset =
                 await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == datasets[0].Id);
-            Dataset? updatedSecondDataset = 
+            Dataset? updatedSecondDataset =
                 await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == datasets[1].Id);
             Assert.Equal("Updated First Dataset", updatedFirstDataset.Name);
             Assert.Equal("Updated Second Dataset", updatedSecondDataset.Name);
@@ -509,7 +529,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
             DatasetsRepository repository = new(dbContext);
-            List<Dataset> invalidDatasets = [ new Dataset { Id = DatasetsSeedData.FirstDataset.Id, Name = null }, 
+            List<Dataset> invalidDatasets = [ new Dataset { Id = DatasetsSeedData.FirstDataset.Id, Name = null },
                                                 new Dataset { Id = DatasetsSeedData.SecondDataset.Id, Name = null }];
 
             // Act
@@ -532,6 +552,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             dbContext.AuditDisabled = true;
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
+
             // Act
             ResultDTO result = await new DatasetsRepository(dbContext).Delete(DatasetsSeedData.FirstDataset);
 
@@ -657,7 +678,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             using var transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
             DatasetsRepository repository = new DatasetsRepository(dbContext);
-            List<Dataset> nonExistentDatasets = [ new Dataset { Id = Guid.NewGuid() }, new Dataset { Id = Guid.NewGuid() } ];
+            List<Dataset> nonExistentDatasets = [new Dataset { Id = Guid.NewGuid() }, new Dataset { Id = Guid.NewGuid() }];
 
             // Act
             ResultDTO result = await repository.DeleteRange(nonExistentDatasets);
@@ -699,7 +720,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
             _fixture.SeedDatabase(dbContext);
             DatasetsRepository repository = new(dbContext);
-            transaction.Rollback(); 
+            transaction.Rollback();
             dbContext.Dispose(); // Dispose context to cause exception
 
             // Act
@@ -751,7 +772,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             Assert.False(result.IsSuccess);
             Assert.NotNull(result.ErrMsg);
             Assert.NotNull(result.ExObj);
-            
+
         }
         #endregion
 

@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Entities;
+﻿using Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace DAL.Interfaces.Repositories
 {
@@ -15,8 +15,6 @@ namespace DAL.Interfaces.Repositories
         Task<ApplicationUser> GetUserBySpecificClaim();
 
         Task<ApplicationUser?> GetUserByUsername(string username);
-
-        Task<ApplicationUser?> GetUserByEmail(string email);
 
         Task<List<ApplicationUser>> GetAllIntanetPortalUsers();
 
@@ -37,18 +35,13 @@ namespace DAL.Interfaces.Repositories
         Task<List<IdentityUserRole<string>>> GetUserRolesByUserId(string userId);
 
         Task<List<IdentityUserClaim<string>>> GetClaimsForUserByUserIdAndClaimType(string userId, string claimType);
-        
+
         Task<List<IdentityRoleClaim<string>>> GetClaimsForRoleByRoleIdAndClaimType(string roleId, string claimType);
 
         Task<string> GetPreferredLanguage(string userId);
         #endregion
 
-        #region Queryables
-        IQueryable<ApplicationUser> GetAppUsersAsQueriable();
 
-        IQueryable<IdentityRole> GetRolesAsQueriable();
-        #endregion
-        
         #endregion
 
         #region Create
@@ -58,9 +51,9 @@ namespace DAL.Interfaces.Repositories
 
         Task AddClaimForRole(IdentityRoleClaim<string> forInsert);
 
-        Task AddClaimForUser(IdentityUserClaim<string> forInsert);
+        Task AddClaimsForUserRange(List<IdentityUserClaim<string>>? userClaims, IDbContextTransaction? transaction = null);
 
-        Task<IdentityUserRole<string>> AddRoleForUser(IdentityUserRole<string> userRole);
+        Task<List<IdentityUserRole<string>>> AddRolesForUserRange(List<IdentityUserRole<string>> userRoles, IDbContextTransaction? transaction = null);
 
         Task AddLanguageClaimForUser(IdentityUserClaim<string> claimDb);
         #endregion
@@ -79,9 +72,8 @@ namespace DAL.Interfaces.Repositories
 
         Task<IdentityRole> DeleteRole(IdentityRole role);
 
-        Task DeleteClaimsForRole(List<IdentityRoleClaim<string>> roleClaims);
-
-        Task DeleteClaimsRolesForUser(List<IdentityUserClaim<string>> userClaims, List<IdentityUserRole<string>> userRoles);
+        Task DeleteClaimsForRole(List<IdentityRoleClaim<string>> roleClaims, IDbContextTransaction? transaction = null);
+        Task DeleteClaimsRolesForUser(List<IdentityUserClaim<string>> userClaims, List<IdentityUserRole<string>> userRoles, IDbContextTransaction? transaction = null);
         #endregion
     }
 }

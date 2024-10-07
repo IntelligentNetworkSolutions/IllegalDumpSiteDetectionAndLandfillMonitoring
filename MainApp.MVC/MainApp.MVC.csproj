@@ -7,6 +7,7 @@
 		<Configuration Condition=" '$(Configuration)' == 'Development' ">Development</Configuration>
 		<Configuration Condition=" '$(Configuration)' == 'Production' ">Production</Configuration>
 		<Configuration Condition=" '$(Configuration)' == 'Staging' ">Staging</Configuration>
+		<UserSecretsId>aa29331c-70db-4022-90e0-a5bb558c5fb7</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -60,11 +61,7 @@
 	</ItemGroup>
 
 	<Target Name="TransformWebConfig" AfterTargets="AfterPublish">
-		<TransformXml
-		  Source="$(PublishDir)web.config"
-		  Transform="web.$(Configuration).config"
-		  Destination="$(PublishDir)web.config"
-		  Condition="Exists('web.$(Configuration).config')" />
+		<TransformXml Source="$(PublishDir)web.config" Transform="web.$(Configuration).config" Destination="$(PublishDir)web.config" Condition="Exists('web.$(Configuration).config')" />
 	</Target>
 
 </Project>

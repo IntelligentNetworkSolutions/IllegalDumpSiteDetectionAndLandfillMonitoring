@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
-using DAL.Helpers;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories;
-using DocumentFormat.OpenXml.Bibliography;
 using DTOs.MainApp.BL;
 using Entities;
 using Microsoft.AspNetCore.Identity;
@@ -42,7 +40,7 @@ namespace Services
                     return ResultDTO.Fail(resGetPassHash.ErrMsg);
                 user.PasswordHash = resGetPassHash.Data;
 
-               
+
                 ApplicationUser insertedUser = await _userManagementDa.AddUser(user);
 
                 // Add User Roles
@@ -129,11 +127,11 @@ namespace Services
             const bool passMustLettersDefault = false;
             const bool passMustNumbersDefault = false;
 
-            ResultDTO<int> resPassMinLenght = 
+            ResultDTO<int> resPassMinLenght =
                 await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("PasswordMinLength", passMinLenDefault);
-            ResultDTO<bool> resPassHasLetters = 
+            ResultDTO<bool> resPassHasLetters =
                 await _appSettingsAccessor.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", passMustLettersDefault);
-            ResultDTO<bool> resPassHasNumbers = 
+            ResultDTO<bool> resPassHasNumbers =
                 await _appSettingsAccessor.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", passMustNumbersDefault);
 
             return (resPassMinLenght.Data, resPassHasLetters.Data, resPassHasNumbers.Data);
@@ -153,10 +151,10 @@ namespace Services
             if (password.Length >= passMinLenght)
                 checkLength = true;
 
-            if(password.Any(c => Char.IsLetter(c)))
+            if (password.Any(c => Char.IsLetter(c)))
                 checkLetters = true;
 
-            if(password.Any(c => Char.IsNumber(c)))
+            if (password.Any(c => Char.IsNumber(c)))
                 checkNumbers = true;
 
             return (checkLength, checkLetters, checkNumbers);
@@ -182,27 +180,35 @@ namespace Services
             try
             {
                 if (claimsInsert is null)
-                    return ResultDTO.Fail("RolesInsert must not be null");
+                    return ResultDTO.Fail("ClaimsInsert must not be null");
 
                 if (claimsInsert.Count == 0)
                     return ResultDTO.Ok();
 
+                var userClaims = new List<IdentityUserClaim<string>>();
+
                 foreach (var claim in claimsInsert)
                 {
-                    var userClaim = _mapper.Map<IdentityUserClaim<string>>(claim);
-                    userClaim.UserId = appUserId;
-                    userClaim.ClaimType = claimsType;
-                    await _userManagementDa.AddClaimForUser(userClaim);
+                    var userClaim = new IdentityUserClaim<string>
+                    {
+                        UserId = appUserId,
+                        ClaimType = claimsType,
+                        ClaimValue = claim
+                    };
+                    userClaims.Add(userClaim);
                 }
 
+                // Call the new method to add claims in bulk
+                await _userManagementDa.AddClaimsForUserRange(userClaims);
 
-                return await Task.FromResult(ResultDTO.Ok());
+                return ResultDTO.Ok();
             }
             catch (Exception ex)
             {
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
+
 
         public async Task<ResultDTO> AddUserRoles(string appUserId, List<string> rolesInsert)
         {
@@ -211,24 +217,31 @@ namespace Services
                 if (rolesInsert is null)
                     return ResultDTO.Fail("RolesInsert must not be null");
 
-                if (rolesInsert.Count == 0  )
+                if (rolesInsert.Count == 0)
                     return ResultDTO.Ok();
 
-                // Set user roles Ids
+                var userRoles = new List<IdentityUserRole<string>>();
+
                 foreach (var role in rolesInsert)
                 {
-                    var userRole = _mapper.Map<IdentityUserRole<string>>(role);
-                    userRole.UserId = appUserId;
-                    await _userManagementDa.AddRoleForUser(userRole);
+                    var userRole = new IdentityUserRole<string>
+                    {
+                        RoleId = role,
+                        UserId = appUserId
+                    };
+                    userRoles.Add(userRole);
                 }
 
-                return await Task.FromResult(ResultDTO.Ok());
+                await _userManagementDa.AddRolesForUserRange(userRoles);
+
+                return ResultDTO.Ok();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
+
 
         #region Update
         public async Task<ResultDTO> UpdateUser(UserManagementDTO dto)
@@ -250,7 +263,7 @@ namespace Services
                 if (string.IsNullOrEmpty(dto.ConfirmPassword) == false)
                 {
                     ResultDTO<string> resGetPass = await GetPasswordHashForAppUser(userEntity, dto.ConfirmPassword);
-                    if (resGetPass.IsSuccess == false) 
+                    if (resGetPass.IsSuccess == false)
                         return ResultDTO.Fail(resGetPass.ErrMsg!);
 
                     userEntity.PasswordHash = resGetPass.Data;      // Set Hashed Password
@@ -261,7 +274,7 @@ namespace Services
                 if (resUpdateUser == false)
                     return ResultDTO.Fail("User not updated");
 
-                List<IdentityUserClaim<string>> userClaims = 
+                List<IdentityUserClaim<string>> userClaims =
                     await _userManagementDa.GetClaimsForUserByUserIdAndClaimType(userEntity.Id, "AuthorizationClaim");
 
                 List<IdentityUserRole<string>> userRoles =
@@ -282,7 +295,7 @@ namespace Services
 
                 return ResultDTO.Ok();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
@@ -335,7 +348,7 @@ namespace Services
                     await _userManagementDa.GetClaimsForRoleByRoleIdAndClaimType(roleEntity.Id, "AuthorizationClaim");
                 // Delete Existing Claims
                 await _userManagementDa.DeleteClaimsForRole(roleClaims);
-                
+
                 foreach (var claim in dto.ClaimsInsert)
                 {
                     var roleClaim = _mapper.Map<IdentityRoleClaim<string>>(claim);
@@ -422,15 +435,15 @@ namespace Services
 
                     dto = _mapper.Map(user, dto);
 
-                    List<IdentityUserRole<string>> userRoles = 
+                    List<IdentityUserRole<string>> userRoles =
                         await _userManagementDa.GetUserRolesByUserId(user.Id);
                     dto.RolesInsert = userRoles.Select(x => x.RoleId).ToList();
 
-                    List<IdentityUserClaim<string>> userAuthClaims = 
+                    List<IdentityUserClaim<string>> userAuthClaims =
                         await _userManagementDa.GetClaimsForUserByUserIdAndClaimType(user.Id, "AuthorizationClaim");
                     dto.ClaimsInsert = userAuthClaims.Select(z => z.ClaimValue).ToList();
 
-                    List<ApplicationUser> allUsersExceptCurrentDb = 
+                    List<ApplicationUser> allUsersExceptCurrentDb =
                         await _userManagementDa.GetAllIntanetPortalUsersExcludingCurrent(user.Id);
                     dto.AllUsersExceptCurrent = _mapper.Map<List<UserDTO>>(allUsersExceptCurrentDb);
                 }
@@ -444,8 +457,8 @@ namespace Services
 
                 List<IdentityRoleClaim<string>> roleClaims = await _userManagementDa.GetAllRoleClaims();
                 dto.RoleClaims = _mapper.Map<List<RoleClaimDTO>>(roleClaims);
-                
-                (int passMinLenght, bool passHasLetters, bool passHasNumbers) = 
+
+                (int passMinLenght, bool passHasLetters, bool passHasNumbers) =
                     await GetPasswordRequirements();
 
                 dto.PasswordMinLength = passMinLenght;
@@ -454,7 +467,7 @@ namespace Services
 
                 return ResultDTO<UserManagementDTO>.Ok(dto);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ResultDTO<UserManagementDTO>.ExceptionFail(ex.Message, ex);
             }
@@ -480,7 +493,7 @@ namespace Services
 
                 return ResultDTO<RoleManagementDTO>.Ok(dto);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ResultDTO<RoleManagementDTO>.ExceptionFail(ex.Message, ex);
             }

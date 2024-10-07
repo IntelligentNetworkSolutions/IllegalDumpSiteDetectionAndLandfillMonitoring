@@ -1,14 +1,14 @@
 ﻿using DAL.ApplicationStorage;
+using DAL.Interfaces.Repositories;
+using Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using DAL.Interfaces.Repositories;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DAL.Repositories
 {
@@ -23,7 +23,7 @@ namespace DAL.Repositories
         }
 
         #region Read
-        
+
         #region Get User/s
         public async Task<List<ApplicationUser>> GetAllIntanetPortalUsers()
         {
@@ -67,7 +67,7 @@ namespace DAL.Repositories
         public async Task<ApplicationUser?> GetUserById(string userId)
         {
             try
-            {                
+            {
                 return await _db.Users.FirstOrDefaultAsync(z => z.Id == userId);
             }
             catch (Exception ex)
@@ -90,18 +90,6 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task<ApplicationUser?> GetUserByEmail(string email)
-        {
-            try
-            {
-                return await _db.Users.FirstOrDefaultAsync(z => z.Email == email);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message);
-                throw;
-            }
-        }
         #endregion
 
         #region Roles and Claims
@@ -156,7 +144,7 @@ namespace DAL.Repositories
                 throw;
             }
         }
-      
+
         public async Task<List<IdentityRole>> GetRolesForUser(List<string> userRoles)
         {
             try
@@ -223,14 +211,6 @@ namespace DAL.Repositories
             }
         }
         #endregion
-
-        #region Queryables
-        public IQueryable<ApplicationUser> GetAppUsersAsQueriable()
-            => _db.Users.AsSingleQuery();
-
-        public IQueryable<IdentityRole> GetRolesAsQueriable()
-            => _db.Roles.AsSingleQuery();
-        #endregion
         #endregion
 
         #region Create
@@ -254,7 +234,7 @@ namespace DAL.Repositories
         public async Task<IdentityRole> AddRole(IdentityRole role)
         {
             try
-            {                
+            {
                 _db.Add(role);
                 await _db.SaveChangesAsync();
                 return role;
@@ -266,27 +246,49 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task<IdentityUserRole<string>> AddRoleForUser(IdentityUserRole<string> userRole)
+        public async Task<List<IdentityUserRole<string>>> AddRolesForUserRange(List<IdentityUserRole<string>> userRoles, IDbContextTransaction? transaction = null)
         {
+            IDbContextTransaction? localTransaction = transaction;
+
             try
             {
-                _db.Add(userRole);
+                if (localTransaction == null)
+                {
+                    localTransaction = await _db.Database.BeginTransactionAsync();
+                }
+
+                foreach (var userRole in userRoles)
+                {
+                    _db.Add(userRole);
+                }
 
                 await _db.SaveChangesAsync();
 
-                return userRole;
+                if (transaction == null)
+                {
+                    await localTransaction.CommitAsync();
+                }
+
+                return userRoles;
             }
             catch (Exception ex)
             {
+                if (transaction == null && localTransaction != null)
+                {
+                    await localTransaction.RollbackAsync();
+                }
+
                 _logger.LogError(ex.Message);
                 throw;
             }
         }
+
+
 
         public async Task AddClaimForRole(IdentityRoleClaim<string> forInsert)
         {
             try
-            {               
+            {
                 _db.Add(forInsert);
                 await _db.SaveChangesAsync();
             }
@@ -297,19 +299,44 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task AddClaimForUser(IdentityUserClaim<string> forInsert)
+        public async Task AddClaimsForUserRange(List<IdentityUserClaim<string>>? userClaims, IDbContextTransaction? transaction = null)
         {
+            IDbContextTransaction? localTransaction = transaction;
+
             try
-            {                
-                _db.Add(forInsert);
-                await _db.SaveChangesAsync();
+            {
+                if (localTransaction == null)
+                {
+                    localTransaction = await _db.Database.BeginTransactionAsync();
+                }
+
+                if (userClaims != null)
+                {
+                    foreach (var claim in userClaims)
+                    {
+                        _db.Add(claim);
+                    }
+                    await _db.SaveChangesAsync();
+
+                }
+
+                if (transaction == null)
+                {
+                    await localTransaction.CommitAsync();
+                }
             }
             catch (Exception ex)
             {
+                if (transaction == null && localTransaction != null)
+                {
+                    await localTransaction.RollbackAsync();
+                }
+
                 _logger.LogError(ex.Message);
                 throw;
             }
         }
+
 
         public async Task AddLanguageClaimForUser(IdentityUserClaim<string> claimDb)
         {
@@ -434,57 +461,86 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task DeleteClaimsRolesForUser(List<IdentityUserClaim<string>> userClaims, 
-                                                    List<IdentityUserRole<string>> userRoles)
+        public async Task DeleteClaimsRolesForUser(List<IdentityUserClaim<string>> userClaims,
+                                                   List<IdentityUserRole<string>> userRoles,
+                                                   IDbContextTransaction? transaction = null)
         {
-            IDbContextTransaction? transaction = null;
+            IDbContextTransaction? localTransaction = transaction;
+
             try
             {
-                transaction = await _db.Database.BeginTransactionAsync();
+                if (localTransaction == null)
+                {
+                    localTransaction = await _db.Database.BeginTransactionAsync();
+                }
 
                 foreach (var claim in userClaims)
+                {
                     _db.Remove(claim);
-                
+                }
+
                 foreach (var role in userRoles)
+                {
                     _db.Remove(role);
-                
+                }
+
                 await _db.SaveChangesAsync();
 
-                await transaction.CommitAsync();
+                if (transaction == null)
+                {
+                    await localTransaction.CommitAsync();
+                }
             }
             catch (Exception ex)
             {
-                if (transaction is not null)
-                    await transaction.RollbackAsync();
+                if (transaction == null && localTransaction != null)
+                {
+                    await localTransaction.RollbackAsync();
+                }
 
                 _logger.LogError(ex.Message);
                 throw;
             }
         }
 
-        public async Task DeleteClaimsForRole(List<IdentityRoleClaim<string>> roleClaims)
+
+
+        public async Task DeleteClaimsForRole(List<IdentityRoleClaim<string>> roleClaims, IDbContextTransaction? transaction = null)
         {
-            IDbContextTransaction? transaction = null;
+            IDbContextTransaction? localTransaction = transaction;
+
             try
             {
-                transaction = await _db.Database.BeginTransactionAsync();
+                if (localTransaction == null)
+                {
+                    localTransaction = await _db.Database.BeginTransactionAsync();
+                }
 
                 foreach (var claim in roleClaims)
+                {
                     _db.Remove(claim);
+                }
 
                 await _db.SaveChangesAsync();
 
-                await transaction.CommitAsync();
+                if (transaction == null)
+                {
+                    await localTransaction.CommitAsync();
+                }
             }
             catch (Exception ex)
             {
-                if (transaction is not null)
-                    await transaction.RollbackAsync();
+                if (transaction == null && localTransaction != null)
+                {
+                    await localTransaction.RollbackAsync();
+                }
 
                 _logger.LogError(ex.Message);
                 throw;
             }
         }
+
+
         #endregion
     }
 }
