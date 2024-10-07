@@ -184,7 +184,6 @@ namespace MainApp.BL.Services.DatasetServices
 
         public async Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize)
         {
-            // Parallelize common queries
             var taskDatasetDatasetClasses = await _datasetDatasetClassRepository.GetAll(null, null, false, includeProperties: "DatasetClass,Dataset") ?? throw new Exception("Object not found"); ;
             var taskDatasetClasses = await _datasetClassesRepository.GetAll(null, null, false, includeProperties: "ParentClass,Datasets") ?? throw new Exception("Object not found"); ;
             var taskCurrentDataset = await _datasetsRepository.GetByIdIncludeThenAll(datasetId, false,
@@ -204,13 +203,10 @@ namespace MainApp.BL.Services.DatasetServices
             var taskNumberOfImagesToPublish = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100) ?? throw new Exception("Object not found"); ;
             var taskNumberOfClassesToPublish = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1) ?? throw new Exception("Object not found"); ;
 
-            // Prepare query for DatasetImages
             var imageResult = await _datasetImagesRepository.GetAll(x => x.DatasetId == datasetId, null, false) ?? throw new Exception("Object not found");
 
-            // Access the underlying images
-            var imageList = imageResult.Data; // Assuming Data holds the IEnumerable<DatasetImage>
+            var imageList = imageResult.Data;
 
-            // Apply filtering
             if (!string.IsNullOrEmpty(searchByImageName))
             {
                 imageList = imageList.Where(x => x.Name == searchByImageName).ToList();
@@ -230,16 +226,13 @@ namespace MainApp.BL.Services.DatasetServices
                 _ => imageList.OrderBy(x => x.IsEnabled).ToList(),
             };
 
-            // Apply pagination
             var pagedImagesData = imageList.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
-            // Retrieve all image annotations for paged images
             var allImageAnnotationsList = await _imageAnnotationsRepository.GetAll(null, null, false);
             var annotationsForPagedImages = allImageAnnotationsList?.Data?.Where(x => pagedImagesData.Select(m => m.Id).Contains(x.DatasetImageId.Value)).ToList();
             var numberOfAnnotatedImages = imageList.Select(x => x.ImageAnnotations).Count();
 
 
-            // Map DatasetImage to DTO
             var annotatedImageIds = annotationsForPagedImages?.Select(x => x.DatasetImageId.Value).ToHashSet() ?? new HashSet<Guid>();
 
             var listOfDatasetImages = pagedImagesData.Select(image => new DatasetImageDTO
@@ -253,18 +246,15 @@ namespace MainApp.BL.Services.DatasetServices
                 IsAnnotated = annotatedImageIds.Contains(image.Id)
             }).ToList();
 
-            // Other calculations
 
             var numberOfEnabledImages = imageList.Count(x => x.IsEnabled == true);
             var allEnabledImagesHaveAnnotations = listOfDatasetImages.All(x => annotatedImageIds.Contains(x.Id));
 
-            // Handle uninserted classes
             var insertedClasses = taskDatasetDatasetClasses?.Data?.Where(x => x.DatasetId == datasetId).Select(x => x.DatasetClass).ToList() ?? throw new Exception("Object not found"); ;
             var insertedClassesIds = taskDatasetDatasetClasses?.Data?.Where(x => x.DatasetId == datasetId).Select(x => x.DatasetClassId).ToList() ?? throw new Exception("Object not found"); ;
             var uninsertedRootClasses = taskDatasetClasses?.Data?.Where(x => !insertedClassesIds.Contains(x.Id) && x.ParentClassId == null).ToList() ?? throw new Exception("Object not found"); ;
             var uninsertedSubclasses = taskDatasetClasses?.Data?.Where(x => !insertedClassesIds.Contains(x.Id) && x.ParentClassId != null).ToList() ?? throw new Exception("Object not found"); ;
 
-            // Return DTO
             var dto = new EditDatasetDTO
             {
                 UninsertedDatasetRootClasses = _mapper.Map<List<DatasetClassDTO>>(uninsertedRootClasses),
