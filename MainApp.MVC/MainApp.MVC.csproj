@@ -7,7 +7,6 @@
 		<Configuration Condition=" '$(Configuration)' == 'Development' ">Development</Configuration>
 		<Configuration Condition=" '$(Configuration)' == 'Production' ">Production</Configuration>
 		<Configuration Condition=" '$(Configuration)' == 'Staging' ">Staging</Configuration>
-		<UserSecretsId>56b4ec19-893a-4c90-9815-d8a78ded9d3e</UserSecretsId>
 	</PropertyGroup>
 
 	<ItemGroup>
