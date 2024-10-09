@@ -8,7 +8,9 @@ using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using SD;
+using System.IO.Compression;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -524,43 +526,55 @@ namespace MainApp.BL.Services.DatasetServices
 
         #region Export
         private ResultDTO<DatasetFullIncludeDTO> GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
-            (Dataset datasetIncluded, bool includeDisabledImages = true, bool includeDisabledAnnotations = true)
+            (Dataset datasetIncluded, string exportOption, bool includeDisabledImages = true, bool includeDisabledAnnotations = true)
         {
             try
             {
                 if (datasetIncluded is null)
                     return ResultDTO<DatasetFullIncludeDTO>.Fail("Dataset is null");
 
-                // Order by CreatedOn
-                List<DatasetImage> orderedDatasetImages = includeDisabledImages switch
+                List<DatasetImage> orderedDatasetImages = exportOption switch
                 {
-                    true => datasetIncluded.DatasetImages.OrderBy(x => x.CreatedOn).ToList(),
-                    false => datasetIncluded.DatasetImages.Where(x => x.IsEnabled).OrderBy(x => x.CreatedOn).ToList()
+                    "AllImages" => includeDisabledImages
+                        ? datasetIncluded.DatasetImages.OrderBy(x => x.CreatedOn).ToList()
+                        : datasetIncluded.DatasetImages.Where(x => x.IsEnabled).OrderBy(x => x.CreatedOn).ToList(),
+                    "AnnotatedImages" => includeDisabledImages
+                        ? datasetIncluded.DatasetImages.Where(x => x.ImageAnnotations.Any()).OrderBy(x => x.CreatedOn).ToList()
+                        : datasetIncluded.DatasetImages.Where(x => x.IsEnabled && x.ImageAnnotations.Any()).OrderBy(x => x.CreatedOn).ToList(),
+                    "EnabledImages" => datasetIncluded.DatasetImages.Where(x => x.IsEnabled).OrderBy(x => x.CreatedOn).ToList(),
+                    "UnannotatedImages" => includeDisabledImages
+                        ? datasetIncluded.DatasetImages.Where(x => !x.ImageAnnotations.Any()).OrderBy(x => x.CreatedOn).ToList()
+                        : datasetIncluded.DatasetImages.Where(x => x.IsEnabled && !x.ImageAnnotations.Any()).OrderBy(x => x.CreatedOn).ToList(),
+                    _ => includeDisabledImages
+                        ? datasetIncluded.DatasetImages.OrderBy(x => x.CreatedOn).ToList()
+                        : datasetIncluded.DatasetImages.Where(x => x.IsEnabled).OrderBy(x => x.CreatedOn).ToList()
                 };
+
                 List<DatasetImageDTO> datasetImageDTOs = _mapper.Map<List<DatasetImageDTO>>(orderedDatasetImages);
 
                 List<ImageAnnotation> orderedAnnotations = (includeDisabledImages, includeDisabledAnnotations) switch
                 {
-                    (true, true) => datasetIncluded.DatasetImages
-                                                    .SelectMany(image => image.ImageAnnotations)
-                                                    .OrderBy(annotation => annotation.CreatedOn)
-                                                    .ToList(),
-                    (true, false) => datasetIncluded.DatasetImages
-                                                    .SelectMany(image => image.ImageAnnotations
-                                                    .Where(ima => ima.IsEnabled))
-                                                    .OrderBy(annotation => annotation.CreatedOn)
-                                                    .ToList(),
-                    (false, true) => datasetIncluded.DatasetImages
-                                                    .Where(im => im.IsEnabled)
-                                                    .SelectMany(image => image.ImageAnnotations)
-                                                    .OrderBy(annotation => annotation.CreatedOn)
-                                                    .ToList(),
-                    (false, false) => datasetIncluded.DatasetImages
-                                                    .Where(im => im.IsEnabled)
-                                                    .SelectMany(image => image.ImageAnnotations.Where(ima => ima.IsEnabled))
-                                                    .OrderBy(annotation => annotation.CreatedOn)
-                                                    .ToList(),
+                    (true, true) => orderedDatasetImages
+                                        .SelectMany(image => image.ImageAnnotations)
+                                        .OrderBy(annotation => annotation.CreatedOn)
+                                        .ToList(),
+                    (true, false) => orderedDatasetImages
+                                        .SelectMany(image => image.ImageAnnotations
+                                        .Where(ima => ima.IsEnabled))
+                                        .OrderBy(annotation => annotation.CreatedOn)
+                                        .ToList(),
+                    (false, true) => orderedDatasetImages
+                                        .Where(im => im.IsEnabled)
+                                        .SelectMany(image => image.ImageAnnotations)
+                                        .OrderBy(annotation => annotation.CreatedOn)
+                                        .ToList(),
+                    (false, false) => orderedDatasetImages
+                                        .Where(im => im.IsEnabled)
+                                        .SelectMany(image => image.ImageAnnotations.Where(ima => ima.IsEnabled))
+                                        .OrderBy(annotation => annotation.CreatedOn)
+                                        .ToList(),
                 };
+
                 List<ImageAnnotationDTO> imageAnnotationDTOs = _mapper.Map<List<ImageAnnotationDTO>>(orderedAnnotations);
 
                 DatasetImageDTO[] datasetImagesDTOsArr = datasetImageDTOs.ToArray();
@@ -597,109 +611,105 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
-        public async Task<ResultDTO<CocoDatasetDTO>> ExportDatasetAsCOCOFormat(Guid datasetId)
+
+        public async Task<ResultDTO<string>> ExportDatasetAsCOCOFormat(Guid datasetId, string exportOption, string? downloadLocation)
         {
             try
             {
                 if (datasetId == Guid.Empty)
-                    return ResultDTO<CocoDatasetDTO>.Fail("Invalid Dataset Id");
+                    return ResultDTO<string>.Fail("Invalid Dataset Id");
 
                 ResultDTO<Dataset?> resultDatasetIncludeThenAll =
-                        await _datasetsRepository.GetByIdIncludeThenAll(datasetId, track: false,
-                            includeProperties: new (Expression<Func<Dataset, object>> Include, Expression<Func<object, object>>[]? ThenInclude)[]
-                            {
-                            (d => d.CreatedBy, null),
-                            (d => d.UpdatedBy, null),
-                            (d => d.ParentDataset, null),
-                            (d => d.DatasetClasses,
-                                [
-                                    ddc => ((Dataset_DatasetClass)ddc).DatasetClass,
-                                    dc => ((DatasetClass)dc).ParentClass, 
-                                   // dc => ((DatasetClass)dc).Datasets, // Cycle Error
-                                ]),
-                            (d => d.DatasetImages,
-                                new Expression<Func<object, object>>[]
-                                {
-                                    di => ((DatasetImage)di).ImageAnnotations,
-                                    ia => ((ImageAnnotation)ia).CreatedBy
-                                }),
-                            (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).UpdatedBy]),
-                            (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations,
-                                    ia => ((ImageAnnotation)ia).DatasetClass,
-                                    dc => ((DatasetClass)dc).Datasets
-                                ]),
-                            }
-                        );
+                    await _datasetsRepository.GetByIdIncludeThenAll(datasetId, track: false,
+                        includeProperties: new (Expression<Func<Dataset, object>> Include, Expression<Func<object, object>>[]? ThenInclude)[]
+                        {
+                    (d => d.CreatedBy, null),
+                    (d => d.UpdatedBy, null),
+                    (d => d.ParentDataset, null),
+                    (d => d.DatasetClasses, new Expression<Func<object, object>>[]
+                    {
+                        ddc => ((Dataset_DatasetClass)ddc).DatasetClass,
+                        dc => ((DatasetClass)dc).ParentClass
+                    }),
+                    (d => d.DatasetImages, new Expression<Func<object, object>>[]
+                    {
+                        di => ((DatasetImage)di).ImageAnnotations,
+                        ia => ((ImageAnnotation)ia).CreatedBy
+                    }),
+                    (d => d.DatasetImages, new Expression<Func<object, object>>[]
+                    {
+                        di => ((DatasetImage)di).ImageAnnotations,
+                        ia => ((ImageAnnotation)ia).UpdatedBy
+                    }),
+                    (d => d.DatasetImages, new Expression<Func<object, object>>[]
+                    {
+                        di => ((DatasetImage)di).ImageAnnotations,
+                        ia => ((ImageAnnotation)ia).DatasetClass,
+                        dc => ((DatasetClass)dc).Datasets
+                    })
+                        });
 
                 if (resultDatasetIncludeThenAll.IsSuccess == false)
-                    return ResultDTO<CocoDatasetDTO>.Fail(resultDatasetIncludeThenAll.ErrMsg!);
+                    return ResultDTO<string>.Fail(resultDatasetIncludeThenAll.ErrMsg!);
 
                 if (resultDatasetIncludeThenAll.Data is null)
-                    return ResultDTO<CocoDatasetDTO>.Fail("Error getting Dataset");
+                    return ResultDTO<string>.Fail("Error getting Dataset");
 
-                return await ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(resultDatasetIncludeThenAll.Data);
+                // Call the method that converts the dataset to COCO format and creates the ZIP
+                return await ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(resultDatasetIncludeThenAll.Data, exportOption, downloadLocation);
             }
             catch (Exception ex)
             {
-                return ResultDTO<CocoDatasetDTO>.ExceptionFail(ex.Message, ex);
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
             }
         }
 
-        private async Task<ResultDTO<CocoDatasetDTO>> ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(Dataset dataset)
+
+        private async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(Dataset dataset, string exportOption, string? downloadLocation)
         {
-            if (dataset is null)
-                return ResultDTO<CocoDatasetDTO>.Fail("Dataset is null");
+            if (dataset == null)
+                return ResultDTO<string>.Fail("Dataset is null");
 
             try
             {
                 ResultDTO<DatasetFullIncludeDTO> resultGetDatasetFullIncludeDTO =
                     GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(datasetIncluded: dataset,
-                                                                                includeDisabledImages: false,
-                                                                                includeDisabledAnnotations: false);
-                if (resultGetDatasetFullIncludeDTO.IsSuccess == false)
-                    return ResultDTO<CocoDatasetDTO>.Fail(resultGetDatasetFullIncludeDTO.ErrMsg!);
+                                                                                exportOption: exportOption,
+                                                                                includeDisabledImages: true,
+                                                                                includeDisabledAnnotations: true);
+
+                if (!resultGetDatasetFullIncludeDTO.IsSuccess)
+                    return ResultDTO<string>.Fail(resultGetDatasetFullIncludeDTO.ErrMsg!);
 
                 DatasetFullIncludeDTO datasetExtClassesImagesAnnotations = resultGetDatasetFullIncludeDTO.Data!;
 
-                List<CocoImageDTO> cocoImageDTOs =
-                    datasetExtClassesImagesAnnotations.DatasetImages.OrderBy(x => x.CreatedOn)
-                                                                    .Select(x => new CocoImageDTO()
-                                                                    {
-                                                                        Id = x.IdInt,
-                                                                        FileName = x.Id.ToString() + ".jpg",
-                                                                        Width = 1280,
-                                                                        Height = 1280,
-                                                                    })
-                                                                    .ToList();
-
-                List<CocoAnnotationDTO> cocoAnnotationDTOs =
-                    datasetExtClassesImagesAnnotations.ImageAnnotations
-                        .Select(x => new CocoAnnotationDTO()
-                        {
-                            Id = x.IdInt,
-                            ImageId = x.DatasetImageIdInt,
-                            CategoryId =
-                                datasetExtClassesImagesAnnotations.DatasetClassForDataset
-                                                                    .First(dcfd => dcfd.DatasetClassId == x.DatasetClass.Id).ClassValue,
-                            IsCrowd = 0, // TODO: Implement maybe
-                            Bbox = GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeightList(x.Geom)
-                        }).ToList();
-
-                List<CocoCategoryDTO> cocoCategoryDTOs =
-                    datasetExtClassesImagesAnnotations.DatasetClassForDataset
-                        .Select(d => new CocoCategoryDTO()
-                        {
-                            Id = d.ClassValue,
-                            Name = d.ClassName,
-                            // TODO: Implement
-                            // Supercategory = 
-                        }).ToList();
-
-                CocoDatasetDTO cocoDatasetDTO = new CocoDatasetDTO()
+                CocoDatasetDTO cocoDatasetDTO = new CocoDatasetDTO
                 {
-                    Images = cocoImageDTOs,
-                    Annotations = cocoAnnotationDTOs,
-                    Categories = cocoCategoryDTOs,
+                    Images = datasetExtClassesImagesAnnotations.DatasetImages
+                                .OrderBy(x => x.CreatedOn)
+                                .Select(x => new CocoImageDTO
+                                {
+                                    Id = x.IdInt,
+                                    FileName = x.Id.ToString() + ".jpg",
+                                    Width = 1280,
+                                    Height = 1280
+                                }).ToList(),
+                    Annotations = datasetExtClassesImagesAnnotations.ImageAnnotations
+                                .Select(x => new CocoAnnotationDTO
+                                {
+                                    Id = x.IdInt,
+                                    ImageId = x.DatasetImageIdInt,
+                                    CategoryId = datasetExtClassesImagesAnnotations.DatasetClassForDataset
+                                            .First(dcfd => dcfd.DatasetClassId == x.DatasetClass.Id).ClassValue,
+                                    IsCrowd = 0,
+                                    Bbox = GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeightList(x.Geom)
+                                }).ToList(),
+                    Categories = datasetExtClassesImagesAnnotations.DatasetClassForDataset
+                                .Select(d => new CocoCategoryDTO
+                                {
+                                    Id = d.ClassValue,
+                                    Name = d.ClassName
+                                }).ToList(),
                     Info = new CocoInfoDTO
                     {
                         Year = DateTime.Now.Year,
@@ -708,17 +718,42 @@ namespace MainApp.BL.Services.DatasetServices
                         Contributor = "IllegalDumpSiteDetectionAndLandfillMonitoring",
                         DateCreated = datasetExtClassesImagesAnnotations.Dataset.CreatedOn.ToString("yyyy-MM-dd HH:mm:ss")
                     },
-
-                    Licenses = new List<CocoLicenseDTO>() { new CocoLicenseDTO() },
+                    Licenses = new List<CocoLicenseDTO> { new CocoLicenseDTO() }
                 };
 
-                return ResultDTO<CocoDatasetDTO>.Ok(cocoDatasetDTO);
+                string cocoJson = JsonConvert.SerializeObject(cocoDatasetDTO, Formatting.Indented);
+
+                string tempDirectory = downloadLocation ?? Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+                Directory.CreateDirectory(tempDirectory);
+
+                string jsonFilePath = Path.Combine(tempDirectory, "coco_dataset.json");
+                await File.WriteAllTextAsync(jsonFilePath, cocoJson);
+
+                foreach (var image in datasetExtClassesImagesAnnotations.DatasetImages)
+                {
+                    var fullImageName = image.Id.ToString() + Path.GetExtension(image.FileName);
+                    string imagePath = Path.Combine("wwwroot", image.ImagePath.TrimStart('\\'), fullImageName);
+                    string destPath = Path.Combine(tempDirectory, Path.GetFileName(imagePath));
+                    File.Copy(imagePath, destPath);
+                }
+
+                string zipFilePath = Path.Combine(Path.GetTempPath(), $"{dataset.Id}.zip");
+                if (File.Exists(zipFilePath))
+                    File.Delete(zipFilePath);
+
+                ZipFile.CreateFromDirectory(tempDirectory, zipFilePath);
+
+                if (downloadLocation == null)
+                    Directory.Delete(tempDirectory, true);
+
+                return ResultDTO<string>.Ok(zipFilePath);
             }
             catch (Exception ex)
             {
-                return ResultDTO<CocoDatasetDTO>.ExceptionFail(ex.Message, ex);
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
             }
         }
+
         #endregion
 
         #region Import

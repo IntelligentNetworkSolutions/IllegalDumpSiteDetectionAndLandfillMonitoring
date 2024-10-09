@@ -214,13 +214,22 @@
                     </button>
                 }
                 <!-- Export Btn TODO: Change Auth Claim-->
-                @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
+@*                 @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
                 {
                     <button class="btn btn-outline-dark btn-block" onclick="exportDatasetAnnotationsToCOCO()">
                         <span>
                             @DbResHtml.T("Export Annotations", "Resources") <small>@DbResHtml.T("to COCO Format", "Resources")</small>
                         </span>
                         <i class=" mx-1 fas fa-file-export"></i>
+                    </button>
+                } *@
+                @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
+                {
+                    <button class="btn btn-outline-dark btn-block" data-toggle="modal" data-target="#exportModal">
+                        <span>
+                            @DbResHtml.T("Export Annotations", "Resources") <small>@DbResHtml.T("to COCO Format", "Resources")</small>
+                        </span>
+                        <i class="mx-1 fas fa-file-export"></i>
                     </button>
                 }
 
@@ -969,56 +978,53 @@
             });
         }
 
+        function startExport(downloadOption) {
+            const selectedOption = document.querySelector('input[name="exportOption"]:checked').value;
 
+            $('#exportModal').modal('hide');
 
-        function exportDatasetAnnotationsToCOCO() {
-            const datasetId = '@Model.CurrentDataset.Id'; // Replace with your actual dataset ID
+            exportDatasetAnnotationsToCOCO(selectedOption, downloadOption);
+        }
 
-            // Set up the click event for the button
+        function exportDatasetAnnotationsToCOCO(exportOption, downloadOption) {
+            const datasetId = '@Model.CurrentDataset.Id';
+
             $.ajax({
                 type: "GET",
-                url: '@Url.Action("ExportDataset", "Datasets", new { area = "IntranetPortal" })', // Replace with your actual area and controller
-                data: { datasetId: datasetId },
-                success: function (data) {
-                    console.log(data);
-                    console.log(data.responseSuccess);
-                    console.log(data.cocoDataset);
-                    if (data.responseSuccess.value == 'Successfully Exported Dataset in COCO Format') {
-                        // Create a JSON string from the dataset
-                        const jsonData = JSON.stringify(data.cocoDataset, null, 2);
-                        console.log(jsonData);
-                        // Create a Blob with the JSON data and type set to JSON
-                        const blob = new Blob([jsonData], { type: 'application/json' });
+                url: '@Url.Action("ExportDataset", "Datasets", new { area = "IntranetPortal" })',
+                data: { datasetId: datasetId, exportOption: exportOption },
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function (data, status, xhr) {
+                    const filename = xhr.getResponseHeader('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'dataset.zip';
+                    const blob = new Blob([data], { type: 'application/zip' });
 
-                        // Create a URL for the Blob
+                    if (downloadOption === 'DownloadNow') {
                         const url = URL.createObjectURL(blob);
-
-                        // Create a temporary anchor element
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = 'dataset.json';
-                        a.target = '_blank';
-
-                        // Programmatically click the anchor to trigger the download/open action
+                        a.download = filename;
                         a.click();
-
-                        // Revoke the object URL to free up memory
                         URL.revokeObjectURL(url);
-                    } else {
+
                         Swal.fire({
-                            text: data.responseError || 'An error occurred while exporting the dataset.',
-                            icon: 'error'
+                            text: 'Download initiated successfully!',
+                            icon: 'success',
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
                         });
                     }
                 },
                 error: function (req, status, error) {
                     Swal.fire({
                         text: 'An error occurred while processing your request.',
-                        icon: 'error'
-                        });
-        }
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
+                }
             });
         }
+
     </script>
 }
 
@@ -1272,4 +1278,47 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-lightblue">
+                    <h5 class="modal-title" id="exportModalLabel">@DbResHtml.T("Choose configuration for exporting the dataset", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="exportConfigForm">
+                        <h6>Image and Annotation Options</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportOption" id="allImages" value="AllImages" checked>
+                            <label class="form-check-label" for="allImages">All Images</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportOption" id="annotatedImages" value="AnnotatedImages">
+                            <label class="form-check-label" for="annotatedImages">Annotated Images</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportOption" id="enabledImages" value="EnabledImages">
+                            <label class="form-check-label" for="enabledImages">Enabled Images</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportOption" id="unannotatedImages" value="UnannotatedImages">
+                            <label class="form-check-label" for="unannotatedImages">Unannotated Images</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="startExport('DownloadNow')">
+                        <span>@DbResHtml.T("Download Now", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
 }

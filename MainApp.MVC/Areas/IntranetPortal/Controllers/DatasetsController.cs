@@ -2,7 +2,6 @@
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using ImageMagick;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.MVC.Filters;
@@ -244,30 +243,36 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         #region Import / Export COCO Dataset
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
-        public async Task<IActionResult> ExportDataset(Guid datasetId)
+        public async Task<IActionResult> ExportDataset(Guid datasetId, string exportOption, string? downloadLocation)
         {
             if (datasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
 
             try
             {
-                ResultDTO<CocoDatasetDTO> resultExportDatasetAsCoco =
-                    await _datasetService.ExportDatasetAsCOCOFormat(datasetId);
-                if (resultExportDatasetAsCoco.IsSuccess == false)
+                // Pass the download location to the service
+                ResultDTO<string> resultExportDatasetAsCoco =
+                    await _datasetService.ExportDatasetAsCOCOFormat(datasetId, exportOption, downloadLocation);
+
+                if (!resultExportDatasetAsCoco.IsSuccess)
                     return Json(new { responseError = DbResHtml.T(resultExportDatasetAsCoco.ErrMsg, "Resources") });
 
-                return Json(new
-                {
-                    responseSuccess = DbResHtml.T("Successfully Exported Dataset in COCO Format", "Resources"),
-                    COCODataset = resultExportDatasetAsCoco.Data
-                });
+                string zipFilePath = resultExportDatasetAsCoco.Data;
+                var fileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
+                var contentType = "application/zip";
+                var fileName = $"{datasetId}-{exportOption}.zip";
+
+                return File(fileStream, contentType, fileName);
             }
             catch (Exception ex)
             {
-                // TODO: ADD Logger
                 return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
             }
         }
+        #endregion
+
+
+
 
         //[HttpGet]
         //[HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
@@ -380,9 +385,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
 
                 string absoluteOutputDir = ProcessZipFile(tempFilePath, _webHostEnvironment.WebRootPath);
-
                 string outputDir = Path.GetRelativePath(_webHostEnvironment.WebRootPath, absoluteOutputDir);
-
                 string outputJsonPath = Path.Combine(_webHostEnvironment.WebRootPath, outputDir);
 
                 ResultDTO<DatasetDTO> importDatasetResult =
@@ -390,28 +393,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                 if (!importDatasetResult.IsSuccess)
                 {
-                    if (System.IO.File.Exists(tempFilePath))
-                    {
-                        System.IO.File.Delete(tempFilePath);
-                    }
-                    if (System.IO.Directory.Exists(outputJsonPath))
-                    {
-                        System.IO.Directory.Delete(outputJsonPath, true);
-                    }
+                    CleanUp(tempFilePath, outputJsonPath);
+
                     return Json(new { responseError = DbResHtml.T("Error importing dataset file", "Resources") });
                 }
 
                 await GenerateThumbnailsForDataset(importDatasetResult.Data.Id);
 
-                if (System.IO.File.Exists(tempFilePath))
-                {
-                    System.IO.File.Delete(tempFilePath);
-                }
+                CleanUp(tempFilePath, outputJsonPath);
 
-                if (System.IO.Directory.Exists(outputJsonPath))
-                {
-                    System.IO.Directory.Delete(outputJsonPath, true);
-                }
                 return Json(new { responseSuccess = DbResHtml.T("Dataset imported and thumbnails generated", "Resources"), dataset = importDatasetResult.Data });
             }
             catch (Exception ex)
@@ -420,11 +410,18 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
         }
 
+        private void CleanUp(string tempFilePath, string outputJsonPath)
+        {
+            if (System.IO.File.Exists(tempFilePath))
+            {
+                System.IO.File.Delete(tempFilePath);
+            }
+            if (System.IO.Directory.Exists(outputJsonPath))
+            {
+                System.IO.Directory.Delete(outputJsonPath, true);
+            }
+        }
 
-
-
-
-        #endregion
 
         #region Dataset Classes
         [HttpPost]
@@ -682,11 +679,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
             }
         }
-
-
-
-
-
 
 
     }

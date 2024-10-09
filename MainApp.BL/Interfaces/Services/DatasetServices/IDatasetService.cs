@@ -1,6 +1,5 @@
 ﻿using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using SD;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
@@ -44,7 +43,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #endregion
 
         #region Export
-        Task<ResultDTO<CocoDatasetDTO>> ExportDatasetAsCOCOFormat(Guid datasetId);
+        Task<ResultDTO<string>> ExportDatasetAsCOCOFormat(Guid datasetId, string exportOption, string? downloadLocation);
         #endregion
 
         #region Import
