@@ -7,11 +7,13 @@ using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
 using MainApp.BL.Interfaces.Services.MapConfigurationServices;
+using MainApp.BL.Interfaces.Services.TrainingServices;
 using MainApp.BL.Services;
 using MainApp.BL.Services.DatasetServices;
 using MainApp.BL.Services.DetectionServices;
 using MainApp.BL.Services.LegalLandfillManagementServices;
 using MainApp.BL.Services.MapConfigurationServices;
+using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Helpers;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Services;
@@ -47,6 +49,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ILegalLandfillWasteImportService, LegalLandfillWasteImportService>();
             services.TryAddScoped<ILegalLandfillTruckService, LegalLandfillTruckService>();
             services.TryAddScoped<IDetectionIgnoreZoneService, DetectionIgnoreZoneService>();
+            services.TryAddScoped<ITrainingRunService, TrainingRunService>();
 
             return services;
         }

@@ -156,6 +156,7 @@ services.AddAuthorization(options => new AuthorizationOptions()
 });
 
 services.AddHttpContextAccessor();
+services.AddMMDetectionConfigurationService(configuration);
 services.AddApplicationServices();
 services.AddInfrastructureServices();
 
