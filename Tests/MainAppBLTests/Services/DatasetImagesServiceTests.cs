@@ -6,12 +6,7 @@ using Entities.DatasetEntities;
 using MainApp.BL.Services.DatasetServices;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppBLTests.Services
 {
@@ -187,14 +182,20 @@ namespace Tests.MainAppBLTests.Services
         public async Task EditDatasetImage_ShouldReturnSuccess_WhenAllOperationsSucceed()
         {
             // Arrange
-            EditDatasetImageDTO editDto = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), 
-                                                                    Id = Guid.NewGuid(), 
-                                                                    IsEnabled = false, 
-                                                                    UpdatedById = Guid.NewGuid().ToString() };
-            Dataset dataset = new Dataset { Id = editDto.DatasetId, 
-                                            CreatedBy = new ApplicationUser(), 
-                                            UpdatedBy = new ApplicationUser() { Id = editDto.UpdatedById }, 
-                                            ParentDataset = new Dataset() };
+            EditDatasetImageDTO editDto = new EditDatasetImageDTO
+            {
+                DatasetId = Guid.NewGuid(),
+                Id = Guid.NewGuid(),
+                IsEnabled = false,
+                UpdatedById = Guid.NewGuid().ToString()
+            };
+            Dataset dataset = new Dataset
+            {
+                Id = editDto.DatasetId,
+                CreatedBy = new ApplicationUser(),
+                UpdatedBy = new ApplicationUser() { Id = editDto.UpdatedById },
+                ParentDataset = new Dataset()
+            };
             DatasetImage datasetImage = new DatasetImage { Id = editDto.Id, ImageAnnotations = new List<ImageAnnotation>() };
             DatasetImage updatedDatasetImage = new DatasetImage { Id = editDto.Id, ImageAnnotations = new List<ImageAnnotation>() };
 
@@ -330,11 +331,11 @@ namespace Tests.MainAppBLTests.Services
             .ReturnsAsync(ResultDTO.Ok());
 
             // Act
-            var result = await _service.DeleteDatasetImage(datasetImageId);
+            var result = await _service.DeleteDatasetImage(datasetImageId, false);
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal(1, result.Data); 
+            Assert.Equal(1, result.Data);
             Assert.Null(result.ErrMsg);
         }
 
@@ -349,7 +350,7 @@ namespace Tests.MainAppBLTests.Services
                 .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(null));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(invalidDatasetImageId));
+            await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(invalidDatasetImageId, false));
         }
 
         [Fact]
@@ -363,11 +364,65 @@ namespace Tests.MainAppBLTests.Services
                 .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(null));
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(invalidDatasetImageId));
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(invalidDatasetImageId, false));
             Assert.Equal("Object not found", exception.Message);
         }
 
-       
+        [Fact]
+        public async Task DeleteDatasetImage_ValidId_WithAnnotations_ReturnsSuccess()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetImage = new DatasetImage
+            {
+                Id = datasetImageId,
+                ImageAnnotations = new List<ImageAnnotation> { new ImageAnnotation() }
+            };
+            //var includeProperties = "ImageAnnotations";
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.GetById(datasetImageId, false, null))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
+
+            _mockImageAnnotationsRepository
+                .Setup(repo => repo.DeleteRange(datasetImage.ImageAnnotations, true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.Delete(datasetImage, true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _service.DeleteDatasetImage(datasetImageId, true);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(1, result.Data);
+            Assert.Null(result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDatasetImage_ValidId_AnnotationsDeletionFails_ReturnsError()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetImage = new DatasetImage
+            {
+                ImageAnnotations = new List<ImageAnnotation> { new ImageAnnotation() }
+            };
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.GetById(datasetImageId, false, null))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
+
+            _mockImageAnnotationsRepository
+                .Setup(repo => repo.DeleteRange(datasetImage.ImageAnnotations, true, default))
+                .Throws(new Exception("Error deleting annotations"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(datasetImageId, true));
+            Assert.Equal("Error deleting annotations", exception.Message);
+        }
+
 
     }
 }

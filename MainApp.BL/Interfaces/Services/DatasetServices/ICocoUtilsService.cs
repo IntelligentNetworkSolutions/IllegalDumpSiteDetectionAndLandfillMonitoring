@@ -10,7 +10,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
 
         ResultDTO IsValidCocoFormatedSplitDirectory(string splitDirPath, bool mustHaveAnnotations);
 
-        Task<ResultDTO<CocoDatasetDTO>> GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(string uploadDirPath);
+        Task<ResultDTO<CocoDatasetDTO>> GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(string uploadDirPath, bool allowUnannotatedImages = false);
 
         bool AreAllAnnotationsForPresentImageIdsInAnnotationFile(CocoDatasetDTO cocoDatasetDTO);
 

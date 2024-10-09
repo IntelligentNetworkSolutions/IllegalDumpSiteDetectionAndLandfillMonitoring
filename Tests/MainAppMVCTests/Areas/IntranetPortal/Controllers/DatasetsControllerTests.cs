@@ -141,9 +141,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var datasetId = Guid.NewGuid();
             var datasetDto = new DatasetDTO { IsPublished = false };
-            var editDto = new EditDatasetDTO { /* initialize with mock data */ };
+            var editDto = new EditDatasetDTO
+            {
+                ListOfDatasetImages = new List<DatasetImageDTO> { },
+                NumberOfDatasetImages = 100
+            };
             _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
-            _mockDatasetService.Setup(service => service.GetObjectForEditDataset(It.IsAny<Guid>(), null, null, null, null))
+            _mockDatasetService.Setup(service => service.GetObjectForEditDataset(It.IsAny<Guid>(), null, null, null, null, 1, 20))
                 .ReturnsAsync(editDto);
 
             var model = new EditDatasetViewModel { /* initialize with properties */ };
@@ -305,11 +309,26 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var datasetId = Guid.NewGuid();
+
+            // Mocking the successful deletion result from the dataset service
             _mockDatasetService.Setup(s => s.DeleteDatasetCompletelyIncluded(datasetId))
                 .ReturnsAsync(ResultDTO.Ok());
+
+            // Mocking the application settings for dataset images and thumbnails
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages"))
                 .ReturnsAsync(new ResultDTO<string>(true, "DatasetImages", null, null));
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
+                .ReturnsAsync(new ResultDTO<string>(true, "DatasetThumbnails", null, null));
+
+            // Mocking the web host environment
             _mockWebHostEnvironment.Setup(e => e.WebRootPath).Returns("wwwroot");
+
+            // Ensure the directories exist for the test
+            var datasetImagesFolderPath = Path.Combine("wwwroot", "DatasetImages", datasetId.ToString());
+            var datasetThumbnailsFolderPath = Path.Combine("wwwroot", "DatasetThumbnails", datasetId.ToString());
+
+            Directory.CreateDirectory(datasetImagesFolderPath);
+            Directory.CreateDirectory(datasetThumbnailsFolderPath);
 
             // Act
             var result = await _controller.DeleteDatasetConfirmed(datasetId) as JsonResult;
@@ -318,7 +337,61 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.NotNull(result);
             var jsonData = JObject.FromObject(result.Value);
             Assert.Equal("Successfully deleted dataset", jsonData["responseSuccess"]["Value"].ToString());
+
+            // Verify that the folders were deleted
+            Assert.False(Directory.Exists(datasetImagesFolderPath));
+            Assert.False(Directory.Exists(datasetThumbnailsFolderPath));
         }
+
+        [Fact]
+        public async Task DeleteDatasetConfirmed_InvalidId_ReturnsJsonError()
+        {
+            // Arrange
+            var datasetId = Guid.Empty;
+
+            // Act
+            var result = await _controller.DeleteDatasetConfirmed(datasetId) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            var jsonData = JObject.FromObject(result.Value);
+            Assert.Equal("Invalid dataset id", jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task DeleteDatasetConfirmed_DeletionFails_ReturnsJsonError()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            _mockDatasetService.Setup(s => s.DeleteDatasetCompletelyIncluded(datasetId))
+                .ReturnsAsync(new ResultDTO(false, "Failed to delete dataset", null));
+
+            // Act
+            var result = await _controller.DeleteDatasetConfirmed(datasetId) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            var jsonData = JObject.FromObject(result.Value);
+            Assert.Equal("Failed to delete dataset", jsonData["responseError"]["Value"].ToString());
+        }
+
+
+
+        //[Fact]
+        //public async Task ImportDataset_ValidCocoFormattedDirectoryAtPath_ReturnsDataset()
+        //{
+        //    // Arrange - Arrange your objects, create and set ImportDataset_ValidCocoFormattedDirectoryAtPath them up as necessary.
+        //    string pathToCocoFormattedDirectory = "";
+
+        //    _mockDatasetService.Setup(s => s.ImportDatasetCocoFormatedAtDirectoryPath(pathToCocoFormattedDirectory))
+        //        .ReturnsAsync(pathToCocoFormattedDirectory);
+
+        //    // Act - Act on an object ValidCocoFormattedDirectoryAtPath.
+
+
+        //    // Assert - Assert that something is as expected ReturnsDataset.
+
+        //}
 
     }
 }
