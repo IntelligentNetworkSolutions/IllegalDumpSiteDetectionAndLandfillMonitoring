@@ -35,10 +35,11 @@ namespace Tests.MainAppBLTests.Services
             var entities = new List<MapLayerGroupConfiguration> { new MapLayerGroupConfiguration() };
             var dtos = new List<MapLayerGroupConfigurationDTO> { new MapLayerGroupConfigurationDTO() };
 
-            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetAll(null, null, false, "MapLayerGroupConfigurations", null))
+            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetAll(null, null, false, "MapLayerConfigurations", null))
                 .ReturnsAsync(ResultDTO<IEnumerable<MapLayerGroupConfiguration>>.Ok(entities));
+
             _mockMapper.Setup(m => m.Map<List<MapLayerGroupConfigurationDTO>>(It.IsAny<IEnumerable<MapLayerGroupConfiguration>>()))
-                   .Returns(dtos);
+                .Returns(dtos);
 
             // Act
             var result = await _service.GetAllMapLayerGroupConfigurations();
@@ -52,12 +53,10 @@ namespace Tests.MainAppBLTests.Services
         public async Task GetAllMapLayerGroupConfigurations_WhenRepositoryFails_ShouldReturnFailure()
         {
             // Arrange
-            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetAll(null, null, false, "MapLayerGroupConfigurations", null))
+            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetAll(null, null, false, "MapLayerConfigurations", null))
                 .ReturnsAsync(ResultDTO<IEnumerable<MapLayerGroupConfiguration>>.Fail("Repository error"));
-
             // Act
             var result = await _service.GetAllMapLayerGroupConfigurations();
-
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Repository error", result.ErrMsg);
@@ -87,15 +86,16 @@ namespace Tests.MainAppBLTests.Services
             var groupConfiguration = new MapLayerGroupConfiguration { Id = groupConfigurationId };
             var mappedDTO = new MapLayerGroupConfigurationDTO();
 
-            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetById(groupConfigurationId, false, "MapLayerGroupConfigurations"))
+            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetById(groupConfigurationId, false, "MapLayerConfigurations"))
                 .ReturnsAsync(ResultDTO<MapLayerGroupConfiguration?>.Ok(groupConfiguration));
-            _mockMapper.Setup(m => m.Map<MapLayerGroupConfigurationDTO>(groupConfiguration)).Returns(mappedDTO);
+            _mockMapper.Setup(m => m.Map<MapLayerGroupConfigurationDTO>(groupConfiguration))
+                .Returns(mappedDTO);
 
             // Act
             var result = await _service.GetAllGroupLayersById(groupConfigurationId);
 
             // Assert
-            Assert.True(result.IsSuccess);
+            Assert.True(result.IsSuccess); // This should now pass
             Assert.Equal(mappedDTO, result.Data);
         }
 
@@ -104,9 +104,8 @@ namespace Tests.MainAppBLTests.Services
         {
             // Arrange
             var groupConfigurationId = Guid.NewGuid();
-            var resultDTO = ResultDTO.Fail("Error");
 
-            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetById(groupConfigurationId, false, "MapLayerGroupConfigurations"))
+            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetById(groupConfigurationId, false, "MapLayerConfigurations"))
                 .ReturnsAsync(ResultDTO<MapLayerGroupConfiguration?>.Fail("Error"));
 
             // Act
@@ -123,7 +122,7 @@ namespace Tests.MainAppBLTests.Services
             // Arrange
             var groupConfigurationId = Guid.NewGuid();
 
-            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetById(groupConfigurationId, false, "MapLayerGroupConfigurations"))
+            _mockMapLayerGroupsConfigRepository.Setup(r => r.GetById(groupConfigurationId, false, "MapLayerConfigurations"))
                 .ThrowsAsync(new Exception("Error"));
 
             // Act
@@ -132,6 +131,7 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Contains("Error", result.ErrMsg);
+
         }
 
         [Fact]

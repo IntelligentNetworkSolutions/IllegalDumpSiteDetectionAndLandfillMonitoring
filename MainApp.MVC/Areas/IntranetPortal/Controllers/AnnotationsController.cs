@@ -23,7 +23,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly IDatasetClassesService _datasetClassesService;
 
         public AnnotationsController(IConfiguration configuration,
-            IMapper mapper, 
+            IMapper mapper,
             IAppSettingsAccessor appSettingsAccessor,
             IDatasetService datasetServoce,
             IDatasetImagesService datasetImagesService,
@@ -38,7 +38,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _datasetService = datasetServoce;
             _datasetClassesService = datasetClassesService;
         }
-            
+
 
         public IActionResult Index()
         {
@@ -49,20 +49,25 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDatasetImageAnnotations))]
         public async Task<IActionResult> Annotate(Guid datasetImageId)
         {
-            if (datasetImageId ==  Guid.Empty)
+            if (datasetImageId == Guid.Empty)
             {
                 throw new Exception("Object not found");
-            }            
+            }
 
             var datasetImage = await _datasetImagesService.GetDatasetImageById(datasetImageId) ?? throw new Exception("Object not found");
             var datasetAllImages = await _datasetImagesService.GetImagesForDataset((Guid)datasetImage.DatasetId);
-            //var imageAnnotations = await _imageAnnotationsService.GetImageAnnotationsByImageId(datasetImageId);
             var dataset = await _datasetService.GetDatasetById(datasetImage.DatasetId.GetValueOrDefault());
             var datasetClasses = await _datasetClassesService.GetAllDatasetClassesByDatasetId(dataset.Id);
+            var currentImagePositionInDataset = datasetAllImages
+                                                 .IndexOf(datasetAllImages.First(x => x.Id == datasetImage.Id));
 
-            var currentImagePositionInDataset = datasetAllImages.IndexOf(datasetAllImages.First(x => x.Id == datasetImage.Id));
-            var nextImage = (currentImagePositionInDataset + 1) < datasetAllImages.Count ? datasetAllImages[currentImagePositionInDataset + 1] : null;
-            var previousImage = (currentImagePositionInDataset > 0) ? datasetAllImages[currentImagePositionInDataset - 1] : null;
+            var nextImage = (currentImagePositionInDataset + 1) < datasetAllImages.Count
+                            ? datasetAllImages[currentImagePositionInDataset + 1]
+                            : datasetAllImages.First();
+
+            var previousImage = (currentImagePositionInDataset > 0)
+                                ? datasetAllImages[currentImagePositionInDataset - 1]
+                                : datasetAllImages.Last();
 
             AnnotateViewModel model = new AnnotateViewModel
             {
@@ -78,6 +83,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return View(model);
         }
 
+
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDatasetImageAnnotations))]
         public async Task<IActionResult> GetImageAnnotations(Guid datasetImageId)
@@ -86,7 +92,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 throw new Exception("Object not found");
             }
-            
+
             var imageAnnotations = await _imageAnnotationsService.GetImageAnnotationsByImageId(datasetImageId);
 
             return Ok(imageAnnotations);
@@ -102,12 +108,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 string? userId = User.FindFirstValue("UserId");
 
-                newImageAnnotationsList = editImageAnnotations.ImageAnnotations.Select(p => p with {
+                newImageAnnotationsList = editImageAnnotations.ImageAnnotations.Select(p => p with
+                {
                     DatasetImageId = editImageAnnotations.DatasetImageId,
                     Geom = (Polygon)DTOs.Helpers.GeoJsonHelpers.GeoJsonFeatureToGeometry(p.AnnotationJson),
                     CreatedById = p.Id.HasValue ? null : userId,
-                    UpdatedById = p.Id.HasValue ? userId : null          
-                }).ToList();                
+                    UpdatedById = p.Id.HasValue ? userId : null
+                }).ToList();
 
             }
 
@@ -118,7 +125,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             };
 
             var res = await _imageAnnotationsService.BulkUpdateImageAnnotations(newEditImageAnnotations);
-                        
+
             return Ok(res);
         }
 

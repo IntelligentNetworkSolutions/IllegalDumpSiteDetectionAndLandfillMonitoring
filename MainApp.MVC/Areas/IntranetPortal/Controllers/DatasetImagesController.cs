@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using AutoMapper;
-using MainApp.BL.Interfaces.Services.DatasetServices;
-using DTOs.MainApp.BL.DatasetDTOs;
-using MainApp.MVC.Helpers;
-using ImageMagick;
+﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
+using DTOs.MainApp.BL.DatasetDTOs;
+using ImageMagick;
+using MainApp.BL.Interfaces.Services;
+using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.MVC.Filters;
-using System.Security.Claims;
+using MainApp.MVC.Helpers;
+using Microsoft.AspNetCore.Mvc;
 using SD;
+using System.Security.Claims;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -18,6 +19,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly IMapper _mapper;
         private readonly IDatasetService _datasetService;
         private readonly IDatasetImagesService _datasetImagesService;
+        private readonly IImageAnnotationsService _imageAnnotationsService;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IAppSettingsAccessor _appSettingsAccessor;
 
@@ -25,6 +27,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                                        IMapper mapper,
                                        IDatasetService datasetService,
                                        IDatasetImagesService datasetImagesService,
+                                       IImageAnnotationsService imageAnnotationsService,
                                        IWebHostEnvironment webHostEnvironment,
                                        IAppSettingsAccessor appSettingsAccessor)
         {
@@ -32,13 +35,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _mapper = mapper;
             _datasetService = datasetService;
             _datasetImagesService = datasetImagesService;
+            _imageAnnotationsService = imageAnnotationsService;
             _webHostEnvironment = webHostEnvironment;
             _appSettingsAccessor = appSettingsAccessor;
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetImage))]
-        public async Task<IActionResult> DeleteDatasetImage(Guid datasetImageId, Guid datasetId)
+        public async Task<IActionResult> DeleteDatasetImage(Guid datasetImageId, Guid datasetId, bool deleteAnnotations = false)
         {
             if (datasetId == Guid.Empty)
             {
@@ -50,39 +54,38 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             var datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Dataset not found");
-            if (datasetDb.IsPublished == true)
+            if (datasetDb.IsPublished)
             {
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
             }
 
-            var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
-            var datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
-
-            var currentImageFileName = string.Format("{0}.jpg", datasetImageId);
-            var currentThumbnailFileName = string.Format("{0}.jpg", datasetImageId);
-
-            var currentImagePath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetId.ToString(), currentImageFileName);
-            var currentThumbnailPath = Path.Combine(_webHostEnvironment.WebRootPath, datasetThumbnailsFolder.Data, datasetId.ToString(), currentThumbnailFileName);
-
-            var isImageDeleted = await _datasetImagesService.DeleteDatasetImage(datasetImageId);
-            if (isImageDeleted.IsSuccess == true && isImageDeleted.Data == 1 && string.IsNullOrEmpty(isImageDeleted.ErrMsg))
+            var datasetImageDb = await _datasetImagesService.GetDatasetImageById(datasetImageId);
+            if (datasetImageDb == null)
             {
-                if (System.IO.File.Exists(currentImagePath))
+                return Json(new { responseError = DbResHtml.T("Dataset image not found", "Resources") });
+            }
+
+            var activeAnnotations = await _imageAnnotationsService.GetImageAnnotationsByImageId(datasetImageId);
+            if (activeAnnotations.Any() && !deleteAnnotations)
+            {
+                return Json(new
                 {
-                    System.IO.File.Delete(currentImagePath);
-                }
-                if (System.IO.File.Exists(currentThumbnailPath))
-                {
-                    System.IO.File.Delete(currentThumbnailPath);
-                }
+                    responseAnnotated = true,
+                    responseError = DbResHtml.T("This image has active annotations. Do you want to continue anyway?", "Resources").ToString()
+                });
+            }
+
+            var isImageDeleted = await _datasetImagesService.DeleteDatasetImage(datasetImageId, deleteAnnotations);
+            if (isImageDeleted.IsSuccess && isImageDeleted.Data == 1)
+            {
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset image", "Resources") });
             }
-            if (!string.IsNullOrEmpty(isImageDeleted.ErrMsg))
-            {
-                return Json(new { responseError = DbResHtml.T(isImageDeleted.ErrMsg, "Resources") });
-            }
-            return Json(new { responseError = DbResHtml.T("Error occured while deleting the image", "Resources") });
+
+            return Json(new { responseError = DbResHtml.T("Error occurred while deleting the image", "Resources") });
         }
+
+
+
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.EditDatasetImage))]
@@ -148,8 +151,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 IsEnabled = false,
                 CreatedOn = DateTime.UtcNow,
                 CreatedById = userId,
-                ImagePath = string.Format("\\{0}\\{1}\\", datasetImagesFolder.Data, datasetDb.Id.ToString()),
-                ThumbnailPath = string.Format("\\{0}\\{1}\\", datasetThumbnailsFolder.Data, datasetDb.Id.ToString()),
+                ImagePath = Path.Combine(datasetImagesFolder.Data, datasetDb.Id.ToString()),
+                ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetDb.Id.ToString()),
             };
 
             ResultDTO<Guid> resultImageAdd = await _datasetImagesService.AddDatasetImage(dto);
@@ -205,5 +208,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
+
+
+
     }
 }

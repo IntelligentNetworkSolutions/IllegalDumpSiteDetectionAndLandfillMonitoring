@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Tests.DalTests.Repositories
+﻿namespace Tests.DalTests.Repositories
 {
-    public class UserManagementDaTests
+    [Trait("Category", "Integration")]
+    public class UserManagementDaTests : IClassFixture<TestDatabaseFixture>
     {
+        private readonly TestDatabaseFixture _fixture;
+
+        public UserManagementDaTests(TestDatabaseFixture fixture) => _fixture = fixture;
+
         [Fact]
         public void GetUserById_UserExists_ReturnsUser()
         {
-            
+
         }
 
         [Fact]

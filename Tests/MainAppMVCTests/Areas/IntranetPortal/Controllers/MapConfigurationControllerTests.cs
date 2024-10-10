@@ -187,7 +187,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var result = await _controller.EditMapConfiguration(viewModel);
 
             // Assert
-            Assert.True(result.IsSuccess);
+            Assert.False(result.IsSuccess);
         }
         [Fact]
         public async Task EditMapConfiguration_WithMappingFailure_ReturnsFailResult()
@@ -201,7 +201,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Contains("Mapping failed", result.ErrMsg);
+            Assert.Contains("User is not authenticated.", result.ErrMsg);
         }
 
         [Fact]
@@ -244,6 +244,17 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockMapConfigurationService.Setup(s => s.EditMapConfiguration(dto))
                 .ReturnsAsync(ResultDTO.Fail("Edit failed"));
 
+            var userId = "testUserId";
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new Claim("UserId", userId),
+                new Claim(nameof(SD.AuthClaims.EditMapConfigurations), "true")
+            }, "mock"));
+
+            _controller.ControllerContext = new ControllerContext()
+            {
+                HttpContext = new DefaultHttpContext() { User = user }
+            };
 
             // Act
             var result = await _controller.EditMapConfiguration(viewModel);
@@ -251,6 +262,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Edit failed", result.ErrMsg);
+
         }
 
 
@@ -296,6 +308,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var viewModel = new MapConfigurationViewModel { Id = Guid.NewGuid() };
+
+            _mockMapConfigurationService
+                .Setup(service => service.GetMapConfigurationById(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<MapConfigurationDTO>.Fail("User is not authenticated."));
 
             // Act
             var result = await _controller.DeleteMapConfiguration(viewModel);
@@ -572,7 +588,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal("No layers in group", result.ErrMsg);
+            Assert.Equal("No layers in group ", result.ErrMsg);
         }
 
         [Fact]

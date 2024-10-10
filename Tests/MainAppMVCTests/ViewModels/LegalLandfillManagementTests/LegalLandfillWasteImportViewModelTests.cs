@@ -39,6 +39,7 @@ namespace Tests.MainAppMVCTests.ViewModels.LegalLandfillManagementTests
         {
             // Arrange
             var viewModel = new LegalLandfillWasteImportViewModel();
+            viewModel.ImportedOn = DateTime.UtcNow;
 
             // Act
             var now = DateTime.UtcNow;
@@ -108,6 +109,7 @@ namespace Tests.MainAppMVCTests.ViewModels.LegalLandfillManagementTests
         {
             // Arrange
             var viewModel = new LegalLandfillWasteImportViewModel();
+            viewModel.CreatedOn = DateTime.UtcNow;
 
             // Act
             var now = DateTime.UtcNow;
