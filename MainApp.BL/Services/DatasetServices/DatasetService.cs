@@ -348,7 +348,7 @@ namespace MainApp.BL.Services.DatasetServices
         #endregion
 
         #region Update
-        public async Task<ResultDTO<int>> PublishDataset(Guid datasetId, string userId)
+        public async Task<ResultDTO<int>> PublishDataset(Guid datasetId, string userId, bool continueWithDisabledImages = false)
         {
             var datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
             var datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
@@ -358,15 +358,29 @@ namespace MainApp.BL.Services.DatasetServices
             var allDatasetImagesData = allDatasetImages.Data ?? throw new Exception("Object not found");
             var enabledImagesList = allDatasetImagesData.Where(x => x.IsEnabled == true).ToList() ?? throw new Exception("Object not found");
             var allImageAnnotationsList = await _imageAnnotationsRepository.GetAll() ?? throw new Exception("Object not found");
-            var allEnabledImagesHaveAnnotations = enabledImagesList.Any() ?
-                            enabledImagesList.All(x => allImageAnnotationsList.Data.Where(m => m.DatasetImageId == x.Id).Select(x => x.DatasetImageId).Any(a => a == x.Id)) : false;
+            var allEnabledImagesHaveEnoughAnnotations = AtLeast90PercentImagesHaveAnnotations(enabledImagesList, allImageAnnotationsList.Data.ToList());
+
+            var disabledImages = allDatasetImagesData.Where(x => !x.IsEnabled).ToList();
+            if (disabledImages.Any() && !continueWithDisabledImages)
+            {
+                return new ResultDTO<int>(IsSuccess: false, 5, "There are disabled images in the dataset. Do you want to continue?", null);
+            }
+
             var nubmerOfImagesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100);
             var nubmerOfClassesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1);
+
             var insertedClasses = allDataset_DatasetClasses.Data?.Where(x => x.DatasetId == datasetDbData.Id).Select(x => x.DatasetClass).ToList() ?? throw new Exception("Object not found");
 
-            if (insertedClasses.Count < nubmerOfClassesNeededToPublishDataset.Data || allEnabledImagesHaveAnnotations == false || allDatasetImagesData.Count() < nubmerOfImagesNeededToPublishDataset.Data)
+            if (insertedClasses.Count < nubmerOfClassesNeededToPublishDataset.Data ||
+                allEnabledImagesHaveEnoughAnnotations == false ||
+                allDatasetImagesData.Count() < nubmerOfImagesNeededToPublishDataset.Data)
             {
                 return new ResultDTO<int>(IsSuccess: false, 2, null, null);
+            }
+
+            if (!AllImagesExistPhysically(allDatasetImagesData))
+            {
+                return new ResultDTO<int>(IsSuccess: false, 4, null, null);
             }
 
             datasetDbData.IsPublished = true;
@@ -382,7 +396,27 @@ namespace MainApp.BL.Services.DatasetServices
             {
                 return new ResultDTO<int>(IsSuccess: false, 3, updatedDataset.ErrMsg, null);
             }
+        }
 
+        private bool AtLeast90PercentImagesHaveAnnotations(List<DatasetImage> enabledImagesList, List<ImageAnnotation> allImageAnnotationsList)
+        {
+            var enabledImagesCount = enabledImagesList.Count;
+            var annotatedImagesCount = enabledImagesList.Count(x => allImageAnnotationsList.Any(m => m.DatasetImageId == x.Id));
+
+            var percentageOfAnnotatedImages = (double)annotatedImagesCount / enabledImagesCount * 100;
+
+            return percentageOfAnnotatedImages >= 90;
+        }
+        private bool AllImagesExistPhysically(IEnumerable<DatasetImage> allDatasetImagesData)
+        {
+            foreach (var image in allDatasetImagesData)
+            {
+                if (!File.Exists(image.ImagePath))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public async Task<ResultDTO<int>> SetAnnotationsPerSubclass(Guid datasetId, bool annotationsPerSubclass, string userId)

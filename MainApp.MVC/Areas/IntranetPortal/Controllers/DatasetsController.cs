@@ -173,12 +173,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return View(model);
         }
 
-
-
-
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
-        public async Task<IActionResult> PublishDataset(Guid datasetId)
+        public async Task<IActionResult> PublishDataset(Guid datasetId, bool continueWithDisabledImages = false)
         {
             string? userId = User.FindFirstValue("UserId");
             if (string.IsNullOrEmpty(userId))
@@ -193,15 +190,21 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetDb.IsPublished == true)
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
-            ResultDTO<int> isPublished = await _datasetService.PublishDataset(datasetId, userId);
+            // Call service and pass the continueWithDisabledImages flag
+            ResultDTO<int> isPublished = await _datasetService.PublishDataset(datasetId, userId, continueWithDisabledImages);
             if (isPublished.IsSuccess == true && isPublished.Data == 1 && string.IsNullOrEmpty(isPublished.ErrMsg))
                 return Json(new { responseSuccess = DbResHtml.T("Successfully published dataset", "Resources") });
-
             if (isPublished.IsSuccess == false && isPublished.Data == 2)
-                return Json(new { responseError = DbResHtml.T($"Insert at least {nubmerOfImagesNeededToPublishDataset.Data} images, {nubmerOfClassesNeededToPublishDataset.Data} class/es and annotate all enabled images to publish the dataset", "Resources") });
+                return Json(new { responseError = DbResHtml.T($"Insert at least {nubmerOfImagesNeededToPublishDataset.Data} images, {nubmerOfClassesNeededToPublishDataset.Data} class/es and annotate at least 90% enabled images to publish the dataset", "Resources") });
+            if (isPublished.IsSuccess == false && isPublished.Data == 4)
+                return Json(new { responseError = DbResHtml.T("One or more images do not exist physically.", "Resources") });
+            if (isPublished.IsSuccess == false && isPublished.Data == 5)
+                return Json(new { responseWarningDisabledImages = DbResHtml.T("There are disabled images. Do you want to continue?", "Resources") });
 
             return Json(new { responseError = DbResHtml.T("Dataset was not published", "Resources") });
         }
+
+
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetClass))]

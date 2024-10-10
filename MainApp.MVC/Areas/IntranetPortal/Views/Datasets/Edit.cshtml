@@ -744,12 +744,13 @@
                 }
             });
         }
-        function publishDatasetConfirmed(datasetId) {
+        function publishDatasetConfirmed(datasetId, continueWithDisabledImages = false) {
             $.ajax({
                 type: "POST",
                 url: '@Url.Action("PublishDataset", "Datasets", new { area = "IntranetPortal" })',
                 data: {
-                    datasetId: datasetId
+                    datasetId: datasetId,
+                    continueWithDisabledImages: continueWithDisabledImages
                 },
                 success: function (data) {
                     $('#publishDatasetModal').modal('hide');
@@ -764,24 +765,35 @@
                                 location.reload();
                             }
                         });
+                    } else if (data.responseWarningDisabledImages != null || data.responseWarningDisabledImages != undefined) {
+                        Swal.fire({
+                            text: `${data.responseWarningDisabledImages.value}`,
+                            icon: "warning",
+                            showCancelButton: true,
+                            confirmButtonText: '@DbResHtml.T("Continue", "Resources")',
+                            cancelButtonText: '@DbResHtml.T("Cancel", "Resources")',
+                            allowOutsideClick: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                publishDatasetConfirmed(datasetId, true);
+                            }
+                        });
+                    } else if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
+                        Swal.fire({
+                            text: `${data.responseErrorAlreadyPublished.value}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
+                            }
+                        });
                     } else {
-                        if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
-                            Swal.fire({
-                                text: `${data.responseErrorAlreadyPublished.value}`,
-                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-                                allowOutsideClick: false,
-                                icon: "error"
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
-                                }
-                            });
-                        } else {
-                            Swal.fire({
-                                text: `${data.responseError.value}`,
-                                icon: "error"
-                            })
-                        }
+                        Swal.fire({
+                            text: `${data.responseError.value}`,
+                            icon: "error"
+                        })
                     }
                 },
                 error: function (req, status, error) {
@@ -792,6 +804,7 @@
                 }
             });
         }
+
         function addNewDatasetClassConfirmed(datasetId) {
             var selectedClassId = $("#classInsert").val();
             $.ajax({

@@ -32,7 +32,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #endregion
 
         #region Update
-        Task<ResultDTO<int>> PublishDataset(Guid datasetId, string userId);
+        Task<ResultDTO<int>> PublishDataset(Guid datasetId, string userId, bool continueWithDisabledImages = false);
         Task<ResultDTO<int>> SetAnnotationsPerSubclass(Guid datasetId, bool annotationsPerSubclass, string userId);
         #endregion
 
