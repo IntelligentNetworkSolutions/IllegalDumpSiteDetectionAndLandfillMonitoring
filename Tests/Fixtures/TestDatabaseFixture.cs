@@ -10,8 +10,10 @@ public class TestDatabaseFixture : IDisposable
 
     public TestDatabaseFixture()
     {
-        _connectionString = Environment.GetEnvironmentVariable("TestConnectionString") ??
-            "Host=localhost;Port=5434;Database=waste_detection_migrated_v4;Username=postgres;Password=postgres;Pooling=true;";
+        string? testConnectionEnv = Environment.GetEnvironmentVariable("TestConnectionString");
+        _connectionString = string.IsNullOrEmpty(testConnectionEnv) 
+            ? "Host=localhost;Port=5434;Database=waste_detection_test_v10;Username=postgres;Password=admin;Pooling=true;"
+            : testConnectionEnv;
 
         DbContextFactory = new ApplicationDbContextFactory();
 
