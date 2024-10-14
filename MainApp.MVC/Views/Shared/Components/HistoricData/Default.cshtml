@@ -6,7 +6,6 @@
 @using Westwind.Globalization.AspNetCore
 @using Newtonsoft.Json
 
-
 <script type="text/javascript">
     $(function () {
         function activateHistoricDataTool() {
@@ -35,7 +34,7 @@
                                         <h1 class="turbosidebar-header text-center">
                                              @DbResHtml.T("Historic Data", "Resources")
                                             <span class="turbosidebar-close"><i class="fa fa-times"></i></span>
-                                        </h1>
+                                        </h1>                                              
                                         <div id="map-sidebar-historicdatatable-tab-container"></div>
                                     </div>`;
 
@@ -56,6 +55,7 @@
                 historicData.activateTool();
             }
         });
+        
         generateDetectionRunsTable();
     });
 
@@ -124,6 +124,11 @@
 
     function triggerShowOnMap() {
         let selectedDetectionRunsIds = getSelectedDetectionRunIds();
+        let selectedConfidenceRates = getSelectedConfidenceRates();
+        let model = {
+            selectedDetectionRunsIds: selectedDetectionRunsIds,
+            selectedConfidenceRates: selectedConfidenceRates
+        };
         if (selectedDetectionRunsIds.length === 0) {
             Swal.fire({
                 text: '@DbResHtml.T("No detection run/s selected", "Resources")',
@@ -136,9 +141,11 @@
         $.ajax({
             type: "POST",
             url: "@Url.Action("ShowDumpSitesOnMap", "Detection", new { Area = "IntranetPortal" })",
-            data: {
-                selectedDetectionRunsIds: selectedDetectionRunsIds
-            },
+            contentType: "application/json",
+            data: JSON.stringify(model),
+            // data: {
+            //     // selectedDetectionRunsIds: selectedDetectionRunsIds
+            // },
             success: function (response) {
                 if (!response.isSuccess) {
                     Swal.fire({
@@ -149,7 +156,7 @@
                     })
                 } else {
                     mapVars.map.getLayers().forEach(function (layer) {
-                        if (layer instanceof ol.layer.Group && layer.get('title') === 'Historic Data') {
+                        if (layer instanceof ol.layer.Group && layer.get('name') === 'Historic Data') {
                             mapVars.map.removeLayer(layer);
                         }
                     });
@@ -157,6 +164,7 @@
                    
                     var historicDataLayerGroup = new ol.layer.Group({
                         title: 'Historic Data',
+                        name: 'Historic Data',
                         order: 3,
                         opacity: 1,
                         visible: true,
@@ -165,9 +173,14 @@
                         layers: new ol.Collection([])
                     });
 
+                    var detectionRunImagesGroupLayer = mapVars.findLayerByName('DetectionRunImages');
+                    if (detectionRunImagesGroupLayer) {
+                        detectionRunImagesGroupLayer.getLayers().clear();
+                    }
+
                     var extent = ol.extent.createEmpty();
-                    response.data.forEach(function (detectionRun,index) {
-                        var detectionRunImagesGroupLayer = mapVars.findLayerByName('DetectionRunImages');
+
+                    response.data.forEach(function (detectionRun,index) {   
                         if (detectionRunImagesGroupLayer) {
                             var layers = detectionRunImagesGroupLayer.getLayers().getArray();
                             var exitingLayer = layers.find(function (layer) {
@@ -208,20 +221,32 @@
                                     dataProjection: mapVars.projection,
                                     featureProjection: mapVars.projection
                                 });
+                                var confRate = dumpSite.confidenceRate * 100;
                                 vectorSource.addFeature(feature);
+                                feature.setStyle(new ol.style.Style({
+                                    fill: new ol.style.Fill({
+                                        color: 'rgba(255, 0, 0, 0.5)'
+                                    }),
+                                    stroke: new ol.style.Stroke({
+                                        color: 'red',
+                                        width: 2 
+                                    }),
+                                    text: new ol.style.Text({
+                                        font: '14px Calibri,sans-serif',
+                                        fill: new ol.style.Fill({ color: '#000' }),
+                                        stroke: new ol.style.Stroke({
+                                            color: '#fff', width: 2
+                                        }),
+                                        text: "Confidence rate:\n" + confRate.toFixed(0).toString() + "%"
+                                    })
+                                }));
                             });
 
                             var vectorLayer = new ol.layer.Vector({
                                 source: vectorSource,
                                 title: detectionRun.name,
                                 order: index + 1,
-                                visible: true, 
-                                style: new ol.style.Style({
-                                    fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.5)' }),
-                                    stroke: new ol.style.Stroke({
-                                        color: 'red', width: 2
-                                    })
-                                })
+                                visible: true                               
                             });
                            
                             historicDataLayerGroup.getLayers().push(vectorLayer);
@@ -261,7 +286,6 @@
                         <thead>
                             <tr>
                                 <th>@DbResHtml.T("Name", "Resources")</th>
-                                <th>@DbResHtml.T("Is Completed", "Resources")</th>
                                 <th>@DbResHtml.T("Created By", "Resources")</th>
                                 <th>@DbResHtml.T("Created On", "Resources")</th>
                             </tr>
@@ -280,8 +304,7 @@
                             <tr>
                                 <th hidden></th>
                                 <th>@DbResHtml.T("Name", "Resources")</th>
-                                <th>@DbResHtml.T("Is Completed", "Resources")</th>
-                                <th>@DbResHtml.T("Created By", "Resources")</th>
+                                <th>@DbResHtml.T("Load detections above - confidence rate (%)", "Resources")</th>
                                 <th>@DbResHtml.T("Created On", "Resources")</th>
                                 <th></th>
                             </tr>
@@ -293,9 +316,10 @@
                         detectionRunsTable +=
                             `<tr>
                             <td hidden>${item.id}</td>
-                            <td>${item.name}</td>
-                            <td>${item.isCompleted}</td>
-                            <td>${item.createdBy.userName}</td>
+                                <td class="text-nowrap overflow-auto" style="max-width: 200px;" title="${item.name}">${item.name}</td>
+                            <td>
+                               <input class="conf_rate_slider" id="conf_rate_range_${item.id}" type="text" name="conf_rate_range_${item.id}" value="">
+                            </td>
                             <td>${new Date(item.createdOn).toLocaleDateString()}</td>
                             <td>
                                <div class="form-group clearfix">
@@ -325,7 +349,18 @@
                     </div>
                     `;
                 }
+              
                 $("#map-sidebar-historicdatatable-tab-container").html(detectionRunsTable);
+                $('.conf_rate_slider').ionRangeSlider({
+                    min: 0,
+                    max: 100,
+                    from: 50,
+                    type: 'single',
+                    step: 1,
+                    postfix: '%',
+                    prettify: false,
+                    hasGrid: true
+                });
 
                 var modelId = '@Model';
                 if (modelId) {
@@ -377,4 +412,30 @@
         });
         return selectedDetectionRunsIds;
     }
+
+    function getSelectedConfidenceRates() {
+        let selectedConfidenceRates = [];
+        $('#historicDataDetectionRunsTable tbody tr').each(function () {
+            if ($(this).find('input[type="checkbox"]').prop('checked')) {
+
+                var id = $(this).find('td:first').text().trim();
+                var sliderInput = $(this).find('td').eq(2).find('input.conf_rate_slider');
+
+                if (sliderInput.length > 0) {
+                    var sliderInstance = sliderInput.data("ionRangeSlider");
+                    if (sliderInstance) {
+                        var conf_rate = sliderInstance.result.from;
+                        selectedConfidenceRates.push({
+                            detectionRunId: id,
+                            confidenceRate: conf_rate
+                        });
+                    }
+                }
+            }
+        });
+
+        return selectedConfidenceRates;
+    }
+
+
 </script>

@@ -1,4 +1,6 @@
-﻿namespace DTOs.MainApp.BL.DetectionDTOs
+﻿using System.ComponentModel;
+
+namespace DTOs.MainApp.BL.DetectionDTOs
 {
     public class DetectionRunDTO
     {
@@ -6,8 +8,10 @@
 
         public string? Name { get; set; }
         public string? Description { get; set; }
+        public string InputImgPath { get; set; } = string.Empty;
 
         public bool IsCompleted { get; set; } = false;
+        public string? Status { get; set; }
 
         public Guid? DetectionInputImageId { get; set; }
         public virtual DetectionInputImageDTO? DetectionInputImage { get; set; }

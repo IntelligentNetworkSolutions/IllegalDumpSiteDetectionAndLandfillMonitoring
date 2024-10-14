@@ -60,6 +60,7 @@ string? applicationStartMode = configuration["ApplicationStartupMode"];
 if (string.IsNullOrEmpty(applicationStartMode))
     throw new Exception("ApplicationStartupMode not defined in appsettings.json");
 
+
 // TODO: Whole code has to stay here Code Generation does not get the indirection here,
 // remove implementation with commented one liners above them
 
@@ -161,8 +162,7 @@ services.AddInfrastructureServices();
 
 // Add Hangfire services
 services.RegisterHangfireServices(configuration);
-// Add the processing hangfire server as IHostedService
-services.AddHangfireProcessingServer();
+
 
 // TODO: look over
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);

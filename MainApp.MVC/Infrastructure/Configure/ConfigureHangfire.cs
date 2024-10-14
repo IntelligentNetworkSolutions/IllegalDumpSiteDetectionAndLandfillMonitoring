@@ -14,8 +14,13 @@ namespace MainApp.MVC.Infrastructure.Configure
                 {
                    new HangfireDashboardAuthorizationFilter()
                 },
-                IgnoreAntiforgeryToken = true
-            });          
+                IgnoreAntiforgeryToken = true,
+                
+            });
+            app.UseHangfireServer(new BackgroundJobServerOptions
+            {
+                WorkerCount = 1
+            });
         }
     }
 }
