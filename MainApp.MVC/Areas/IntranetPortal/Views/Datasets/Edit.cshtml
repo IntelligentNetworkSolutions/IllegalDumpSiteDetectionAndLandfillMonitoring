@@ -214,13 +214,22 @@
                     </button>
                 }
                 <!-- Export Btn TODO: Change Auth Claim-->
-                @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
+@*                 @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
                 {
                     <button class="btn btn-outline-dark btn-block" onclick="exportDatasetAnnotationsToCOCO()">
                         <span>
                             @DbResHtml.T("Export Annotations", "Resources") <small>@DbResHtml.T("to COCO Format", "Resources")</small>
                         </span>
                         <i class=" mx-1 fas fa-file-export"></i>
+                    </button>
+                } *@
+                @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
+                {
+                    <button class="btn btn-outline-dark btn-block" data-toggle="modal" data-target="#exportModal">
+                        <span>
+                            @DbResHtml.T("Export Annotations", "Resources") <small>@DbResHtml.T("to COCO Format", "Resources")</small>
+                        </span>
+                        <i class="mx-1 fas fa-file-export"></i>
                     </button>
                 }
 
@@ -251,7 +260,7 @@
                         <div class="form-group">
                             <select class="select2" asp-for="@Model.SearchByImageName" style="width: 100%;">
                                 <option></option>
-                                @foreach (var item in Model.ListOfAllDatasetImagesUnFiltered.OrderBy(x => x.Name))
+                                @foreach (var item in Model.ListOfAllDatasetImagesUnFiltered.OrderBy(x => x.Name)) // u controller
                                 {
                                     <option value="@item.Name">@item.Name</option>
                                 }
@@ -308,16 +317,18 @@
                     {
                         @foreach (var item in Model.PagedImagesList)
                         {
-                            string thumbPath = item.ThumbnailPath + item.Id.ToString() + item.FileName.Substring(item.FileName.LastIndexOf('.'));
-                            thumbPath = thumbPath.Replace("\\", "/");  //TODO: Change the DB format of this path
+                            string thumbPath = "\\" + item.ThumbnailPath + "\\" + item.Id.ToString() + item.FileName.Substring(item.FileName.LastIndexOf('.'));
+                            thumbPath = thumbPath.Replace("\\", "/");
 
-                            bool isAnnotated = Model.AllImageAnnotations.Select(x => x.DatasetImageId).Contains(@item.Id);
+                            bool isAnnotated = item.IsAnnotated; // Use the DTO property
+
                             <div class="col-md-3">
                                 <div class="card shadow">
                                     @{
                                         string cardHeaderClass = (item.IsEnabled && isAnnotated) ? "bg-gradient-olive" :
                                         (item.IsEnabled || isAnnotated) ? "bg-gradient-gray-dark" :
                                         "bg-gradient-danger";
+
                                         string cardBodyClass = (item.IsEnabled && isAnnotated) ? "border-success" :
                                         (item.IsEnabled || isAnnotated) ? "border-dark" :
                                         "border-danger";
@@ -333,8 +344,6 @@
                                     </div>
                                     <div class="card-body border border-top-0 d-flex flex-column align-items-center @cardBodyClass">
                                         <div class="show-image position-relative">
-
-
                                             <img id="@item.Id" class="rounded" src="@Url.Content("~" + thumbPath)" />
                                             @if (User.HasAuthClaim(SD.AuthClaims.EditDatasetImage))
                                             {
@@ -342,21 +351,23 @@
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.EditDatasetImageAnnotations))
                                             {
-                                                @* <input id="@($"{item.Id}_editImageAnnotation")" class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" /> *@
-                                                <a id="@($"{item.Id}_editImageAnnotation")" href="@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = item.Id})" class="editAnnotation btn btn-xs bg-gradient-orange text-white">Edit annotations</a>
+                                                <a id="@($"{item.Id}_editImageAnnotation")" href="@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = item.Id })" class="editAnnotation btn btn-xs bg-gradient-orange text-white">Edit annotations</a>
                                             }
-                                            @Html.Raw((item.IsEnabled ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Enabled\"><i class=\"fas fa-check-circle\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Disabled\"><i class=\"fas fa-times-circle\"></i></span>"))
-                                            @Html.Raw((isAnnotated ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Annotated\"><i class=\"fas fa-map-marked-alt\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Not Annotated\"><i class=\"fas fa-map-marked\"></i></span>"))
+                                            <input type="hidden" id="annotationStatus_@item.Id" value="@isAnnotated" />
+
+                                            @Html.Raw(item.IsEnabled ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Enabled\"><i class=\"fas fa-check-circle\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Disabled\"><i class=\"fas fa-times-circle\"></i></span>")
+                                            @Html.Raw(isAnnotated ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Annotated\"><i class=\"fas fa-map-marked-alt\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Not Annotated\"><i class=\"fas fa-map-marked\"></i></span>")
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         }
+
                     }
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        @Html.PagedListPager(Model.PagedImagesList, page => Url.Action("Edit", "Datasets", new { page, datasetId = Model.CurrentDataset.Id, SearchByImageName = Model.SearchByImageName, SearchByIsAnnotatedImage = Model.SearchByIsAnnotatedImage, SearchByIsEnabledImage = Model.SearchByIsEnabledImage, SearchByShowNumberOfImages = Model.SearchByShowNumberOfImages, OrderByImages = Model.OrderByImages }), new PagedListRenderOptions
+                        @Html.PagedListPager(Model.PagedImagesList, page => Url.Action("Edit", new { page, datasetId = Model.CurrentDataset.Id, SearchByImageName = Model.SearchByImageName, SearchByIsAnnotatedImage = Model.SearchByIsAnnotatedImage, SearchByIsEnabledImage = Model.SearchByIsEnabledImage, SearchByShowNumberOfImages = Model.SearchByShowNumberOfImages, OrderByImages = Model.OrderByImages }), new PagedListRenderOptions
                    {
                        LiElementClasses = new string[] { "page-item" },
                        PageClasses = new string[] { "page-link" }
@@ -370,6 +381,7 @@
 
 @section Scripts {
     <script>
+
         $(function () {
             $(".PagedList-skipToNext a").html('<i class="fas fa-step-forward"></i>');
             $(".PagedList-skipToPrevious a").html('<i class="fas fa-step-backward"></i>');
@@ -517,7 +529,9 @@
 
 
         function deleteDatasetImage(datasetImageId, datasetImageFileName) {
-            var datasetId = '@Model.CurrentDataset.Id'
+            var datasetId = '@Model.CurrentDataset.Id';
+            var isEnabled = $('#annotationStatus_' + datasetImageId).val() === 'True';
+
             Swal.fire({
                 text: '@DbResHtml.T("Are you sure you want to delete this image?", "Resources")',
                 confirmButtonText: '@DbResHtml.T("Delete", "Resources")',
@@ -531,10 +545,56 @@
                         url: '@Url.Action("DeleteDatasetImage", "DatasetImages", new { area = "IntranetPortal" })',
                         data: {
                             datasetImageId: datasetImageId,
-                            datasetId: datasetId
+                            datasetId: datasetId,
+                            deleteAnnotations: isEnabled 
                         },
                         success: function (data) {
-                            if (data.responseSuccess != null || data.responseSuccess != undefined) {
+                            if (data.responseAnnotated) {
+                                Swal.fire({
+                                    text: data.responseError,
+                                    confirmButtonText: '@DbResHtml.T("Delete", "Resources")',
+                                    cancelButtonText: '@DbResHtml.T("Cancel", "Resources")',
+                                    showCancelButton: true,
+                                    icon: "warning"
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        $.ajax({
+                                            type: "POST",
+                                            url: '@Url.Action("DeleteDatasetImage", "DatasetImages", new { area = "IntranetPortal" })',
+                                            data: {
+                                                datasetImageId: datasetImageId,
+                                                datasetId: datasetId,
+                                                deleteAnnotations: true
+                                            },
+                                            success: function (data) {
+                                                if (data.responseSuccess) {
+                                                    Swal.fire({
+                                                        text: `${data.responseSuccess.value}`,
+                                                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                                        allowOutsideClick: false,
+                                                        icon: "success"
+                                                    }).then((result) => {
+                                                        if (result.isConfirmed) {
+                                                            location.reload();
+                                                        }
+                                                    });
+                                                } else {
+                                                    Swal.fire({
+                                                        text: `${data.responseError.value}`,
+                                                        icon: "error"
+                                                    });
+                                                }
+                                            },
+                                            error: function (req, status, error) {
+                                                Swal.fire({
+                                                    text: "Error occurred",
+                                                    icon: "error"
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+                            } else if (data.responseSuccess) {
                                 Swal.fire({
                                     text: `${data.responseSuccess.value}`,
                                     confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
@@ -546,32 +606,19 @@
                                     }
                                 });
                             } else {
-                                if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
-                                    Swal.fire({
-                                        text: `${data.responseErrorAlreadyPublished.value}`,
-                                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-                                        allowOutsideClick: false,
-                                        icon: "error"
-                                    }).then((result) => {
-                                        if (result.isConfirmed) {
-                                            location.href = '@Url.Action("Index", "Datasets", new { area = "IntranetPortal" })';
-                                        }
-                                    });
-                                } else {
-                                    Swal.fire({
-                                        text: `${data.responseError.value}`,
-                                        icon: "error"
-                                    }).then((result) => {
-                                        if (result.isConfirmed) {
-                                            location.reload();
-                                        }
-                                    });
-                                }
+                                Swal.fire({
+                                    text: `${data.responseError.value}`,
+                                    icon: "error"
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        location.reload();
+                                    }
+                                });
                             }
                         },
                         error: function (req, status, error) {
                             Swal.fire({
-                                text: "Error occured",
+                                text: "Error occurred",
                                 icon: "error"
                             });
                         }
@@ -579,6 +626,9 @@
                 }
             });
         }
+
+
+
         // function populatePagination(dataList) {
         //     let allImageAnnotationsList = Html.Raw(JsonConvert.SerializeObject(Model.AllImageAnnotations));
         //     $('#pagination').pagination({
@@ -846,21 +896,23 @@
         function editDatasetImageConfirmed(datasetImageId, datasetId) {
             var isEnabled = $(`#editDatasetImageEnabledInput_${datasetImageId}`).is(":checked");
             var imageName = $(`#editDatasetImageNameInput_${datasetImageId}`).val();
+            var isAnnotated = $(`#annotationStatus_${datasetImageId}`).val();
+
             var model = {
                 Id: datasetImageId,
                 DatasetId: datasetId,
                 IsEnabled: isEnabled,
                 Name: imageName
-            }
+            };
+
             $.ajax({
                 type: "POST",
                 url: '@Url.Action("EditDatasetImage", "DatasetImages", new { area = "IntranetPortal" })',
-                data: {
-                    model: model
-                },
+                data: { model: model },
                 success: function (data) {
                     $(`#editDatasetImageModal_${datasetImageId}`).modal('hide');
-                    if (data.responseSuccess != null || data.responseSuccess != undefined) {
+
+                    if (data.responseSuccess) {
                         Swal.fire({
                             text: `${data.responseSuccess.value}`,
                             confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
@@ -868,11 +920,37 @@
                             icon: "success"
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                location.reload();
+                                const card = $(`.card:has(#${datasetImageId})`);  
+                                card.find('.card-header h5').text(imageName);
+
+                                let cardHeaderClass = (isEnabled && isAnnotated) ? "bg-gradient-olive" :
+                                    (isEnabled || isAnnotated) ? "bg-gradient-gray-dark" :
+                                        "bg-gradient-danger";
+
+                                let cardBodyClass = (isEnabled && isAnnotated) ? "border-success" :
+                                    (isEnabled || isAnnotated) ? "border-dark" :
+                                        "border-danger";
+
+                                card.find('.card-header').removeClass("bg-gradient-olive bg-gradient-gray-dark bg-gradient-danger")
+                                    .addClass(cardHeaderClass);
+
+                                card.find('.card-body').removeClass("border-success border-dark border-danger")
+                                    .addClass(cardBodyClass);
+
+                                const statusBadge = card.find('.badge.bg-gradient-olive, .badge.bg-gradient-danger');
+                                if (isEnabled) {
+                                    statusBadge.removeClass('bg-gradient-danger').addClass('bg-gradient-olive')
+                                        .attr('title', 'Enabled')
+                                        .html('<i class="fas fa-check-circle"></i>');
+                                } else {
+                                    statusBadge.removeClass('bg-gradient-olive').addClass('bg-gradient-danger')
+                                        .attr('title', 'Disabled')
+                                        .html('<i class="fas fa-times-circle"></i>');
+                                }
                             }
                         });
                     } else {
-                        if (data.responseErrorAlreadyPublished != null || data.responseErrorAlreadyPublished != undefined) {
+                        if (data.responseErrorAlreadyPublished) {
                             Swal.fire({
                                 text: `${data.responseErrorAlreadyPublished.value}`,
                                 confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
@@ -887,72 +965,66 @@
                             Swal.fire({
                                 text: `${data.responseError.value}`,
                                 icon: "error"
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    location.reload();
-                                }
                             });
                         }
                     }
                 },
                 error: function (req, status, error) {
                     Swal.fire({
-                        text: "Error occured",
+                        text: "Error occurred",
                         icon: "error"
                     });
                 }
             });
-
         }
 
-        function exportDatasetAnnotationsToCOCO() {
-            const datasetId = '@Model.CurrentDataset.Id'; // Replace with your actual dataset ID
+        function startExport(downloadOption) {
+            const selectedOption = document.querySelector('input[name="exportOption"]:checked').value;
 
-            // Set up the click event for the button
+            $('#exportModal').modal('hide');
+
+            exportDatasetAnnotationsToCOCO(selectedOption, downloadOption);
+        }
+
+        function exportDatasetAnnotationsToCOCO(exportOption, downloadOption) {
+            const datasetId = '@Model.CurrentDataset.Id';
+
             $.ajax({
                 type: "GET",
-                url: '@Url.Action("ExportDataset", "Datasets", new { area = "IntranetPortal" })', // Replace with your actual area and controller
-                data: { datasetId: datasetId },
-                success: function (data) {
-                    console.log(data);
-                    console.log(data.responseSuccess);
-                    console.log(data.cocoDataset);
-                    if (data.responseSuccess.value == 'Successfully Exported Dataset in COCO Format') {
-                        // Create a JSON string from the dataset
-                        const jsonData = JSON.stringify(data.cocoDataset, null, 2);
-                        console.log(jsonData);
-                        // Create a Blob with the JSON data and type set to JSON
-                        const blob = new Blob([jsonData], { type: 'application/json' });
+                url: '@Url.Action("ExportDataset", "Datasets", new { area = "IntranetPortal" })',
+                data: { datasetId: datasetId, exportOption: exportOption },
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function (data, status, xhr) {
+                    const filename = xhr.getResponseHeader('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'dataset.zip';
+                    const blob = new Blob([data], { type: 'application/zip' });
 
-                        // Create a URL for the Blob
+                    if (downloadOption === 'DownloadNow') {
                         const url = URL.createObjectURL(blob);
-
-                        // Create a temporary anchor element
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = 'dataset.json';
-                        a.target = '_blank';
-
-                        // Programmatically click the anchor to trigger the download/open action
+                        a.download = filename;
                         a.click();
-
-                        // Revoke the object URL to free up memory
                         URL.revokeObjectURL(url);
-                    } else {
+
                         Swal.fire({
-                            text: data.responseError || 'An error occurred while exporting the dataset.',
-                            icon: 'error'
+                            text: 'Download initiated successfully!',
+                            icon: 'success',
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
                         });
                     }
                 },
                 error: function (req, status, error) {
                     Swal.fire({
                         text: 'An error occurred while processing your request.',
-                        icon: 'error'
-                        });
-        }
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
+                }
             });
         }
+
     </script>
 }
 
@@ -1143,6 +1215,7 @@
                             <label class="form-control-label mt-3" for="#editDatasetImageNameInput_@item.Id">@DbResHtml.T("Image Name:", "Resources")</label>
                             <input type="text" name="editDatasetImageNameInput_@item.Id" class="form-control" id="editDatasetImageNameInput_@item.Id" value="@item.Name" required />
                         </div>
+
                         @if (Model.AllImageAnnotations.Select(x => x.DatasetImageId).Contains(item.Id))
                         {
                             <div class="form-group clearfix">
@@ -1162,6 +1235,9 @@
                     <div class="modal-footer">
                         <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="editDatasetImageConfirmed('@item.Id', '@Model.CurrentDataset.Id')" data-dismiss="modal" aria-label="Edit">
                             <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
+                        </button>
+                        <button typeof="button" class="mb-1 btn bg-gradient-danger text-white" onclick="deleteDatasetImage('@item.Id','@item.FileName')" data-dismiss="modal" aria-label="Delete">
+                            <span aria-hidden="true" class="pr-1">@DbResHtml.T("Delete", "Resources")</span>
                         </button>
                     </div>
                 </div>
@@ -1202,4 +1278,47 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-lightblue">
+                    <h5 class="modal-title" id="exportModalLabel">@DbResHtml.T("Choose configuration for exporting the dataset", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="exportConfigForm">
+                        <h6>Image and Annotation Options</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportOption" id="allImages" value="AllImages" checked>
+                            <label class="form-check-label" for="allImages">All Images</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportOption" id="annotatedImages" value="AnnotatedImages">
+                            <label class="form-check-label" for="annotatedImages">Annotated Images</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportOption" id="enabledImages" value="EnabledImages">
+                            <label class="form-check-label" for="enabledImages">Enabled Images</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="exportOption" id="unannotatedImages" value="UnannotatedImages">
+                            <label class="form-check-label" for="unannotatedImages">Unannotated Images</label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="startExport('DownloadNow')">
+                        <span>@DbResHtml.T("Download Now", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
 }

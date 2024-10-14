@@ -1,8 +1,5 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
-using DTOs.MainApp.BL;
+﻿using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.ObjectDetection.API.CocoFormatDTOs;
-using Entities.DatasetEntities;
 using SD;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
@@ -24,7 +21,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         Task<List<DatasetDTO>> GetAllDatasets();
         Task<DatasetDTO> GetDatasetById(Guid datasetId);
         Task<CreateDatasetDTO> FillDatasetDto(CreateDatasetDTO dto);
-        Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages);
+        Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize);
         #endregion
         #endregion
 
@@ -46,11 +43,11 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #endregion
 
         #region Export
-        Task<ResultDTO<CocoDatasetDTO>> ExportDatasetAsCOCOFormat(Guid datasetId);
+        Task<ResultDTO<string>> ExportDatasetAsCOCOFormat(Guid datasetId, string exportOption, string? downloadLocation);
         #endregion
 
         #region Import
-        Task<ResultDTO<DatasetDTO>> ImportDatasetCocoFormatedAtDirectoryPath(string datasetName, string dirPath, string userId, string? wwwRoot = null);
+        Task<ResultDTO<DatasetDTO>> ImportDatasetCocoFormatedAtDirectoryPath(string datasetName, string dirPath, string userId, string? wwwRoot = null, bool allowUnannotatedImages = false);
         #endregion
     }
 }
