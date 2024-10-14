@@ -9,6 +9,7 @@
 
         public string? ImagePath { get; set; }
         public string? ImageFileName { get; set; }
+        public string? ThumbnailFilePath { get; set; }
 
         public string? CreatedById { get; set; }
         public DateTime? CreatedOn { get; set; }
