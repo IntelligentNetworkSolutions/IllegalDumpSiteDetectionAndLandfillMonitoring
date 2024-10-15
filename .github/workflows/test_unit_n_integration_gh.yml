@@ -38,7 +38,7 @@ jobs:
       run: dotnet restore
       
     - name: Run Tests
-      run: dotnet test --settings ExcludeCodeCoverage.runsettings.xml --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
+      run: dotnet test -nowarn --settings ExcludeCodeCoverage.runsettings.xml --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
       env:
         TestConnectionString: "Host=localhost;Port=5434;Database=waste_detection_test_v3;Username=postgres;Password=admin;Pooling=true;"
 
