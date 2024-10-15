@@ -978,21 +978,32 @@
             });
         }
 
-        function startExport(downloadOption) {
-            const selectedOption = document.querySelector('input[name="exportOption"]:checked').value;
+        function startExport() {
+            const toggleAllImages = document.getElementById('toggleAllImages').checked; // "All Images" or "Enabled Images"
+            const asSplit = $('#splitDataset').is(':checked'); // "Export as Split Dataset"
+            let exportOption = '';
+
+            // If "All Images" is selected, get the image type (Annotated/Unannotated)
+            if (toggleAllImages) {
+                const imageType = document.getElementById('imageTypeDropdown').value; // Get dropdown value (Annotated/Unannotated)
+                exportOption = imageType; // Set exportOption to either "AnnotatedImages" or "UnannotatedImages"
+            } else {
+                // If "Enabled Images" is selected, set exportOption to "EnabledImages"
+                exportOption = 'EnabledImages';
+            }
 
             $('#exportModal').modal('hide');
 
-            exportDatasetAnnotationsToCOCO(selectedOption, downloadOption);
+            exportDatasetAnnotationsToCOCO(exportOption, asSplit);
         }
 
-        function exportDatasetAnnotationsToCOCO(exportOption, downloadOption) {
+        function exportDatasetAnnotationsToCOCO(exportOption, asSplit) {
             const datasetId = '@Model.CurrentDataset.Id';
 
             $.ajax({
                 type: "GET",
                 url: '@Url.Action("ExportDataset", "Datasets", new { area = "IntranetPortal" })',
-                data: { datasetId: datasetId, exportOption: exportOption },
+                data: { datasetId: datasetId, exportOption: exportOption, asSplit: asSplit },
                 xhrFields: {
                     responseType: 'blob'
                 },
@@ -1000,20 +1011,20 @@
                     const filename = xhr.getResponseHeader('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'dataset.zip';
                     const blob = new Blob([data], { type: 'application/zip' });
 
-                    if (downloadOption === 'DownloadNow') {
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = filename;
-                        a.click();
-                        URL.revokeObjectURL(url);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
 
-                        Swal.fire({
-                            text: 'Download initiated successfully!',
-                            icon: 'success',
-                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
-                        });
-                    }
+                    Swal.fire({
+                        text: 'Download initiated successfully!',
+                        icon: 'success',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 },
                 error: function (req, status, error) {
                     Swal.fire({
@@ -1025,6 +1036,44 @@
             });
         }
 
+
+        function handleSwitchChange() {
+            var toggleAllImages = document.getElementById('toggleAllImages').checked;
+            var imageTypeDropdown = document.getElementById('imageTypeDropdown');
+            var allImagesLabel = document.getElementById('allImagesLabel');
+            var enabledImagesLabel = document.getElementById('enabledImagesLabel');
+
+            if (toggleAllImages) {
+                imageTypeDropdown.disabled = false;
+                allImagesLabel.style.display = "inline";
+                enabledImagesLabel.style.display = "none";
+            } else {
+                imageTypeDropdown.disabled = true;
+                allImagesLabel.style.display = "none";
+                enabledImagesLabel.style.display = "inline";
+            }
+        }
+        function updateImageStatusLabels() {
+            const toggleStatus = document.getElementById('toggleExportStatus');
+            const enabledLabel = document.getElementById('enabledExportLabel');
+            const disabledLabel = document.getElementById('disabledExportLabel');
+            const toggleLabel = document.getElementById('toggleExportLabel');
+            if (toggleStatus.checked) {
+                enabledLabel.style.display = 'inline';
+                disabledLabel.style.display = 'none';
+                toggleLabel.classList.add('text-success');
+                toggleLabel.classList.remove('text-danger');
+            } else {
+                enabledLabel.style.display = 'none';
+                disabledLabel.style.display = 'inline';
+                toggleLabel.classList.add('text-danger');
+                toggleLabel.classList.remove('text-success');
+            }
+        }
+
+
+        handleSwitchChange();
+        updateImageStatusLabels();
     </script>
 }
 
@@ -1279,45 +1328,80 @@
         </div>
     </div>
 
-    <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-gradient-lightblue">
-                    <h5 class="modal-title" id="exportModalLabel">@DbResHtml.T("Choose configuration for exporting the dataset", "Resources")</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-lightblue">
+                <h5 class="modal-title" id="exportModalLabel">@DbResHtml.T("Choose configuration for exporting the dataset", "Resources")</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
                 <div class="modal-body">
                     <form id="exportConfigForm">
-                        <h6>Image and Annotation Options</h6>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="exportOption" id="allImages" value="AllImages" checked>
-                            <label class="form-check-label" for="allImages">All Images</label>
+                        <h5 class="mb-4">Export options for dataset</h5>
+
+                        <div class="form-group row mb-3">
+                            <label class="col-12 col-md-4 col-form-label">Export Option</label>
+                            <div class="col-12 col-md-8 d-flex justify-content-center align-items-center">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox"
+                                           class="custom-control-input"
+                                           id="toggleAllImages"
+                                           onchange="handleSwitchChange()">
+                                    <label class="custom-control-label" for="toggleAllImages">
+                                        <span id="allImagesLabel">
+                                            <i class="fas fa-images"></i> All Images
+                                        </span>
+                                        <span id="enabledImagesLabel" style="display: none;">
+                                            <i class="fas fa-image"></i> Enabled Images
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="exportOption" id="annotatedImages" value="AnnotatedImages">
-                            <label class="form-check-label" for="annotatedImages">Annotated Images</label>
+                        <div class="form-group row mb-3">
+                            <label class="col-12 col-md-4 col-form-label">Image Type</label>
+                            <div class="col-12 col-md-8">
+                                <select class="form-control" id="imageTypeDropdown" disabled>
+                                    <option value="AnnotatedImages">Annotated Images</option>
+                                    <option value="UnannotatedImages">Unannotated Images</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="exportOption" id="enabledImages" value="EnabledImages">
-                            <label class="form-check-label" for="enabledImages">Enabled Images</label>
+                        <div class="form-group row mb-3">
+                            <label class="col-12 col-md-4 col-form-label">Export as Split dataset</label>
+                            <div class="col-12 col-md-8 d-flex justify-content-center align-items-center">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox"
+                                           class="custom-control-input"
+                                           id="toggleExportStatus"
+                                           onchange="updateImageStatusLabels()">
+                                    <label class="custom-control-label" for="toggleExportStatus" id="toggleExportLabel">
+                                        <span id="enabledExportLabel" style="display: none;">
+                                            <i class="fas fa-check"></i> Enabled
+                                        </span>
+                                        <span id="disabledExportLabel" class="text-danger">
+                                            <i class="fas fa-times"></i> Disabled
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="exportOption" id="unannotatedImages" value="UnannotatedImages">
-                            <label class="form-check-label" for="unannotatedImages">Unannotated Images</label>
-                        </div>
+
+
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" onclick="startExport('DownloadNow')">
-                        <span>@DbResHtml.T("Download Now", "Resources")</span>
-                    </button>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="startExport()">
+                    <span>@DbResHtml.T("Download Now", "Resources")</span>
+                </button>
             </div>
         </div>
     </div>
+</div>
+
 
 
 
