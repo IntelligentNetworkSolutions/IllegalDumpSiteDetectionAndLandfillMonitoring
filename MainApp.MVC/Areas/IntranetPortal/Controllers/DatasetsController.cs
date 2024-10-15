@@ -243,7 +243,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         #region Import / Export COCO Dataset
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
-        public async Task<IActionResult> ExportDataset(Guid datasetId, string exportOption, string? downloadLocation)
+        public async Task<IActionResult> ExportDataset(Guid datasetId, string exportOption, string? downloadLocation, bool asSplit)
         {
             if (datasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
@@ -252,7 +252,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 // Pass the download location to the service
                 ResultDTO<string> resultExportDatasetAsCoco =
-                    await _datasetService.ExportDatasetAsCOCOFormat(datasetId, exportOption, downloadLocation);
+                    await _datasetService.ExportDatasetAsCOCOFormat(datasetId, exportOption, downloadLocation, asSplit);
 
                 if (!resultExportDatasetAsCoco.IsSuccess)
                     return Json(new { responseError = DbResHtml.T(resultExportDatasetAsCoco.ErrMsg, "Resources") });
@@ -393,14 +393,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                 if (!importDatasetResult.IsSuccess)
                 {
-                    CleanUp(tempFilePath, outputJsonPath);
+                    CleanUpFoldersFromImportingDataset(tempFilePath, outputJsonPath);
 
                     return Json(new { responseError = DbResHtml.T("Error importing dataset file", "Resources") });
                 }
 
                 await GenerateThumbnailsForDataset(importDatasetResult.Data.Id);
 
-                CleanUp(tempFilePath, outputJsonPath);
+                CleanUpFoldersFromImportingDataset(tempFilePath, outputJsonPath);
 
                 return Json(new { responseSuccess = DbResHtml.T("Dataset imported and thumbnails generated", "Resources"), dataset = importDatasetResult.Data });
             }
@@ -410,7 +410,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
         }
 
-        private void CleanUp(string tempFilePath, string outputJsonPath)
+        private void CleanUpFoldersFromImportingDataset(string tempFilePath, string outputJsonPath)
         {
             if (System.IO.File.Exists(tempFilePath))
             {

@@ -43,7 +43,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #endregion
 
         #region Export
-        Task<ResultDTO<string>> ExportDatasetAsCOCOFormat(Guid datasetId, string exportOption, string? downloadLocation);
+        Task<ResultDTO<string>> ExportDatasetAsCOCOFormat(Guid datasetId, string exportOption, string? downloadLocation, bool asSplit);
         #endregion
 
         #region Import

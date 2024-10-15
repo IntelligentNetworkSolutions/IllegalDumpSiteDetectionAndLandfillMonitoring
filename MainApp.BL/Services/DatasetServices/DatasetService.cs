@@ -612,7 +612,7 @@ namespace MainApp.BL.Services.DatasetServices
         }
 
 
-        public async Task<ResultDTO<string>> ExportDatasetAsCOCOFormat(Guid datasetId, string exportOption, string? downloadLocation)
+        public async Task<ResultDTO<string>> ExportDatasetAsCOCOFormat(Guid datasetId, string exportOption, string? downloadLocation, bool asSplit)
         {
             try
             {
@@ -655,8 +655,14 @@ namespace MainApp.BL.Services.DatasetServices
                 if (resultDatasetIncludeThenAll.Data is null)
                     return ResultDTO<string>.Fail("Error getting Dataset");
 
-                // Call the method that converts the dataset to COCO format and creates the ZIP
-                return await ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(resultDatasetIncludeThenAll.Data, exportOption, downloadLocation);
+                if (asSplit)
+                {
+                    return await ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(resultDatasetIncludeThenAll.Data, exportOption, downloadLocation);
+                }
+                else
+                {
+                    return await ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(resultDatasetIncludeThenAll.Data, exportOption, downloadLocation);
+                }
             }
             catch (Exception ex)
             {
@@ -664,6 +670,173 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
+        private async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(Dataset dataset, string exportOption, string? downloadLocation)
+        {
+
+            // TODO: Implement for multiple classes
+            if (dataset == null)
+                return ResultDTO<string>.Fail("Dataset is null");
+
+            try
+            {
+                ResultDTO<DatasetFullIncludeDTO> resultGetDatasetFullIncludeDTO =
+                    GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(datasetIncluded: dataset,
+                                                                                exportOption: exportOption,
+                                                                                includeDisabledImages: true,
+                                                                                includeDisabledAnnotations: true);
+
+                if (!resultGetDatasetFullIncludeDTO.IsSuccess)
+                    return ResultDTO<string>.Fail(resultGetDatasetFullIncludeDTO.ErrMsg!);
+
+                DatasetFullIncludeDTO datasetExtClassesImagesAnnotations = resultGetDatasetFullIncludeDTO.Data!;
+
+                var totalImages = datasetExtClassesImagesAnnotations.DatasetImages.Count;
+                var trainCount = (int)(totalImages * 0.7);
+                var valCount = (int)(totalImages * 0.2);
+                var testCount = totalImages - trainCount - valCount;
+
+                var random = new Random();
+                var shuffledImages = datasetExtClassesImagesAnnotations.DatasetImages
+                    .OrderBy(x => random.Next())
+                    .ToList();
+
+                // Create directories for train, val, test
+                string tempDirectory = downloadLocation ?? Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+                string trainDir = Path.Combine(tempDirectory, "train");
+                string valDir = Path.Combine(tempDirectory, "val");
+                string testDir = Path.Combine(tempDirectory, "test");
+
+                Directory.CreateDirectory(trainDir);
+                Directory.CreateDirectory(valDir);
+                Directory.CreateDirectory(testDir);
+
+                // Create COCO datasets with required fields initialized
+                var trainCocoDataset = new CocoDatasetDTO
+                {
+                    Info = new CocoInfoDTO
+                    {
+                        Year = DateTime.Now.Year,
+                        Version = "1.0",
+                        Description = datasetExtClassesImagesAnnotations.Dataset.Description,
+                        Contributor = "IllegalDumpSiteDetectionAndLandfillMonitoring",
+                        DateCreated = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                    },
+                    Licenses = new List<CocoLicenseDTO> { new CocoLicenseDTO { Id = 1, Name = "Apache 2.0", Url = "https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring?tab=Apache-2.0-1-ov-file#readme" } },
+                    Images = new List<CocoImageDTO>(),
+                    Annotations = new List<CocoAnnotationDTO>(),
+                    Categories = datasetExtClassesImagesAnnotations.DatasetClassForDataset
+                        .Select(d => new CocoCategoryDTO { Id = d.ClassValue, Name = d.ClassName })
+                        .ToList()
+                };
+
+                var valCocoDataset = new CocoDatasetDTO
+                {
+                    Info = trainCocoDataset.Info,
+                    Licenses = trainCocoDataset.Licenses,
+                    Images = new List<CocoImageDTO>(),
+                    Annotations = new List<CocoAnnotationDTO>(),
+                    Categories = trainCocoDataset.Categories
+                };
+
+                var testCocoDataset = new CocoDatasetDTO
+                {
+                    Info = trainCocoDataset.Info,
+                    Licenses = trainCocoDataset.Licenses,
+                    Images = new List<CocoImageDTO>(),
+                    Annotations = new List<CocoAnnotationDTO>(),
+                    Categories = trainCocoDataset.Categories
+                };
+
+                int trainImageId = 0, valImageId = 0, testImageId = 0;
+                int trainAnnotationId = 0, valAnnotationId = 0, testAnnotationId = 0;
+
+                for (int i = 0; i < totalImages; i++)
+                {
+                    var image = shuffledImages[i];
+                    var fullImageName = image.Id.ToString() + Path.GetExtension(image.FileName);
+                    string imagePath = Path.Combine("wwwroot", image.ImagePath.TrimStart('\\'), fullImageName);
+                    string destPath = (i < trainCount) ? Path.Combine(trainDir, fullImageName) :
+                        (i < trainCount + valCount) ? Path.Combine(valDir, fullImageName) :
+                        Path.Combine(testDir, fullImageName);
+                    File.Copy(imagePath, destPath);
+
+                    var cocoImage = new CocoImageDTO
+                    {
+                        Id = (i < trainCount) ? trainImageId++ : (i < trainCount + valCount) ? valImageId++ : testImageId++,
+                        FileName = fullImageName,
+                        Width = 1280,
+                        Height = 1280,
+                        DateCaptured = DateTime.Now.ToString("yyyy-MM-dd"),
+                        License = 1
+                    };
+
+                    if (i < trainCount)
+                    {
+                        trainCocoDataset.Images.Add(cocoImage);
+                    }
+                    else if (i < trainCount + valCount)
+                    {
+                        valCocoDataset.Images.Add(cocoImage);
+                    }
+                    else
+                    {
+                        testCocoDataset.Images.Add(cocoImage);
+                    }
+
+                    // Add annotations to the respective dataset
+                    var annotations = datasetExtClassesImagesAnnotations.ImageAnnotations
+                        .Where(x => x.DatasetImageIdInt == image.IdInt)
+                        .Select(x => new CocoAnnotationDTO
+                        {
+                            Id = (i < trainCount) ? trainAnnotationId++ : (i < trainCount + valCount) ? valAnnotationId++ : testAnnotationId++,
+                            ImageId = cocoImage.Id,
+                            CategoryId = datasetExtClassesImagesAnnotations.DatasetClassForDataset
+                                .First(dcfd => dcfd.DatasetClassId == x.DatasetClass.Id).ClassValue,
+                            IsCrowd = 0,
+                            Bbox = GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeightList(x.Geom),
+                            Segmentation = null,
+                            Area = 0.0F // Adjust as needed
+                        });
+
+                    if (i < trainCount)
+                    {
+                        trainCocoDataset.Annotations.AddRange(annotations);
+                    }
+                    else if (i < trainCount + valCount)
+                    {
+                        valCocoDataset.Annotations.AddRange(annotations);
+                    }
+                    else
+                    {
+                        testCocoDataset.Annotations.AddRange(annotations);
+                    }
+                }
+
+                string trainJson = JsonConvert.SerializeObject(trainCocoDataset, Formatting.Indented);
+                string valJson = JsonConvert.SerializeObject(valCocoDataset, Formatting.Indented);
+                string testJson = JsonConvert.SerializeObject(testCocoDataset, Formatting.Indented);
+
+                await File.WriteAllTextAsync(Path.Combine(trainDir, "coco_dataset.json"), trainJson);
+                await File.WriteAllTextAsync(Path.Combine(valDir, "coco_dataset.json"), valJson);
+                await File.WriteAllTextAsync(Path.Combine(testDir, "coco_dataset.json"), testJson);
+
+                // Zip the directories
+                string zipFilePath = Path.Combine(Path.GetTempPath(), $"{dataset.Id}.zip");
+                if (File.Exists(zipFilePath))
+                    File.Delete(zipFilePath);
+
+                ZipFile.CreateFromDirectory(tempDirectory, zipFilePath);
+
+                if (downloadLocation == null)
+                    Directory.Delete(tempDirectory, true);
+
+                return ResultDTO<string>.Ok(zipFilePath);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
+            }
+        }
 
         private async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(Dataset dataset, string exportOption, string? downloadLocation)
         {
