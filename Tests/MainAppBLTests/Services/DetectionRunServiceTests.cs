@@ -86,11 +86,12 @@ namespace Tests.MainAppBLTests.Services
             // Arrange
             var selectedDetectionRunsIds = new List<Guid>();
             var detectionRuns = new List<DetectionRun>();
+            var confidenceRates = new List<ConfidenceRateDTO>();
             _mockDetectionRunsRepository.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, null, null))
                                         .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Ok(detectionRuns));
 
             // Act
-            var result = await _service.GetSelectedDetectionRunsIncludingDetectedDumpSites(selectedDetectionRunsIds);
+            var result = await _service.GetSelectedDetectionRunsIncludingDetectedDumpSites(selectedDetectionRunsIds, confidenceRates);
 
             // Assert
             Assert.False(result.IsSuccess, "Operation should be successful");
@@ -332,11 +333,11 @@ namespace Tests.MainAppBLTests.Services
             _mockFileSystem.Setup(x => x.FileExists(absDetectionRunResultsBBoxesFilePath)).Returns(false);
 
             // Act
-            var result = await _service.GetRawDetectionRunResultPathsByRunId(detectionRunId, imgFileExtension);
+            var result = await _service.GetRawDetectionRunResultPathsByRunId(detectionRunId);
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal("No Visualized Detection Run Results Found", result.ErrMsg);
+            Assert.Equal("No Polygonized Predictions Detection Run Results Found", result.ErrMsg);
         }
 
         [Fact]
@@ -486,15 +487,15 @@ namespace Tests.MainAppBLTests.Services
                 .Returns(inputImageEntity);
 
             _mockDetectionInputImageRepository
-                .Setup(repo => repo.Create(inputImageEntity, true, default))
-                .ReturnsAsync(ResultDTO.Ok());
+                .Setup(repo => repo.CreateAndReturnEntity(inputImageEntity, true, default))
+                .ReturnsAsync(ResultDTO<DetectionInputImage>.Ok(inputImageEntity));
 
             // Act
             var result = await _service.CreateDetectionInputImage(inputImageDTO);
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Null(result.ErrMsg);
+            Assert.Null(result.ErrMsg); 
         }
 
         [Fact]
@@ -509,8 +510,8 @@ namespace Tests.MainAppBLTests.Services
                 .Returns(inputImageEntity);
 
             _mockDetectionInputImageRepository
-                .Setup(repo => repo.Create(inputImageEntity, true, default))
-                .ReturnsAsync(ResultDTO.Fail("Creation failed"));
+                .Setup(repo => repo.CreateAndReturnEntity(inputImageEntity, true, default))
+                 .ThrowsAsync(new Exception("Creation failed"));
 
             // Act
             var result = await _service.CreateDetectionInputImage(inputImageDTO);
@@ -527,19 +528,22 @@ namespace Tests.MainAppBLTests.Services
             var inputImageDTO = new DetectionInputImageDTO { Id = Guid.NewGuid() };
             var inputImageEntity = new DetectionInputImage { Id = Guid.NewGuid() };
 
+            // Mock the mapping from DTO to entity
             _mockMapper
                 .Setup(m => m.Map<DetectionInputImage>(inputImageDTO))
                 .Returns(inputImageEntity);
 
+            // Mock the repository method to throw an exception
             _mockDetectionInputImageRepository
-                .Setup(repo => repo.Create(inputImageEntity, true, default))
+                .Setup(repo => repo.CreateAndReturnEntity(It.IsAny<DetectionInputImage>(), true, default))
                 .ThrowsAsync(new Exception("Exception occurred"));
 
             // Act
             var result = await _service.CreateDetectionInputImage(inputImageDTO);
 
             // Assert
-            Assert.False(result.IsSuccess);
+            Assert.NotNull(result); // Check that result is not null
+            Assert.False(result.IsSuccess); // Ensure the result indicates failure
             Assert.Equal("Exception occurred", result.ErrMsg);
         }
 

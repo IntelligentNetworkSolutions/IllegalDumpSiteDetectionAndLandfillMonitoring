@@ -8,6 +8,7 @@ namespace Entities.DetectionEntities
         public string? Description { get; set; }
 
         public bool IsCompleted { get; set; } = false;
+        public string? Status { get; set; }
 
         public Guid DetectionInputImageId { get; set; }
         public virtual DetectionInputImage? DetectionInputImage { get; set; }

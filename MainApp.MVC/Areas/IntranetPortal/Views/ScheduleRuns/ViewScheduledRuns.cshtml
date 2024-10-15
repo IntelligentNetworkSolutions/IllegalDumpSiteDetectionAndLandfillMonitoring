@@ -1,0 +1,338 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.ScheduleRuns
+@using Microsoft.AspNetCore.Localization
+@using SD.Enums
+@using SD.Helpers
+@model ViewScheduledRunsViewModel
+@{
+    ViewData["Title"] = "Manage scheduled runs";
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Manage scheduled detection and training runs.", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">                   
+                    <div class="card-body">
+                        <table id="scheduledRunsTable" class="table table-sm table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Name", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Description", "Resources")
+                                    </th>                                    
+                                    <th>
+                                        @DbResHtml.T("Created By", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Created On", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Is Completed", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Status", "Resources")
+                                    </th>
+                                    <th class="notexport">
+                                        @DbResHtml.T("Action", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.DetectionRuns)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td>@item.Description</td>
+                                        <td>@item.CreatedBy?.UserName</td>
+                                        <td>@item.CreatedOn?.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@item.IsCompleted</td>
+                                        <td>@item.Status</td>
+                                        <td>
+                                            @if (item.Status == nameof(ScheduleRunsStatus.Success) && User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
+                                            {
+                                                <a asp-controller="Map" asp-action="Index" asp-route-detectionRunId="@item.Id" class="mb-1 btn bg-gradient-info text-white btn-xs" title="@DbResHtml.T("View detection run", "Resources")">
+                                                    <i class="fas fa-map-marked-alt"></i>
+                                                </a>
+                                            }
+                                            @if (item.Status == nameof(ScheduleRunsStatus.Waiting) && User.HasAuthClaim(SD.AuthClaims.DeleteDetectionRun))
+                                            {
+                                                <button class="mb-1 btn bg-gradient-danger btn-xs" id="@item.Id" onclick="deleteDetectionRunModalFunction('@item.Id')" title="@DbResHtml.T("Delete Detection Run", "Resources")">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            }
+                                            @if (item.Status == nameof(ScheduleRunsStatus.Error) && User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
+                                            {
+                                                <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="viewErrorDetectionRunModalFunction('@item.Id')" title="@DbResHtml.T("View Detection Run Error", "Resources")">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                </button>
+                                            }                                           
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+        $(document).ready(function () {
+            $('#scheduledRunsTable').DataTable({
+                paging: true,
+                pageLength: 100,
+                "language": {
+                    "url": "@langPath"
+                },
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        className: 'btn bg-gradient-success border-0',
+                        text: '<i class="fas fa-file-alt"></i>',
+                        titleAttr: "Export to excel",
+                        filename: "Scheduled detection and training runs - @DateTime.Now.ToString("dd.MM.yyyy")",
+                        exportOptions: {
+                            columns: ':not(.notexport)'
+                        }
+                    }
+                ]
+            });
+        });
+        
+        function viewErrorDetectionRunModalFunction(detectionRunId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetDetectionRunErrorLogMessage", "Detection", "IntranetPortal")",
+                data: {
+                    detectionRunId: detectionRunId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#viewErrorDetectionRunModalCardBody").html("");
+
+                            $("#viewErrorDetectionRunModalCardBody").append(
+                                ` <div class="d-flex justify-content-center align-items-center"><strong><i class="fas fa-exclamation-triangle fa-2x text-warning"></i></strong></div>
+                                  <p class="text-muted text-break overflow-auto p-3" style="line-height: 1.6; max-height: 400px;"> ${data.data} </p>
+                                `
+                            );
+
+                            $('#viewErrorDetectionRunModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',                       
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+        function deleteDetectionRun() {
+            var detectionRunId = $("#txtDeleteDetectionRunId").val();
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteDetectionRun", "Detection", "IntranetPortal")",
+                data: {
+                    detectionRunId: detectionRunId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully deleted detection run", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function deleteDetectionRunModalFunction(detectionRunId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetDetectionRunById", "Detection", "IntranetPortal")",
+                data: {
+                    detectionRunId: detectionRunId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#deleteDetectionRunModalBody").html("");
+
+                            $("#deleteDetectionRunModalBody").append(
+                                '<div>'
+                                + '<input type="text" id="txtDeleteDetectionRunId" hidden/>'
+                                + '<table class="table table-striped my-4 w-100">'
+                                + '<thead>'
+                                + '<tr>'
+                                + '<th>@DbResHtml.T("Name", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Description", "Resources")</th>'
+                                + '<th>@DbResHtml.T("CreatedBy", "Resources")</th>'
+                                + '<th>@DbResHtml.T("CreatedOn", "Resources")</th>'
+                                + '</tr>'
+                                + '</thead>'
+                                + '<tbody>'
+                                + '<tr>'
+                                + `<td>${data.data.name}</td>`
+                                + `<td>${data.data.description}</td>`
+                                + `<td>${data.data.createdBy.userName}</td>`
+                                + `<td>${new Date(data.data.createdOn).toLocaleDateString('en-GB')}</td>`
+                                + '</tr>'
+                                + '</tbody>'
+                                + '</table>'
+                                + '</div>'
+                            );
+
+                            $(`#txtDeleteDetectionRunId`).val(data.data.id);
+                            $('#deleteDetectionRunModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                }
+            });
+        }
+    </script>
+}
+@section BodyArea{
+    <div class="modal" id="viewErrorDetectionRunModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-warning text-white">
+                    <h5 class="modal-title">@DbResHtml.T("Detection run error message log", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="viewErrorDetectionRunModalBody" class="modal-body">
+                    <div class="card card-warning bg-light">
+                        <div class="card-body" id="viewErrorDetectionRunModalCardBody">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-warning text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"> @DbResHtml.T("Close", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="deleteDetectionRunModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-danger">
+                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this detection run?", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="deleteDetectionRunModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteDetectionRun()" data-dismiss="modal" aria-label="Delete">
+                        <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>    
+}

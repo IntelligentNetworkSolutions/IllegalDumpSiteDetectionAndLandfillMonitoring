@@ -9,13 +9,15 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
     {
         Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRuns();
         Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRunsIncludingDetectedDumpSites();
-        Task<ResultDTO<List<DetectionRunDTO>>> GetSelectedDetectionRunsIncludingDetectedDumpSites(List<Guid> selectedDetectionRunsIds);
+        Task<ResultDTO<List<DetectionRunDTO>>> GetSelectedDetectionRunsIncludingDetectedDumpSites(List<Guid> selectedDetectionRunsIds, List<ConfidenceRateDTO> selectedConfidenceRates);
         Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds);
         Task<ResultDTO<DetectionRunDTO>> GetDetectionRunById(Guid id, bool track = false);
+        Task<ResultDTO> DeleteDetectionRun(DetectionRunDTO detectionRunDTO);
         Task<ResultDTO> CreateDetectionRun(DetectionRunDTO detectionRunDTO);
         Task<ResultDTO> StartDetectionRun(DetectionRunDTO detectionRunDTO);
         Task<ResultDTO> IsCompleteUpdateDetectionRun(DetectionRunDTO detectionRunDTO);
-        Task<ResultDTO<(string visualizedFilePath, string bboxesFilePath)>> GetRawDetectionRunResultPathsByRunId(Guid detectionRunId, string filePath);
+        Task<ResultDTO> UpdateStatus(Guid detectionRunId, string status);
+        Task<ResultDTO<string>> GetRawDetectionRunResultPathsByRunId(Guid detectionRunId);
         Task<ResultDTO<DetectionRunFinishedResponse>> GetBBoxResultsDeserialized(string absBBoxResultsFilePath);
         Task<List<DetectionRunDTO>> GetDetectionRunsWithClasses();
         Task<ResultDTO<DetectionRunFinishedResponse>> ConvertBBoxResultToImageProjection
@@ -25,7 +27,7 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
 
         //Images
         Task<ResultDTO<List<DetectionInputImageDTO>>> GetAllImages();
-        Task<ResultDTO> CreateDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO);
+        Task<ResultDTO<DetectionInputImageDTO>> CreateDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO);
         Task<ResultDTO> EditDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO);
         Task<ResultDTO> DeleteDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO);
         Task<ResultDTO<List<DetectionRunDTO>>> GetDetectionInputImageByDetectionRunId(Guid detectionInputImageId);

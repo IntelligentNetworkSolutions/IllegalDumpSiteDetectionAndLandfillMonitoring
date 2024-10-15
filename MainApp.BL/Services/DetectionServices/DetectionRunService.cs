@@ -4,6 +4,7 @@ using CliWrap.Buffered;
 using DAL.Interfaces.Repositories.DetectionRepositories;
 using DTOs.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
+using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
 using Entities.DetectionEntities;
 using MainApp.BL.Interfaces.Services.DetectionServices;
@@ -122,18 +123,27 @@ namespace MainApp.BL.Services.DetectionServices
             }
         }
 
-        public async Task<ResultDTO<List<DetectionRunDTO>>> GetSelectedDetectionRunsIncludingDetectedDumpSites(List<Guid> selectedDetectionRunsIds)
+        public async Task<ResultDTO<List<DetectionRunDTO>>> GetSelectedDetectionRunsIncludingDetectedDumpSites(List<Guid> selectedDetectionRunIds, List<ConfidenceRateDTO> selectedConfidenceRates)
         {
             try
             {
-                // DetectedDumpSites might throw error
-                ResultDTO<IEnumerable<DetectionRun>> resultGetAllEntites =
-                    await _detectionRunRepository.GetAll(filter: x => selectedDetectionRunsIds.Contains(x.Id), includeProperties: "CreatedBy,DetectedDumpSites,DetectionInputImage");
+                ResultDTO<IEnumerable<DetectionRun>> resultGetAllEntities = await _detectionRunRepository
+                    .GetAll(filter: x => selectedDetectionRunIds.Contains(x.Id), includeProperties: "CreatedBy,DetectedDumpSites,DetectionInputImage");
+                if (!resultGetAllEntities.IsSuccess && resultGetAllEntities.HandleError())
+                    return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntities.ErrMsg!);
 
-                if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
-                    return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntites.ErrMsg!);
+                var detectionRuns = resultGetAllEntities.Data.ToList();
+                var confidenceRateDict = selectedConfidenceRates.ToDictionary(cr => cr.detectionRunId, cr => cr.confidenceRate);
 
-                List<DetectionRunDTO> dtos = _mapper.Map<List<DetectionRunDTO>>(resultGetAllEntites.Data);
+                foreach (var detectionRun in detectionRuns)
+                {
+                    if (confidenceRateDict.TryGetValue(detectionRun.Id, out var confidenceThreshold))
+                    {
+                        detectionRun.DetectedDumpSites = detectionRun.DetectedDumpSites?.Where(dds => dds.ConfidenceRate > confidenceThreshold/100).ToList();
+                    }
+                }
+
+                List<DetectionRunDTO> dtos = _mapper.Map<List<DetectionRunDTO>>(detectionRuns);
 
                 return ResultDTO<List<DetectionRunDTO>>.Ok(dtos);
             }
@@ -143,7 +153,7 @@ namespace MainApp.BL.Services.DetectionServices
                 return ResultDTO<List<DetectionRunDTO>>.ExceptionFail(ex.Message, ex);
             }
         }
-
+        
         public async Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds)
         {
             List<DetectionRun> list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds) ?? throw new Exception("Object not found");
@@ -212,6 +222,25 @@ namespace MainApp.BL.Services.DetectionServices
             }
         }
 
+        public async Task<ResultDTO> DeleteDetectionRun(DetectionRunDTO detectionRunDTO)
+        {
+            try
+            {
+                DetectionRun detectionRun = _mapper.Map<DetectionRun>(detectionRunDTO);
+                ResultDTO resultDeleteEntity = await _detectionRunRepository.Delete(detectionRun);
+
+                if (resultDeleteEntity.IsSuccess == false && resultDeleteEntity.HandleError())
+                    return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);               
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
+
         public async Task<List<DetectionRunDTO>> GetDetectionRunsWithClasses()
         {
             try
@@ -228,19 +257,20 @@ namespace MainApp.BL.Services.DetectionServices
         }
 
         private string GeneratePythonDetectionCommandByType(string imageToRunDetectionOnPath,
-            string trainedModelConfigPath, string trainedModelModelPath, bool isSmallImage = true, bool hasGPU = false)
+            string trainedModelConfigPath, string trainedModelModelPath, string detectionRunId, bool isSmallImage = false, bool hasGPU = false)
         {
             string detectionCommandStr = string.Empty;
             //string scriptName = isSmallImage ? "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\demo\\image_demo.py" : "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\demo\\large_image_demo.py";
-            string scriptName = isSmallImage ? "demo\\image_demo.py" : "demo\\large_image_demo.py";
+            string scriptName = isSmallImage ? "demo\\image_demo.py" : "ins_development\\scripts\\large_image_annotated_inference.py";
             string weightsCommandParamStr = isSmallImage ? "--weights" : string.Empty;
+            string patchSizeCommand = isSmallImage ? string.Empty : "--patch-size 1280";
             string cpuDetectionCommandPart = hasGPU == false ? "--device cpu" : string.Empty;
 
-            string relativeOutputImageDirectoryMMDetection = Path.Combine(OutputBaseDirectoryMMDetectionRelPath, Path.GetFileNameWithoutExtension(imageToRunDetectionOnPath));
+            string relativeOutputImageDirectoryMMDetection = Path.Combine(OutputBaseDirectoryMMDetectionRelPath, detectionRunId); //Path.GetFileNameWithoutExtension(imageToRunDetectionOnPath)
             string outDirCommandPart = $"--out-dir {relativeOutputImageDirectoryMMDetection}";
 
-            detectionCommandStr = $"run -n openmmlab python {scriptName} \"{imageToRunDetectionOnPath}\" " +
-                $"{trainedModelConfigPath} {weightsCommandParamStr} {trainedModelModelPath} {outDirCommandPart} {cpuDetectionCommandPart}";
+            detectionCommandStr = $"run -p C:\\Users\\INS\\miniconda3\\envs\\openmmlab python {scriptName} \"{imageToRunDetectionOnPath}\" " +
+                $"{trainedModelConfigPath} {weightsCommandParamStr} {trainedModelModelPath} {outDirCommandPart} {cpuDetectionCommandPart} {patchSizeCommand}";
 
             return detectionCommandStr;
         }
@@ -266,7 +296,32 @@ namespace MainApp.BL.Services.DetectionServices
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
+        public async Task<ResultDTO> UpdateStatus(Guid detectionRunId, string status)
+        {
+            try
+            {
+                ResultDTO<DetectionRun?> resultGetEntity = await _detectionRunRepository.GetById(detectionRunId, track: true);
+                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                    return ResultDTO.Fail(resultGetEntity.ErrMsg!);
 
+                if (resultGetEntity.Data is null)
+                    return ResultDTO.Fail($"No Detection Run found with ID: {detectionRunId}");
+
+                DetectionRun detectionRunEntity = resultGetEntity.Data!;
+                detectionRunEntity.Status = status;
+
+                ResultDTO resultUpdate = await _detectionRunRepository.Update(detectionRunEntity);
+                if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())
+                    return ResultDTO.Fail(resultUpdate.ErrMsg!);
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
         public async Task<ResultDTO> IsCompleteUpdateDetectionRun(DetectionRunDTO detectionRunDTO)
         {
             try
@@ -303,10 +358,11 @@ namespace MainApp.BL.Services.DetectionServices
 
                 string detectionCommand =
                     GeneratePythonDetectionCommandByType(
-                        imageToRunDetectionOnPath: detectionRunDTO.DetectionInputImage.ImagePath,
+                        imageToRunDetectionOnPath: detectionRunDTO.InputImgPath,
                         trainedModelConfigPath: TrainedModelConfigFileRelPath,
                         trainedModelModelPath: TrainedModelModelFileRelPath,
-                        isSmallImage: true, hasGPU: false);
+                        detectionRunId: detectionRunDTO.Id.ToString()!,
+                        isSmallImage: false, hasGPU: false);
 
                 var powerShellResults = await Cli.Wrap(CondaExeFileAbsPath)
                         .WithWorkingDirectory(WorkingMMDetectionDirectoryAbsPath)
@@ -316,7 +372,7 @@ namespace MainApp.BL.Services.DetectionServices
                         .WithStandardErrorPipe(PipeTarget.ToFile(Path.Combine(CliLogsDirectoryAbsPath, $"error_{DateTime.Now.Ticks}.txt")))
                         .ExecuteBufferedAsync();
 
-                if (powerShellResults.StandardOutput.Contains("results have been saved") == false)
+                if (powerShellResults.StandardOutput.Contains("Results have been saved") == false)
                     return ResultDTO.Fail($"Detection Run failed with error: {powerShellResults.StandardError}");
 
                 return ResultDTO.Ok();
@@ -328,32 +384,22 @@ namespace MainApp.BL.Services.DetectionServices
             }
         }
 
-        public async Task<ResultDTO<(string visualizedFilePath, string bboxesFilePath)>> GetRawDetectionRunResultPathsByRunId(Guid detectionRunId, string imgFileExtension)
+        public async Task<ResultDTO<string>> GetRawDetectionRunResultPathsByRunId(Guid detectionRunId)
         {
             string relDetectionRunResultsDirPath =
                 Path.Combine(OutputBaseDirectoryMMDetectionRelPath, detectionRunId.ToString());
 
             string absDetectionRunResultsDirPath =
                 Path.Combine(WorkingMMDetectionDirectoryAbsPath, relDetectionRunResultsDirPath);
-
-            string absDetectionRunResultsVizualizedDirPath =
-                Path.Combine(absDetectionRunResultsDirPath, "vis");
-            string absDetectionRunResultsBBoxesDirPath =
-                Path.Combine(absDetectionRunResultsDirPath, "preds");
-
-            string absDetectionRunResultsVizualizedFilePath =
-                Path.Combine(absDetectionRunResultsVizualizedDirPath, detectionRunId.ToString() + imgFileExtension);
+           
             string absDetectionRunResultsBBoxesFilePath =
-                Path.Combine(absDetectionRunResultsBBoxesDirPath, detectionRunId.ToString() + ".json");
-
-            if (File.Exists(absDetectionRunResultsVizualizedFilePath) == false)
-                return ResultDTO<(string, string)>.Fail("No Visualized Detection Run Results Found");
+                Path.Combine(absDetectionRunResultsDirPath, "detection_bboxes" + ".json");
 
             if (File.Exists(absDetectionRunResultsBBoxesFilePath) == false)
-                return ResultDTO<(string, string)>.Fail("No Polygonized Predictions Detection Run Results Found");
+                return ResultDTO<string>.Fail("No Polygonized Predictions Detection Run Results Found");
 
             return await Task.FromResult(
-                ResultDTO<(string, string)>.Ok((absDetectionRunResultsVizualizedFilePath, absDetectionRunResultsBBoxesFilePath))
+                ResultDTO<string>.Ok(absDetectionRunResultsBBoxesFilePath)
                 );
         }
 
@@ -396,7 +442,7 @@ namespace MainApp.BL.Services.DetectionServices
                 double yres = geoTransform[5];
                 double lrx = ulx + (gdalDataset.RasterXSize * xres);
                 double lry = uly + (gdalDataset.RasterYSize * yres);
-
+                
                 // Georeference the data
                 foreach (var bbox in detectionRunFinishedResponse.bboxes)
                 {
@@ -484,7 +530,7 @@ namespace MainApp.BL.Services.DetectionServices
                 {
                     return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
                 }
-                List<DetectionInputImageDTO> dtos = _mapper.Map<List<DetectionInputImageDTO>>(resultGetEntities.Data);
+                List<DetectionInputImageDTO> dtos = _mapper.Map<List<DetectionInputImageDTO>>(resultGetEntities.Data);               
                 return ResultDTO<List<DetectionInputImageDTO>>.Ok(dtos);
             }
             catch (Exception ex)
@@ -534,24 +580,24 @@ namespace MainApp.BL.Services.DetectionServices
             }
         }
 
-        public async Task<ResultDTO> CreateDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO)
+        public async Task<ResultDTO<DetectionInputImageDTO>> CreateDetectionInputImage(DetectionInputImageDTO detectionInputImageDTO)
         {
             try
             {
                 DetectionInputImage detectionInputImageEntity = _mapper.Map<DetectionInputImage>(detectionInputImageDTO);
 
-                ResultDTO resultCreate = await _detectionInputImageRepository.Create(detectionInputImageEntity);
+                ResultDTO<DetectionInputImage> resultCreate = await _detectionInputImageRepository.CreateAndReturnEntity(detectionInputImageEntity);
                 if (resultCreate.IsSuccess == false && resultCreate.HandleError())
                 {
-                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+                    return ResultDTO<DetectionInputImageDTO>.Fail(resultCreate.ErrMsg!);
                 }
-
-                return ResultDTO.Ok();
+                DetectionInputImageDTO dto = _mapper.Map<DetectionInputImageDTO>(resultCreate.Data);
+                return ResultDTO<DetectionInputImageDTO>.Ok(dto);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
-                return ResultDTO.ExceptionFail(ex.Message, ex);
+                return ResultDTO<DetectionInputImageDTO>.ExceptionFail(ex.Message, ex);
             }
         }
 

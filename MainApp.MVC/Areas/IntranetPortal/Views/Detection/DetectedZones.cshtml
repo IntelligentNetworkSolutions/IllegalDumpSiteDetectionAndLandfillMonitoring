@@ -44,9 +44,6 @@
                                         @DbResHtml.T("Description", "Resources")
                                     </th>
                                     <th>
-                                        @DbResHtml.T("Is Completed", "Resources")
-                                    </th>
-                                    <th>
                                         @DbResHtml.T("Created By", "Resources")
                                     </th>
                                     <th>
@@ -63,7 +60,6 @@
                                     <tr>
                                         <td>@item.Name</td>
                                         <td>@item.Description</td>
-                                        <td>@item.IsCompleted</td>
                                         <td>@item.CreatedBy?.UserName</td>
                                         <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
                                         <td>

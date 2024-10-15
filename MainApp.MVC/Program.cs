@@ -159,8 +159,7 @@ services.AddInfrastructureServices();
 
 // Add Hangfire services
 services.RegisterHangfireServices(configuration);
-// Add the processing hangfire server as IHostedService
-services.AddHangfireProcessingServer();
+
 
 // TODO: look over
 services.AddAutoMapper(typeof(Program).Assembly, typeof(UserManagementProfileBL).Assembly);

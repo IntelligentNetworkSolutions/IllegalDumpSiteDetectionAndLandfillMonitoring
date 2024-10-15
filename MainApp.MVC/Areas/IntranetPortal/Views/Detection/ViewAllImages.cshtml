@@ -31,10 +31,13 @@
                 <div class="card">
 
                     <div class="card-body">
-                        <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addImageModal">
+                        @if (User.HasAuthClaim(SD.AuthClaims.AddDetectionInputImage))
+                        {
+                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addImageModal">
                                 <i class="fas fa-plus"></i>
                                 @DbResHtml.T("Add Input Image", "Resources")
                             </button>
+                        }                      
                         <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
                             <i class="fas fa-file-alt"></i>
                         </button>
@@ -72,12 +75,24 @@
                                             <td>@item.CreatedBy?.UserName</td>
                                             <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
                                             <td>
-                                                <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editDetectionInputImageModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" id="@item.Id" onclick="deleteDetectionInputImageModalFunction('@item.Id')" title="@DbResHtml.T("Delete", "Resources")">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                @if (User.HasAuthClaim(SD.AuthClaims.PreviewDetectionInputImages))
+                                                {
+                                                    <button class="ml-1 mb-1 btn bg-gradient-info btn-xs" id="preview_@item.Id" onclick="previewInputImageModalFunction('@item.Id')" title="@DbResHtml.T("Preview Input Image", "Resources")">
+                                                        <i class="fas fa-photo-video"></i>
+                                                    </button>
+                                                }                                              
+                                                @if (User.HasAuthClaim(SD.AuthClaims.EditDetectionInputImage))
+                                                {
+                                                    <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editDetectionInputImageModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                }
+                                                @if (User.HasAuthClaim(SD.AuthClaims.DeleteDetectionInputImage))
+                                                {
+                                                    <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" id="@item.Id" onclick="deleteDetectionInputImageModalFunction('@item.Id')" title="@DbResHtml.T("Delete", "Resources")">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }                                                
                                             </td>
                                         </tr>
                                     }
@@ -176,13 +191,30 @@
                     if (data.isSuccess) {
                         Swal.fire({
                             icon: "success",
-                            text: '@DbResHtml.T("Image uploaded successfully", "Resources")',
+                            text: '@DbResHtml.T("Image uploaded successfully. Thumbnail will be uploaded in na few moments!", "Resources")',
                             confirmButtonText: '@DbResHtml.T("OK", "Resources")'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                location.reload(); // Reload the page to show the new image
+                                location.reload();
                             }
+                            $.ajax({
+                                type: "POST",
+                                url: "@Url.Action("GenerateThumbnail", "Detection", "IntranetPortal")",
+                                data: JSON.stringify(data.data),
+                                contentType: "application/json",
+                                success: function (thumbnailData) {
+                                    if (thumbnailData.isSuccess) {
+                                        console.log("Thumbnail created successfully.");
+                                    } else {
+                                        console.error(thumbnailData.errMsg);
+                                    }
+                                },
+                                error: function () {
+                                    console.error("Error generating the thumbnail.");
+                                }
+                            });
                         });
+                      
                     } else {
                         Swal.fire({
                             icon: "error",
@@ -209,12 +241,14 @@
             var name = $("#txtDeleteName").val();
             var description = $("#txtDeleteDescription").val();
             var imagePath = $("#txtDeleteImagePath").val();
+            var imageFileName = $("#txtDeleteImageFileName").val()
 
             var detectionInputImageViewModel = {
                 Id: id,
                 Name: name,
                 Description: description,
-                ImagePath: imagePath
+                ImagePath: imagePath,
+                ImageFileName: imageFileName
             }
 
             $.ajax({
@@ -290,6 +324,7 @@
                                 + '<input type="text" id="txtDeleteName" hidden/>'
                                 + '<input type="text" id="txtDeleteDescription" hidden/>'
                                 + '<input type="text" id="txtDeleteImagePath" hidden/>'
+                                + '<input type="text" id="txtDeleteImageFileName" hidden/>'
                                 + '<table class="table table-striped my-4 w-100">'
                                 + '<thead>'
                                 + '<tr>'
@@ -311,6 +346,7 @@
                             $(`#txtDeleteName`).val(data.data.name);
                             $(`#txtDeleteDescription`).val(data.data.description);
                             $(`#txtDeleteImagePath`).val(data.data.imagePath);
+                            $(`#txtDeleteImageFileName`).val(data.data.imageFileName);
 
 
                             $('#deleteDetectionInputImageModal').modal('show');
@@ -466,10 +502,74 @@
                 }
             });
         }
+
+        function previewInputImageModalFunction(detectionInputImageId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetDetectionInputImageById", "Detection", "IntranetPortal")",
+                data: {
+                    detectionInputImageId: detectionInputImageId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#inputImagePreviewCard").html("");
+
+                            $("#inputImagePreviewCard").append(
+                                `<img src='${data.data.thumbnailFilePath}'  class='rounded w-50'/>`
+                            );
+
+                            $('#inputImgPreviewModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
     </script>
 }
 
 @section BodyArea{
+    <div class="modal" id="inputImgPreviewModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-info">
+                    <h4 class="modal-title">@DbResHtml.T("Input Image Preview", "Resources") </h4>
+                </div>
+                <div class="modal-body row">
+                    <div class="col-md-12">
+                        <div class="card card-success bg-light">
+                            <div class="card-body text-center" id="inputImagePreviewCard">
+                            </div>
+                        </div>
+                    </div>                   
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn btn-outline-info" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">@DbResHtml.T("Close", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="addImageModal" tabindex="-1" role="dialog" aria-labelledby="addImageModalTitle" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -510,8 +610,6 @@
             </div>
         </div>
     </div>
-
-
     <div class="modal" id="deleteDetectionInputImageModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
