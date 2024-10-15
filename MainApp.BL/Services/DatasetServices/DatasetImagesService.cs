@@ -35,7 +35,6 @@ namespace MainApp.BL.Services.DatasetServices
         #region Get DatasetImage/es
         public async Task<DatasetImageDTO> GetDatasetImageById(Guid datasetImageId)
         {
-            // TODO: Refactor to use ResultDTO
             ResultDTO<DatasetImage?> datasetImageDb =
                 await _datasetImagesRepository.GetById(datasetImageId) ?? throw new Exception("Object not found");
             return _mapper.Map<DatasetImageDTO>(datasetImageDb.Data);
@@ -43,7 +42,6 @@ namespace MainApp.BL.Services.DatasetServices
 
         public async Task<List<DatasetImageDTO>> GetImagesForDataset(Guid datasetId)
         {
-            // TODO: Refactor to use ResultDTO
             ResultDTO<IEnumerable<DatasetImage>> datasetImages =
                 await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetId) ?? throw new Exception("Object not found");
             return _mapper.Map<List<DatasetImageDTO>>(datasetImages.Data);
@@ -54,7 +52,7 @@ namespace MainApp.BL.Services.DatasetServices
         #region Create
         public async Task<ResultDTO<Guid>> AddDatasetImage(DatasetImageDTO datasetImageDto)
         {
-            // TODO: Refactor to use ResultDTO
+            // TODO: Refactor to not throw exceptions 
             Guid datasetId = datasetImageDto.DatasetId ?? throw new Exception("Dataset id is null");
             ResultDTO<Dataset?> datasetDb =
                 await _datasetsRepository.GetById(datasetId, track: true, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");

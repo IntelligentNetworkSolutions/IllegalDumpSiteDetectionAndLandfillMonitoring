@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using DAL.Interfaces.Helpers;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,7 +20,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var res = await _trainingRunService.ExecuteDummyTrainingRunProcess();
+            var getTrainingRunResultsLogResult = await _trainingRunService.GetBestEpochForTrainingRun(Guid.Parse("e6684e31-1dd9-489a-9163-524f134e397a"));
+
+            //var res = await _trainingRunService.ExecuteDummyTrainingRunProcess();
 
             return View();
         }

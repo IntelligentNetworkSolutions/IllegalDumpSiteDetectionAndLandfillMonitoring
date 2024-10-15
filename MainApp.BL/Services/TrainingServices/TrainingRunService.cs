@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using CliWrap;
 using CliWrap.Buffered;
 using DAL.Interfaces.Repositories.DatasetRepositories;
 using DAL.Interfaces.Repositories.TrainingRepositories;
+using DTOs.MainApp.BL.TrainingDTOs;
 using Entities.DatasetEntities;
 using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Interfaces.Services.TrainingServices;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using SD;
 
 namespace MainApp.BL.Services.TrainingServices
@@ -41,6 +36,34 @@ namespace MainApp.BL.Services.TrainingServices
             _datasetsRepository = datasetsRepository;
         }
 
+        // TODO: Refactor to return DTO
+        public async Task<ResultDTO<TrainingRun>> GetTrainingRunById(Guid id, bool track = false)
+        {
+            try
+            {
+                ResultDTO<TrainingRun?> resultGetById =
+                    await _trainingRunsRepository.GetById(id, track: track, includeProperties: "CreatedBy");
+
+                if (resultGetById.IsSuccess == false && resultGetById.HandleError())
+                    return ResultDTO<TrainingRun>.Fail(resultGetById.ErrMsg!);
+
+                //DetectionRunDTO dto = _mapper.Map<DetectionRunDTO>(resultGetAllEntites.Data);
+
+                return ResultDTO<TrainingRun>.Ok(resultGetById.Data!);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<TrainingRun>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        // TODO: Implement
+        public async Task<ResultDTO<List<TrainingRunDTO>>> GetAllTrainingRuns()
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<ResultDTO> ExecuteDummyTrainingRunProcess()
         {
             //string modelConfigPath = "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\ins_development\\resources\\ins_best_pretrained_2x2_model_files\\compiled_config\\ins_ann_v9_faster_r101_2_stages_base_add300_2_stages_e9.py";
@@ -56,7 +79,7 @@ namespace MainApp.BL.Services.TrainingServices
                     (d => d.DatasetClasses, [ddc => ((Dataset_DatasetClass)ddc).DatasetClass, dc => ((DatasetClass)dc).ParentClass]),
                     (d => d.DatasetImages, [di => ((DatasetImage)di).ImageAnnotations,]),
                     (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations]),
-                    (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).DatasetClass, 
+                    (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).DatasetClass,
                                                 dc => ((DatasetClass)dc).Datasets]),
                     ]
                 );
@@ -67,21 +90,21 @@ namespace MainApp.BL.Services.TrainingServices
             if (resultDatasetIncludeThenAll.Data is null)
                 return ResultDTO.Fail("Error getting Dataset");
 
-            ResultDTO<TrainedModel?> getInsBestTrainedModelResult = 
+            ResultDTO<TrainedModel?> getInsBestTrainedModelResult =
                 await _trainedModelsRepository.GetByIdInclude(Guid.Parse("a83f2202-f919-4b79-a181-b2747219ed46"), track: false);
 
             int numEpochs = 1;
             int numBatchSize = 1;
             int numFrozenStages = 4;
 
-            ResultDTO result = 
-                await ExecuteTrainingRunProcess(trainingRunName, resultDatasetIncludeThenAll.Data, getInsBestTrainedModelResult.Data!, createdById, 
+            ResultDTO result =
+                await ExecuteTrainingRunProcess(trainingRunName, resultDatasetIncludeThenAll.Data, getInsBestTrainedModelResult.Data!, createdById,
                                                 numEpochs, numFrozenStages, numBatchSize);
 
             return ResultDTO.Ok();
         }
 
-        public async Task<ResultDTO> ExecuteTrainingRunProcess(string trainRunName, Dataset dataset, TrainedModel baseTrainedModel, 
+        public async Task<ResultDTO> ExecuteTrainingRunProcess(string trainRunName, Dataset dataset, TrainedModel baseTrainedModel,
             string createdById, int? numEpochs = null, int? numFrozenStages = null, int? numBatchSize = null)
         {
             try
@@ -94,7 +117,7 @@ namespace MainApp.BL.Services.TrainingServices
 
                 // TODO: Export Dataset at _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRun.Id)
 
-                ResultDTO<string> generateTrainRunResult = 
+                ResultDTO<string> generateTrainRunResult =
                     await GenerateTrainingRunConfig(trainingRun.Id, dataset, baseTrainedModel, numEpochs, numFrozenStages, numBatchSize);
 
                 ResultDTO startTrainRunResult = await StartTrainingRun(trainingRun.Id);
@@ -103,11 +126,11 @@ namespace MainApp.BL.Services.TrainingServices
                 if (createTrainedModelResult.IsSuccess == false && createTrainedModelResult.HandleError())
                     return ResultDTO.Fail(createTrainedModelResult.ErrMsg!);
 
-                if(createTrainedModelResult.Data is null )
+                if (createTrainedModelResult.Data is null)
                     return ResultDTO.Fail("Create Trained Model returned Null Trained Model");
 
-                // TODO: Update Training Run
-                ResultDTO<TrainingRun> updateTrainRunResult = 
+                // TODO: Update Training Run IsSuccuss
+                ResultDTO<TrainingRun> updateTrainRunResult =
                     await UpdateTrainingRunAfterSuccessfullTraining(trainingRun, createTrainedModelResult.Data.Id);
                 if (updateTrainRunResult.IsSuccess == false && updateTrainRunResult.HandleError())
                     return ResultDTO.Fail(updateTrainRunResult.ErrMsg!);
@@ -121,7 +144,7 @@ namespace MainApp.BL.Services.TrainingServices
             }
             finally
             {
-                // TODO: Clean Up Training Run Files
+                // TODO: Clean Up Training Run Files, Later
             }
         }
 
@@ -130,14 +153,16 @@ namespace MainApp.BL.Services.TrainingServices
             if (trainingRun is null)
                 return ResultDTO<TrainedModel>.Fail("Training Run is null when Creating Trained Model");
 
-            ResultDTO<string> getTrainedModelConfigFilePathResult = 
+            ResultDTO<string> getTrainedModelConfigFilePathResult =
                 _MMDetectionConfiguration.GetTrainedModelConfigFileAbsPath(trainingRun.Id);
-            if(getTrainedModelConfigFilePathResult.IsSuccess == false)
+            if (getTrainedModelConfigFilePathResult.IsSuccess == false)
                 return ResultDTO<TrainedModel>.Fail(getTrainedModelConfigFilePathResult.ErrMsg!);
 
-            ResultDTO<string> getTrainedModelBestEpochFilePathResult = 
+            //TODO : Get BEst Epoch and call with NumBestEpoch
+
+            ResultDTO<string> getTrainedModelBestEpochFilePathResult =
                 _MMDetectionConfiguration.GetTrainedModelBestEpochFileAbsPath(trainingRun.Id);
-            if(getTrainedModelBestEpochFilePathResult.IsSuccess == false)
+            if (getTrainedModelBestEpochFilePathResult.IsSuccess == false)
                 return ResultDTO<TrainedModel>.Fail(getTrainedModelBestEpochFilePathResult.ErrMsg!);
 
             TrainedModel trainedModel = new TrainedModel()
@@ -181,7 +206,7 @@ namespace MainApp.BL.Services.TrainingServices
 
                     TrainParamsId = null,
                     TrainParams = null,
-                
+
                     TrainedModelId = null,
                     TrainedModel = null,
 
@@ -222,7 +247,7 @@ namespace MainApp.BL.Services.TrainingServices
         private string GeneratePythonTrainingCommandByRunId(Guid trainingRunId)
         {
             string detectionCommandStr = string.Empty;
-            
+
             string scriptName = Path.Combine("tools", "train.py");
             string scriptFileAbsPath = Path.Combine(_MMDetectionConfiguration.GetRootDirAbsPath(), scriptName);
             // TODO: Update Script with INS script
@@ -232,10 +257,10 @@ namespace MainApp.BL.Services.TrainingServices
             string trainingConfigFileAbsPath = Path.Combine(trainingConfigDirAbsPath, $"{trainingRunId}.py");
 
             // Save/Output Directory
-            string workDirCommandParamStr = "--work-dir"; 
+            string workDirCommandParamStr = "--work-dir";
             string workDirAbsPath = Path.Combine(_MMDetectionConfiguration.GetTrainingRunsBaseOutDirAbsPath(), trainingRunId.ToString());
 
-            detectionCommandStr = 
+            detectionCommandStr =
                 $"run -n openmmlab python " +
                 $"{scriptFileAbsPath} " +
                 $"\"{trainingConfigFileAbsPath}\" "
@@ -256,16 +281,16 @@ namespace MainApp.BL.Services.TrainingServices
                         .WithStandardErrorPipe(PipeTarget.ToFile(Path.Combine(_MMDetectionConfiguration.GetTrainingRunCliOutDirAbsPath(), $"error_{DateTime.Now.Ticks}.txt")))
                         .ExecuteBufferedAsync();
 
-            if(powerShellResults.IsSuccess == false)
+            if (powerShellResults.IsSuccess == false)
                 return ResultDTO.Fail(powerShellResults.StandardError);
 
             return ResultDTO.Ok();
         }
 
-        private async Task<ResultDTO<string>> GenerateTrainingRunConfig(Guid trainingRunId, 
-            Dataset  dataset, TrainedModel baseTrainedModel, int? numEpochs = null, int? numFrozenStages = null, int? numBatchSize = null)
+        private async Task<ResultDTO<string>> GenerateTrainingRunConfig(Guid trainingRunId,
+            Dataset dataset, TrainedModel baseTrainedModel, int? numEpochs = null, int? numFrozenStages = null, int? numBatchSize = null)
         {
-            if(Guid.Empty == trainingRunId)
+            if (Guid.Empty == trainingRunId)
                 return ResultDTO<string>.Fail("TrainingRunStartParams must have a Training Run Id");
 
             if ((baseTrainedModel is not null
@@ -275,7 +300,7 @@ namespace MainApp.BL.Services.TrainingServices
                 return ResultDTO<string>.Fail("TrainingRunStartParams must have a BaseTrainedModel with a fully included dataset " +
                     "i.e. DatasetClasses with DatasetClasses");
 
-            if(string.IsNullOrEmpty(baseTrainedModel.ModelConfigPath)
+            if (string.IsNullOrEmpty(baseTrainedModel.ModelConfigPath)
                 || string.IsNullOrEmpty(baseTrainedModel.ModelFilePath))
                 return ResultDTO<string>.Fail("TrainingRunStartParams must have a BaseTrainedModel with Model File and Config paths");
 
@@ -283,8 +308,8 @@ namespace MainApp.BL.Services.TrainingServices
 
             string datasetRootPath = "C:/vs_code_workspaces/mmdetection/mmdetection/data/ins/v2";
 
-            string trainingRunConfigContentStr = 
-                TrainingRunConfigGenerator.GenerateConfigOverrideStr(
+            string trainingRunConfigContentStr =
+                TrainingConfigGenerator.GenerateConfigOverrideStr(
                     backboneCheckpointAbsPath: _MMDetectionConfiguration.GetBackboneCheckpointAbsPath(),
                     //dataRootAbsPath: _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRunId),
                     dataRootAbsPath: datasetRootPath, // TODO: Return previous line once Export is available
@@ -320,150 +345,119 @@ namespace MainApp.BL.Services.TrainingServices
             return ResultDTO<string>.Ok(trainingRunConfigPythonFileAbsPath);
         }
 
+        public async Task<ResultDTO<TrainingRunResultsDTO>> GetBestEpochForTrainingRun(Guid trainingRunId)
+        {
+            try
+            {
+
+                ResultDTO<string> getLogFilePathResult = _MMDetectionConfiguration.GetTrainingRunResultLogFileAbsPath(trainingRunId);
+                if (getLogFilePathResult.IsSuccess == false && getLogFilePathResult.HandleError())
+                    return ResultDTO<TrainingRunResultsDTO>.Fail(getLogFilePathResult.ErrMsg!);
+
+                Dictionary<int, TrainingEpochMetricsDTO> epochMetrics = new Dictionary<int, TrainingEpochMetricsDTO>();
+                using (StreamReader reader = new StreamReader(getLogFilePathResult.Data!))
+                {
+                    string jsonContent = "";
+                    int currentEpoch = 0;
+                    int lineNumber = 0;
+
+                    while (!reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+                        lineNumber++;
+
+                        if (string.IsNullOrWhiteSpace(line) || line.Trim() == "{")
+                            continue; // Skip empty lines or lines with only '{'
+
+                        jsonContent += line;
+
+                        if (line.Trim().EndsWith("}"))
+                        {
+                            try
+                            {
+                                JObject jsonObject = JObject.Parse(jsonContent);
+                                TrainingEpochStepMetricsDTO stepMetrics = new TrainingEpochStepMetricsDTO();
+
+                                if (jsonObject.TryGetValue("epoch", out JToken? epochToken))
+                                    currentEpoch = epochToken.Value<int>();
+
+                                if (jsonObject.TryGetValue("step", out JToken? stepToken))
+                                    stepMetrics.Step = stepToken.Value<int>();
+
+                                if (!epochMetrics.ContainsKey(currentEpoch))
+                                    epochMetrics[currentEpoch] = new TrainingEpochMetricsDTO { Epoch = currentEpoch };
+
+                                foreach (var property in jsonObject.Properties())
+                                {
+                                    if (property.Value.Type == JTokenType.Float || property.Value.Type == JTokenType.Integer)
+                                    {
+                                        double value = property.Value.Value<double>();
+                                        stepMetrics.Metrics[property.Name] = value;
+                                    }
+                                }
+
+                                epochMetrics[currentEpoch].Steps.Add(stepMetrics);
+
+                                jsonContent = ""; // Reset for the next object
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error parsing JSON at line {lineNumber}: {jsonContent}");
+                                Console.WriteLine($"Error message: {ex.Message}");
+                                jsonContent = ""; // Reset for the next object
+                            }
+                        }
+                    }
+                }
+
+                if (epochMetrics.Count == 0)
+                    return ResultDTO<TrainingRunResultsDTO>.Fail("No valid data found in the file.");
+
+                TrainingEpochMetricsDTO? bestEpoch = 
+                    epochMetrics.Values.Where(e => e.Steps.Any(s => s.Metrics.ContainsKey("coco/bbox_mAP")))
+                                        .OrderByDescending(e => e.Steps.Max(s => s.Metrics.GetValueOrDefault("coco/bbox_mAP", 0)))
+                                        .FirstOrDefault();
+
+                if (bestEpoch is null)
+                    return ResultDTO<TrainingRunResultsDTO>.Fail("No epoch found with coco/bbox_mAP metric.");
+
+                TrainingRunResultsDTO trainingRunResults = new TrainingRunResultsDTO()
+                {
+                    BestEpochMetrics = bestEpoch,
+                    EpochMetrics = epochMetrics,
+                };
+
+                return ResultDTO<TrainingRunResultsDTO>.Ok(trainingRunResults);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<TrainingRunResultsDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
         // TODO: Implement
         public async Task<ResultDTO> ScheduleTrainingRun()
         {
             throw new NotImplementedException();
         }
 
-        // TODO: Implement, maybe one retry Clean up files regardless of outcome
+        // TODO: Implement, maybe one retry Clean up files regardless of outcome, someday
         public async Task<ResultDTO> CleanUpTrainingRunFiles()
         {
             throw new NotImplementedException();
         }
-    }
 
-    public static class TrainingRunConfigGenerator
-    {
-        public static string GenerateConfigOverrideStr(string backboneCheckpointAbsPath, 
-            string dataRootAbsPath, string[] classNames, 
-            string baseModelConfigFilePath, string baseModelFileAbsPath, 
-            int numDatasetClasses, int? numBatchSize = null, int? numEpochs = null, int? numFrozenStages = null)
+        // TODO: Implement 
+        public async Task<ResultDTO<TrainingRunDTO>> EditTrainingRunById(Guid trainingRunId)
         {
-            string configStr =
-                $"{GenerateConfigVariablesOverrideStr(numDatasetClasses, numBatchSize, numEpochs, numFrozenStages)}\r\n" +
-                $"\r\n" +
-                $"{GenerateConfigBaseModelOverrideStr(baseModelConfigFilePath)}\r\n" +
-                $"\r\n" +
-                $"{GenerateConfigDataRootOverrideStr(dataRootAbsPath)}\r\n" +
-                $"\r\n" +
-                $"{GenerateConfigMetaInfoOverrideStr(classNames)}\r\n" +
-                $"\r\n" +
-                $"{GenerateConfigModelOverrideStr(backboneCheckpointAbsPath)}\r\n" +
-                $"\r\n" +
-                $"{GenerateConfigTrainCfgOverrideStr}\r\n" +
-                $"{GenerateConfigTrainDataloaderOverrideStr}\r\n" +
-                $"\r\n" +
-                $"{GenerateConfigValCfgOverrideStr}\r\n" +
-                $"{GenerateConfigValDataloaderOverrideStr}\r\n" +
-                $"{GenerateConfigValEvaluatorOverrideStr}\r\n" +
-                $"\r\n" +
-                $"{GenerateConfigTestCfgOverrideStr}\r\n" +
-                $"{GenerateConfigTestDataloaderOverrideStr}\r\n" +
-                $"{GenerateConfigTestEvaluatorOverrideStr}\r\n" +
-                $"\r\n" +
-                $"{GenerateConfigLoadFromOverrideStr(baseModelFileAbsPath)}\r\n" +
-                $"\r\n";
-
-            return configStr;
+            // Allowed Update only for Name and IsPublished
+            throw new NotImplementedException();
         }
 
-        public static string GenerateConfigVariablesOverrideStr(int numDatasetClasses, 
-            int? numBatchSize = null, int? numEpochs = null, int? numFrozenStages = null)
+        // TODO: Implement , Delete files as well
+        public async Task<ResultDTO> DeleteTrainingRunById(Guid trainingRunId)
         {
-            string configVariablesOverrideStr =
-                $"num_dataset_classes = {numDatasetClasses}\r\n" +
-                $"num_batch_size = {(numBatchSize.HasValue ? numBatchSize.Value : 2)}\r\n" +
-                $"num_epochs = {(numEpochs.HasValue ? numEpochs.Value : 15)}\r\n" +
-                $"num_frozen_stages = {(numFrozenStages.HasValue ? numFrozenStages.Value : 2)}\r\n";
-
-            return configVariablesOverrideStr;
+            throw new NotImplementedException();
         }
-
-        public static string GenerateConfigBaseModelOverrideStr(string baseModelConfigFilePath)
-            => $"_base_ = ['{baseModelConfigFilePath}']";
-
-        public static string GenerateConfigDataRootOverrideStr(string dataRootAbsPath)
-            => $"data_root = '{dataRootAbsPath}'\r\n";
-
-        public static string GenerateConfigMetaInfoOverrideStr(string[] classNames)
-        {
-            string classesListOverrideStr = "";
-            string paletteArrOverrideStr = "";
-            const int redVal = 220;
-            const int greenVal = 20;
-            const int blueVal = 60;
-            for (int i = 0; i < classNames.Length; i++)
-            {
-                string className = classNames[i];
-                classesListOverrideStr += $"'{className}', ";
-                paletteArrOverrideStr += $"({redVal + i * -10}, {greenVal + i * 10}, {blueVal + i * 10}), ";
-            }
-
-            string metaInfoOverrideStr = $"metainfo = dict(classes=({classesListOverrideStr}), palette=[{paletteArrOverrideStr}])\r\n";
-
-            return metaInfoOverrideStr;
-        }
-
-        public static string GenerateConfigModelOverrideStr(string backboneCheckpointAbsPath)
-        {
-            string configModelOverrideStr =
-                $"model = dict(\r\n" +
-                $"\tbackbone=dict(\r\n" +
-                $"\t\tfrozen_stages=num_frozen_stages,\r\n" +
-                $"\t\tinit_cfg=dict(checkpoint=r'{backboneCheckpointAbsPath}', type='Pretrained'),\r\n" +
-                $"\t\tnum_stages=4),\r\n" +
-                $"\troi_head=dict(\r\n" +
-                $"\t\tbbox_head=dict(\r\n" +
-                $"\t\t\tnum_classes=num_dataset_classes\r\n" +
-                $"\t\t\t),\r\n" +
-                $"\t\t),\r\n" +
-                $"\ttype='FasterRCNN')\r\n";
-
-            return configModelOverrideStr;
-        }
-
-        public const string GenerateConfigTrainCfgOverrideStr =
-            "train_cfg = dict(max_epochs=num_epochs, type='EpochBasedTrainLoop', val_interval=1)\t\n";
-        public const string GenerateConfigTrainDataloaderOverrideStr = 
-                "train_dataloader = dict(\r\n" +
-                "\tbatch_size=num_batch_size,\r\n" +
-                "\tdataset=dict(\r\n" +
-                "\t\tdata_root=data_root,\r\n" +
-                "\t\tmetainfo=metainfo,\r\n" +
-                "\t\tann_file='train/annotations_coco.json',\r\n" +
-                "\t\tdata_prefix=dict(img='train/'),),\r\n" +
-                "\tnum_workers=2,)\r\n";
-
-        public const string GenerateConfigValCfgOverrideStr = 
-            "val_cfg = dict(type='ValLoop')\r\n";
-        public const string GenerateConfigValDataloaderOverrideStr =
-                "val_dataloader = dict(\r\n" +
-                "\tbatch_size=num_batch_size,\r\n" +
-                "\tdataset=dict(\r\n" +
-                "\t\tdata_root=data_root,\r\n" +
-                "\t\tmetainfo=metainfo,\r\n" +
-                "\t\tann_file='valid/annotations_coco.json',\r\n" +
-                "\t\tdata_prefix=dict(img='valid/'),),\r\n" +
-                "\tnum_workers=2,)\r\n";
-        public const string GenerateConfigValEvaluatorOverrideStr = 
-            "val_evaluator = dict(ann_file=data_root + '/valid/annotations_coco.json',)\r\n";
-
-        public const string GenerateConfigTestCfgOverrideStr = 
-            "test_cfg = dict(type='TestLoop')\r\n";
-        public const string GenerateConfigTestDataloaderOverrideStr = 
-                "test_dataloader = dict(\r\n" +
-                "\tbatch_size=num_batch_size,\r\n" +
-                "\tdataset=dict(\r\n" +
-                "\t\tdata_root=data_root,\r\n" +
-                "\t\tmetainfo=metainfo,\r\n" +
-                "\t\tann_file='test/annotations_coco.json',\r\n" +
-                "\t\tdata_prefix=dict(img='test/'),),\r\n" +
-                "\tnum_workers=2,)\r\n";
-        public const string GenerateConfigTestEvaluatorOverrideStr = 
-            "test_evaluator = dict(ann_file=data_root + '/test/annotations_coco.json',)\r\n";
-
-        public static string GenerateConfigLoadFromOverrideStr(string baseModelFileAbsPath)
-            => $"load_from = '{baseModelFileAbsPath}'\r\n";
     }
 }

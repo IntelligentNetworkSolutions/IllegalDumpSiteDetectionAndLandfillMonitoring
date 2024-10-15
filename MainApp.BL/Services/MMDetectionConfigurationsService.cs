@@ -88,7 +88,7 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
             return ResultDTO<string>.Fail("No Directories found in Training Run Output Directory, there must be at least one direcotry present");
 
         string logDir = dirs[0];
-        string? visDataDir = Directory.GetDirectories(logDir).FirstOrDefault(d => d == "vis_data");
+        string? visDataDir = Directory.GetDirectories(logDir).FirstOrDefault(d => d.EndsWith("vis_data"));
         if (string.IsNullOrEmpty(visDataDir))
             return ResultDTO<string>.Fail("No Directory named vis_data found in Training Run Output Directory, there must be at least one directory named vis_data present");
 
@@ -96,7 +96,7 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
         if (visDataFiles.Length == 0)
             return ResultDTO<string>.Fail("No Files found in Training Run Output vis_data Directory");
 
-        string? resultLogFile = visDataFiles.FirstOrDefault(f => f == "scalars.json");
+        string? resultLogFile = visDataFiles.FirstOrDefault(f => f.EndsWith("scalars.json"));
         if (string.IsNullOrEmpty(resultLogFile))
             return ResultDTO<string>.Fail($"No Result Log File found in Training Run Output vis_data Directory, no file named scalars.json");
 
