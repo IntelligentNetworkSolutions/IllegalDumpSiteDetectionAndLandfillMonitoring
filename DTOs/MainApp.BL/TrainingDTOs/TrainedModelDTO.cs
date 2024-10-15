@@ -8,6 +8,7 @@ namespace DTOs.MainApp.BL.TrainingDTOs
 
         public string? Name { get; set; }
         public string? ModelFilePath { get; set; }
+        public string? ModelConfigPath { get; set; }
 
         public bool IsPublished { get; set; } = false;
 

@@ -4,11 +4,13 @@ using DAL.Interfaces.Repositories.DatasetRepositories;
 using DAL.Interfaces.Repositories.DetectionRepositories;
 using DAL.Interfaces.Repositories.LegalLandfillManagementRepositories;
 using DAL.Interfaces.Repositories.MapConfigurationRepositories;
+using DAL.Interfaces.Repositories.TrainingRepositories;
 using DAL.Repositories;
 using DAL.Repositories.DatasetRepositories;
 using DAL.Repositories.DetectionRepositories;
 using DAL.Repositories.LegalLandfillManagementRepositories;
 using DAL.Repositories.MapConfigurationRepositories;
+using DAL.Repositories.TrainingRepositories;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Services;
 using Services.Interfaces.Services;
@@ -44,6 +46,8 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ILegalLandfillWasteTypeRepository, LegalLandfillWasteTypeRepository>();
             services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();            
             services.TryAddScoped<IDetectionInputImageRepository, DetectionInputImageRepository>();
+            services.TryAddScoped<ITrainingRunsRepository, TrainingRunsRepository>();
+            services.TryAddScoped<ITrainedModelsRepository, TrainedModelsRepository>();
 
             return services;
         }

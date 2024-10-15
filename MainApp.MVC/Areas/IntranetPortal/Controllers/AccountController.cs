@@ -62,7 +62,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
 
-        //TODO
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]

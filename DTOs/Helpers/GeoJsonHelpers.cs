@@ -122,7 +122,6 @@ namespace DTOs.Helpers
             return new Dictionary<int, int> { { top, left }, { width, height } };
         }
 
-        // TODO: Review with Igor
         public static List<float>? GeometryBBoxToTopLeftWidthHeightListIgorche(Geometry geom)
         {
             if (geom == null)

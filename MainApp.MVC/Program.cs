@@ -60,10 +60,6 @@ string? applicationStartMode = configuration["ApplicationStartupMode"];
 if (string.IsNullOrEmpty(applicationStartMode))
     throw new Exception("ApplicationStartupMode not defined in appsettings.json");
 
-
-// TODO: Whole code has to stay here Code Generation does not get the indirection here,
-// remove implementation with commented one liners above them
-
 //services.RegisterWestwindLocalization(configuration);
 services.AddLocalization(options =>
 {
@@ -157,6 +153,7 @@ services.AddAuthorization(options => new AuthorizationOptions()
 });
 
 services.AddHttpContextAccessor();
+services.AddMMDetectionConfigurationService(configuration);
 services.AddApplicationServices();
 services.AddInfrastructureServices();
 
