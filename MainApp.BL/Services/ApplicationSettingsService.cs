@@ -83,7 +83,9 @@ namespace MainApp.BL.Services
                 if (string.IsNullOrEmpty(appSettingDTO.Description))
                     appSettingDTO.Description = appSettingDTO.Key;
 
-                applicationSettingEntity = _mapper.Map<ApplicationSettings>(appSettingDTO);
+                //applicationSettingEntity = _mapper.Map<ApplicationSettings>(appSettingDTO);
+                _mapper.Map(appSettingDTO, applicationSettingEntity);
+
                 if (applicationSettingEntity is null)
                     return ResultDTO.Fail("Mapping Failed");
 
