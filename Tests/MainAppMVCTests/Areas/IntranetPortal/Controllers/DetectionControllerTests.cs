@@ -20,6 +20,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
     {
 
         private readonly Mock<IDetectionRunService> _mockDetectionRunService;
+        private readonly Mock<IDetectionIgnoreZoneService> _mockDetectionIgnoreZoneService;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IUserManagementService> _mockUserManagementService;
         private readonly Mock<IConfiguration> _mockConfiguration;
@@ -31,6 +32,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public DetectionControllerTests()
         {
             _mockDetectionRunService = new Mock<IDetectionRunService>();
+            _mockDetectionIgnoreZoneService = new Mock<IDetectionIgnoreZoneService>();
             _mockMapper = new Mock<IMapper>();
             _mockUserManagementService = new Mock<IUserManagementService>();
             _mockConfiguration = new Mock<IConfiguration>();
@@ -52,7 +54,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 _mockWebHostEnvironment.Object,
                 _mockAppSettingsAccessor.Object,
                 _mockDetectionRunService.Object,
-                _mockBackgroundJobClient.Object);
+                _mockBackgroundJobClient.Object,
+                _mockDetectionIgnoreZoneService.Object);
         }
 
         [Fact]
