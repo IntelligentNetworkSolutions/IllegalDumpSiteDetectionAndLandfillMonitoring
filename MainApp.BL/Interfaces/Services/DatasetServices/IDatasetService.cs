@@ -1,5 +1,6 @@
 ﻿using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
+using Entities.DatasetEntities;
 using SD;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
@@ -22,6 +23,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         Task<DatasetDTO> GetDatasetById(Guid datasetId);
         Task<CreateDatasetDTO> FillDatasetDto(CreateDatasetDTO dto);
         Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize);
+        Task<ResultDTO<DatasetDTO>> GetDatasetDTOFullyIncluded(Guid datasetId, bool track = false);
         #endregion
         #endregion
 

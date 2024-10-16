@@ -9,6 +9,7 @@ using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using SD;
 using System.IO.Compression;
 using System.Linq.Expressions;
@@ -76,113 +77,31 @@ namespace MainApp.BL.Services.DatasetServices
             return datasetDto;
         }
 
-        //public async Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize)
-        //{
+        public async Task<ResultDTO<DatasetDTO>> GetDatasetDTOFullyIncluded(Guid datasetId, bool track = false)
+        {
+            ResultDTO<Dataset?> getDatasetFullyIncludedResult = 
+                await _datasetsRepository.GetByIdIncludeThenAll(datasetId, track,
+                    includeProperties: 
+                    new (Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[] 
+                    {
+                        (d => d.CreatedBy!, null),
+                        (d => d.UpdatedBy, null),
+                        (d => d.ParentDataset, null),
+                        (d => d.DatasetClasses, [ ddc => ((Dataset_DatasetClass)ddc).DatasetClass, dc => ((DatasetClass)dc).ParentClass ]),
+                        (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).CreatedBy! ])
+                    });
+            if (getDatasetFullyIncludedResult.IsSuccess == false && getDatasetFullyIncludedResult.HandleError())
+                return ResultDTO<DatasetDTO>.Fail(getDatasetFullyIncludedResult.ErrMsg!);
 
+            if (getDatasetFullyIncludedResult.Data is null)
+                return ResultDTO<DatasetDTO>.Fail($"Dataset not found, for id: {datasetId}");
 
-        //    var allDataset_DatasetClasses = await _datasetDatasetClassRepository.GetAll(includeProperties: "DatasetClass,Dataset") ?? throw new Exception("Object not found");
-        //    ResultDTO<IEnumerable<DatasetClass>> allClasses = await _datasetClassesRepository.GetAll(includeProperties: "ParentClass,Datasets") ?? throw new Exception("Model not found");
+            DatasetDTO datasetDto = _mapper.Map<DatasetDTO>(getDatasetFullyIncludedResult.Data);
+            if(datasetDto is null)
+                return ResultDTO<DatasetDTO>.Fail($"Dataset Mapping failed, for id: {datasetId}");
 
-        //    var insertedClasses = allDataset_DatasetClasses.Data?.Where(x => x.DatasetId == datasetId).Select(x => x.DatasetClass).ToList() ?? throw new Exception("Object not found");
-        //    var insertedClassesIds = allDataset_DatasetClasses.Data?.Where(x => x.DatasetId == datasetId).Select(x => x.DatasetClassId).ToList() ?? throw new Exception("Object not found");
-        //    var uninsertedRootClasses = allClasses.Data?.Where(x => !insertedClassesIds.Contains(x.Id) && x.ParentClassId == null).ToList() ?? throw new Exception("Object not found");
-        //    var uninsertedSubclasses = allClasses.Data?.Where(x => !insertedClassesIds.Contains(x.Id) && x.ParentClassId != null).ToList() ?? throw new Exception("Object not found");
-        //    var currentDataset = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
-        //    var currentDatasetData = currentDataset.Data ?? throw new Exception("Object not found");
-
-        //    var allDatasetImagesUnfiltered = await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetId) ?? throw new Exception("Object not found");
-        //    var allDatasetImagesData = allDatasetImagesUnfiltered.Data ?? throw new Exception("Object not found");
-        //    var allDatasetImages = await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetId) ?? throw new Exception("Object not found");
-
-        //    if (!string.IsNullOrEmpty(searchByImageName))
-        //    {
-        //        allDatasetImagesData = allDatasetImagesData.Where(x => x.Name == searchByImageName).ToList();
-        //    }
-
-        //    if (searchByIsEnabledImage.HasValue)
-        //    {
-        //        allDatasetImagesData = allDatasetImagesData.Where(x => x.IsEnabled == searchByIsEnabledImage).ToList();
-        //    }
-
-        //    if (!string.IsNullOrEmpty(orderByImages))
-        //    {
-        //        allDatasetImagesData = orderByImages switch
-        //        {
-        //            "ascName" => allDatasetImagesData.OrderBy(x => x.Name).ToList(),
-        //            "descName" => allDatasetImagesData.OrderByDescending(x => x.Name).ToList(),
-        //            "ascCreatedOn" => allDatasetImagesData.OrderBy(x => x.CreatedOn).ToList(),
-        //            "descCreatedOn" => allDatasetImagesData.OrderByDescending(x => x.CreatedOn).ToList(),
-        //            _ => allDatasetImagesData.OrderByDescending(x => x.IsEnabled).ToList(),
-        //        };
-        //    }
-
-        //    int totalImageCount = allDatasetImagesData.Count();
-        //    var pagedImagesData = allDatasetImagesData.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
-
-        //    if (allDatasetImagesData.Count() > 0 && searchByIsEnabledImage is not null)
-        //    {
-        //        allDatasetImagesData = allDatasetImagesData.Where(x => x.IsEnabled == searchByIsEnabledImage).ToList();
-        //    }
-
-        //    var imageAnnotationsDbList = await _imageAnnotationsRepository.GetAll() ?? throw new Exception("Object not found");
-        //    var allImageAnnotationsList = imageAnnotationsDbList.Data?.Where(x => x.IsEnabled == true).ToList();
-
-
-        //    var annotationsForDatasetImages = allImageAnnotationsList?
-        //    .Where(x => allDatasetImagesData.Select(m => m.Id).Contains(x.DatasetImageId.Value))
-        //    .ToList();
-
-        //    var annotatedImageIds = annotationsForDatasetImages?
-        //        .Select(x => x.DatasetImageId.Value)
-        //        .ToHashSet() ?? new HashSet<Guid>();
-
-        //    // Map DatasetImage to DatasetImageDTO and set IsAnnotated
-        //    var listOfDatasetImages = pagedImagesData.Select(image => new DatasetImageDTO
-        //    {
-        //        Id = image.Id,
-        //        FileName = image.FileName,
-        //        Name = image.Name,
-        //        ImagePath = image.ImagePath,
-        //        ThumbnailPath = image.ThumbnailPath,
-        //        IsEnabled = image.IsEnabled,
-        //        IsAnnotated = annotatedImageIds.Contains(image.Id)
-        //    }).ToList();
-
-
-
-
-        //    var numberOfEnabledImages = allDatasetImagesData.Where(x => x.IsEnabled == true).Count();
-        //    var numberOfAnnotatedImages = allImageAnnotationsList.Where(x => allDatasetImagesData.Select(m => m.Id).Contains(x.DatasetImageId.Value)).DistinctBy(x => x.DatasetImageId).Count();
-        //    var enabledImagesList = allDatasetImagesData.Where(x => x.IsEnabled == true).ToList() ?? throw new Exception("Object not found");
-        //    var allEnabledImagesHaveAnnotations = enabledImagesList.Any() ?
-        //                     enabledImagesList.All(x => allImageAnnotationsList.Where(x => x.DatasetImageId == x.Id).Select(x => x.DatasetImageId).Any(a => a == x.Id)) : false;
-        //    var nubmerOfImagesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100);
-        //    var nubmerOfClassesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1);
-        //    var classesForParentDataset = allDataset_DatasetClasses.Data?.Where(x => x.DatasetId == currentDatasetData.ParentDatasetId).Select(x => x.DatasetClass).ToList();
-        //    var numOfChildrenDatasetsByDatasetIdResult = await _datasetsRepository.GetAll(filter: x => x.ParentDatasetId == datasetId, includeProperties: "ParentDataset") ?? throw new Exception("Object not found");
-        //    var numOfChildrenDatasetsByDatasetIdData = numOfChildrenDatasetsByDatasetIdResult.Data ?? throw new Exception("Object not found");
-
-        //    var dto = new EditDatasetDTO
-        //    {
-        //        UninsertedDatasetRootClasses = _mapper.Map<List<DatasetClassDTO>>(uninsertedRootClasses),
-        //        UninsertedDatasetSubclasses = _mapper.Map<List<DatasetClassDTO>>(uninsertedSubclasses),
-        //        ClassesByDatasetId = _mapper.Map<List<DatasetClassDTO>>(insertedClasses),
-        //        NumberOfDatasetClasses = insertedClasses.Count,
-        //        CurrentDataset = _mapper.Map<DatasetDTO>(currentDatasetData),
-        //        NumberOfChildrenDatasets = numOfChildrenDatasetsByDatasetIdData.Count(),
-        //        ParentDatasetClasses = _mapper.Map<List<DatasetClassDTO>>(classesForParentDataset),
-        //        ListOfDatasetImages = listOfDatasetImages,
-        //        NumberOfDatasetImages = totalImageCount,
-        //        AllImageAnnotations = _mapper.Map<List<ImageAnnotationDTO>>(allImageAnnotationsList),
-        //        NumberOfEnabledImages = numberOfEnabledImages,
-        //        NumberOfAnnotatedImages = numberOfAnnotatedImages,
-        //        AllEnabledImagesHaveAnnotations = allEnabledImagesHaveAnnotations,
-        //        NumberOfClassesNeededToPublishDataset = nubmerOfClassesNeededToPublishDataset.Data,
-        //        NumberOfImagesNeededToPublishDataset = nubmerOfImagesNeededToPublishDataset.Data,
-        //        ListOfAllDatasetImagesUnFiltered = _mapper.Map<List<DatasetImageDTO>>(allDatasetImagesData)
-        //    };
-        //    return dto;
-        //}
+            return ResultDTO<DatasetDTO>.Ok(datasetDto);
+        }
 
         public async Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize)
         {
@@ -279,11 +198,6 @@ namespace MainApp.BL.Services.DatasetServices
 
             return dto;
         }
-
-
-
-
-
         #endregion
 
         #region Create
@@ -525,6 +439,7 @@ namespace MainApp.BL.Services.DatasetServices
         #endregion
 
         #region Export
+        // TODO: Create DatsetExportOption Enum/Static Class to replace magic string param
         private ResultDTO<DatasetFullIncludeDTO> GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
             (Dataset datasetIncluded, string exportOption, bool includeDisabledImages = true, bool includeDisabledAnnotations = true)
         {
@@ -703,7 +618,7 @@ namespace MainApp.BL.Services.DatasetServices
                 // Create directories for train, val, test
                 string tempDirectory = downloadLocation ?? Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
                 string trainDir = Path.Combine(tempDirectory, "train");
-                string valDir = Path.Combine(tempDirectory, "val");
+                string valDir = Path.Combine(tempDirectory, "valid");
                 string testDir = Path.Combine(tempDirectory, "test");
 
                 Directory.CreateDirectory(trainDir);
@@ -812,13 +727,21 @@ namespace MainApp.BL.Services.DatasetServices
                     }
                 }
 
-                string trainJson = JsonConvert.SerializeObject(trainCocoDataset, Formatting.Indented);
-                string valJson = JsonConvert.SerializeObject(valCocoDataset, Formatting.Indented);
-                string testJson = JsonConvert.SerializeObject(testCocoDataset, Formatting.Indented);
+                DefaultContractResolver contractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new SnakeCaseNamingStrategy()
+                };
 
-                await File.WriteAllTextAsync(Path.Combine(trainDir, "coco_dataset.json"), trainJson);
-                await File.WriteAllTextAsync(Path.Combine(valDir, "coco_dataset.json"), valJson);
-                await File.WriteAllTextAsync(Path.Combine(testDir, "coco_dataset.json"), testJson);
+                string trainJson = JsonConvert.SerializeObject(trainCocoDataset, 
+                    new JsonSerializerSettings{ ContractResolver = contractResolver, Formatting = Formatting.Indented});
+                string valJson = JsonConvert.SerializeObject(valCocoDataset,
+                    new JsonSerializerSettings { ContractResolver = contractResolver, Formatting = Formatting.Indented });
+                string testJson = JsonConvert.SerializeObject(testCocoDataset,
+                    new JsonSerializerSettings { ContractResolver = contractResolver, Formatting = Formatting.Indented });
+
+                await File.WriteAllTextAsync(Path.Combine(trainDir, "annotations_coco.json"), trainJson);
+                await File.WriteAllTextAsync(Path.Combine(valDir, "annotations_coco.json"), valJson);
+                await File.WriteAllTextAsync(Path.Combine(testDir, "annotations_coco.json"), testJson);
 
                 // Zip the directories
                 string zipFilePath = Path.Combine(Path.GetTempPath(), $"{dataset.Id}.zip");

@@ -3,13 +3,16 @@ using CliWrap;
 using CliWrap.Buffered;
 using DAL.Interfaces.Repositories.DatasetRepositories;
 using DAL.Interfaces.Repositories.TrainingRepositories;
+using DTOs.MainApp.BL.DatasetDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
 using Entities.DatasetEntities;
 using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
+using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Security.Certificates;
 using SD;
 
 namespace MainApp.BL.Services.TrainingServices
@@ -19,21 +22,20 @@ namespace MainApp.BL.Services.TrainingServices
         protected readonly IMMDetectionConfigurationService _MMDetectionConfiguration;
         private readonly ITrainingRunsRepository _trainingRunsRepository;
         private readonly ITrainedModelsRepository _trainedModelsRepository;
-        private readonly IDatasetsRepository _datasetsRepository;
+        private readonly IDatasetService _datasetService;
         private readonly IMapper _mapper;
         private readonly ILogger<TrainingRunService> _logger;
 
         public TrainingRunService(IMMDetectionConfigurationService mMDetectionConfiguration,
             ITrainingRunsRepository trainingRunsRepository, ITrainedModelsRepository trainedModelsRepository,
-            IDatasetsRepository datasetsRepository,
-            IMapper mapper, ILogger<TrainingRunService> logger)
+            IMapper mapper, ILogger<TrainingRunService> logger, IDatasetService datasetService)
         {
             _MMDetectionConfiguration = mMDetectionConfiguration;
             _trainingRunsRepository = trainingRunsRepository;
             _trainedModelsRepository = trainedModelsRepository;
             _mapper = mapper;
             _logger = logger;
-            _datasetsRepository = datasetsRepository;
+            _datasetService = datasetService;
         }
 
         // TODO: Refactor to return DTO
@@ -70,35 +72,28 @@ namespace MainApp.BL.Services.TrainingServices
             //string modelFilePath = "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\ins_development\\resources\\ins_best_pretrained_2x2_model_files\\epoch_9.pth";
 
             string createdById = "bba10742-90ea-4ee7-ba41-b322099f01d8";
-            string trainingRunName = "CowboyRun";
+            string trainingRunName = "CowboyRun import n export Dataset";
 
-            ResultDTO<Dataset?> resultDatasetIncludeThenAll =
-                await _datasetsRepository.GetByIdIncludeThenAll(Guid.Parse("cf84ac82-f28d-439d-98c2-d11eed031ac6"), track: false,
-                    includeProperties:
-                    [(d => d.CreatedBy, null), (d => d.UpdatedBy, null), (d => d.ParentDataset, null),
-                    (d => d.DatasetClasses, [ddc => ((Dataset_DatasetClass)ddc).DatasetClass, dc => ((DatasetClass)dc).ParentClass]),
-                    (d => d.DatasetImages, [di => ((DatasetImage)di).ImageAnnotations,]),
-                    (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations]),
-                    (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).DatasetClass,
-                                                dc => ((DatasetClass)dc).Datasets]),
-                    ]
-                );
+            ResultDTO<DatasetDTO> resultDatasetIncludeThenAll =
+                await _datasetService.GetDatasetDTOFullyIncluded(Guid.Parse("10e236cc-c027-43e7-b185-303a8cf91b07"), track: false);
 
             if (resultDatasetIncludeThenAll.IsSuccess == false)
                 return ResultDTO.Fail(resultDatasetIncludeThenAll.ErrMsg!);
 
-            if (resultDatasetIncludeThenAll.Data is null)
+            Dataset datasetEntity = _mapper.Map<Dataset>(resultDatasetIncludeThenAll.Data);
+
+            if (resultDatasetIncludeThenAll.Data is null || datasetEntity is null)
                 return ResultDTO.Fail("Error getting Dataset");
 
             ResultDTO<TrainedModel?> getInsBestTrainedModelResult =
                 await _trainedModelsRepository.GetByIdInclude(Guid.Parse("a83f2202-f919-4b79-a181-b2747219ed46"), track: false);
 
-            int numEpochs = 1;
+            int numEpochs = 3;
             int numBatchSize = 1;
             int numFrozenStages = 4;
 
             ResultDTO result =
-                await ExecuteTrainingRunProcess(trainingRunName, resultDatasetIncludeThenAll.Data, getInsBestTrainedModelResult.Data!, createdById,
+                await ExecuteTrainingRunProcess(trainingRunName, datasetEntity, getInsBestTrainedModelResult.Data!, createdById,
                                                 numEpochs, numFrozenStages, numBatchSize);
 
             return ResultDTO.Ok();
@@ -117,10 +112,20 @@ namespace MainApp.BL.Services.TrainingServices
 
                 // TODO: Export Dataset at _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRun.Id)
 
-                ResultDTO<string> generateTrainRunResult =
+                string datasetExportAbsPathForTrainingRunId = _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRun.Id);
+                ResultDTO<string> exportDatasetResult = 
+                    await _datasetService.ExportDatasetAsCOCOFormat(dataset.Id, "AllImages", datasetExportAbsPathForTrainingRunId, true);
+                if(exportDatasetResult.IsSuccess == false && exportDatasetResult.HandleError())
+                    return ResultDTO.Fail(exportDatasetResult.ErrMsg!);
+
+                ResultDTO<string> generateTrainRunConfigResult =
                     await GenerateTrainingRunConfig(trainingRun.Id, dataset, baseTrainedModel, numEpochs, numFrozenStages, numBatchSize);
+                if(generateTrainRunConfigResult.IsSuccess == false && generateTrainRunConfigResult.HandleError())
+                    return ResultDTO.Fail(generateTrainRunConfigResult.ErrMsg!);
 
                 ResultDTO startTrainRunResult = await StartTrainingRun(trainingRun.Id);
+                if (startTrainRunResult.IsSuccess == false && startTrainRunResult.HandleError())
+                    return ResultDTO.Fail(startTrainRunResult.ErrMsg!);
 
                 ResultDTO<TrainedModel> createTrainedModelResult = await CreateTrainedModelFromTrainingRun(trainingRun);
                 if (createTrainedModelResult.IsSuccess == false && createTrainedModelResult.HandleError())
@@ -158,10 +163,12 @@ namespace MainApp.BL.Services.TrainingServices
             if (getTrainedModelConfigFilePathResult.IsSuccess == false)
                 return ResultDTO<TrainedModel>.Fail(getTrainedModelConfigFilePathResult.ErrMsg!);
 
-            //TODO : Get BEst Epoch and call with NumBestEpoch
+            ResultDTO<TrainingRunResultsDTO> getBestEpochResult = await GetBestEpochForTrainingRun(trainingRun.Id);
+            if (getBestEpochResult.IsSuccess == false && getBestEpochResult.HandleError())
+                return ResultDTO<TrainedModel>.Fail(getBestEpochResult.ErrMsg!);
 
             ResultDTO<string> getTrainedModelBestEpochFilePathResult =
-                _MMDetectionConfiguration.GetTrainedModelBestEpochFileAbsPath(trainingRun.Id);
+                _MMDetectionConfiguration.GetTrainedModelBestEpochFileAbsPath(trainingRun.Id, getBestEpochResult.Data!.BestEpochMetrics.Epoch);
             if (getTrainedModelBestEpochFilePathResult.IsSuccess == false)
                 return ResultDTO<TrainedModel>.Fail(getTrainedModelBestEpochFilePathResult.ErrMsg!);
 
@@ -306,13 +313,13 @@ namespace MainApp.BL.Services.TrainingServices
 
             string[] classNames = dataset.DatasetClasses.Select(dc => dc.DatasetClass.ClassName).ToArray();
 
-            string datasetRootPath = "C:/vs_code_workspaces/mmdetection/mmdetection/data/ins/v2";
+            //string datasetRootPath = "C:/vs_code_workspaces/mmdetection/mmdetection/data/ins/v2";
 
             string trainingRunConfigContentStr =
                 TrainingConfigGenerator.GenerateConfigOverrideStr(
                     backboneCheckpointAbsPath: _MMDetectionConfiguration.GetBackboneCheckpointAbsPath(),
-                    //dataRootAbsPath: _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRunId),
-                    dataRootAbsPath: datasetRootPath, // TODO: Return previous line once Export is available
+                    dataRootAbsPath: _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRunId),
+                    //dataRootAbsPath: datasetRootPath, // TODO: Return previous line once Export is available
                     classNames: classNames,
                     baseModelConfigFilePath: baseTrainedModel.ModelConfigPath,
                     baseModelFileAbsPath: baseTrainedModel.ModelFilePath,

@@ -25,5 +25,6 @@ namespace DTOs.MainApp.BL.DatasetDTOs
         public DateTime? UpdatedOn { get; init; }
         public UserDTO? UpdatedBy { get; init; }
         public bool IsAnnotated { get; set; }
+        public virtual ICollection<ImageAnnotationDTO> ImageAnnotations { get; set; } = new List<ImageAnnotationDTO>();
     }
 }

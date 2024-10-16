@@ -271,94 +271,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
         #endregion
 
-
-
-
-        //[HttpGet]
-        //[HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
-        //public async Task<IActionResult> ImportDataset(string cocoDatasetDirectoryPath)
-        //{
-        //    string? userId = User.FindFirstValue("UserId");
-        //    if (string.IsNullOrEmpty(userId))
-        //        return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
-
-        //    try
-        //    {
-        //        ResultDTO<DatasetDTO> importDatasetResult =
-        //            await _datasetService.ImportDatasetCocoFormatedAtDirectoryPath("Test Dataset with Save Images v12", cocoDatasetDirectoryPath,
-        //                                                                            userId, _webHostEnvironment.WebRootPath);
-        //        if (importDatasetResult.IsSuccess == false && ResultDTO<DatasetDTO>.HandleError(importDatasetResult))
-        //            return Json(new { responseError = DbResHtml.T(importDatasetResult.ErrMsg!, "Resources") });
-
-        //        return Json(new { importDatasetResult.Data });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // TODO: ADD Logger
-        //        return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
-        //    }
-        //}
-
-        //[HttpPost]
-        //[RequestSizeLimit(int.MaxValue)]
-        //[RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue)]
-        //[HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
-        //public async Task<IActionResult> UploadAndProcessDataset(IFormFile datasetFile, string datasetName)
-        //{
-        //    if (datasetFile == null || datasetFile.Length == 0)
-        //    {
-        //        return Json(new { responseError = DbResHtml.T("Invalid dataset file", "Resources") });
-        //    }
-
-        //    string? userId = User.FindFirstValue("UserId");
-        //    if (string.IsNullOrEmpty(userId))
-        //        return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
-
-        //    string tempFilePath = null;
-        //    string outputDir = null;
-
-        //    try
-        //    {
-        //        // Step 1: Save the uploaded zip file temporarily
-        //        tempFilePath = Path.Combine(Path.GetTempPath(), datasetFile.FileName);
-        //        using (var stream = new FileStream(tempFilePath, FileMode.Create))
-        //        {
-        //            await datasetFile.CopyToAsync(stream);
-        //        }
-
-        //        // Step 2: Process the zip file and get the path to the temp folder under datasetImagesFolder
-        //        string absoluteOutputDir = ProcessZipFile(tempFilePath, _webHostEnvironment.WebRootPath);
-
-        //        // Get the relative path from the web root to the output directory
-        //        outputDir = Path.GetRelativePath(_webHostEnvironment.WebRootPath, absoluteOutputDir);
-
-        //        string outputJsonPath = Path.Combine(_webHostEnvironment.WebRootPath, outputDir);
-
-        //        // Step 3: Call the ImportDataset method to import the dataset
-        //        ResultDTO<DatasetDTO> importDatasetResult =
-        //            await _datasetService.ImportDatasetCocoFormatedAtDirectoryPath(datasetName, outputJsonPath, userId, _webHostEnvironment.WebRootPath);
-
-        //        if (!importDatasetResult.IsSuccess && ResultDTO<DatasetDTO>.HandleError(importDatasetResult))
-        //        {
-        //            return Json(new { responseError = DbResHtml.T(importDatasetResult.ErrMsg!, "Resources") });
-        //        }
-
-        //        return Json(new { importDatasetResult.Data });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // TODO: Add logging
-        //        return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
-        //    }
-        //    finally
-        //    {
-        //        // Clean up the temporary zip file
-        //        if (System.IO.File.Exists(tempFilePath))
-        //        {
-        //            System.IO.File.Delete(tempFilePath);
-        //        }
-        //    }
-        //}
         [HttpPost]
         [RequestSizeLimit(int.MaxValue)]
         [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue)]
@@ -535,11 +447,18 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private string ProcessZipFile(string zipFilePath, string webRootPath)
         {
             //coco dataset
-            string tempDir = Path.Combine(webRootPath, "temp");
+            string tempDir = Path.Combine(webRootPath, "temp" + Guid.NewGuid().ToString());
             Directory.CreateDirectory(tempDir);
 
             string extractDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            ZipFile.ExtractToDirectory(zipFilePath, extractDir);
+            try
+            {
+                ZipFile.ExtractToDirectory(zipFilePath, extractDir);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
 
             List<JObject> images = new List<JObject>();
             List<JObject> annotations = new List<JObject>();
