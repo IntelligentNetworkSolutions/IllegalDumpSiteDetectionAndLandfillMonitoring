@@ -36,6 +36,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     {
         private readonly IDetectionRunService _detectionRunService;
         private readonly IUserManagementService _userManagementService;
+        private readonly IDetectionIgnoreZoneService _detectionIgnoreZoneService;
         private readonly IConfiguration _configuration;
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _webHostEnvironment;
@@ -46,7 +47,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private string _baseDetectionRunCopyVisualizedOutputImagesDirectoryPathMVC = "detection-runs\\outputs\\visualized-images";
         private string _baseSaveMMDetectionDirectoryAbsPath = "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\ins_development";
 
-        public DetectionController(IUserManagementService userManagementService, IConfiguration configuration, IMapper mapper, IWebHostEnvironment webHostEnvironment, IAppSettingsAccessor appSettingsAccessor,IDetectionRunService detectionRunService, IBackgroundJobClient backgroundJobClient)
+        public DetectionController(IUserManagementService userManagementService, 
+                                    IConfiguration configuration, 
+                                    IMapper mapper, 
+                                    IWebHostEnvironment webHostEnvironment, 
+                                    IAppSettingsAccessor appSettingsAccessor,
+                                    IDetectionRunService detectionRunService, 
+                                    IBackgroundJobClient backgroundJobClient,
+                                    IDetectionIgnoreZoneService detectionIgnoreZoneService)
         {
             _userManagementService = userManagementService;
             _configuration = configuration;
@@ -54,6 +62,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _webHostEnvironment = webHostEnvironment;
             _appSettingsAccessor = appSettingsAccessor;
             _detectionRunService = detectionRunService;
+            _detectionIgnoreZoneService = detectionIgnoreZoneService;
+            
 
             string? baseSaveMMDetectionDirectoryAbsPath =
                 _configuration["AppSettings:MMDetection:BaseSaveMMDetectionDirectoryAbsPath"];
@@ -73,7 +83,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _baseDetectionRunInputImagesSaveDirectoryPath = baseDetectionRunInputImagesSaveDirPathMVC;
             _baseDetectionRunCopyVisualizedOutputImagesDirectoryPathMVC = baseDetectionRunCopyVisualizedOutputDirPathMVC;
             _baseSaveMMDetectionDirectoryAbsPath = baseSaveMMDetectionDirectoryAbsPath;
-            _backgroundJobClient = backgroundJobClient;
+            _backgroundJobClient = backgroundJobClient;            
         }
 
         public IActionResult Index()
@@ -537,6 +547,24 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO<List<DetectionRunDTO>>.Fail(selectedDetectionRuns.ErrMsg!);
             if (selectedDetectionRuns.Data == null)
                 return ResultDTO<List<DetectionRunDTO>>.Fail("Data is null");
+
+            ResultDTO<List<DetectionIgnoreZoneDTO>> ignoreZones = await _detectionIgnoreZoneService.GetAllIgnoreZonesDTOs();
+            if (ignoreZones.IsSuccess == false && ignoreZones.HandleError())
+                return ResultDTO<List<DetectionRunDTO>>.Fail(ignoreZones.ErrMsg!);
+            if (ignoreZones.Data == null)
+                return ResultDTO<List<DetectionRunDTO>>.Fail("Ignore zones are null");
+
+            foreach (var detectionRun in selectedDetectionRuns.Data)
+            {
+                foreach (var dumpSite in detectionRun.DetectedDumpSites)
+                {
+                    if (dumpSite.Geom != null)
+                    {
+                        dumpSite.IsInsideIgnoreZone = ignoreZones.Data.Any(zone =>
+                            zone.Geom != null && zone.Geom.Intersects(dumpSite.Geom));
+                    }
+                }
+            }
 
             return ResultDTO<List<DetectionRunDTO>>.Ok(selectedDetectionRuns.Data);
         }

@@ -15,6 +15,7 @@ namespace DTOs.MainApp.BL.DetectionDTOs
         public Guid? Id { get; set; }
 
         public double? ConfidenceRate { get; set; }
+        public bool IsInsideIgnoreZone { get; set; }
 
         public Guid? DetectionRunId { get; set; }
         public virtual DetectionRunDTO? DetectionRun { get; set; }

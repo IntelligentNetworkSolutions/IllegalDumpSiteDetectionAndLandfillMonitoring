@@ -37,6 +37,8 @@ namespace MainApp.BL.Services.DetectionServices
         private string TrainedModelModelFileRelPath = string.Empty;
 
         private string DetectionResultDummyDatasetClassId = string.Empty;
+        private string OpenMMLabAbsPath = string.Empty;
+        private string HasGPU = string.Empty;
 
         public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository)
         {
@@ -64,6 +66,12 @@ namespace MainApp.BL.Services.DetectionServices
             string? trainedModelModelFileRelPath = _configuration["AppSettings:MMDetection:TrainedModelModelFileRelPath"];
             if (string.IsNullOrEmpty(trainedModelModelFileRelPath))
                 throw new Exception($"{nameof(trainedModelModelFileRelPath)} is missing");
+            string? openMMLabAbsPath = _configuration["AppSettings:MMDetection:OpenMMLabAbsPath"];
+            if (string.IsNullOrEmpty(openMMLabAbsPath))
+                throw new Exception($"{nameof(openMMLabAbsPath)} is missing");
+            string? hasGPU = _configuration["AppSettings:MMDetection:HasGPU"];
+            if (string.IsNullOrEmpty(hasGPU))
+                throw new Exception($"{nameof(hasGPU)} is missing");
 
             string? detectionResultDummyDatasetClassId = _configuration["AppSettings:MMDetection:DetectionResultDummyDatasetClassId"];
             if (string.IsNullOrEmpty(detectionResultDummyDatasetClassId))
@@ -75,6 +83,8 @@ namespace MainApp.BL.Services.DetectionServices
             WorkingMMDetectionDirectoryAbsPath = workingMMDetectionDirectoryAbsPath;
             TrainedModelConfigFileRelPath = trainedModelConfigFileRelPath;
             TrainedModelModelFileRelPath = trainedModelModelFileRelPath;
+            OpenMMLabAbsPath = openMMLabAbsPath;
+            HasGPU = hasGPU;
             _detectedDumpSitesRepository = detectedDumpSitesRepository;
 
             DetectionResultDummyDatasetClassId = detectionResultDummyDatasetClassId;
@@ -269,7 +279,9 @@ namespace MainApp.BL.Services.DetectionServices
             string relativeOutputImageDirectoryMMDetection = Path.Combine(OutputBaseDirectoryMMDetectionRelPath, detectionRunId); //Path.GetFileNameWithoutExtension(imageToRunDetectionOnPath)
             string outDirCommandPart = $"--out-dir {relativeOutputImageDirectoryMMDetection}";
 
-            detectionCommandStr = $"run -p C:\\Users\\INS\\miniconda3\\envs\\openmmlab python {scriptName} \"{imageToRunDetectionOnPath}\" " +
+            string openmmlabAbsPath = Path.Combine(OpenMMLabAbsPath);
+
+            detectionCommandStr = $"run -p {openmmlabAbsPath} python {scriptName} \"{imageToRunDetectionOnPath}\" " +
                 $"{trainedModelConfigPath} {weightsCommandParamStr} {trainedModelModelPath} {outDirCommandPart} {cpuDetectionCommandPart} {patchSizeCommand}";
 
             return detectionCommandStr;
@@ -356,13 +368,18 @@ namespace MainApp.BL.Services.DetectionServices
                 if (detectionRunDTO is null)
                     return ResultDTO.Fail("");
 
+                bool hasGPU = false;
+                string hasGPUStrAppSetting = HasGPU;
+                if (hasGPUStrAppSetting == "true")
+                    hasGPU = true;
+
                 string detectionCommand =
                     GeneratePythonDetectionCommandByType(
                         imageToRunDetectionOnPath: detectionRunDTO.InputImgPath,
                         trainedModelConfigPath: TrainedModelConfigFileRelPath,
                         trainedModelModelPath: TrainedModelModelFileRelPath,
                         detectionRunId: detectionRunDTO.Id.ToString()!,
-                        isSmallImage: false, hasGPU: false);
+                        isSmallImage: false, hasGPU: hasGPU);
 
                 var powerShellResults = await Cli.Wrap(CondaExeFileAbsPath)
                         .WithWorkingDirectory(WorkingMMDetectionDirectoryAbsPath)

@@ -223,7 +223,26 @@
                                 });
                                 var confRate = dumpSite.confidenceRate * 100;
                                 vectorSource.addFeature(feature);
-                                feature.setStyle(new ol.style.Style({
+                                if(dumpSite.isInsideIgnoreZone === true){
+                                    feature.setStyle(new ol.style.Style({
+                                    fill: new ol.style.Fill({
+                                        color: 'rgba(82, 78, 183, 0.5)'
+                                    }),
+                                    stroke: new ol.style.Stroke({
+                                        color: 'blue',
+                                        width: 2 
+                                    }),
+                                    text: new ol.style.Text({
+                                        font: '14px Calibri,sans-serif',
+                                        fill: new ol.style.Fill({ color: '#000' }),
+                                        stroke: new ol.style.Stroke({
+                                            color: '#fff', width: 2
+                                        }),
+                                        text: "Confidence rate:\n" + confRate.toFixed(0).toString() + "%"
+                                    })
+                                }));
+                                }else{
+                                    feature.setStyle(new ol.style.Style({
                                     fill: new ol.style.Fill({
                                         color: 'rgba(255, 0, 0, 0.5)'
                                     }),
@@ -240,6 +259,7 @@
                                         text: "Confidence rate:\n" + confRate.toFixed(0).toString() + "%"
                                     })
                                 }));
+                                }
                             });
 
                             var vectorLayer = new ol.layer.Vector({
