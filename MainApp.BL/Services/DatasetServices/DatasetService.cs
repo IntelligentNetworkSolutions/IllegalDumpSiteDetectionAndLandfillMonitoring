@@ -536,33 +536,15 @@ namespace MainApp.BL.Services.DatasetServices
 
                 ResultDTO<Dataset?> resultDatasetIncludeThenAll =
                     await _datasetsRepository.GetByIdIncludeThenAll(datasetId, track: false,
-                        includeProperties: new (Expression<Func<Dataset, object>> Include, Expression<Func<object, object>>[]? ThenInclude)[]
-                        {
-                    (d => d.CreatedBy, null),
-                    (d => d.UpdatedBy, null),
-                    (d => d.ParentDataset, null),
-                    (d => d.DatasetClasses, new Expression<Func<object, object>>[]
-                    {
-                        ddc => ((Dataset_DatasetClass)ddc).DatasetClass,
-                        dc => ((DatasetClass)dc).ParentClass
-                    }),
-                    (d => d.DatasetImages, new Expression<Func<object, object>>[]
-                    {
-                        di => ((DatasetImage)di).ImageAnnotations,
-                        ia => ((ImageAnnotation)ia).CreatedBy
-                    }),
-                    (d => d.DatasetImages, new Expression<Func<object, object>>[]
-                    {
-                        di => ((DatasetImage)di).ImageAnnotations,
-                        ia => ((ImageAnnotation)ia).UpdatedBy
-                    }),
-                    (d => d.DatasetImages, new Expression<Func<object, object>>[]
-                    {
-                        di => ((DatasetImage)di).ImageAnnotations,
-                        ia => ((ImageAnnotation)ia).DatasetClass,
-                        dc => ((DatasetClass)dc).Datasets
-                    })
-                        });
+                        includeProperties:
+                        [ (d => d.CreatedBy, null),
+                            (d => d.UpdatedBy, null),
+                            (d => d.ParentDataset, null),
+                            (d => d.DatasetClasses, [ddc => ((Dataset_DatasetClass)ddc).DatasetClass, dc => ((DatasetClass)dc).ParentClass ]),
+                            (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).CreatedBy ]),
+                            (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).UpdatedBy ]),
+                            (d => d.DatasetImages, [ di => ((DatasetImage)di).ImageAnnotations, ia => ((ImageAnnotation)ia).DatasetClass, dc => ((DatasetClass)dc).Datasets ])
+                        ]);
 
                 if (resultDatasetIncludeThenAll.IsSuccess == false)
                     return ResultDTO<string>.Fail(resultDatasetIncludeThenAll.ErrMsg!);
@@ -605,13 +587,13 @@ namespace MainApp.BL.Services.DatasetServices
 
                 DatasetFullIncludeDTO datasetExtClassesImagesAnnotations = resultGetDatasetFullIncludeDTO.Data!;
 
-                var totalImages = datasetExtClassesImagesAnnotations.DatasetImages.Count;
-                var trainCount = (int)(totalImages * 0.7);
-                var valCount = (int)(totalImages * 0.2);
-                var testCount = totalImages - trainCount - valCount;
+                int totalImages = datasetExtClassesImagesAnnotations.DatasetImages.Count;
+                int trainCount = (int)(totalImages * 0.7);
+                int valCount = (int)(totalImages * 0.2);
+                int testCount = totalImages - trainCount - valCount;
 
-                var random = new Random();
-                var shuffledImages = datasetExtClassesImagesAnnotations.DatasetImages
+                Random random = new Random();
+                List<DatasetImageDTO> shuffledImages = datasetExtClassesImagesAnnotations.DatasetImages
                     .OrderBy(x => random.Next())
                     .ToList();
 
@@ -626,7 +608,7 @@ namespace MainApp.BL.Services.DatasetServices
                 Directory.CreateDirectory(testDir);
 
                 // Create COCO datasets with required fields initialized
-                var trainCocoDataset = new CocoDatasetDTO
+                CocoDatasetDTO trainCocoDataset = new CocoDatasetDTO
                 {
                     Info = new CocoInfoDTO
                     {
@@ -644,7 +626,7 @@ namespace MainApp.BL.Services.DatasetServices
                         .ToList()
                 };
 
-                var valCocoDataset = new CocoDatasetDTO
+                CocoDatasetDTO valCocoDataset = new CocoDatasetDTO
                 {
                     Info = trainCocoDataset.Info,
                     Licenses = trainCocoDataset.Licenses,
@@ -653,7 +635,7 @@ namespace MainApp.BL.Services.DatasetServices
                     Categories = trainCocoDataset.Categories
                 };
 
-                var testCocoDataset = new CocoDatasetDTO
+                CocoDatasetDTO testCocoDataset = new CocoDatasetDTO
                 {
                     Info = trainCocoDataset.Info,
                     Licenses = trainCocoDataset.Licenses,
@@ -667,15 +649,15 @@ namespace MainApp.BL.Services.DatasetServices
 
                 for (int i = 0; i < totalImages; i++)
                 {
-                    var image = shuffledImages[i];
-                    var fullImageName = image.Id.ToString() + Path.GetExtension(image.FileName);
+                    DatasetImageDTO image = shuffledImages[i];
+                    string fullImageName = image.Id.ToString() + Path.GetExtension(image.FileName);
                     string imagePath = Path.Combine("wwwroot", image.ImagePath.TrimStart('\\'), fullImageName);
                     string destPath = (i < trainCount) ? Path.Combine(trainDir, fullImageName) :
                         (i < trainCount + valCount) ? Path.Combine(valDir, fullImageName) :
                         Path.Combine(testDir, fullImageName);
                     File.Copy(imagePath, destPath);
 
-                    var cocoImage = new CocoImageDTO
+                    CocoImageDTO cocoImage = new CocoImageDTO
                     {
                         Id = (i < trainCount) ? trainImageId++ : (i < trainCount + valCount) ? valImageId++ : testImageId++,
                         FileName = fullImageName,
@@ -699,7 +681,7 @@ namespace MainApp.BL.Services.DatasetServices
                     }
 
                     // Add annotations to the respective dataset
-                    var annotations = datasetExtClassesImagesAnnotations.ImageAnnotations
+                    IEnumerable<CocoAnnotationDTO> annotations = datasetExtClassesImagesAnnotations.ImageAnnotations
                         .Where(x => x.DatasetImageIdInt == image.IdInt)
                         .Select(x => new CocoAnnotationDTO
                         {
@@ -708,9 +690,8 @@ namespace MainApp.BL.Services.DatasetServices
                             CategoryId = datasetExtClassesImagesAnnotations.DatasetClassForDataset
                                 .First(dcfd => dcfd.DatasetClassId == x.DatasetClass.Id).ClassValue,
                             IsCrowd = 0,
+                            //Bbox = GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeightList(x.Geom),
                             Bbox = GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeightList(x.Geom),
-                            Segmentation = null,
-                            Area = 0.0F // Adjust as needed
                         });
 
                     if (i < trainCount)
@@ -727,17 +708,13 @@ namespace MainApp.BL.Services.DatasetServices
                     }
                 }
 
-                DefaultContractResolver contractResolver = new DefaultContractResolver
-                {
-                    NamingStrategy = new SnakeCaseNamingStrategy()
-                };
+                trainCocoDataset.Annotations.ForEach(a => a.Bbox.ForEach(coord => coord = (float)Math.Round(coord, 2)));
+                valCocoDataset.Annotations.ForEach(a => a.Bbox.ForEach(coord => coord = (float)Math.Round(coord, 2)));
+                testCocoDataset.Annotations.ForEach(a => a.Bbox.ForEach(coord => coord = (float)Math.Round(coord, 2)));
 
-                string trainJson = JsonConvert.SerializeObject(trainCocoDataset, 
-                    new JsonSerializerSettings{ ContractResolver = contractResolver, Formatting = Formatting.Indented});
-                string valJson = JsonConvert.SerializeObject(valCocoDataset,
-                    new JsonSerializerSettings { ContractResolver = contractResolver, Formatting = Formatting.Indented });
-                string testJson = JsonConvert.SerializeObject(testCocoDataset,
-                    new JsonSerializerSettings { ContractResolver = contractResolver, Formatting = Formatting.Indented });
+                string trainJson = NewtonsoftJsonHelper.Serialize(trainCocoDataset);
+                string valJson = NewtonsoftJsonHelper.Serialize(valCocoDataset);
+                string testJson = NewtonsoftJsonHelper.Serialize(testCocoDataset);
 
                 await File.WriteAllTextAsync(Path.Combine(trainDir, "annotations_coco.json"), trainJson);
                 await File.WriteAllTextAsync(Path.Combine(valDir, "annotations_coco.json"), valJson);

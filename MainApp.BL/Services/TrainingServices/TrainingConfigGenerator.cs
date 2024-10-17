@@ -1,4 +1,6 @@
-﻿namespace MainApp.BL.Services.TrainingServices
+﻿using SD.Helpers;
+
+namespace MainApp.BL.Services.TrainingServices
 {
     public static class TrainingConfigGenerator
     {
@@ -48,10 +50,10 @@
         }
 
         public static string GenerateConfigBaseModelOverrideStr(string baseModelConfigFilePath)
-            => $"_base_ = [r'{baseModelConfigFilePath}']";
+            => $"_base_ = ['{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(baseModelConfigFilePath)}']";
 
         public static string GenerateConfigDataRootOverrideStr(string dataRootAbsPath)
-            => $"data_root = r'{dataRootAbsPath}'\r\n";
+            => $"data_root = '{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(dataRootAbsPath)}'\r\n";
 
         public static string GenerateConfigMetaInfoOverrideStr(string[] classNames)
         {
@@ -74,11 +76,13 @@
 
         public static string GenerateConfigModelOverrideStr(string backboneCheckpointAbsPath)
         {
+            backboneCheckpointAbsPath = CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(backboneCheckpointAbsPath);
+
             string configModelOverrideStr =
                 $"model = dict(\r\n" +
                 $"\tbackbone=dict(\r\n" +
                 $"\t\tfrozen_stages=num_frozen_stages,\r\n" +
-                $"\t\tinit_cfg=dict(checkpoint=r'{Path.GetFullPath(backboneCheckpointAbsPath)}', type='Pretrained'),\r\n" +
+                $"\t\tinit_cfg=dict(checkpoint='{backboneCheckpointAbsPath}', type='Pretrained'),\r\n" +
                 $"\t\tnum_stages=4),\r\n" +
                 $"\troi_head=dict(\r\n" +
                 $"\t\tbbox_head=dict(\r\n" +
@@ -98,7 +102,7 @@
                 "\tdataset=dict(\r\n" +
                 "\t\tdata_root=data_root,\r\n" +
                 "\t\tmetainfo=metainfo,\r\n" +
-                $"\t\tann_file=r'{Path.Combine(dataRootAbsPath, "train", "annotations_coco.json")}',\r\n" +
+                $"\t\tann_file='train/annotations_coco.json',\r\n" +
                 "\t\tdata_prefix=dict(img='train/'),),\r\n" +
                 "\tnum_workers=2,)\r\n";
 
@@ -110,11 +114,11 @@
                 "\tdataset=dict(\r\n" +
                 "\t\tdata_root=data_root,\r\n" +
                 "\t\tmetainfo=metainfo,\r\n" +
-                $"\t\tann_file=r'{Path.Combine(dataRootAbsPath, "valid", "annotations_coco.json")}',\r\n" +
+                $"\t\tann_file='valid/annotations_coco.json',\r\n" +
                 "\t\tdata_prefix=dict(img='valid/'),),\r\n" +
                 "\tnum_workers=2,)\r\n";
         public static string GenerateConfigValEvaluatorOverrideStr(string dataRootAbsPath) 
-            => $"val_evaluator = dict(ann_file=r'{Path.Combine(dataRootAbsPath, "valid", "annotations_coco.json")}',)\r\n";
+            => $"val_evaluator = dict(ann_file=data_root + '/valid/annotations_coco.json',)\r\n";
 
         public const string GenerateConfigTestCfgOverrideStr =
             "test_cfg = dict(type='TestLoop')\r\n";
@@ -124,13 +128,13 @@
                 "\tdataset=dict(\r\n" +
                 "\t\tdata_root=data_root,\r\n" +
                 "\t\tmetainfo=metainfo,\r\n" +
-                $"\t\tann_file=r'{Path.Combine(dataRootAbsPath, "test", "annotations_coco.json")}',\r\n" +
+                $"\t\tann_file='test/annotations_coco.json',\r\n" +
                 "\t\tdata_prefix=dict(img='test/'),),\r\n" +
                 "\tnum_workers=2,)\r\n";
         public static string GenerateConfigTestEvaluatorOverrideStr(string dataRootAbsPath)
-            => $"test_evaluator = dict(ann_file=r'{Path.Combine(dataRootAbsPath, "test", "annotations_coco.json")}',)\r\n";
+            => $"test_evaluator = dict(ann_file=data_root + '/test/annotations_coco.json',)\r\n";
 
         public static string GenerateConfigLoadFromOverrideStr(string baseModelFileAbsPath)
-            => $"load_from = r'{baseModelFileAbsPath}'\r\n";
+            => $"load_from = '{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(baseModelFileAbsPath)}'\r\n";
     }
 }

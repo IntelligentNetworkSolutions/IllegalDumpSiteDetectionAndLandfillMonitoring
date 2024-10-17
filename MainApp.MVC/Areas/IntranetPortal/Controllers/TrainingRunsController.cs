@@ -20,9 +20,16 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> Index()
         {
-            //var getTrainingRunResultsLogResult = await _trainingRunService.GetBestEpochForTrainingRun(Guid.Parse("e6684e31-1dd9-489a-9163-524f134e397a"));
+            //var getTrainingRunResultsLogResult = _trainingRunService.GetBestEpochForTrainingRun(Guid.Parse("ffead056-aa94-4f85-9496-2dabab848a32"));
 
-            var res = await _trainingRunService.ExecuteDummyTrainingRunProcess();
+            SD.ResultDTO<Entities.TrainingEntities.TrainingRun> trainingRunResult =
+                await _trainingRunService.GetTrainingRunById(Guid.Parse("ffead056-aa94-4f85-9496-2dabab848a32"));
+            var createTrainedModelResult = await _trainingRunService.CreateTrainedModelFromTrainingRun(trainingRunResult.Data);
+
+            var updateTrainRunResult = 
+                await _trainingRunService.UpdateTrainingRunAfterSuccessfullTraining(trainingRunResult.Data, createTrainedModelResult.Data.Id);
+
+            //var res = await _trainingRunService.ExecuteDummyTrainingRunProcess();
 
             return View();
         }

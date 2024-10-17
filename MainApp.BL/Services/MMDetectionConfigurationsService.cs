@@ -152,7 +152,7 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
         }
         else
         {
-            bestEpoch = files.FirstOrDefault(f => f == $"epoch_{bestEpochNum}.pth");
+            bestEpoch = files.FirstOrDefault(f => f.EndsWith($"epoch_{bestEpochNum}.pth"));
             if (string.IsNullOrEmpty(bestEpoch))
                 return ResultDTO<string>.Fail($"No Trained Model Config File found in Training Run Output Directory, no file named epoch_{bestEpochNum}.pth");
         }
@@ -169,6 +169,12 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
 
     public string GetDetectionRunOutputDirAbsPath()
         => Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Detection.OutputDirRelPath);
+
+    public string GetDetectionRunOutputDirAbsPathByRunId(Guid detectionRunId)
+        => Path.Combine(GetDetectionRunOutputDirAbsPath(), detectionRunId.ToString());
+
+    public string GetDetectionRunOutputAnnotationsFileAbsPathByRunId(Guid detectionRunId)
+        => Path.Combine(GetDetectionRunOutputDirAbsPathByRunId(detectionRunId), "detection_bboxes.json");
 
     public string GetDetectionRunCliOutDirAbsPath()
         => _MMDetectionConfiguration.Detection.CliLogsAbsPath;

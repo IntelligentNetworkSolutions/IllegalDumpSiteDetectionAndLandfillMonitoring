@@ -50,6 +50,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ILegalLandfillTruckService, LegalLandfillTruckService>();
             services.TryAddScoped<IDetectionIgnoreZoneService, DetectionIgnoreZoneService>();
             services.TryAddScoped<ITrainingRunService, TrainingRunService>();
+            services.TryAddScoped<ITrainedModelService, TrainedModelService>();
 
             return services;
         }

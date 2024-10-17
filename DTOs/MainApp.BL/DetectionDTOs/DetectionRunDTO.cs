@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using DTOs.MainApp.BL.TrainingDTOs;
 
 namespace DTOs.MainApp.BL.DetectionDTOs
 {
@@ -15,6 +16,9 @@ namespace DTOs.MainApp.BL.DetectionDTOs
 
         public Guid? DetectionInputImageId { get; set; }
         public virtual DetectionInputImageDTO? DetectionInputImage { get; set; }
+
+        public Guid? TrainedModelId { get; set; }
+        public virtual TrainedModelDTO? TrainedModel { get; set; }
 
         public string? CreatedById { get; set; }
         public DateTime? CreatedOn { get; set; }
