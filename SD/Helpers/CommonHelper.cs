@@ -67,5 +67,16 @@ namespace SD.Helpers
 
             return collection.GroupBy(property).Any(g => g.Count() > 1);
         }
+
+        public static string ConvertWindowsPathToLinuxPathReplaceAllDashes(string windowsPath)
+        {
+            if (windowsPath.Contains("\\\\"))
+                windowsPath = windowsPath.Replace("\\\\", "/");
+
+            if (windowsPath.Contains("\\"))
+                windowsPath = windowsPath.Replace("\\", "/");
+
+            return windowsPath;
+        }
     }
 }

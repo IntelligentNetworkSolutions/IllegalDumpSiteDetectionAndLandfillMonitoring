@@ -3,6 +3,8 @@ using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
 using Hangfire;
 using MainApp.BL.Interfaces.Services.DetectionServices;
+using MainApp.BL.Interfaces.Services.TrainingServices;
+using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using Microsoft.AspNetCore.Hosting;
@@ -27,6 +29,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IWebHostEnvironment> _mockWebHostEnvironment;
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
         private readonly Mock<IBackgroundJobClient> _mockBackgroundJobClient;
+        private readonly Mock<ITrainedModelService> _mockTrainedModelService;
         private readonly DetectionController _controller;
 
         public DetectionControllerTests()
@@ -39,6 +42,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
             _mockBackgroundJobClient = new Mock<IBackgroundJobClient>();
+            _mockTrainedModelService = new Mock<ITrainedModelService>();
 
             _mockConfiguration.Setup(c => c["AppSettings:MMDetection:BaseSaveMMDetectionDirectoryAbsPath"])
                 .Returns(@"C:\vs_code_workspaces\mmdetection\mmdetection\ins_development");
@@ -55,7 +59,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 _mockAppSettingsAccessor.Object,
                 _mockDetectionRunService.Object,
                 _mockBackgroundJobClient.Object,
-                _mockDetectionIgnoreZoneService.Object);
+                _mockDetectionIgnoreZoneService.Object,
+                _mockTrainedModelService.Object);
         }
 
         [Fact]

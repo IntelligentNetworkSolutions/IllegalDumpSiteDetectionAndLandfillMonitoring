@@ -29,8 +29,7 @@ namespace MainApp.BL.Services.TrainingServices
             _trainingRunService = trainingRunService;
         }
 
-        // TODO: Refactor to return DTO
-        public async Task<ResultDTO<TrainedModel>> GetTrainedModelById(Guid id, bool track = false)
+        public async Task<ResultDTO<TrainedModelDTO>> GetTrainedModelById(Guid id, bool track = false)
         {
             try
             {
@@ -38,16 +37,18 @@ namespace MainApp.BL.Services.TrainingServices
                     await _trainedModelsRepository.GetById(id, track: track, includeProperties: "CreatedBy");
 
                 if (resultGetById.IsSuccess == false && resultGetById.HandleError())
-                    return ResultDTO<TrainedModel>.Fail(resultGetById.ErrMsg!);
+                    return ResultDTO<TrainedModelDTO>.Fail(resultGetById.ErrMsg!);
 
-                //DetectionRunDTO dto = _mapper.Map<DetectionRunDTO>(resultGetAllEntites.Data);
+                TrainedModelDTO trainedModelDTO = _mapper.Map<TrainedModelDTO>(resultGetById.Data);
+                if (trainedModelDTO is null)
+                    return ResultDTO<TrainedModelDTO>.Fail("Failed mapping to DTO for Trained Model");
 
-                return ResultDTO<TrainedModel>.Ok(resultGetById.Data!);
+                return ResultDTO<TrainedModelDTO>.Ok(trainedModelDTO);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
-                return ResultDTO<TrainedModel>.ExceptionFail(ex.Message, ex);
+                return ResultDTO<TrainedModelDTO>.ExceptionFail(ex.Message, ex);
             }
         }
 
@@ -67,14 +68,14 @@ namespace MainApp.BL.Services.TrainingServices
         {
             try
             {
-                ResultDTO<TrainedModel> getTrainedModelResult = await GetTrainedModelById(trainedModelId, false);
+                ResultDTO<TrainedModelDTO> getTrainedModelResult = await GetTrainedModelById(trainedModelId, false);
                 if(getTrainedModelResult.IsSuccess == false && getTrainedModelResult.HandleError())
                     return ResultDTO<TrainingRunResultsDTO>.Fail(getTrainedModelResult.ErrMsg!);
 
-                TrainedModel trainedModel = getTrainedModelResult.Data!;
+                TrainedModelDTO trainedModel = getTrainedModelResult.Data!;
 
                 ResultDTO<TrainingRunResultsDTO> getBestEpochResult = 
-                    await _trainingRunService.GetBestEpochForTrainingRun(trainedModel.TrainingRunId!.Value);
+                    _trainingRunService.GetBestEpochForTrainingRun(trainedModel.TrainingRunId!.Value);
                 if(getBestEpochResult.IsSuccess == false && getBestEpochResult.HandleError())
                     return ResultDTO<TrainingRunResultsDTO>.Fail(getBestEpochResult.ErrMsg!);
 

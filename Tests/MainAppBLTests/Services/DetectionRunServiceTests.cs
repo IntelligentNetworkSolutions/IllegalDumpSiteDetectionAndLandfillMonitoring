@@ -3,6 +3,7 @@ using DAL.Interfaces.Repositories.DetectionRepositories;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
 using Entities.DetectionEntities;
+using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Services.DetectionServices;
 using Microsoft.DotNet.Scaffolding.Shared;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +24,7 @@ namespace Tests.MainAppBLTests.Services
         private readonly Mock<ILogger<DetectionRunService>> _mockLogger;
         private readonly DetectionRunService _service;
         private readonly Mock<IFileSystem> _mockFileSystem;
+        private readonly Mock<IMMDetectionConfigurationService> _mockMMDetectionConfigurationService;
 
         public DetectionRunServiceTests()
         {
@@ -32,6 +34,7 @@ namespace Tests.MainAppBLTests.Services
             _mockMapper = new Mock<IMapper>();
             _mockLogger = new Mock<ILogger<DetectionRunService>>();
             _mockFileSystem = new Mock<IFileSystem>();
+            _mockMMDetectionConfigurationService = new Mock<IMMDetectionConfigurationService>();
 
             _mockConfiguration = new Mock<IConfiguration>();
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:CondaExeFileAbsPath"]).Returns("conda_exe_file_path");
@@ -47,7 +50,8 @@ namespace Tests.MainAppBLTests.Services
                                                _mockLogger.Object,
                                                _mockConfiguration.Object,
                                                _mockDetectedDumSiteRepositoryRepository.Object,
-                                                _mockDetectionInputImageRepository.Object);
+                                                _mockDetectionInputImageRepository.Object,
+                                                _mockMMDetectionConfigurationService.Object);
         }
 
         [Fact]

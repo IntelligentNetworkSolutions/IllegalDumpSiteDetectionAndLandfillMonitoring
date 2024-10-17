@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CliWrap;
 using CliWrap.Buffered;
-using DAL.Interfaces.Repositories.DatasetRepositories;
 using DAL.Interfaces.Repositories.TrainingRepositories;
 using DTOs.MainApp.BL.DatasetDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
@@ -12,7 +11,6 @@ using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Security.Certificates;
 using SD;
 
 namespace MainApp.BL.Services.TrainingServices
@@ -72,10 +70,10 @@ namespace MainApp.BL.Services.TrainingServices
             //string modelFilePath = "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\ins_development\\resources\\ins_best_pretrained_2x2_model_files\\epoch_9.pth";
 
             string createdById = "bba10742-90ea-4ee7-ba41-b322099f01d8";
-            string trainingRunName = "CowboyRun import n export Dataset";
+            string trainingRunName = "CowboyRun import n export Dataset with Thumbnails correct";
 
             ResultDTO<DatasetDTO> resultDatasetIncludeThenAll =
-                await _datasetService.GetDatasetDTOFullyIncluded(Guid.Parse("10e236cc-c027-43e7-b185-303a8cf91b07"), track: false);
+                await _datasetService.GetDatasetDTOFullyIncluded(Guid.Parse("8b0c9979-cdf9-46a4-bf0b-d496b71d507e"), track: false);
 
             if (resultDatasetIncludeThenAll.IsSuccess == false)
                 return ResultDTO.Fail(resultDatasetIncludeThenAll.ErrMsg!);
@@ -88,9 +86,9 @@ namespace MainApp.BL.Services.TrainingServices
             ResultDTO<TrainedModel?> getInsBestTrainedModelResult =
                 await _trainedModelsRepository.GetByIdInclude(Guid.Parse("a83f2202-f919-4b79-a181-b2747219ed46"), track: false);
 
-            int numEpochs = 3;
-            int numBatchSize = 1;
-            int numFrozenStages = 4;
+            int numEpochs = 5;
+            int numBatchSize = 2;
+            int numFrozenStages = 3;
 
             ResultDTO result =
                 await ExecuteTrainingRunProcess(trainingRunName, datasetEntity, getInsBestTrainedModelResult.Data!, createdById,
@@ -104,29 +102,32 @@ namespace MainApp.BL.Services.TrainingServices
         {
             try
             {
+                // Create Training Run
                 ResultDTO<TrainingRun> createTrainingRunResult = await CreateTrainingRun(trainRunName, dataset, baseTrainedModel, createdById);
                 if (createTrainingRunResult.IsSuccess == false && ResultDTO<TrainingRun>.HandleError(createTrainingRunResult))
                     return ResultDTO.Fail(createTrainingRunResult.ErrMsg!);
 
                 TrainingRun trainingRun = createTrainingRunResult.Data!;
 
-                // TODO: Export Dataset at _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRun.Id)
-
+                // Export Dataset
                 string datasetExportAbsPathForTrainingRunId = _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRun.Id);
                 ResultDTO<string> exportDatasetResult = 
                     await _datasetService.ExportDatasetAsCOCOFormat(dataset.Id, "AllImages", datasetExportAbsPathForTrainingRunId, true);
                 if(exportDatasetResult.IsSuccess == false && exportDatasetResult.HandleError())
                     return ResultDTO.Fail(exportDatasetResult.ErrMsg!);
 
+                // Generate Training Config
                 ResultDTO<string> generateTrainRunConfigResult =
                     await GenerateTrainingRunConfig(trainingRun.Id, dataset, baseTrainedModel, numEpochs, numFrozenStages, numBatchSize);
                 if(generateTrainRunConfigResult.IsSuccess == false && generateTrainRunConfigResult.HandleError())
                     return ResultDTO.Fail(generateTrainRunConfigResult.ErrMsg!);
 
+                // Start Training Run
                 ResultDTO startTrainRunResult = await StartTrainingRun(trainingRun.Id);
                 if (startTrainRunResult.IsSuccess == false && startTrainRunResult.HandleError())
                     return ResultDTO.Fail(startTrainRunResult.ErrMsg!);
 
+                // Create Trained Model
                 ResultDTO<TrainedModel> createTrainedModelResult = await CreateTrainedModelFromTrainingRun(trainingRun);
                 if (createTrainedModelResult.IsSuccess == false && createTrainedModelResult.HandleError())
                     return ResultDTO.Fail(createTrainedModelResult.ErrMsg!);
@@ -134,6 +135,7 @@ namespace MainApp.BL.Services.TrainingServices
                 if (createTrainedModelResult.Data is null)
                     return ResultDTO.Fail("Create Trained Model returned Null Trained Model");
 
+                // Update Training Run
                 // TODO: Update Training Run IsSuccuss
                 ResultDTO<TrainingRun> updateTrainRunResult =
                     await UpdateTrainingRunAfterSuccessfullTraining(trainingRun, createTrainedModelResult.Data.Id);
@@ -163,7 +165,7 @@ namespace MainApp.BL.Services.TrainingServices
             if (getTrainedModelConfigFilePathResult.IsSuccess == false)
                 return ResultDTO<TrainedModel>.Fail(getTrainedModelConfigFilePathResult.ErrMsg!);
 
-            ResultDTO<TrainingRunResultsDTO> getBestEpochResult = await GetBestEpochForTrainingRun(trainingRun.Id);
+            ResultDTO<TrainingRunResultsDTO> getBestEpochResult = GetBestEpochForTrainingRun(trainingRun.Id);
             if (getBestEpochResult.IsSuccess == false && getBestEpochResult.HandleError())
                 return ResultDTO<TrainedModel>.Fail(getBestEpochResult.ErrMsg!);
 
@@ -352,7 +354,7 @@ namespace MainApp.BL.Services.TrainingServices
             return ResultDTO<string>.Ok(trainingRunConfigPythonFileAbsPath);
         }
 
-        public async Task<ResultDTO<TrainingRunResultsDTO>> GetBestEpochForTrainingRun(Guid trainingRunId)
+        public ResultDTO<TrainingRunResultsDTO> GetBestEpochForTrainingRun(Guid trainingRunId)
         {
             try
             {
@@ -420,7 +422,7 @@ namespace MainApp.BL.Services.TrainingServices
                 if (epochMetrics.Count == 0)
                     return ResultDTO<TrainingRunResultsDTO>.Fail("No valid data found in the file.");
 
-                TrainingEpochMetricsDTO? bestEpoch = 
+                TrainingEpochMetricsDTO? bestEpoch =
                     epochMetrics.Values.Where(e => e.Steps.Any(s => s.Metrics.ContainsKey("coco/bbox_mAP")))
                                         .OrderByDescending(e => e.Steps.Max(s => s.Metrics.GetValueOrDefault("coco/bbox_mAP", 0)))
                                         .FirstOrDefault();
