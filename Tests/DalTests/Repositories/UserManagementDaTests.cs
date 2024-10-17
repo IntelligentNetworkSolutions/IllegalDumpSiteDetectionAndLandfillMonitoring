@@ -10,7 +10,8 @@ using Microsoft.Extensions.Logging;
 namespace Tests.DalTests.Repositories
 {
     [Trait("Category", "Integration")]
-    public class UserManagementDaTests : IClassFixture<TestDatabaseFixture>
+    [Collection("Shared TestDatabaseFixture")]
+    public class UserManagementDaTests
     {
         private readonly TestDatabaseFixture _fixture;
 

@@ -1,7 +1,10 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
+using Hangfire;
 using MainApp.BL.Interfaces.Services.DetectionServices;
+using MainApp.BL.Interfaces.Services.TrainingServices;
+using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using Microsoft.AspNetCore.Hosting;
@@ -19,21 +22,27 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
     {
 
         private readonly Mock<IDetectionRunService> _mockDetectionRunService;
+        private readonly Mock<IDetectionIgnoreZoneService> _mockDetectionIgnoreZoneService;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IUserManagementService> _mockUserManagementService;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<IWebHostEnvironment> _mockWebHostEnvironment;
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
+        private readonly Mock<IBackgroundJobClient> _mockBackgroundJobClient;
+        private readonly Mock<ITrainedModelService> _mockTrainedModelService;
         private readonly DetectionController _controller;
 
         public DetectionControllerTests()
         {
             _mockDetectionRunService = new Mock<IDetectionRunService>();
+            _mockDetectionIgnoreZoneService = new Mock<IDetectionIgnoreZoneService>();
             _mockMapper = new Mock<IMapper>();
             _mockUserManagementService = new Mock<IUserManagementService>();
             _mockConfiguration = new Mock<IConfiguration>();
             _mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
+            _mockBackgroundJobClient = new Mock<IBackgroundJobClient>();
+            _mockTrainedModelService = new Mock<ITrainedModelService>();
 
             _mockConfiguration.Setup(c => c["AppSettings:MMDetection:BaseSaveMMDetectionDirectoryAbsPath"])
                 .Returns(@"C:\vs_code_workspaces\mmdetection\mmdetection\ins_development");
@@ -48,7 +57,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 _mockMapper.Object,
                 _mockWebHostEnvironment.Object,
                 _mockAppSettingsAccessor.Object,
-                _mockDetectionRunService.Object);
+                _mockDetectionRunService.Object,
+                _mockBackgroundJobClient.Object,
+                _mockDetectionIgnoreZoneService.Object,
+                _mockTrainedModelService.Object);
         }
 
         [Fact]
@@ -63,12 +75,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             var detectionRunsViewModelList = new List<DetectionRunViewModel>
             {
-                new DetectionRunViewModel { Id = detectionRunsListDTOs[0].Id, Name = "TestRun1" },
-                new DetectionRunViewModel { Id = detectionRunsListDTOs[1].Id, Name = "TestRun2" }
+                new DetectionRunViewModel { Id = detectionRunsListDTOs[0].Id, Name = "TestRun1", IsCompleted = true, Status = "Success" },
+                new DetectionRunViewModel { Id = detectionRunsListDTOs[1].Id, Name = "TestRun2", IsCompleted = true, Status = "Success" }
             };
 
             _mockDetectionRunService.Setup(service => service.GetDetectionRunsWithClasses())
                 .ReturnsAsync(detectionRunsListDTOs);
+
             _mockMapper.Setup(mapper => mapper.Map<List<DetectionRunViewModel>>(detectionRunsListDTOs))
                 .Returns(detectionRunsViewModelList);
 
@@ -136,8 +149,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             var detectionRunViewModels = new List<DetectionRunViewModel>
             {
-                new DetectionRunViewModel { Id = detectionRunDTOs[0].Id, Name = "Run 1", Description = "Description 1" },
-                new DetectionRunViewModel { Id = detectionRunDTOs[1].Id, Name = "Run 2", Description = "Description 2" }
+                new DetectionRunViewModel { Id = detectionRunDTOs[0].Id, Name = "Run 1", Description = "Description 1", IsCompleted = true, Status = "Success" },
+                new DetectionRunViewModel { Id = detectionRunDTOs[1].Id, Name = "Run 2", Description = "Description 2", IsCompleted = true, Status = "Success" }
             };
 
             _mockDetectionRunService.Setup(service => service.GetDetectionRunsWithClasses())
@@ -189,23 +202,46 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var detectionRunId1 = Guid.NewGuid();
             var detectionRunId2 = Guid.NewGuid();
+
             var detectionRunDTOs = new List<DetectionRunDTO>
             {
                 new DetectionRunDTO { Id = detectionRunId1, Name = "Run 1" },
                 new DetectionRunDTO { Id = detectionRunId2, Name = "Run 2" }
             };
 
+            var confidenceRates = new List<ConfidenceRateDTO>
+            {
+                new ConfidenceRateDTO { detectionRunId = detectionRunId1, confidenceRate = 0.9 },
+                new ConfidenceRateDTO { detectionRunId = detectionRunId2, confidenceRate = 0.85 }
+            };
+
+            var model = new DetectionRunShowOnMapViewModel
+            {
+                selectedDetectionRunsIds = new List<Guid> { detectionRunId1, detectionRunId2 },
+                selectedConfidenceRates = confidenceRates
+            };
+
             var resultDTO = ResultDTO<List<DetectionRunDTO>>.Ok(detectionRunDTOs);
-            _mockDetectionRunService.Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(It.IsAny<List<Guid>>()))
+
+            _mockDetectionRunService
+                .Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
+                    It.IsAny<List<Guid>>(), It.IsAny<List<ConfidenceRateDTO>>()))
                 .ReturnsAsync(resultDTO);
 
+            _mockDetectionIgnoreZoneService.Setup(service => service.GetAllIgnoreZonesDTOs())
+                .ReturnsAsync(ResultDTO<List<DetectionIgnoreZoneDTO>>.Ok(new List<DetectionIgnoreZoneDTO>()));
+
             // Act
-            var result = await _controller.ShowDumpSitesOnMap(new List<Guid> { detectionRunId1, detectionRunId2 });
+            var result = await _controller.ShowDumpSitesOnMap(model);
 
             // Assert
             Assert.True(result.IsSuccess);
             Assert.Equal(detectionRunDTOs, result.Data);
+            _mockDetectionRunService.Verify(service =>
+                service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
+                    model.selectedDetectionRunsIds, model.selectedConfidenceRates), Times.Once);
         }
+
 
         [Fact]
         public async Task ShowDumpSitesOnMap_ReturnsFail_WhenServiceFails()
@@ -213,32 +249,61 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var errorMessage = "Error retrieving detection runs";
             var resultDTO = ResultDTO<List<DetectionRunDTO>>.Fail(errorMessage);
-            _mockDetectionRunService.Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(It.IsAny<List<Guid>>()))
+
+            var model = new DetectionRunShowOnMapViewModel
+            {
+                selectedDetectionRunsIds = new List<Guid> { Guid.NewGuid() },
+                selectedConfidenceRates = new List<ConfidenceRateDTO>
+                {
+                    new ConfidenceRateDTO { detectionRunId = Guid.NewGuid(), confidenceRate = 0.75 }
+                }
+            };
+
+            _mockDetectionRunService.Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
+                It.IsAny<List<Guid>>(), It.IsAny<List<ConfidenceRateDTO>>()))
                 .ReturnsAsync(resultDTO);
 
             // Act
-            var result = await _controller.ShowDumpSitesOnMap(new List<Guid> { Guid.NewGuid() });
+            var result = await _controller.ShowDumpSitesOnMap(model);
 
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal(errorMessage, result.ErrMsg);
+            _mockDetectionRunService.Verify(service =>
+                service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
+                    model.selectedDetectionRunsIds, model.selectedConfidenceRates), Times.Once);
         }
+
+
 
         [Fact]
         public async Task ShowDumpSitesOnMap_ReturnsFail_WhenDataIsNull()
         {
             // Arrange
             var resultDTO = ResultDTO<List<DetectionRunDTO>>.Ok(null as List<DetectionRunDTO>);
-            _mockDetectionRunService.Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(It.IsAny<List<Guid>>()))
+
+            var model = new DetectionRunShowOnMapViewModel
+            {
+                selectedDetectionRunsIds = new List<Guid> { Guid.NewGuid() },
+                selectedConfidenceRates = null
+            };
+
+            _mockDetectionRunService.Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
+                It.IsAny<List<Guid>>(), It.IsAny<List<ConfidenceRateDTO>>()))
                 .ReturnsAsync(resultDTO);
 
             // Act
-            var result = await _controller.ShowDumpSitesOnMap(new List<Guid> { Guid.NewGuid() });
+            var result = await _controller.ShowDumpSitesOnMap(model);
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal("Data is null", result.ErrMsg);
+            Assert.Equal("No confidence rates selected", result.ErrMsg);
+            _mockDetectionRunService.Verify(service =>
+                service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
+                    model.selectedDetectionRunsIds, It.IsAny<List<ConfidenceRateDTO>>()), Times.Never);
         }
+
+
 
         [Fact]
         public async Task GenerateAreaComparisonAvgConfidenceRateReport_ReturnsData_WhenDataIsAvailable()
@@ -392,18 +457,25 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var detectionInputImageId = Guid.NewGuid();
-            var detectionInputImageDTO = new DetectionInputImageDTO { Id = detectionInputImageId };
+            var detectionInputImageDTO = new DetectionInputImageDTO { Id = detectionInputImageId, ImageFileName = "image.jpg" };
 
             _mockDetectionRunService
                 .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
                 .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(detectionInputImageDTO));
+
+            var thumbnailsFolderPath = "Uploads\\DetectionUploads\\InputImageThumbnails";
+            _mockAppSettingsAccessor
+                .Setup(accessor => accessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok(thumbnailsFolderPath));
 
             // Act
             var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal(detectionInputImageDTO, result.Data);
+            Assert.Equal(detectionInputImageDTO.Id, result.Data.Id);
+            Assert.NotNull(result.Data.ThumbnailFilePath);
+            Assert.Contains("_thumbnail.jpg", result.Data.ThumbnailFilePath);
         }
 
         //[Fact]

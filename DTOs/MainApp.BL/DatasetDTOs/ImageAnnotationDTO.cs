@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using DTOs.Helpers;
+﻿using DTOs.Helpers;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations.Schema;
 
 
 namespace DTOs.MainApp.BL.DatasetDTOs

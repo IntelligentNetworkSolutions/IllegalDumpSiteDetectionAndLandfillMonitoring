@@ -319,8 +319,8 @@
         ignoreZonesList.forEach(function (item) {
             detectionIgnoreZonesTable +=
                 `<tr>
-                                            <td>${item.name}</td>
-                                            <td>${item.description}</td>
+                                            <td class="text-nowrap overflow-auto" style="max-width: 130px;"  title="${item.name}">${item.name}</td>
+                                                <td class="text-nowrap overflow-auto" style="max-width: 130px;" title="${item.description}">${item.description}</td>
                                             <td>${item.isEnabled}</td>
                                             <td>
                                                 <button onclick='focusOnIgnoreZone("${item.id}")' class="btn btn-xs bg-gradient-dark mr-1" title="@DbResHtml.T("Focus on this zone", "Resources")">

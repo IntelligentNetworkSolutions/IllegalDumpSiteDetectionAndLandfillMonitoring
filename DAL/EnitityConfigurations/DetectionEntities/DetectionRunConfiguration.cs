@@ -27,6 +27,13 @@ namespace DAL.EnitityConfigurations.DetectionEntities
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 
+            // Configure the relationship with TrainedModel
+            builder.HasOne(dr => dr.TrainedModel)
+                .WithMany()
+                .HasForeignKey(dr => dr.TrainedModelId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
             // Configure the relationship with ApplicationUser
             builder.HasOne(dr => dr.CreatedBy)
                    .WithMany() // Assuming ApplicationUser has no navigation property back to DetectionRun

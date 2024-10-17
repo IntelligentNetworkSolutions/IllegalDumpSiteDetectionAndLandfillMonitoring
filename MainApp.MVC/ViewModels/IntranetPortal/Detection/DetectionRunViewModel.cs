@@ -8,8 +8,10 @@ namespace MainApp.MVC.ViewModels.IntranetPortal.Detection
 
         public string? Name { get; set; }
         public string? Description { get; set; }
+        public Guid SelectedInputImageId { get; set; }
 
         public bool IsCompleted { get; set; } = false;
+        public string? Status { get; set; }
 
         public string? DetectionInputImageId { get; set; }
         public virtual DetectionInputImageViewModel? DetectionInputImage { get; set; }

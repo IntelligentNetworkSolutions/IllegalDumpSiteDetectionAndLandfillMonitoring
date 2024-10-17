@@ -1,21 +1,16 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
-using MainApp.BL.Interfaces.Services.DatasetServices;
-using MainApp.BL.Interfaces.Services;
-using MainApp.MVC.Areas.IntranetPortal.Controllers;
-using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using DTOs.MainApp.BL.DatasetDTOs;
+using MainApp.BL.Interfaces.Services;
+using MainApp.BL.Interfaces.Services.DatasetServices;
+using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.Annotations;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Moq;
 using SD;
+using System.Security.Claims;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -66,7 +61,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var datasetImageId = Guid.NewGuid();
             var datasetId = Guid.NewGuid();
-
             var datasetImage = new DatasetImageDTO { Id = datasetImageId, DatasetId = datasetId };
             var datasetAllImages = new List<DatasetImageDTO> { datasetImage };
             var dataset = new DatasetDTO { Id = datasetId };
@@ -90,12 +84,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<AnnotateViewModel>(viewResult.ViewData.Model);
+
             Assert.Equal(datasetImage, model.DatasetImage);
             Assert.Equal(dataset, model.Dataset);
             Assert.Equal(datasetClasses, model.DatasetClasses);
             Assert.Equal(1, model.CurrentImagePositionInDataset);
-            Assert.Null(model.NextImage);
-            Assert.Null(model.PreviousImage);
+            Assert.Equal(datasetImage, model.NextImage);
+            Assert.Equal(datasetImage, model.PreviousImage);
             Assert.Equal(1, model.TotalImagesCount);
         }
 
@@ -227,7 +222,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Null(viewResult.ViewName); 
+            Assert.Null(viewResult.ViewName);
         }
 
         [Fact]
@@ -236,11 +231,16 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var datasetImageId = Guid.NewGuid();
             var datasetId = Guid.NewGuid();
+            var previousImageId = Guid.NewGuid();
+            var nextImageId = Guid.NewGuid();
             var datasetImage = new DatasetImageDTO { Id = datasetImageId, DatasetId = datasetId };
-            var datasetAllImages = new List<DatasetImageDTO> { datasetImage };
+            var previousImage = new DatasetImageDTO { Id = previousImageId, DatasetId = datasetId };
+            var nextImage = new DatasetImageDTO { Id = nextImageId, DatasetId = datasetId };
+            var datasetAllImages = new List<DatasetImageDTO> { previousImage, datasetImage, nextImage };
             var dataset = new DatasetDTO { Id = datasetId };
             var datasetClasses = new List<DatasetClassDTO>();
-            var currentImagePositionInDataset = 1;
+
+            var currentImagePositionInDataset = 2;
 
             _mockDatasetImagesService.Setup(service => service.GetDatasetImageById(datasetImageId))
                 .ReturnsAsync(datasetImage);
@@ -260,12 +260,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<AnnotateViewModel>(viewResult.ViewData.Model);
+
             Assert.Equal(datasetImage, model.DatasetImage);
             Assert.Equal(dataset, model.Dataset);
             Assert.Equal(datasetClasses, model.DatasetClasses);
             Assert.Equal(currentImagePositionInDataset, model.CurrentImagePositionInDataset);
-            Assert.Null(model.NextImage);
-            Assert.Null(model.PreviousImage);
+            Assert.Equal(nextImage, model.NextImage);
+            Assert.Equal(previousImage, model.PreviousImage);
             Assert.Equal(datasetAllImages.Count, model.TotalImagesCount);
         }
 

@@ -620,12 +620,22 @@ namespace DAL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<string>("Status")
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TrainedModelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("trained_model_id");
+
                     b.HasKey("Id")
                         .HasName("pk_detection_runs");
 
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("DetectionInputImageId");
+
+                    b.HasIndex("TrainedModelId");
 
                     b.ToTable("detection_runs");
                 });
@@ -1624,9 +1634,18 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_detection_runs_detection_input_images_detection_input_image~");
 
+                    b.HasOne("Entities.TrainingEntities.TrainedModel", "TrainedModel")
+                        .WithMany()
+                        .HasForeignKey("TrainedModelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_detection_runs_trained_models_trained_model_id");
+
                     b.Navigation("CreatedBy");
 
                     b.Navigation("DetectionInputImage");
+
+                    b.Navigation("TrainedModel");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>

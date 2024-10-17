@@ -1,0 +1,80 @@
+name: test_unit_n_integration_gh
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch: # This event allows manual triggering
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest] # Uncomment to enable testing across all platforms
+      fail-fast: false      
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Setup PostgreSQL with PostGIS
+      run: |
+        docker pull postgis/postgis:16-3.4
+        docker run -d --name postgres -e POSTGRES_DB=waste_detection_test_v3 -e POSTGRES_PASSWORD=admin -e POSTGRES_USER=postgres -p 5434:5432 postgis/postgis:16-3.4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Run Tests
+      run: dotnet test -nologo -consoleloggerparameters:NoSummary /p:WarningLevel=0 --settings ExcludeCodeCoverage.runsettings.xml --collect:"XPlat Code Coverage" --logger "trx;LogFileName=test-results.trx"
+      env:
+        TestConnectionString: "Host=localhost;Port=5434;Database=waste_detection_test_v3;Username=postgres;Password=admin;Pooling=true;"
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: Tests/TestResults/*/coverage.cobertura.xml
+
+    - name: Install ReportGenerator
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      
+    - name: Generate HTML report
+      run: reportgenerator "-reports:Tests/TestResults/*/coverage.cobertura.xml" "-targetdir:./coverage-report" "-reporttypes:Html"
+
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-html-report
+        path: ./coverage-report
+
+    - name: Upload TRX report
+      uses: actions/upload-artifact@v3
+      with:
+        name: trx-report
+        path: Tests/TestResults/**/*.trx
+
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: 'Unit Tests'
+        path: Tests/TestResults/**/*.trx
+        reporter: dotnet-trx
+        
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4.0.1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}

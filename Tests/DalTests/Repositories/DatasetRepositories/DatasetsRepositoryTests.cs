@@ -10,7 +10,8 @@ using System.Linq.Expressions;
 namespace Tests.DalTests.Repositories.DatasetRepositories
 {
     [Trait("Category", "Integration")]
-    public class DatasetsRepositoryTests : IClassFixture<TestDatabaseFixture>
+    [Collection("Shared TestDatabaseFixture")]
+    public class DatasetsRepositoryTests
     {
         private readonly TestDatabaseFixture _fixture;
 

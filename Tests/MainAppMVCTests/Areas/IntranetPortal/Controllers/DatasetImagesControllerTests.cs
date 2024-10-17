@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.DatasetDTOs;
+using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using Microsoft.AspNetCore.Hosting;
@@ -9,13 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Newtonsoft.Json.Linq;
-using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -26,6 +21,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IDatasetService> _mockDatasetService;
         private readonly Mock<IDatasetImagesService> _mockDatasetImagesService;
+        private readonly Mock<IImageAnnotationsService> _mockImageAnnotationsService;
         private readonly Mock<IWebHostEnvironment> _mockWebHostEnvironment;
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
         private readonly Mock<IHttpContextAccessor> _httpContextAccessor;
@@ -36,15 +32,18 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockMapper = new Mock<IMapper>();
             _mockDatasetService = new Mock<IDatasetService>();
             _mockDatasetImagesService = new Mock<IDatasetImagesService>();
+            _mockImageAnnotationsService = new Mock<IImageAnnotationsService>();
             _mockWebHostEnvironment = new Mock<IWebHostEnvironment>();
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
             _httpContextAccessor = new Mock<IHttpContextAccessor>();
+
 
             _controller = new DatasetImagesController(
                 _mockConfiguration.Object,
                 _mockMapper.Object,
                 _mockDatasetService.Object,
                 _mockDatasetImagesService.Object,
+                _mockImageAnnotationsService.Object,
                 _mockWebHostEnvironment.Object,
                 _mockAppSettingsAccessor.Object);
 
@@ -198,7 +197,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Dataset is already published. No changes allowed", data["responseErrorAlreadyPublished"]["Value"].ToString());
         }
 
-        
+
 
     }
 }

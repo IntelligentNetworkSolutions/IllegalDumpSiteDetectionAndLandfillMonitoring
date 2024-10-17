@@ -10,15 +10,18 @@ public class TestDatabaseFixture : IDisposable
 
     public TestDatabaseFixture()
     {
-        _connectionString = Environment.GetEnvironmentVariable("TestConnectionString") ??
-            "Host=localhost;Port=5434;Database=waste_detection_migrated_v7;Username=postgres;Password=postgres;Pooling=true;";
+        string? testConnectionEnv = Environment.GetEnvironmentVariable("TestConnectionString");
+        _connectionString = string.IsNullOrEmpty(testConnectionEnv) 
+            ? $"Host=localhost;Port=5434;Database=waste_detection_test_v12;Username=postgres;Password=admin;Pooling=true;"
+            : testConnectionEnv;
 
         DbContextFactory = new ApplicationDbContextFactory();
 
         // Use the factory to create the context for migrations and database setup
         DbContext = CreateDbContext();
         DbContext.AuditDisabled = true;
-        DbContext.Database.Migrate();
+        if (DbContext.Database.GetPendingMigrations().Count() > 0)
+            DbContext.Database.Migrate();
     }
 
     public ApplicationDbContext CreateDbContext()
@@ -49,6 +52,7 @@ public class TestDatabaseFixture : IDisposable
     }
     public void Dispose()
     {
+        DbContext.Database.EnsureDeleted();
         DbContext.Dispose();
     }
 }

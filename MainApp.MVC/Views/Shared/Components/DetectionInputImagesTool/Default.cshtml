@@ -132,7 +132,7 @@
 
     function showEmptyImagesTable(detectionInputImagesTable) {
         detectionInputImagesTable +=
-            `   <table class='table table-striped table-bordered table-hover mt-4'>
+            `  <table class='table table-striped table-bordered table-hover mt-4'>
                                                 <thead>
                                                     <tr>
                                                         <th>@DbResHtml.T("Name", "Resources")</th>
@@ -178,8 +178,8 @@
         inputImagesList.forEach(function (item) {
             detectionInputImagesTable +=
                 `<tr>
-                                                <td hidden>${item.id}</td>
-                                                <td>${item.name}</td>
+                                                 <td hidden>${item.id}</td>
+                                                 <td class="text-nowrap overflow-auto" style="max-width: 220px;" title="${item.name}">${item.name}</td>
                                                  <td>${ new Date(item.dateTaken).toLocaleDateString('en-GB') } </td>
                                                  <td>${item.createdBy.userName}</td>
                                                  <td>

@@ -76,6 +76,8 @@ namespace SD
         public static readonly Module LegalLandfillWasteManagement = new Module { Value = "LegalLandfillWasteManagement", Title = "Legal Landfill Waste Management", Description = "Legal Landfill Waste Management" };
         public static readonly Module MapConfiguration = new Module { Value = "MapConfiguration", Title = "Map Configuration", Description = "Map Configuration" };
         public static readonly Module MapToolDetectionInputImages = new Module { Value = "MapToolDetectionInputImages", Title = "Map Tool Detection Input Images", Description = "Map Tool Detection Input Images" };
+        public static readonly Module ScheduleDetectionAndTrainingRuns = new Module { Value = "ScheduleDetectionAndTrainingRuns", Title = "Schedule Detection And Training Runs", Description = "Schedule Detection And Training Runs" };
+        
 
 
     }

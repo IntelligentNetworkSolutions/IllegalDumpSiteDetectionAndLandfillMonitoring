@@ -38,7 +38,7 @@ namespace SD
             }
             return claims;
         }
-        //TODO: Maybe add function return claims for role name
+
         public static void CheckAuthClaimsValuesForDuplicates()
         {
             var valuesList = GetAll().Select(s => s.Value);
@@ -255,6 +255,67 @@ namespace SD
             FromModule = Modules.Detection,
             Description = "View Detection Runs"
         };
+        public static readonly AuthClaim DeleteDetectionRun = new AuthClaim
+        {
+            Value = "12:2",
+            FromModule = Modules.Detection,
+            Description = "Delete Detection Run"
+        };
+        public static readonly AuthClaim CreateDetectionRun = new AuthClaim
+        {
+            Value = "12:3",
+            FromModule = Modules.Detection,
+            Description = "Create Detection Run"
+        };
+        public static readonly AuthClaim ManageDetectionRuns = new AuthClaim
+        {
+            Value = "12:4",
+            FromModule = Modules.Detection,
+            Description = "Manage Detection Runs"
+        };
+        public static readonly AuthClaim StartDetectionRun = new AuthClaim
+        {
+            Value = "12:5",
+            FromModule = Modules.Detection,
+            Description = "Start Detection Run"
+        };
+        public static readonly AuthClaim ScheduleDetectionRun = new AuthClaim
+        {
+            Value = "12:6",
+            FromModule = Modules.Detection,
+            Description = "Schedule Detection Run"
+        };
+        public static readonly AuthClaim ViewDetectedZones = new AuthClaim
+        {
+            Value = "12:7",
+            FromModule = Modules.Detection,
+            Description = "View Detected Zones"
+        };
+        public static readonly AuthClaim PreviewDetectionInputImages = new AuthClaim
+        {
+            Value = "12:8",
+            FromModule = Modules.Detection,
+            Description = "Preview Detection Input Images"
+        };
+        public static readonly AuthClaim AddDetectionInputImage = new AuthClaim
+        {
+            Value = "12:9",
+            FromModule = Modules.Detection,
+            Description = "Add Detection Input Image"
+        };
+        public static readonly AuthClaim EditDetectionInputImage = new AuthClaim
+        {
+            Value = "12:10",
+            FromModule = Modules.Detection,
+            Description = "Edit Detection Input Image"
+        };
+        public static readonly AuthClaim DeleteDetectionInputImage = new AuthClaim
+        {
+            Value = "12:11",
+            FromModule = Modules.Detection,
+            Description = "Delete Detection Input Image"
+        };
+
         public static readonly AuthClaim AddLegalLandfill = new AuthClaim
         {
             Value = "13:1",
@@ -466,14 +527,12 @@ namespace SD
             Description = "Add Map Layer Group Configurations"
         };
 
-
         public static readonly AuthClaim ViewDetectionInputImages = new AuthClaim
         {
             Value = "16:1",
             FromModule = Modules.MapToolDetectionInputImages,
             Description = "View Detection Input Images"
-        };
-        
+        };        
 
         public static readonly AuthClaim ManageDetectionIgnoreZones = new AuthClaim
         {
@@ -481,6 +540,13 @@ namespace SD
             FromModule = Modules.MapToolDetectionIgnoreZones,
             Description = "Manage Detection Ignore Zones"
         };
+        public static readonly AuthClaim ManageScheduledRuns = new AuthClaim
+        {
+            Value = "18:1",
+            FromModule = Modules.ScheduleDetectionAndTrainingRuns,
+            Description = "Manage Scheduled Detection And Training Runs"
+        };
+        
     } 
 }
 
