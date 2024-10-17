@@ -228,6 +228,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                     It.IsAny<List<Guid>>(), It.IsAny<List<ConfidenceRateDTO>>()))
                 .ReturnsAsync(resultDTO);
 
+            _mockDetectionIgnoreZoneService.Setup(service => service.GetAllIgnoreZonesDTOs())
+                .ReturnsAsync(ResultDTO<List<DetectionIgnoreZoneDTO>>.Ok(new List<DetectionIgnoreZoneDTO>()));
+
             // Act
             var result = await _controller.ShowDumpSitesOnMap(model);
 
