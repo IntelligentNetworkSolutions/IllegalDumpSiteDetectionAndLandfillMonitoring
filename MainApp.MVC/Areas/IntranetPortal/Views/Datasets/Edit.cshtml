@@ -979,16 +979,14 @@
         }
 
         function startExport() {
-            const toggleAllImages = document.getElementById('toggleAllImages').checked; // "All Images" or "Enabled Images"
-            const asSplit = $('#splitDataset').is(':checked'); // "Export as Split Dataset"
+            const toggleAllImages = document.getElementById('toggleAllImages').checked;
+            const asSplit = $('#toggleExportStatus').is(':checked');
             let exportOption = '';
 
-            // If "All Images" is selected, get the image type (Annotated/Unannotated)
             if (toggleAllImages) {
-                const imageType = document.getElementById('imageTypeDropdown').value; // Get dropdown value (Annotated/Unannotated)
-                exportOption = imageType; // Set exportOption to either "AnnotatedImages" or "UnannotatedImages"
+                const imageType = document.getElementById('imageTypeDropdown').value;
+                exportOption = imageType;
             } else {
-                // If "Enabled Images" is selected, set exportOption to "EnabledImages"
                 exportOption = 'EnabledImages';
             }
 
