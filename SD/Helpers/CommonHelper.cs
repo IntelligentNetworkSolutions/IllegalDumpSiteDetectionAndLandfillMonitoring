@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace SD.Helpers
 {
@@ -68,15 +69,34 @@ namespace SD.Helpers
             return collection.GroupBy(property).Any(g => g.Count() > 1);
         }
 
-        public static string ConvertWindowsPathToLinuxPathReplaceAllDashes(string windowsPath)
+        public static string PathToLinuxRegexSlashReplace(string path)
         {
-            if (windowsPath.Contains("\\\\"))
-                windowsPath = windowsPath.Replace("\\\\", "/");
+            //if (string.IsNullOrEmpty(windowsPath))
+            //    return windowsPath;
 
-            if (windowsPath.Contains("\\"))
-                windowsPath = windowsPath.Replace("\\", "/");
+            //if (windowsPath.Contains("\\\\"))
+            //    windowsPath = windowsPath.Replace("\\\\", "/");
 
-            return windowsPath;
+            //if (windowsPath.Contains("\\"))
+            //    windowsPath = windowsPath.Replace("\\", "/");
+
+            //return windowsPath;
+
+            // Replace consecutive backslashes with a single forward slash
+            string linuxPath = Regex.Replace(path, @"\\+", "/");
+
+            // Replace consecutive forward slashes with a single forward slash
+            linuxPath = Regex.Replace(linuxPath, @"/+", "/");
+
+            // Remove the drive letter if present
+            if (linuxPath.Length >= 2 && linuxPath[1] == ':')
+                linuxPath = linuxPath.Substring(2);
+
+            // Ensure the path starts with a forward slash if it's not empty
+            if (!string.IsNullOrEmpty(linuxPath) && !linuxPath.StartsWith("/"))
+                linuxPath = "/" + linuxPath;
+
+            return linuxPath;
         }
     }
 }

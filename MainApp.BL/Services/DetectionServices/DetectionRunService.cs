@@ -253,14 +253,14 @@ namespace MainApp.BL.Services.DetectionServices
             string cpuDetectionCommandPart = hasGPU == false ? "--device cpu" : string.Empty;
 
             string outDirAbsPath = _MMDetectionConfiguration.GetDetectionRunOutputDirAbsPathByRunId(detectionRunId);
-            string outDirCommandPart = $"--out-dir {CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(outDirAbsPath)}";
+            string outDirCommandPart = $"--out-dir {CommonHelper.PathToLinuxRegexSlashReplace(outDirAbsPath)}";
 
             string openmmlabAbsPath = Path.Combine(OpenMMLabEnviromentAbsPath);
 
             detectionCommandStr = $"run -p {openmmlabAbsPath} python {scriptName} " +
-                $"\"{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(imageToRunDetectionOnPath)}\" " +
-                $"{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(trainedModelConfigPath)} " +
-                $"{weightsCommandParamStr} {CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(trainedModelModelPath)} " +
+                $"\"{CommonHelper.PathToLinuxRegexSlashReplace(imageToRunDetectionOnPath)}\" " +
+                $"{CommonHelper.PathToLinuxRegexSlashReplace(trainedModelConfigPath)} " +
+                $"{weightsCommandParamStr} {CommonHelper.PathToLinuxRegexSlashReplace(trainedModelModelPath)} " +
                 $"{outDirCommandPart} {cpuDetectionCommandPart} {patchSizeCommand}";
 
             return detectionCommandStr;
@@ -361,8 +361,8 @@ namespace MainApp.BL.Services.DetectionServices
                 string detectionCommand =
                     GeneratePythonDetectionCommandByType(
                         imageToRunDetectionOnPath: detectionRunDTO.InputImgPath,
-                        trainedModelConfigPath: CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(detectionRunDTO.TrainedModel.ModelConfigPath!),
-                        trainedModelModelPath: CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(detectionRunDTO.TrainedModel.ModelFilePath!),
+                        trainedModelConfigPath: CommonHelper.PathToLinuxRegexSlashReplace(detectionRunDTO.TrainedModel.ModelConfigPath!),
+                        trainedModelModelPath: CommonHelper.PathToLinuxRegexSlashReplace(detectionRunDTO.TrainedModel.ModelFilePath!),
                         detectionRunId: detectionRunDTO.Id!.Value,
                         isSmallImage: false, hasGPU: hasGPU);
 

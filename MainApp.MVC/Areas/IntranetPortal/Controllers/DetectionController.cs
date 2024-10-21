@@ -2,7 +2,6 @@
 using CliWrap;
 using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
-using DocumentFormat.OpenXml.Vml;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
@@ -10,28 +9,20 @@ using Entities.DetectionEntities;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.MVC.Helpers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
-using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using OSGeo.GDAL;
 using SD;
 using Services.Interfaces.Services;
 using System.Security.Claims;
-using System.IO;
 using Hangfire.States;
 using Hangfire;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using MainApp.MVC.Filters;
 using SD.Enums;
-using System.Runtime.InteropServices;
 using System.Text;
-using Hangfire.Server;
-using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
-using MimeKit;
 using Hangfire.Storage.Monitoring;
 using Hangfire.Storage;
 using Microsoft.AspNetCore.Html;
 using MainApp.BL.Interfaces.Services.TrainingServices;
+using DTOs.MainApp.BL.TrainingDTOs;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -103,8 +94,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.CreateDetectionRun))]
         public async Task<IActionResult> CreateDetectionRun()
-        {           
+        {
             return View();
+            ResultDTO<List<TrainedModelDTO>> getPublishedTrainedModelsResult = 
+                await _trainedModelService.GetPublishedTrainedModelsIncludingTrainRuns();
+            if(getPublishedTrainedModelsResult.IsSuccess == false && getPublishedTrainedModelsResult.HandleError())
+                return Json(new { isSuccess = false, errMsg = getPublishedTrainedModelsResult.ErrMsg! });
+
+            return View(getPublishedTrainedModelsResult.Data);
         }
 
         [HttpPost]
@@ -881,6 +878,25 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 item.ImagePath = "/" + item.ImagePath?.Replace("\\", "/");
             
             return ResultDTO<List<DetectionInputImageDTO>>.Ok(resultGetEntities.Data);
+        }
+
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.PreviewDetectionInputImages))]
+        public async Task<ResultDTO<List<TrainedModelDTO>>> GetPublishedTrainedModels()
+        {
+            try
+            {
+                ResultDTO<List<TrainedModelDTO>> getPublishedTrainedModelsResult =
+                    await _trainedModelService.GetPublishedTrainedModelsIncludingTrainRuns();
+                if (getPublishedTrainedModelsResult.IsSuccess == false && getPublishedTrainedModelsResult.HandleError())
+                    ResultDTO<List<TrainedModelDTO>>.Fail(getPublishedTrainedModelsResult.ErrMsg!);
+
+                return ResultDTO<List<TrainedModelDTO>>.Ok(getPublishedTrainedModelsResult.Data!);
+            }
+            catch(Exception ex)
+            {
+                return ResultDTO<List<TrainedModelDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
     }
 }

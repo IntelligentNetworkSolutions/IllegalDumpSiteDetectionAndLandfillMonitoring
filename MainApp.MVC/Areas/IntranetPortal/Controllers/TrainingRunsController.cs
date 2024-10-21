@@ -22,14 +22,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         {
             //var getTrainingRunResultsLogResult = _trainingRunService.GetBestEpochForTrainingRun(Guid.Parse("ffead056-aa94-4f85-9496-2dabab848a32"));
 
-            SD.ResultDTO<Entities.TrainingEntities.TrainingRun> trainingRunResult =
-                await _trainingRunService.GetTrainingRunById(Guid.Parse("ffead056-aa94-4f85-9496-2dabab848a32"));
-            var createTrainedModelResult = await _trainingRunService.CreateTrainedModelFromTrainingRun(trainingRunResult.Data);
-
-            var updateTrainRunResult = 
-                await _trainingRunService.UpdateTrainingRunAfterSuccessfullTraining(trainingRunResult.Data, createTrainedModelResult.Data.Id);
-
-            //var res = await _trainingRunService.ExecuteDummyTrainingRunProcess();
+            var res = await _trainingRunService.ExecuteDummyTrainingRunProcess();
 
             return View();
         }

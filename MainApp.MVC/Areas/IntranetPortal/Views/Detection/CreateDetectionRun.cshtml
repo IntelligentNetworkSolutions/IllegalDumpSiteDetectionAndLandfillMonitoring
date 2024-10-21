@@ -1,7 +1,6 @@
 ﻿@using DTOs.MainApp.BL.DetectionDTOs
 @using MainApp.MVC.Helpers
 @using SD.Helpers
-@model List<DetectionRunDTO>
 
 @{
     ViewData["Title"] = "Create Detection Run";
@@ -28,7 +27,7 @@
             <div class="col-md-8 offset-2">
                 <div class="card d-flex">
                     <div class="card-body overlay-wrapper">
-                        <div class="">                          
+                        <div class="">
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label class="form-control-label" for="#inpName">
@@ -46,26 +45,26 @@
                                     <label for="trainedModelSelect" class="form-label">@DbResHtml.T("Trained Model", "Resources")</label>
                                     <select id="trainedModelSelect" class="form-control" name="trainedModelSelect">
                                         <option></option>
-                                        <option>Trained Model 1</option>
-                                        <option>Trained Model 2</option>
+                                        @* <option>Trained Model 1</option>
+                                        <option>Trained Model 2</option> *@
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="detInputImage" class="form-label">@DbResHtml.T("Detection Input Image", "Resources")</label>
                                     <select id="detInputImage" class="form-control" name="detInputImage">
-                                        <option></option>                                       
+                                        <option></option>
                                     </select>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 text-center">                           
+                        <div class="col-12 text-center">
                             @if (User.HasAuthClaim(SD.AuthClaims.ScheduleDetectionRun))
                             {
                                 <button type="button" onclick="scheduleDetectionRun()" class="btn bg-gradient-success">
                                     @DbResHtml.T("Schedule Detection", "Resources")
                                 </button>
-                            }                          
-                            
+                            }
+
                         </div>
                     </div>
                 </div>
@@ -84,6 +83,8 @@
                 placeholder: "@DbResHtml.T("Select Trained Model", "Resources")",
                 allowClear: true
             });
+            populateTrainedModelsSelect();
+
             $("#detInputImage").select2({
                 placeholder: "@DbResHtml.T("Select Input Image", "Resources")",
                 allowClear: true,
@@ -131,25 +132,25 @@
                             //var thumbnailPath = "/" + data.data.thumbnailFilePath.replace(/\\/g, '/');
 
                             inputImagePropertiesHtml += `
-                                     <strong><i class="fas fa-file-signature mr-1"></i>@DbResHtml.T("Name", "Resources")</strong>
-                                     <p class="text-muted">${data.data.name}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-book mr-1"></i>@DbResHtml.T("Descripiton", "Resources")</strong>
-                                     <p class="text-muted">${data.data.description}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-calendar-alt mr-1"></i>@DbResHtml.T("Created On", "Resources")</strong>
-                                        <p class="text-muted">${new Date(data.data.createdOn).toLocaleDateString('en-GB')}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-user-edit mr-1"></i>@DbResHtml.T("Created By", "Resources")</strong>
-                                     <p class="text-muted">${data.data.createdBy.userName}</p>
-                                    `;
+                                                             <strong><i class="fas fa-file-signature mr-1"></i>@DbResHtml.T("Name", "Resources")</strong>
+                                                             <p class="text-muted">${data.data.name}</p>
+                                                             <hr>
+                                                             <strong><i class="fas fa-book mr-1"></i>@DbResHtml.T("Descripiton", "Resources")</strong>
+                                                             <p class="text-muted">${data.data.description}</p>
+                                                             <hr>
+                                                             <strong><i class="fas fa-calendar-alt mr-1"></i>@DbResHtml.T("Created On", "Resources")</strong>
+                                                                <p class="text-muted">${new Date(data.data.createdOn).toLocaleDateString('en-GB')}</p>
+                                                             <hr>
+                                                             <strong><i class="fas fa-user-edit mr-1"></i>@DbResHtml.T("Created By", "Resources")</strong>
+                                                             <p class="text-muted">${data.data.createdBy.userName}</p>
+                                                            `;
                             inputImagePreviewHtml += `
-                                         <img src='${data.data.thumbnailFilePath}' class="w-75 rounded" />
-                                    `;
+                                                                 <img src='${data.data.thumbnailFilePath}' class="w-75 rounded" />
+                                                            `;
                             $("#inputImagePropertiesCardBody").append(inputImagePropertiesHtml);
                             $("#inputImagePreview").append(inputImagePreviewHtml);
                             $("#inputImgDetailsModal").show();
-                           
+
                         }
                     }
                     else {
@@ -184,7 +185,7 @@
             return $state;
         }
 
-        function populateInputImageSelect(){
+        function populateInputImageSelect() {
             $.ajax({
                 type: "GET",
                 url: "@Url.Action("GetAllDetectionInputImages", "Detection", new { Area = "IntranetPortal" })",
@@ -193,7 +194,7 @@
                         if (data.isSuccess == false && data.errMsg != null) {
                             Swal.fire({
                                 text: `${data.errMsg}`,
-                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',                               
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                                 allowOutsideClick: false,
                                 icon: "error"
                             });
@@ -208,7 +209,7 @@
                     else {
                         Swal.fire({
                             text: `@DbResHtml.T("No data received", "Resources")`,
-                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',                           
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                             allowOutsideClick: false,
                             icon: "error"
                         });
@@ -217,7 +218,7 @@
                 error: function (req, status, error) {
                     Swal.fire({
                         text: '@DbResHtml.T("Error occured", "Resources")',
-                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',                       
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                         allowOutsideClick: false,
                         icon: "error"
                     });
@@ -225,6 +226,46 @@
             });
         }
 
+        function populateTrainedModelsSelect() {
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetPublishedTrainedModels", "Detection", new { Area = "IntranetPortal" })",
+                success: function (data) {
+                    if (data == undefined || data == null) {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                        return;
+                    }
+
+                    if (data.isSuccess !== true) {
+                        Swal.fire({
+                            text: `${data.errMsg}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                        return;
+                    }
+
+                    let list = data.data;
+                    for (let i = 0; i < list.length; i++) {
+                        $("#trainedModelSelect").append($('<option></option>').val(list[i].id).html(`${list[i].name} - ${new Date(list[i].createdOn).toLocaleDateString('en-GB')}`));
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                }
+            });
+        }
 
         function scheduleDetectionRun() {
             DisableAllChildControlsByContainerClass('content');
@@ -251,7 +292,7 @@
             $.ajax({
                 type: "POST",
                 url: '@Url.Action("ScheduleDetectionRun", "Detection", new { area = "IntranetPortal" })',
-                data: {                    
+                data: {
                     viewModel: viewModel
                 },
                 success: function (data) {
@@ -301,7 +342,7 @@
     </script>
 }
 
-@section BodyArea{
+@section BodyArea {
     <div class="modal" id="inputImgDetailsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -321,7 +362,7 @@
                             </div>
                         </div>
                     </div>
-                 
+
 
                 </div>
                 <div class="modal-footer">

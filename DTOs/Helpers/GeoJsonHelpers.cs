@@ -122,23 +122,6 @@ namespace DTOs.Helpers
             return new Dictionary<int, int> { { top, left }, { width, height } };
         }
 
-        public static List<float>? GeometryBBoxToTopLeftWidthHeightListIgorche(Geometry geom)
-        {
-            if (geom == null)
-            {
-                return null;
-            }
-
-            var envelope = geom.EnvelopeInternal;
-
-            int top = Convert.ToInt32(envelope.MinX);
-            int left = Convert.ToInt32(envelope.MaxY);
-            float width = (float)envelope.Width;
-            float height = (float)envelope.Height;
-
-            return new List<float> { left, top, width, height };
-        }
-
         /// <summary>
         /// Returns BBox coordinates (top left, width, height) format
         /// </summary>

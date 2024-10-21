@@ -137,5 +137,111 @@ namespace Tests.SDTests.Helpers
             };
             Assert.False(CommonHelper.EnumerableHasDuplicatesByProperty(collection, x => x.Value));
         }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithBackslashes_ReturnsForwardSlashes()
+        {
+            string windowsPath = "C:\\Users\\JohnDoe\\Documents\\file.txt";
+            string expected = "C:/Users/JohnDoe/Documents/file.txt";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(windowsPath);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithMixedSlashes_ReturnsForwardSlashes()
+        {
+            string mixedPath = "C:\\Users/JohnDoe\\Documents/file.txt";
+            string expected = "C:/Users/JohnDoe/Documents/file.txt";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(mixedPath);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithNetworkPath_ReturnsForwardSlashes()
+        {
+            string networkPath = "\\\\ServerName\\SharedFolder\\file.txt";
+            string expected = "/ServerName/SharedFolder/file.txt";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(networkPath);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithAlreadyLinuxPath_ReturnsSamePath()
+        {
+            string linuxPath = "/home/user/documents/file.txt";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(linuxPath);
+
+            Assert.Equal(linuxPath, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithEmptyString_ReturnsEmptyString()
+        {
+            string emptyPath = "";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(emptyPath);
+
+            Assert.Equal(emptyPath, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithNullInput_ReturnsEmptyString()
+        {
+            string nullPath = null;
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(nullPath);
+
+            Assert.Equal(null, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithEmptyInput_ReturnsEmptyString()
+        {
+            string nullPath = string.Empty;
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(nullPath);
+
+            Assert.Equal(string.Empty, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithOnlyBackslashes_ReturnsAllForwardSlashes()
+        {
+            string backslashesOnly = "\\\\\\\\";
+            string expected = "//";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(backslashesOnly);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithPathContainingSpaces_PreservesSpaces()
+        {
+            string pathWithSpaces = "C:\\Program Files\\My App\\file with spaces.txt";
+            string expected = "C:/Program Files/My App/file with spaces.txt";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(pathWithSpaces);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithRelativePath_ConvertsToPosixStyle()
+        {
+            string relativePath = "..\\ParentFolder\\ChildFolder\\file.txt";
+            string expected = "../ParentFolder/ChildFolder/file.txt";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(relativePath);
+
+            Assert.Equal(expected, result);
+        }
     }
 }
