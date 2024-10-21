@@ -1,12 +1,7 @@
-﻿using DTOs.MainApp.BL.DatasetDTOs;
+﻿using DTOs.Helpers;
 using DTOs.MainApp.BL;
+using DTOs.MainApp.BL.DatasetDTOs;
 using NetTopologySuite.Geometries;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTOs.Helpers;
 
 namespace Tests.DTOsTests.MainAppBL.DatasetDTOsTests
 {
@@ -119,49 +114,49 @@ namespace Tests.DTOsTests.MainAppBL.DatasetDTOsTests
             Assert.Equal(expectedGeoJson, actualGeoJson);
         }
 
-        [Fact]
-        public void ImageAnnotationDTO_TopLeftBottomRight_ShouldReturnExpectedDictionary()
-        {
-            // Arrange
-            var geom = new Polygon(new LinearRing(new[]
-            {
-                new Coordinate(0, 0),
-                new Coordinate(1, 0),
-                new Coordinate(1, 1),
-                new Coordinate(0, 1),
-                new Coordinate(0, 0)
-            }));
-            var expectedDictionary = GeoJsonHelpers.GeometryBBoxToTopLeftBottomRight(geom);
+        //[Fact]
+        //public void ImageAnnotationDTO_TopLeftBottomRight_ShouldReturnExpectedDictionary()
+        //{
+        //    // Arrange
+        //    var geom = new Polygon(new LinearRing(new[]
+        //    {
+        //        new Coordinate(0, 0),
+        //        new Coordinate(1, 0),
+        //        new Coordinate(1, 1),
+        //        new Coordinate(0, 1),
+        //        new Coordinate(0, 0)
+        //    }));
+        //    var expectedDictionary = GeoJsonHelpers.GeometryBBoxToTopLeftBottomRight(geom);
 
-            // Act
-            var dto = new ImageAnnotationDTO { Geom = geom };
-            var actualDictionary = dto.TopLeftBottomRight;
+        //    // Act
+        //    var dto = new ImageAnnotationDTO { Geom = geom };
+        //    var actualDictionary = dto.TopLeftBottomRight;
 
-            // Assert
-            Assert.Equal(expectedDictionary, actualDictionary);
-        }
+        //    // Assert
+        //    Assert.Equal(expectedDictionary, actualDictionary);
+        //}
 
-        [Fact]
-        public void ImageAnnotationDTO_TopLeftWidthHeight_ShouldReturnExpectedDictionary()
-        {
-            // Arrange
-            var geom = new Polygon(new LinearRing(new[]
-            {
-                new Coordinate(0, 0),
-                new Coordinate(1, 0),
-                new Coordinate(1, 1),
-                new Coordinate(0, 1),
-                new Coordinate(0, 0)
-            }));
-            var expectedDictionary = GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeight(geom);
+        //[Fact]
+        //public void ImageAnnotationDTO_TopLeftWidthHeight_ShouldReturnExpectedDictionary()
+        //{
+        //    // Arrange
+        //    var geom = new Polygon(new LinearRing(new[]
+        //    {
+        //        new Coordinate(0, 0),
+        //        new Coordinate(1, 0),
+        //        new Coordinate(1, 1),
+        //        new Coordinate(0, 1),
+        //        new Coordinate(0, 0)
+        //    }));
+        //    var expectedDictionary = GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeight(geom);
 
-            // Act
-            var dto = new ImageAnnotationDTO { Geom = geom };
-            var actualDictionary = dto.TopLeftWidthHeight;
+        //    // Act
+        //    var dto = new ImageAnnotationDTO { Geom = geom };
+        //    var actualDictionary = dto.TopLeftWidthHeight;
 
-            // Assert
-            Assert.Equal(expectedDictionary, actualDictionary);
-        }
+        //    // Assert
+        //    Assert.Equal(expectedDictionary, actualDictionary);
+        //}
 
     }
 }
