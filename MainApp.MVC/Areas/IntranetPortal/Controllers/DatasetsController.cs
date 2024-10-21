@@ -2,6 +2,7 @@
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
+using DTOs.MainApp.BL.TrainingDTOs;
 using ImageMagick;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.MVC.Filters;
@@ -62,6 +63,20 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return datasets;
         }
 
+        public async Task<ResultDTO<List<DatasetDTO>>> GetAllPublishedDatasets()
+        {
+            ResultDTO<List<DatasetDTO>>? resultGetEntities = await _datasetService.GetAllPublishedDatasets();
+            if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
+                return ResultDTO<List<DatasetDTO>>.Fail(resultGetEntities.ErrMsg!);
+
+            if (resultGetEntities.Data == null)
+                return ResultDTO<List<DatasetDTO>>.Fail("Published datasets not found");
+
+            return ResultDTO<List<DatasetDTO>>.Ok(resultGetEntities.Data);
+
+        }
+
+        
         [HttpPost]
         public async Task<IActionResult> GetParentAndChildrenDatasets(Guid currentDatasetId)
         {

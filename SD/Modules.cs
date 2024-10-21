@@ -77,6 +77,7 @@ namespace SD
         public static readonly Module MapConfiguration = new Module { Value = "MapConfiguration", Title = "Map Configuration", Description = "Map Configuration" };
         public static readonly Module MapToolDetectionInputImages = new Module { Value = "MapToolDetectionInputImages", Title = "Map Tool Detection Input Images", Description = "Map Tool Detection Input Images" };
         public static readonly Module ScheduleDetectionAndTrainingRuns = new Module { Value = "ScheduleDetectionAndTrainingRuns", Title = "Schedule Detection And Training Runs", Description = "Schedule Detection And Training Runs" };
+        public static readonly Module Training = new Module { Value = "Training", Title = "Training", Description = "Training" };
         
 
 

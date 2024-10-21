@@ -1,5 +1,8 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.TrainingRepositories;
+using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Office2019.Presentation;
+using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
 using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
@@ -52,10 +55,29 @@ namespace MainApp.BL.Services.TrainingServices
             }
         }
 
-        // TODO: Implement
         public async Task<ResultDTO<List<TrainedModelDTO>>> GetAllTrainedModels()
         {
-            throw new NotImplementedException();
+            try
+            {
+               ResultDTO<IEnumerable<TrainedModel>>? resultGetEntities = await _trainedModelsRepository.GetAll(includeProperties: "CreatedBy");
+
+                if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
+                    return ResultDTO<List<TrainedModelDTO>>.Fail(resultGetEntities.ErrMsg!);
+
+                if(resultGetEntities.Data == null)
+                {
+                    return ResultDTO<List<TrainedModelDTO>>.Fail("Trained models not found");
+                }
+
+                List<TrainedModelDTO> dto = _mapper.Map<List<TrainedModelDTO>>(resultGetEntities.Data);
+
+                return ResultDTO<List<TrainedModelDTO>>.Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<List<TrainedModelDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         // TODO: Implement

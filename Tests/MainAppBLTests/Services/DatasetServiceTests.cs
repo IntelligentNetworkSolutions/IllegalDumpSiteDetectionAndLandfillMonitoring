@@ -5,6 +5,9 @@ using DTOs.MainApp.BL.DatasetDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Services.DatasetServices;
+using MainApp.BL.Services.LegalLandfillManagementServices;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Microsoft.Extensions.Logging;
 using Moq;
 using SD;
 using System.Linq.Expressions;
@@ -22,6 +25,7 @@ namespace Tests.MainAppBLTests.Services
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
         private readonly Mock<ICocoUtilsService> _mockCocoUtilsService;
         private readonly DatasetService _datasetService;
+        private readonly Mock<ILogger<DatasetService>> _mockLogger;
 
         public DatasetServiceTests()
         {
@@ -33,6 +37,7 @@ namespace Tests.MainAppBLTests.Services
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
             _mockMapper = new Mock<IMapper>();
             _mockCocoUtilsService = new Mock<ICocoUtilsService>();
+            _mockLogger = new Mock<ILogger<DatasetService>>();
                         
             var mockDatasetDatasetClassRepository = new Mock<IDataset_DatasetClassRepository>();
             var mockDatasetImagesRepository = new Mock<IDatasetImagesRepository>();
@@ -47,7 +52,8 @@ namespace Tests.MainAppBLTests.Services
                 mockImageAnnotationsRepository.Object,
                 _mockAppSettingsAccessor.Object,
                 _mockMapper.Object,
-                _mockCocoUtilsService.Object
+                _mockCocoUtilsService.Object,
+                _mockLogger.Object
             );
         }
 

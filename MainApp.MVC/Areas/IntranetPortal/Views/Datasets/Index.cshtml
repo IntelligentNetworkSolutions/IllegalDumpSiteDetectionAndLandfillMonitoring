@@ -205,12 +205,12 @@
             );
             return $state;
         }
-        function showParentChildrenDatasetsModal(currenctDatasetId) {            
+        function showParentChildrenDatasetsModal(currenctDatasetId) {
             $.ajax({
                 type: "POST",
                 url: "@Url.Action("GetParentAndChildrenDatasets", "Datasets", new { Area = "IntranetPortal" })",
                 data: {
-                    currenctDatasetId: currenctDatasetId
+                    currentDatasetId: currenctDatasetId
                 },
                 success: function (data) {
                     if (data.responseError != null || data.responseError != undefined) {

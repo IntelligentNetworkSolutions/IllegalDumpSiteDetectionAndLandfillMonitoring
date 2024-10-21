@@ -29,10 +29,7 @@ namespace MainApp.BL.Services.DetectionServices
         private readonly IConfiguration _configuration;
 
         // TODO: Think Refactoring
-        private string OutputBaseDirectoryMMDetectionRelPath = string.Empty;
-
         private string DetectionResultDummyDatasetClassId = string.Empty;
-        private string OpenMMLabEnviromentAbsPath = string.Empty;
         private string HasGPU = string.Empty;
 
         public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository, IMMDetectionConfigurationService mMDetectionConfiguration)
@@ -43,12 +40,7 @@ namespace MainApp.BL.Services.DetectionServices
             _logger = logger;
             _configuration = configuration;
 
-            string? outputBaseDirectoryMMDetectionRelPath = _configuration["AppSettings:MMDetection:OutputBaseDirectoryMMDetectionRelPath"];
-            if (string.IsNullOrEmpty(outputBaseDirectoryMMDetectionRelPath))
-                throw new Exception($"{nameof(outputBaseDirectoryMMDetectionRelPath)} is missing");
-            string? openMMLabAbsPath = _configuration["AppSettings:MMDetection:OpenMMLabAbsPath"];
-            if (string.IsNullOrEmpty(openMMLabAbsPath))
-                throw new Exception($"{nameof(openMMLabAbsPath)} is missing");
+           
             string? hasGPU = _configuration["AppSettings:MMDetection:HasGPU"];
             if (string.IsNullOrEmpty(hasGPU))
                 throw new Exception($"{nameof(hasGPU)} is missing");
@@ -56,12 +48,9 @@ namespace MainApp.BL.Services.DetectionServices
             string? detectionResultDummyDatasetClassId = _configuration["AppSettings:MMDetection:DetectionResultDummyDatasetClassId"];
             if (string.IsNullOrEmpty(detectionResultDummyDatasetClassId))
                 throw new Exception($"{nameof(detectionResultDummyDatasetClassId)} is missing");
-
-            OutputBaseDirectoryMMDetectionRelPath = outputBaseDirectoryMMDetectionRelPath;
-            OpenMMLabEnviromentAbsPath = openMMLabAbsPath;
+         
             HasGPU = hasGPU;
             _detectedDumpSitesRepository = detectedDumpSitesRepository;
-
             DetectionResultDummyDatasetClassId = detectionResultDummyDatasetClassId;
             _MMDetectionConfiguration = mMDetectionConfiguration;
         }
@@ -255,7 +244,7 @@ namespace MainApp.BL.Services.DetectionServices
             string outDirAbsPath = _MMDetectionConfiguration.GetDetectionRunOutputDirAbsPathByRunId(detectionRunId);
             string outDirCommandPart = $"--out-dir {CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(outDirAbsPath)}";
 
-            string openmmlabAbsPath = Path.Combine(OpenMMLabEnviromentAbsPath);
+            string openmmlabAbsPath = _MMDetectionConfiguration.GetOpenMMLabAbsPath();
 
             detectionCommandStr = $"run -p {openmmlabAbsPath} python {scriptName} " +
                 $"\"{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(imageToRunDetectionOnPath)}\" " +
@@ -371,9 +360,9 @@ namespace MainApp.BL.Services.DetectionServices
                         .WithValidation(CommandResultValidation.None)
                         .WithArguments(detectionCommand.ToLower())
                         .WithStandardOutputPipe(PipeTarget.ToFile(
-                            Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"succ_{DateTime.Now.Ticks}.txt")))
+                            Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"succ_{detectionRunDTO.Id.Value}.txt")))
                         .WithStandardErrorPipe(PipeTarget.ToFile(
-                            Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"error_{DateTime.Now.Ticks}.txt")))
+                            Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"error_{detectionRunDTO.Id.Value}.txt")))
                         .ExecuteBufferedAsync();
 
                 if (powerShellResults.StandardOutput.Contains("Results have been saved") == false)
