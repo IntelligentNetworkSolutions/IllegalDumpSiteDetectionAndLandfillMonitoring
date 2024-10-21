@@ -69,10 +69,10 @@ namespace SD.Helpers
             return collection.GroupBy(property).Any(g => g.Count() > 1);
         }
 
-        public static string PathToLinuxRegexSlashReplace(string path, bool replaceDrive = false)
+        public static string PathToLinuxRegexSlashReplace(string path)
         {
-            //if (string.IsNullOrEmpty(windowsPath))
-            //    return windowsPath;
+            if (string.IsNullOrEmpty(path))
+                return path;
 
             //if (windowsPath.Contains("\\\\"))
             //    windowsPath = windowsPath.Replace("\\\\", "/");
@@ -89,7 +89,7 @@ namespace SD.Helpers
             linuxPath = Regex.Replace(linuxPath, @"/+", "/");
 
 
-            if (replaceDrive)
+            if (Path.DirectorySeparatorChar == '/')
             {
                 // Remove the drive letter if present
                 if (linuxPath.Length >= 2 && linuxPath[1] == ':')

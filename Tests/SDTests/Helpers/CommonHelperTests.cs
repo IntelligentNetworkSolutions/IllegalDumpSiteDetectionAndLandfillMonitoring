@@ -215,7 +215,7 @@ namespace Tests.SDTests.Helpers
         public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithOnlyBackslashes_ReturnsAllForwardSlashes()
         {
             string backslashesOnly = "\\\\\\\\";
-            string expected = "//";
+            string expected = "/";
 
             string result = CommonHelper.PathToLinuxRegexSlashReplace(backslashesOnly);
 
