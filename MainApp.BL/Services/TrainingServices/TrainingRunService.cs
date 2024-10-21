@@ -606,11 +606,23 @@ namespace MainApp.BL.Services.TrainingServices
                     return ResultDTO.Fail(resultGetTrainedModel.ErrMsg!);
                 if (resultGetTrainedModel.Data == null)
                     return ResultDTO.Fail("Training model not found");
+                
+                //get all training runs
+                ResultDTO<IEnumerable<TrainingRun>> resultGetAllTrainingRuns = await _trainingRunsRepository.GetAll();
+                if (!resultGetAllTrainingRuns.IsSuccess && resultGetAllTrainingRuns.HandleError())
+                    return ResultDTO.Fail(resultGetAllTrainingRuns.ErrMsg!);
+                if (resultGetAllTrainingRuns.Data == null)
+                    return ResultDTO.Fail("Training runs not found");
 
-                //detele trained model from db
-                ResultDTO resultDeleteTrainedModel = await _trainedModelsRepository.Delete(resultGetTrainedModel.Data);
-                if (!resultDeleteTrainedModel.IsSuccess && resultDeleteTrainedModel.HandleError())
-                    return ResultDTO.Fail(resultDeleteTrainedModel.ErrMsg!);
+                //all trained model ids from training runs
+                var trainingModelIdsList = resultGetAllTrainingRuns.Data.Select(x => x.TrainedModelId).ToList();
+                if (!trainingModelIdsList.Contains(resultGetTrainedModel.Data.Id))
+                {
+                    //detele trained model from db if it is not contained in other training runs
+                    ResultDTO resultDeleteTrainedModel = await _trainedModelsRepository.Delete(resultGetTrainedModel.Data);
+                    if (!resultDeleteTrainedModel.IsSuccess && resultDeleteTrainedModel.HandleError())
+                        return ResultDTO.Fail(resultDeleteTrainedModel.ErrMsg!);
+                } 
 
                 //delete training run from db
                 TrainingRun trainingRun = _mapper.Map<TrainingRun>(resultGetEntity.Data);
