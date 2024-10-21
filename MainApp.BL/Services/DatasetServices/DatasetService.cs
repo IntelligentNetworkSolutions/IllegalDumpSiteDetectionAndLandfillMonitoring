@@ -857,94 +857,296 @@ namespace MainApp.BL.Services.DatasetServices
             return Path.Combine(applicationPath, "wwwroot");
         }
 
-        public async Task<ResultDTO<DatasetDTO>> ImportDatasetCocoFormatedAtDirectoryPath(string datasetName, string cocoDirPath, string userId, string? saveDir = null, bool allowUnannotatedImages = false)
+        //public async Task<ResultDTO<DatasetDTO>> ImportDatasetCocoFormatedAtDirectoryPath(string datasetName, string cocoDirPath, string userId, string? saveDir = null, bool allowUnannotatedImages = false)
+        //{
+        //    string? datasetImgUploadAbsDir = null;
+        //    try
+        //    {
+        //        string saveRoot = GetWwwRootOrSaveDirectory(saveDir);
+
+        //        ResultDTO<CocoDatasetDTO> getCocoDatasetResult =
+        //            await _cocoUtilsService.GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(cocoDirPath, allowUnannotatedImages);
+        //        if ((getCocoDatasetResult.IsSuccess == false && ResultDTO<CocoDatasetDTO>.HandleError(getCocoDatasetResult))
+        //            || getCocoDatasetResult.Data is null)
+        //            return ResultDTO<DatasetDTO>.Fail(getCocoDatasetResult.ErrMsg!);
+
+        //        CocoDatasetDTO cocoDataset = getCocoDatasetResult.Data;
+
+        //        Guid datasetEntityId = Guid.NewGuid();
+
+        //        if (string.IsNullOrEmpty(userId))
+        //            return ResultDTO<DatasetDTO>.Fail("Invalid User Id");
+
+        //        string datasetNameCalc = string.IsNullOrEmpty(datasetName) == false
+        //                                ? datasetName
+        //                                : "CocoDataset-" + DateTime.UtcNow.ToString("yyyy-MM-dd");
+
+        //        string datasetDescription = cocoDataset.Info is not null && string.IsNullOrEmpty(cocoDataset.Info.Description) == false
+        //                                    ? cocoDataset.Info.Description
+        //                                    : "Coco Dataset Imported at: " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+
+        //        Dataset datasetEntity = new Dataset()
+        //        {
+        //            Id = datasetEntityId,
+        //            Name = datasetName,
+        //            Description = datasetDescription,
+        //            IsPublished = false,
+
+        //            CreatedBy = null,
+        //            CreatedById = userId,
+        //            CreatedOn = DateTime.UtcNow,
+        //            UpdatedBy = null,
+        //            UpdatedById = userId,
+        //            UpdatedOn = DateTime.UtcNow,
+
+        //            // TODO: Implement
+        //            ParentDataset = null,
+        //            ParentDatasetId = null,
+        //            AnnotationsPerSubclass = false,
+        //        };
+
+        //        List<DatasetClass> datasetClassEntities = new List<DatasetClass>();
+        //        List<Dataset_DatasetClass> datasetDatasetClassesEntities = new List<Dataset_DatasetClass>();
+        //        Dictionary<int, Guid> cocoCategoriesToDatasetClassDict = new Dictionary<int, Guid>();
+        //        Dictionary<int, Guid> cocoCategoriesToDatasetDatasetClassDict = new Dictionary<int, Guid>();
+
+        //        foreach (CocoCategoryDTO category in cocoDataset.Categories)
+        //        {
+        //            var existingDatasetClass = await _datasetClassesRepository.GetFirstOrDefault(dc => dc.ClassName == category.Name);
+
+        //            DatasetClass datasetClassEntity;
+
+        //            if (existingDatasetClass.IsSuccess && existingDatasetClass.Data != null)
+        //            {
+        //                datasetClassEntity = existingDatasetClass.Data;
+        //            }
+        //            else
+        //            {
+        //                datasetClassEntity = new DatasetClass()
+        //                {
+        //                    Id = Guid.NewGuid(),
+        //                    ClassName = category.Name,
+
+        //                    CreatedOn = DateTime.Now,
+        //                    CreatedBy = null,
+        //                    CreatedById = userId,
+
+        //                    // TODO: Implement
+        //                    ParentClass = null,
+        //                    ParentClassId = null,
+        //                };
+        //                datasetClassEntities.Add(datasetClassEntity);
+        //            }
+
+        //            cocoCategoriesToDatasetClassDict.Add(category.Id, datasetClassEntity.Id);
+
+        //            Dataset_DatasetClass datasetDatasetClassEntity = new Dataset_DatasetClass()
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                Dataset = datasetEntity,
+        //                DatasetId = datasetEntityId,
+        //                DatasetClassValue = category.Id,
+        //                DatasetClass = datasetClassEntity,
+        //                DatasetClassId = datasetClassEntity.Id,
+        //            };
+        //            datasetDatasetClassesEntities.Add(datasetDatasetClassEntity);
+        //            cocoCategoriesToDatasetDatasetClassDict.Add(category.Id, datasetDatasetClassEntity.Id);
+        //        }
+
+        //        // Assign Dataset Classes
+        //        datasetEntity.DatasetClasses = datasetDatasetClassesEntities;
+
+        //        // Dataset Images
+        //        List<DatasetImage> datasetImages = new List<DatasetImage>();
+        //        Dictionary<int, Guid> cocoImagesToDatasetImagesDict = new Dictionary<int, Guid>();
+
+        //        // Create Dataset Images Directory 
+        //        ResultDTO<string> getImagesDirRelPathResult = await GetDatasetImagesDirectoryRelativePathByDatasetId(datasetEntityId);
+        //        if (getImagesDirRelPathResult.IsSuccess == false)
+        //            return ResultDTO<DatasetDTO>.Fail(getImagesDirRelPathResult.ErrMsg!);
+
+        //        string datasetImgUploadRelDir = getImagesDirRelPathResult.Data!;
+        //        ResultDTO<string?> datasetThumbnailsFolder =
+        //        await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+
+        //        ResultDTO<string> getImagesDirAbsPathResult = await GetDatasetImagesDirectoryAbsolutePathByDatasetId(saveRoot, datasetEntityId);
+        //        if (getImagesDirAbsPathResult.IsSuccess == false)
+        //            return ResultDTO<DatasetDTO>.Fail(getImagesDirAbsPathResult.ErrMsg!);
+
+        //        datasetImgUploadAbsDir = getImagesDirAbsPathResult.Data!;
+        //        if (Directory.Exists(datasetImgUploadAbsDir) == false)
+        //            Directory.CreateDirectory(datasetImgUploadAbsDir);
+
+        //        foreach (CocoImageDTO img in cocoDataset.Images)
+        //        {
+        //            Guid datasetImageId = Guid.NewGuid();
+        //            DatasetImage datasetImage = new DatasetImage()
+        //            {
+        //                Id = datasetImageId,
+        //                DatasetId = datasetEntityId,
+        //                IsEnabled = false,
+        //                Name = Path.GetFileNameWithoutExtension(img.FileName),
+        //                FileName = datasetImageId.ToString() + Path.GetExtension(img.FileName),
+        //                ImagePath = "\\" + datasetImgUploadRelDir + "\\",
+        //                ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetEntityId.ToString()),
+
+        //                CreatedBy = null,
+        //                CreatedById = userId,
+        //                CreatedOn = DateTime.UtcNow,
+        //                UpdatedBy = null,
+        //                UpdatedById = userId,
+        //                UpdatedOn = DateTime.UtcNow,
+        //            };
+
+        //            cocoImagesToDatasetImagesDict.Add(img.Id, datasetImage.Id);
+        //            datasetImages.Add(datasetImage);
+
+        //            ResultDTO copyImageResult =
+        //                CopyImageFromSourcePathToDestinationPath(
+        //                    Path.Combine(cocoDirPath, img.FileName),
+        //                    Path.Combine(datasetImgUploadAbsDir, datasetImageId.ToString() + Path.GetExtension(img.FileName)));
+        //            if (copyImageResult.IsSuccess == false)
+        //                continue;
+        //            // TODO: REVIEW !!!
+        //        }
+
+        //        // Annotations
+        //        List<ImageAnnotation> imageAnnotations = new List<ImageAnnotation>();
+        //        foreach (CocoAnnotationDTO cocoAnnotation in cocoDataset.Annotations)
+        //        {
+        //            ImageAnnotation imageAnnotationEntity = new ImageAnnotation()
+        //            {
+        //                Id = Guid.NewGuid(),
+        //                IsEnabled = true,
+
+        //                Geom = GeoJsonHelpers.ConvertBoundingBoxToPolygon(cocoAnnotation.Bbox),
+
+        //                DatasetClassId = cocoCategoriesToDatasetClassDict.GetValueOrDefault(cocoAnnotation.CategoryId),
+        //                DatasetClass = null,
+
+        //                DatasetImageId = cocoImagesToDatasetImagesDict.GetValueOrDefault(cocoAnnotation.ImageId),
+        //                DatasetImage = null,
+
+        //                CreatedBy = null,
+        //                CreatedById = userId,
+        //                CreatedOn = DateTime.UtcNow,
+        //                UpdatedBy = null,
+        //                UpdatedById = userId,
+        //                UpdatedOn = DateTime.UtcNow,
+        //            };
+        //            imageAnnotations.Add(imageAnnotationEntity);
+        //        }
+
+        //        // Assign Annotations to Images
+        //        foreach (DatasetImage datasetImage in datasetImages)
+        //        {
+        //            List<ImageAnnotation> datasetImageAnnotations =
+        //                imageAnnotations.Where(ann => ann.DatasetImageId == datasetImage.Id).ToList();
+        //            datasetImage.ImageAnnotations = datasetImageAnnotations;
+        //        }
+
+        //        datasetEntity.DatasetImages = datasetImages;
+
+        //        ResultDTO createDatasetResult = await _datasetsRepository.Create(datasetEntity);
+        //        if (createDatasetResult.IsSuccess == false)
+        //            return ResultDTO<DatasetDTO>.Fail(createDatasetResult.ErrMsg!);
+
+        //        DatasetDTO? datasetDTO = _mapper.Map<DatasetDTO>(datasetEntity);
+        //        if (datasetDTO is null)
+        //            return ResultDTO<DatasetDTO>.Fail("Failed mapping to Dataset DTO");
+
+        //        return ResultDTO<DatasetDTO>.Ok(datasetDTO);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        if (string.IsNullOrEmpty(datasetImgUploadAbsDir) == false)
+        //            await DeleteAllFilesInDatasetDirectoryAtWwwRoot(datasetImgUploadAbsDir);
+
+        //        return ResultDTO<DatasetDTO>.ExceptionFail(ex.Message, ex);
+        //    }
+        //}
+
+        public async Task<ResultDTO<DatasetDTO>> ImportDatasetCocoFormatedAtDirectoryPath(string datasetName,
+                                                                                          string cocoDirPath,
+                                                                                          string userId,
+                                                                                          string? saveDir = null,
+                                                                                          bool allowUnannotatedImages = false)
         {
             string? datasetImgUploadAbsDir = null;
+
             try
             {
                 string saveRoot = GetWwwRootOrSaveDirectory(saveDir);
 
                 ResultDTO<CocoDatasetDTO> getCocoDatasetResult =
                     await _cocoUtilsService.GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(cocoDirPath, allowUnannotatedImages);
-                if ((getCocoDatasetResult.IsSuccess == false && ResultDTO<CocoDatasetDTO>.HandleError(getCocoDatasetResult))
-                    || getCocoDatasetResult.Data is null)
+
+                if (!getCocoDatasetResult.IsSuccess || getCocoDatasetResult.Data is null)
                     return ResultDTO<DatasetDTO>.Fail(getCocoDatasetResult.ErrMsg!);
 
                 CocoDatasetDTO cocoDataset = getCocoDatasetResult.Data;
-
                 Guid datasetEntityId = Guid.NewGuid();
 
                 if (string.IsNullOrEmpty(userId))
                     return ResultDTO<DatasetDTO>.Fail("Invalid User Id");
 
-                string datasetNameCalc = string.IsNullOrEmpty(datasetName) == false
-                                        ? datasetName
-                                        : "CocoDataset-" + DateTime.UtcNow.ToString("yyyy-MM-dd");
+                string datasetNameCalc = string.IsNullOrEmpty(datasetName) ? $"CocoDataset-{DateTime.UtcNow:yyyy-MM-dd}" : datasetName;
+                string datasetDescription = cocoDataset.Info?.Description ?? $"Coco Dataset Imported at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}";
 
-                string datasetDescription = cocoDataset.Info is not null && string.IsNullOrEmpty(cocoDataset.Info.Description) == false
-                                            ? cocoDataset.Info.Description
-                                            : "Coco Dataset Imported at: " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-
-                Dataset datasetEntity = new Dataset()
+                Dataset datasetEntity = new Dataset
                 {
                     Id = datasetEntityId,
-                    Name = datasetName,
+                    Name = datasetNameCalc,
                     Description = datasetDescription,
                     IsPublished = false,
-
-                    CreatedBy = null,
                     CreatedById = userId,
                     CreatedOn = DateTime.UtcNow,
-                    UpdatedBy = null,
                     UpdatedById = userId,
                     UpdatedOn = DateTime.UtcNow,
-
-                    // TODO: Implement
-                    ParentDataset = null,
-                    ParentDatasetId = null,
-                    AnnotationsPerSubclass = false,
+                    DatasetClasses = new List<Dataset_DatasetClass>(),
+                    DatasetImages = new List<DatasetImage>()
                 };
 
-                List<DatasetClass> datasetClassEntities = new List<DatasetClass>();
-                List<Dataset_DatasetClass> datasetDatasetClassesEntities = new List<Dataset_DatasetClass>();
                 Dictionary<int, Guid> cocoCategoriesToDatasetClassDict = new Dictionary<int, Guid>();
-                Dictionary<int, Guid> cocoCategoriesToDatasetDatasetClassDict = new Dictionary<int, Guid>();
 
                 foreach (CocoCategoryDTO category in cocoDataset.Categories)
                 {
-                    DatasetClass datasetClassEntity = new DatasetClass()
+                    var existingDatasetClass = await _datasetClassesRepository.GetFirstOrDefault(x => x.ClassName == category.Name);
+                    DatasetClass datasetClassEntity;
+
+                    if (existingDatasetClass.IsSuccess && existingDatasetClass.Data != null)
+                    {
+                        datasetClassEntity = existingDatasetClass.Data;
+                    }
+                    else
+                    {
+                        datasetClassEntity = new DatasetClass
+                        {
+                            Id = Guid.NewGuid(),
+                            ClassName = category.Name,
+                            CreatedOn = DateTime.UtcNow,
+                            CreatedBy = null,
+                            CreatedById = userId,
+
+                            // TODO: Implement
+                            ParentClass = null,
+                            ParentClassId = null,
+                        };
+                        await _datasetClassesRepository.Create(datasetClassEntity);
+                    }
+
+                    cocoCategoriesToDatasetClassDict[category.Id] = datasetClassEntity.Id;
+
+                    datasetEntity.DatasetClasses.Add(new Dataset_DatasetClass
                     {
                         Id = Guid.NewGuid(),
-                        ClassName = category.Name,
-
-                        CreatedOn = DateTime.Now,
-                        CreatedBy = null,
-                        CreatedById = userId,
-
-                        // TODO: Implement
-                        ParentClass = null,
-                        ParentClassId = null,
-                    };
-                    datasetClassEntities.Add(datasetClassEntity);
-                    cocoCategoriesToDatasetClassDict.Add(category.Id, datasetClassEntity.Id);
-
-                    Dataset_DatasetClass datasetDatasetClassEntity = new Dataset_DatasetClass()
-                    {
-                        Id = Guid.NewGuid(),
-                        Dataset = datasetEntity,
                         DatasetId = datasetEntityId,
-                        DatasetClassValue = category.Id,
-                        DatasetClass = datasetClassEntity,
                         DatasetClassId = datasetClassEntity.Id,
-                    };
-                    datasetDatasetClassesEntities.Add(datasetDatasetClassEntity);
-                    cocoCategoriesToDatasetDatasetClassDict.Add(category.Id, datasetDatasetClassEntity.Id);
+                        DatasetClassValue = category.Id
+                    });
                 }
 
-                // Assign Dataset Classes
-                datasetEntity.DatasetClasses = datasetDatasetClassesEntities;
-
-                // Dataset Images
+                // Process Dataset Images
                 List<DatasetImage> datasetImages = new List<DatasetImage>();
                 Dictionary<int, Guid> cocoImagesToDatasetImagesDict = new Dictionary<int, Guid>();
 
@@ -955,20 +1157,20 @@ namespace MainApp.BL.Services.DatasetServices
 
                 string datasetImgUploadRelDir = getImagesDirRelPathResult.Data!;
                 ResultDTO<string?> datasetThumbnailsFolder =
-                await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+                    await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
 
                 ResultDTO<string> getImagesDirAbsPathResult = await GetDatasetImagesDirectoryAbsolutePathByDatasetId(saveRoot, datasetEntityId);
                 if (getImagesDirAbsPathResult.IsSuccess == false)
                     return ResultDTO<DatasetDTO>.Fail(getImagesDirAbsPathResult.ErrMsg!);
 
                 datasetImgUploadAbsDir = getImagesDirAbsPathResult.Data!;
-                if (Directory.Exists(datasetImgUploadAbsDir) == false)
+                if (!Directory.Exists(datasetImgUploadAbsDir))
                     Directory.CreateDirectory(datasetImgUploadAbsDir);
 
                 foreach (CocoImageDTO img in cocoDataset.Images)
                 {
                     Guid datasetImageId = Guid.NewGuid();
-                    DatasetImage datasetImage = new DatasetImage()
+                    DatasetImage datasetImage = new DatasetImage
                     {
                         Id = datasetImageId,
                         DatasetId = datasetEntityId,
@@ -977,11 +1179,8 @@ namespace MainApp.BL.Services.DatasetServices
                         FileName = datasetImageId.ToString() + Path.GetExtension(img.FileName),
                         ImagePath = "\\" + datasetImgUploadRelDir + "\\",
                         ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetEntityId.ToString()),
-
-                        CreatedBy = null,
                         CreatedById = userId,
                         CreatedOn = DateTime.UtcNow,
-                        UpdatedBy = null,
                         UpdatedById = userId,
                         UpdatedOn = DateTime.UtcNow,
                     };
@@ -995,37 +1194,27 @@ namespace MainApp.BL.Services.DatasetServices
                             Path.Combine(datasetImgUploadAbsDir, datasetImageId.ToString() + Path.GetExtension(img.FileName)));
                     if (copyImageResult.IsSuccess == false)
                         continue;
-                    // TODO: REVIEW !!!
                 }
 
-                // Annotations
+                // Process Annotations
                 List<ImageAnnotation> imageAnnotations = new List<ImageAnnotation>();
                 foreach (CocoAnnotationDTO cocoAnnotation in cocoDataset.Annotations)
                 {
-                    ImageAnnotation imageAnnotationEntity = new ImageAnnotation()
+                    ImageAnnotation imageAnnotationEntity = new ImageAnnotation
                     {
                         Id = Guid.NewGuid(),
                         IsEnabled = true,
-
                         Geom = GeoJsonHelpers.ConvertBoundingBoxToPolygon(cocoAnnotation.Bbox),
-
                         DatasetClassId = cocoCategoriesToDatasetClassDict.GetValueOrDefault(cocoAnnotation.CategoryId),
-                        DatasetClass = null,
-
                         DatasetImageId = cocoImagesToDatasetImagesDict.GetValueOrDefault(cocoAnnotation.ImageId),
-                        DatasetImage = null,
-
-                        CreatedBy = null,
                         CreatedById = userId,
                         CreatedOn = DateTime.UtcNow,
-                        UpdatedBy = null,
                         UpdatedById = userId,
                         UpdatedOn = DateTime.UtcNow,
                     };
                     imageAnnotations.Add(imageAnnotationEntity);
                 }
 
-                // Assign Annotations to Images
                 foreach (DatasetImage datasetImage in datasetImages)
                 {
                     List<ImageAnnotation> datasetImageAnnotations =
@@ -1035,8 +1224,9 @@ namespace MainApp.BL.Services.DatasetServices
 
                 datasetEntity.DatasetImages = datasetImages;
 
+                // Save Dataset
                 ResultDTO createDatasetResult = await _datasetsRepository.Create(datasetEntity);
-                if (createDatasetResult.IsSuccess == false)
+                if (!createDatasetResult.IsSuccess)
                     return ResultDTO<DatasetDTO>.Fail(createDatasetResult.ErrMsg!);
 
                 DatasetDTO? datasetDTO = _mapper.Map<DatasetDTO>(datasetEntity);
@@ -1047,7 +1237,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
             catch (Exception ex)
             {
-                if (string.IsNullOrEmpty(datasetImgUploadAbsDir) == false)
+                if (!string.IsNullOrEmpty(datasetImgUploadAbsDir))
                     await DeleteAllFilesInDatasetDirectoryAtWwwRoot(datasetImgUploadAbsDir);
 
                 return ResultDTO<DatasetDTO>.ExceptionFail(ex.Message, ex);
