@@ -1,7 +1,6 @@
-﻿@using DTOs.MainApp.BL.DetectionDTOs
+﻿@using DTOs.MainApp.BL.TrainingDTOs
 @using MainApp.MVC.Helpers
 @using SD.Helpers
-@model List<DetectionRunDTO>
 
 @{
     ViewData["Title"] = "Create Detection Run";
@@ -11,11 +10,11 @@
         <div class="row">
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
-                <small class="text-muted">@DbResHtml.T("Initiate a detection run to analyze and identify potential instances of illegal dumping using system algorithms and data inputs.", "Resources")</small>
+                <small class="text-muted">@DbResHtml.T("Initiate a training run selected training model and dataset.", "Resources")</small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Detection", "Resources")</a></li>
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Training", "Resources")</a></li>
                     <li class="breadcrumb-item active">@ViewData["Title"]</li>
                 </ol>
             </div>
@@ -28,43 +27,37 @@
             <div class="col-md-8 offset-2">
                 <div class="card d-flex">
                     <div class="card-body overlay-wrapper">
-                        <div class="">                          
+                        <div class="">
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label class="form-control-label" for="#inpName">
-                                        @DbResHtml.T("Detection Run Name", "Resources")
+                                        @DbResHtml.T("Training Run Name", "Resources")
                                     </label>
                                     <input type="text" name="Name" class="form-control" id="inpName" required />
-                                </div>
+                                </div>                               
                                 <div class="form-group">
-                                    <label class="form-control-label" for="#inpDescription">
-                                        @DbResHtml.T("Detection Run Description", "Resources")
-                                    </label>
-                                    <input type="text" name="Description" class="form-control" id="inpDescription" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="trainedModelSelect" class="form-label">@DbResHtml.T("Trained Model", "Resources")</label>
+                                    <label for="trainedModelSelect" class="form-label">@DbResHtml.T("Model To Train On", "Resources")</label>
                                     <select id="trainedModelSelect" class="form-control" name="trainedModelSelect">
                                         <optgroup label="Base models"></optgroup>
                                         <optgroup label="Trained models"></optgroup>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="detInputImage" class="form-label">@DbResHtml.T("Detection Input Image", "Resources")</label>
-                                    <select id="detInputImage" class="form-control" name="detInputImage">
-                                        <option></option>                                       
+                                    <label for="datasetSelect" class="form-label">@DbResHtml.T("Dataset", "Resources")</label>
+                                    <select id="datasetSelect" class="form-control" name="datasetSelect">
+                                        <option></option>
                                     </select>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 text-center">                           
-                            @if (User.HasAuthClaim(SD.AuthClaims.ScheduleDetectionRun))
+                        <div class="col-12 text-center">
+                            @if (User.HasAuthClaim(SD.AuthClaims.ScheduleTrainingRun))
                             {
-                                <button type="button" onclick="scheduleDetectionRun()" class="btn bg-gradient-success">
-                                    @DbResHtml.T("Schedule Detection", "Resources")
+                                <button type="button" onclick="scheduleTrainingRun()" class="btn bg-gradient-success">
+                                    @DbResHtml.T("Schedule Training", "Resources")
                                 </button>
-                            }                          
-                            
+                            }
+
                         </div>
                     </div>
                 </div>
@@ -73,46 +66,53 @@
     </div>
 </div>
 
-@section Scripts {
+@section Scripts{
     <script>
         $(document).ready(function () {
-            $("#NavlinkDetection").addClass("active");
+            
             $("#trainedModelSelect").select2({
                 width: '100%',
                 theme: 'bootstrap4',
                 placeholder: "@DbResHtml.T("Select Trained Model", "Resources")",
                 allowClear: true
             });
-            $("#detInputImage").select2({
-                placeholder: "@DbResHtml.T("Select Input Image", "Resources")",
+            $("#datasetSelect").select2({
+                placeholder: "@DbResHtml.T("Select Dataset", "Resources")",
                 allowClear: true,
                 width: '100%',
                 theme: 'bootstrap4',
                 templateResult: setFormat
             });
+            populateDatasetSelect();
             populateTrainedModelSelect();
-            populateInputImageSelect();
-            $(document).on("mouseover", "#btnShowDetails", function (event) {
+            $(document).on("mouseover", "#btnShowDatasetDetails", function (event) {
                 event.stopPropagation();
-                var buttonImgDetails = $(this).data("image-id");
-                if (buttonImgDetails !== null) {
+                var buttonDatasetDetails = $(this).data("dataset-id");
+                if (buttonDatasetDetails !== null) {
                     setTimeout(function () {
-                        showInputImageDetailsModal(buttonImgDetails);
+                        showDatasetDetailsModal(buttonDatasetDetails);
                         setTimeout(function () {
-                            $("#detInputImage").select2("close");
+                            $("#datasetSelect").select2("close");
                         }, 110);
                     }, 700);
                 }
             });
         });
 
-        function showInputImageDetailsModal(currentImgId) {
+        function setFormat(state) {
+            if (!state.id) {
+                return state.text;
+            }
+            var $state = $(
+                `<span class="mr-2">${state.text}</span><button type="button" class="btn btn-xs btn-outline-dark float-right" id="btnShowDatasetDetails" data-dataset-id="${state.element.value}">@DbResHtml.T("Hover to view dataset details", "Resources")</button>`
+            );
+            return $state;
+        }
+
+        function populateDatasetSelect() {
             $.ajax({
-                type: "POST",
-                data: {
-                    detectionInputImageId: currentImgId
-                },
-                url: "@Url.Action("GetDetectionInputImageById", "Detection", new { Area = "IntranetPortal" })",
+                type: "GET",
+                url: "@Url.Action("GetAllPublishedDatasets", "Datasets", new { Area = "IntranetPortal" })",
                 success: function (data) {
                     if (data != undefined || data != null) {
                         if (data.isSuccess == false && data.errMsg != null) {
@@ -124,32 +124,10 @@
                             });
                         }
                         else {
-                            $("#inputImagePropertiesCardBody").empty();
-                            $("#inputImagePreview").empty();
-                            var inputImagePropertiesHtml = '';
-                            var inputImagePreviewHtml = '';
-                            //var thumbnailPath = "/" + data.data.thumbnailFilePath.replace(/\\/g, '/');
-
-                            inputImagePropertiesHtml += `
-                                     <strong><i class="fas fa-file-signature mr-1"></i>@DbResHtml.T("Name", "Resources")</strong>
-                                     <p class="text-muted">${data.data.name}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-book mr-1"></i>@DbResHtml.T("Descripiton", "Resources")</strong>
-                                     <p class="text-muted">${data.data.description}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-calendar-alt mr-1"></i>@DbResHtml.T("Created On", "Resources")</strong>
-                                        <p class="text-muted">${new Date(data.data.createdOn).toLocaleDateString('en-GB')}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-user-edit mr-1"></i>@DbResHtml.T("Created By", "Resources")</strong>
-                                     <p class="text-muted">${data.data.createdBy.userName}</p>
-                                    `;
-                            inputImagePreviewHtml += `
-                                         <img src='${data.data.thumbnailFilePath}' class="w-75 rounded" />
-                                    `;
-                            $("#inputImagePropertiesCardBody").append(inputImagePropertiesHtml);
-                            $("#inputImagePreview").append(inputImagePreviewHtml);
-                            $("#inputImgDetailsModal").show();
-                           
+                            var list = data.data;
+                            for (var i = 0; i < list.length; i++) {
+                                $("#datasetSelect").append($('<option></option>').val(list[i].id).html(list[i].name));
+                            }
                         }
                     }
                     else {
@@ -171,59 +149,95 @@
                 }
             });
         }
-        function closeInputImageDetailsModalModal() {
-            $("#inputImgDetailsModal").hide();
-        }
-        function setFormat(state) {
-            if (!state.id) {
-                return state.text;
-            }
-            var $state = $(
-                `<span class="mr-2">${state.text}</span><button type="button" class="btn btn-xs btn-outline-dark float-right" id="btnShowDetails" data-image-id="${state.element.value}">@DbResHtml.T("Hover to view input image details", "Resources")</button>`
-            );
-            return $state;
-        }
 
-        function populateInputImageSelect(){
+        function showDatasetDetailsModal(currentDatasetId) {
             $.ajax({
-                type: "GET",
-                url: "@Url.Action("GetAllDetectionInputImages", "Detection", new { Area = "IntranetPortal" })",
+                type: "POST",
+                url: "@Url.Action("GetParentAndChildrenDatasets", "Datasets", new { Area = "IntranetPortal" })",
+                data: {
+                    currentDatasetId: currentDatasetId
+                },
                 success: function (data) {
-                    if (data != undefined || data != null) {
-                        if (data.isSuccess == false && data.errMsg != null) {
-                            Swal.fire({
-                                text: `${data.errMsg}`,
-                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',                               
-                                allowOutsideClick: false,
-                                icon: "error"
-                            });
-                        }
-                        else {
-                            var list = data.data;
-                            for (var i = 0; i < list.length; i++) {
-                                $("#detInputImage").append($('<option></option>').val(list[i].id).html(`${list[i].name} - ${new Date(list[i].createdOn).toLocaleDateString('en-GB')}`));
-                            }
-                        }
-                    }
-                    else {
+                    if (data.responseError != null || data.responseError != undefined) {
                         Swal.fire({
-                            text: `@DbResHtml.T("No data received", "Resources")`,
-                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',                           
-                            allowOutsideClick: false,
+                            text: `${data.responseError.value}`,
                             icon: "error"
                         });
+                    } else {
+                        $("#viewParentDatasetModalTableTBody").empty();
+                        $("#viewChildrenDatasetsModalTableTBody").empty();
+
+                        $("#currentDatasetNameHeader").empty();
+                        $("#currentDatasetPropertiesCardBody").empty();
+
+                        var currentDatasetHeaderHtml = "";
+                        var currentDatasetPropertiesHtml = "";
+                        if (data.currentDataset && data.currentDataset != null) {
+                            var createdOn = new Date(data.currentDataset.createdOn);
+
+                            var day = createdOn.getDate();
+                            var month = createdOn.getMonth() + 1; 
+                            var year = createdOn.getFullYear();
+
+                            var formattedDate = ('0' + day).slice(-2) + '.' + ('0' + month).slice(-2) + '.' + year;
+
+                            currentDatasetHeaderHtml += `<h3 class="card-title">@DbResHtml.T("Selected Dataset: ", "Resources")</h3>`;
+
+                            currentDatasetPropertiesHtml += `
+                                     <strong><i class="fas fa-file-signature mr-1"></i>@DbResHtml.T("Name", "Resources")</strong>
+                                     <p class="text-muted">${data.currentDataset.name}</p>
+                                     <hr>
+                                     <strong><i class="fas fa-book mr-1"></i>@DbResHtml.T("Descripiton", "Resources")</strong>
+                                     <p class="text-muted">${data.currentDataset.description}</p>
+                                     <hr>
+                                     <strong><i class="fas fa-calendar-alt mr-1"></i>@DbResHtml.T("Created On", "Resources")</strong>
+                                             <p class="text-muted">${formattedDate}</p>
+                                     <hr>
+                                     <strong><i class="fas fa-user-edit mr-1"></i>@DbResHtml.T("Created By", "Resources")</strong>
+                                     <p class="text-muted">${data.currentDataset.createdBy.userName}</p>
+                                     <hr>
+                                     <strong><i class="fas fa-file-upload mr-1"></i>@DbResHtml.T("Is Published", "Resources")</strong>
+                                     <p class="text-muted">${data.currentDataset.isPublished}</p>
+                                    `;
+                        }
+
+                        var dataHtmlParent = "";
+                        if (data.parent && data.parent.name != null) {
+                            dataHtmlParent += `<tr><td>${data.parent.name}</td><td>${data.parent.description}</td></tr>`;
+                        } else {
+                            dataHtmlParent += `<tr><td class="text-center" colspan="2">@DbResHtml.T("No parent dataset", "Resources")</td></tr>`;
+                        }
+
+                        var dataHtmlChildren = "";
+                        if (data.childrenList && data.childrenList.length > 0) {
+                            data.childrenList.forEach(function (child) {
+                                dataHtmlChildren += `<tr><td>${child.name}</td><td>${child.description}</td></tr>`;
+                            });
+                        } else {
+                            dataHtmlChildren += `<tr><td class="text-center" colspan="2">@DbResHtml.T("No children datasets", "Resources")</td></tr>`;
+                        }
+
+                        $("#viewParentDatasetModalTableTBody").append(dataHtmlParent);
+                        $("#viewChildrenDatasetsModalTableTBody").append(dataHtmlChildren);
+                        $("#currentDatasetNameHeader").append(currentDatasetHeaderHtml);
+                        $("#currentDatasetPropertiesCardBody").append(currentDatasetPropertiesHtml);
+                        $("#viewParentChildrenDatasetModal").show();
                     }
+
                 },
                 error: function (req, status, error) {
                     Swal.fire({
                         text: '@DbResHtml.T("Error occured", "Resources")',
-                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',                       
-                        allowOutsideClick: false,
                         icon: "error"
                     });
                 }
             });
         }
+
+        function closeDatasetDetailsModal() {
+            $("#viewParentChildrenDatasetModal").hide();
+        }
+
         function populateTrainedModelSelect() {
             $.ajax({
                 type: "GET",
@@ -237,7 +251,7 @@
                                 allowOutsideClick: false,
                                 icon: "error"
                             });
-                        }
+                        } 
                         else {
                             var list = data.data;
                             var baseModels = $("#trainedModelSelect optgroup[label='Base models']");
@@ -264,7 +278,8 @@
                             });
                             $('#trainedModelSelect').val(null).trigger('change');
                         }
-                    }
+
+                    } 
                     else {
                         Swal.fire({
                             text: `@DbResHtml.T("No data received", "Resources")`,
@@ -285,19 +300,15 @@
             });
         }
 
-
-        function scheduleDetectionRun() {
-            DisableAllChildControlsByContainerClass('content');
-
-            let inputImg = $("#detInputImage").val();
-            let description = $("#inpDescription").val();
-            let name = $("#inpName").val();
+        function scheduleTrainingRun() {
+            let datasetId = $("#datasetSelect").val();
             let trainedModelId = $("#trainedModelSelect").val();
+            let name = $("#inpName").val();
 
 
-            if ((name === '' || name === undefined) || (description === '' || description === undefined) || (inputImg === '' || inputImg === undefined) || (trainedModelId === '' || trainedModelId === undefined)) {
+            if ((name === '' || name === undefined) || (trainedModelId === '' || trainedModelId === undefined) || (datasetId === '' || datasetId === undefined)) {
                 Swal.fire({
-                    text: "@DbResHtml.T("All fields are required", "Resources")",
+                    text: '@DbResHtml.T("All fields are required", "Resources")',
                     icon: 'error'
                 });
                 return;
@@ -305,15 +316,14 @@
 
             var viewModel = {
                 Name: name,
-                Description: description,
-                SelectedInputImageId: inputImg,
-                SelectedTrainedModelId: trainedModelId
+                TrainedModelId: trainedModelId,
+                DatasetId: datasetId
             }
 
             $.ajax({
                 type: "POST",
-                url: '@Url.Action("ScheduleDetectionRun", "Detection", new { area = "IntranetPortal" })',
-                data: {                    
+                url: '@Url.Action("ScheduleTrainingRun", "TrainingRuns", new { area = "IntranetPortal" })',
+                data: {
                     viewModel: viewModel
                 },
                 success: function (data) {
@@ -328,13 +338,12 @@
                         }
                         else {
                             Swal.fire({
-                                text: '@DbResHtml.T("Detection run scheduled successfully", "Resources")',
+                                text: '@DbResHtml.T("Training run scheduled successfully", "Resources")',
                                 confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                                 allowOutsideClick: false,
                                 icon: "success"
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    removeOverlayByQuerySelector('.card-body');
                                     location.href = '@Url.Action("Index", "Map", new { area = "IntranetPortal" })';
                                 }
                             });
@@ -362,32 +371,55 @@
         }
     </script>
 }
-
 @section BodyArea{
-    <div class="modal" id="inputImgDetailsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal" id="viewParentChildrenDatasetModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-gradient-info">
-                    <h4 class="modal-title">@DbResHtml.T("Input Image Details", "Resources") </h4>
+                <div class="modal-header bg-gradient-dark">
+                    <h4 class="modal-title">@DbResHtml.T("Parent/Children datasets", "Resources") </h4>
                 </div>
                 <div class="modal-body row">
                     <div class="col-md-6">
                         <div class="card card-success bg-light">
-                            <div class="card-body" id="inputImagePropertiesCardBody">
+                            <div class="card-header" id="currentDatasetNameHeader">
+                            </div>
+                            <div class="card-body" id="currentDatasetPropertiesCardBody">
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card card-success bg-light">
-                            <div class="card-body text-center" id="inputImagePreview">
-                            </div>
-                        </div>
+                    <div class="col-md-6 table-responsive">
+                        <table class="table table-bordered table-striped mb-4 w-100" id="viewParentDatasetModalTable">
+                            <thead class="bg-gradient-gray">
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Parent dataset", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Description", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="viewParentDatasetModalTableTBody">
+                            </tbody>
+                        </table>
+                        <table class="table table-bordered table-striped mb-4 w-100" id="viewChildrenDatasetsModalTable">
+                            <thead class="bg-gradient-gray-dark">
+                                <tr>
+                                    <th>
+                                        @DbResHtml.T("Child dataset", "Resources")
+                                    </th>
+                                    <th>
+                                        @DbResHtml.T("Description", "Resources")
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="viewChildrenDatasetsModalTableTBody">
+                            </tbody>
+                        </table>
                     </div>
-                 
-
                 </div>
                 <div class="modal-footer">
-                    <button onclick="closeInputImageDetailsModalModal()" type="button" class="mb-1 btn btn-outline-info" data-dismiss="modal" aria-label="Close">
+                    <button onclick="closeDatasetDetailsModal()" type="button" class="mb-1 btn bg-gradient-dark" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">@DbResHtml.T("Close", "Resources")</span>
                     </button>
                 </div>

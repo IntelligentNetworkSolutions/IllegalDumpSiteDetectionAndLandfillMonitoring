@@ -14,7 +14,7 @@
   },
   {
     "Key": "DatasetThumbnailsFolder",
-    "Value": "DatasetImages",
+    "Value": "DatasetThumbnails",
     "Description": "Dataset Thumbnails Folder Path",
     "DataType": "String"
   },
@@ -113,7 +113,30 @@
     "Value": "C:\\Users\\INS\\miniconda3\\envs\\waste_comparison_env\\python.exe",
     "Description": "Python Exe From Environment Abs Path",
     "DataType": "String"
+  },
+  {
+    "Key": "TrainingRunsErrorLogsFolder",
+    "Value": "Uploads\\TrainingUploads\\TrainingRunsErrorLogs",
+    "Description": "Training Runs Error Logs Folder",
+    "DataType": "String"
+  },
+  {
+    "Key": "DetectionInputImageThumbnailsFolder",
+    "Value": "Uploads\\DetectionUploads\\InputImageThumbnails",
+    "Description": "Detection Input Image Thumbnails Folder",
+    "DataType": "String"
+  },
+  {
+    "Key": "DetectionInputImagesFolder",
+    "Value": "Uploads\\DetectionUploads\\InputImages",
+    "Description": "Detection input images",
+    "DataType": "String"
+  },
+  {
+    "Key": "DetectionRunsErrorLogsFolder",
+    "Value": "Uploads\\DetectionUploads\\DetectionRunsErrorLogs",
+    "Description": "Detection Runs Error Logs Folder",
+    "DataType": "String"
   }
-
 
 ]

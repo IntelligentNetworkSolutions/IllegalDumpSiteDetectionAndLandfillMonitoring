@@ -52,7 +52,7 @@
                         </ul>
                     </li>
                 }
-                @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasets) && User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewTrainingRuns) && User.HasAuthClaim(SD.AuthClaims.CreateTrainingRun))
                 {
                     <li class="nav-item">
                         <a href="#" class="nav-link" id="NavlinkTraining">
@@ -64,11 +64,11 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="Index" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
-                                   title="@DbResHtml.T("Training runs", "Resources")">
+                                <a asp-action="CreateTrainingRun" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
+                                   title="@DbResHtml.T("Create Training Run", "Resources")">
                                     <i class="fas fa-paper-plane"></i> &nbsp;&nbsp;
                                     <p>
-                                        @DbResHtml.T("Training runs", "Resources")
+                                        @DbResHtml.T("Create Training Run", "Resources")
                                     </p>
                                 </a>
                             </li>                           
