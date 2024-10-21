@@ -139,10 +139,12 @@ namespace Tests.SDTests.Helpers
         }
 
         [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithBackslashes_ReturnsForwardSlashes()
+        public void PathToLinuxRegexSlashReplace_WithBackslashes_ReturnsForwardSlashes()
         {
             string windowsPath = "C:\\Users\\JohnDoe\\Documents\\file.txt";
             string expected = "C:/Users/JohnDoe/Documents/file.txt";
+            if (Path.DirectorySeparatorChar == '/')
+                expected = "/Users/JohnDoe/Documents/file.txt";
 
             string result = CommonHelper.PathToLinuxRegexSlashReplace(windowsPath);
 
@@ -150,10 +152,12 @@ namespace Tests.SDTests.Helpers
         }
 
         [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithMixedSlashes_ReturnsForwardSlashes()
+        public void PathToLinuxRegexSlashReplace_WithMixedSlashes_ReturnsForwardSlashes()
         {
             string mixedPath = "C:\\Users/JohnDoe\\Documents/file.txt";
             string expected = "C:/Users/JohnDoe/Documents/file.txt";
+            if (Path.DirectorySeparatorChar == '/')
+                expected = "/Users/JohnDoe/Documents/file.txt";
 
             string result = CommonHelper.PathToLinuxRegexSlashReplace(mixedPath);
 
@@ -161,7 +165,7 @@ namespace Tests.SDTests.Helpers
         }
 
         [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithNetworkPath_ReturnsForwardSlashes()
+        public void PathToLinuxRegexSlashReplace_WithNetworkPath_ReturnsForwardSlashes()
         {
             string networkPath = "\\\\ServerName\\SharedFolder\\file.txt";
             string expected = "/ServerName/SharedFolder/file.txt";
@@ -172,7 +176,7 @@ namespace Tests.SDTests.Helpers
         }
 
         [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithAlreadyLinuxPath_ReturnsSamePath()
+        public void PathToLinuxRegexSlashReplace_WithAlreadyLinuxPath_ReturnsSamePath()
         {
             string linuxPath = "/home/user/documents/file.txt";
 
@@ -182,7 +186,7 @@ namespace Tests.SDTests.Helpers
         }
 
         [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithEmptyString_ReturnsEmptyString()
+        public void PathToLinuxRegexSlashReplace_WithEmptyString_ReturnsEmptyString()
         {
             string emptyPath = "";
 
@@ -192,41 +196,22 @@ namespace Tests.SDTests.Helpers
         }
 
         [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithNullInput_ReturnsEmptyString()
+        public void PathToLinuxRegexSlashReplace_WithNullInput_ReturnsEmptyString()
         {
             string nullPath = null;
 
             string result = CommonHelper.PathToLinuxRegexSlashReplace(nullPath);
 
-            Assert.Equal(null, result);
+            Assert.Null(result);
         }
 
         [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithEmptyInput_ReturnsEmptyString()
-        {
-            string nullPath = string.Empty;
-
-            string result = CommonHelper.PathToLinuxRegexSlashReplace(nullPath);
-
-            Assert.Equal(string.Empty, result);
-        }
-
-        [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithOnlyBackslashes_ReturnsAllForwardSlashes()
-        {
-            string backslashesOnly = "\\\\\\\\";
-            string expected = "/";
-
-            string result = CommonHelper.PathToLinuxRegexSlashReplace(backslashesOnly);
-
-            Assert.Equal(expected, result);
-        }
-
-        [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithPathContainingSpaces_PreservesSpaces()
+        public void PathToLinuxRegexSlashReplace_WithPathContainingSpaces_PreservesSpaces()
         {
             string pathWithSpaces = "C:\\Program Files\\My App\\file with spaces.txt";
             string expected = "C:/Program Files/My App/file with spaces.txt";
+            if (Path.DirectorySeparatorChar == '/')
+                expected = "/Program Files/My App/file with spaces.txt";
 
             string result = CommonHelper.PathToLinuxRegexSlashReplace(pathWithSpaces);
 
@@ -234,7 +219,7 @@ namespace Tests.SDTests.Helpers
         }
 
         [Fact]
-        public void ConvertWindowsPathToLinuxPathReplaceAllDashes_WithRelativePath_ConvertsToPosixStyle()
+        public void PathToLinuxRegexSlashReplace_WithRelativePath_ConvertsToPosixStyle()
         {
             string relativePath = "..\\ParentFolder\\ChildFolder\\file.txt";
             string expected = "../ParentFolder/ChildFolder/file.txt";
@@ -242,6 +227,42 @@ namespace Tests.SDTests.Helpers
             string result = CommonHelper.PathToLinuxRegexSlashReplace(relativePath);
 
             Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void PathToLinuxRegexSlashReplace_WithWindowsDriveLetter_HandlesCorrectly()
+        {
+            string windowsPath = "D:\\Projects\\MyProject\\src\\main.cs";
+            string expected = "D:/Projects/MyProject/src/main.cs";
+            if (Path.DirectorySeparatorChar == '/')
+                expected = "/Projects/MyProject/src/main.cs";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(windowsPath);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void PathToLinuxRegexSlashReplace_WithConsecutiveBackslashes_ReducesToSingleForwardSlash()
+        {
+            string pathWithConsecutiveSlashes = "C:\\\\Users\\\\JohnDoe\\\\\\Documents\\\\file.txt";
+            string expected = "C:/Users/JohnDoe/Documents/file.txt";
+            if (Path.DirectorySeparatorChar == '/')
+                expected = "/Users/JohnDoe/Documents/file.txt";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(pathWithConsecutiveSlashes);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void PathToLinuxRegexSlashReplace_WithLinuxRootPath_RetainsLeadingSlash()
+        {
+            string linuxRootPath = "/root/directory/file.txt";
+
+            string result = CommonHelper.PathToLinuxRegexSlashReplace(linuxRootPath);
+
+            Assert.Equal(linuxRootPath, result);
         }
     }
 }

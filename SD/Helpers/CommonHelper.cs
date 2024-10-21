@@ -74,14 +74,6 @@ namespace SD.Helpers
             if (string.IsNullOrEmpty(path))
                 return path;
 
-            //if (windowsPath.Contains("\\\\"))
-            //    windowsPath = windowsPath.Replace("\\\\", "/");
-
-            //if (windowsPath.Contains("\\"))
-            //    windowsPath = windowsPath.Replace("\\", "/");
-
-            //return windowsPath;
-
             // Replace consecutive backslashes with a single forward slash
             string linuxPath = Regex.Replace(path, @"\\+", "/");
 
@@ -92,7 +84,7 @@ namespace SD.Helpers
             if (Path.DirectorySeparatorChar == '/')
             {
                 // Remove the drive letter if present
-                if (linuxPath.Length >= 2 && linuxPath[1] == ':')
+                if (linuxPath.Length >= 2 && char.IsLetter(linuxPath[0]) && linuxPath[1] == ':')
                     linuxPath = linuxPath.Substring(2);
 
                 // Ensure the path starts with a forward slash if it's not empty
