@@ -8,6 +8,7 @@ namespace DTOs.MainApp.BL.TrainingDTOs
         public string? Name { get; set; }
 
         public bool IsCompleted { get; set; } = false;
+        public string? Status { get; set; }
 
         public Guid? DatasetId { get; set; }
         public virtual DatasetDTO? Dataset { get; set; }

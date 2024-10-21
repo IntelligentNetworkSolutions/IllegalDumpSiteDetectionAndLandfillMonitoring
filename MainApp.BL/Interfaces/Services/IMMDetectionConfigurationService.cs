@@ -10,6 +10,8 @@ namespace MainApp.BL.Interfaces.Services
         string GetRootDirAbsPath();
         string GetCondaExeAbsPath();
         string GetScriptsDirAbsPath();
+        string GetOpenMMLabAbsPath();
+     
 
 
         string GetBackboneCheckpointAbsPath();

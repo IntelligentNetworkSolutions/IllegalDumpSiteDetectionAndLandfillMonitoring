@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241017080407_StatusAddedInTariningRunsTable")]
+    partial class StatusAddedInTariningRunsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -624,18 +627,12 @@ namespace DAL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("status");
 
-                    b.Property<Guid>("TrainedModelId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("trained_model_id");
-
                     b.HasKey("Id")
                         .HasName("pk_detection_runs");
 
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("DetectionInputImageId");
-
-                    b.HasIndex("TrainedModelId");
 
                     b.ToTable("detection_runs");
                 });
@@ -1638,18 +1635,9 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_detection_runs_detection_input_images_detection_input_image~");
 
-                    b.HasOne("Entities.TrainingEntities.TrainedModel", "TrainedModel")
-                        .WithMany()
-                        .HasForeignKey("TrainedModelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_detection_runs_trained_models_trained_model_id");
-
                     b.Navigation("CreatedBy");
 
                     b.Navigation("DetectionInputImage");
-
-                    b.Navigation("TrainedModel");
                 });
 
             modelBuilder.Entity("Entities.IntranetPortalUsersToken", b =>
