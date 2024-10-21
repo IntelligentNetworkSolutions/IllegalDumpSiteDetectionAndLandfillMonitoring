@@ -20,6 +20,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #region Read
         #region Get Dataset/es
         Task<List<DatasetDTO>> GetAllDatasets();
+        Task<ResultDTO<List<DatasetDTO>>> GetAllPublishedDatasets();
         Task<DatasetDTO> GetDatasetById(Guid datasetId);
         Task<CreateDatasetDTO> FillDatasetDto(CreateDatasetDTO dto);
         Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize);
