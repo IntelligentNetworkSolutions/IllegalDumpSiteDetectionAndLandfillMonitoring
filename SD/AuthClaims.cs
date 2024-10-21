@@ -546,7 +546,38 @@ namespace SD
             FromModule = Modules.ScheduleDetectionAndTrainingRuns,
             Description = "Manage Scheduled Detection And Training Runs"
         };
-        
+
+        public static readonly AuthClaim CreateTrainingRun = new AuthClaim
+        {
+            Value = "19:1",
+            FromModule = Modules.Training,
+            Description = "Create Training Run"
+        };
+        public static readonly AuthClaim ViewTrainingRuns = new AuthClaim
+        {
+            Value = "19:2",
+            FromModule = Modules.Training,
+            Description = "View Training Run"
+        };
+        public static readonly AuthClaim ScheduleTrainingRun = new AuthClaim
+        {
+            Value = "19:3",
+            FromModule = Modules.Training,
+            Description = "Schedule Training Run"
+        };
+        public static readonly AuthClaim DeleteTrainingRun = new AuthClaim
+        {
+            Value = "19:4",
+            FromModule = Modules.Training,
+            Description = "Delete Training Run"
+        };
+        public static readonly AuthClaim PublishTrainingRunTrainedModel = new AuthClaim
+        {
+            Value = "19:5",
+            FromModule = Modules.Training,
+            Description = "Publish Training Run Trained Model"
+        };
+
     } 
 }
 

@@ -1,13 +1,16 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
+using DTOs.MainApp.BL.TrainingDTOs;
 using Entities.DetectionEntities;
+using Entities.TrainingEntities;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
 using MainApp.BL.Interfaces.Services.DetectionServices;
+using MainApp.BL.Interfaces.Services.TrainingServices;
 using MainApp.MVC.Filters;
 using MainApp.MVC.ViewModels.IntranetPortal.ScheduleRuns;
 using Microsoft.AspNetCore.Mvc;
@@ -21,11 +24,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     public class ScheduleRunsController : Controller
     {
         private readonly IDetectionRunService _detectionRunService;
+        private readonly ITrainingRunService _trainingRunService;
         private readonly IConfiguration _configuration;
 
-        public ScheduleRunsController(IDetectionRunService detectionRunService, IConfiguration configuration)
+        public ScheduleRunsController(IDetectionRunService detectionRunService, ITrainingRunService trainingRunService, IConfiguration configuration)
         {
             _detectionRunService = detectionRunService;
+            _trainingRunService = trainingRunService;
             _configuration = configuration;
         }
 
@@ -39,6 +44,16 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return RedirectToErrorPage("Error");
             }
             if (resultGetDetectionRuns.Data == null)
+            {
+                return RedirectToErrorPage("Error404");
+            }
+
+            ResultDTO<List<TrainingRunDTO>> resultGetTrainingRuns = await _trainingRunService.GetAllTrainingRuns();
+            if (!resultGetTrainingRuns.IsSuccess && resultGetTrainingRuns.HandleError())
+            {
+                return RedirectToErrorPage("Error");
+            }
+            if (resultGetTrainingRuns.Data == null)
             {
                 return RedirectToErrorPage("Error404");
             }
@@ -85,7 +100,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             ViewScheduledRunsViewModel vm = new()
             {
-                DetectionRuns = resultGetDetectionRuns.Data
+                DetectionRuns = resultGetDetectionRuns.Data,
+                TrainingRuns = resultGetTrainingRuns.Data
             };
 
             return View(vm);

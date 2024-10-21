@@ -8,7 +8,7 @@ namespace SD.Helpers
     {
         public static object? CastTo<ReturnType>(object? inputValue)
         {
-            if(inputValue is null) 
+            if (inputValue is null)
                 return null;
 
             try
@@ -23,14 +23,14 @@ namespace SD.Helpers
 
                 return castValueAsReturnType;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 // TODO: Handle
                 return null;
             }
         }
 
-        private static object? CastToType(object inputValue, Type outputType) 
+        private static object? CastToType(object inputValue, Type outputType)
         {
             if (inputValue is null)
                 return null;
@@ -42,7 +42,7 @@ namespace SD.Helpers
             CultureInfo culture = CultureInfo.InvariantCulture;
 
             TypeConverter outputTypeConverter = TypeDescriptor.GetConverter(outputType);
-            if (outputTypeConverter.CanConvertFrom(inputValue.GetType())) 
+            if (outputTypeConverter.CanConvertFrom(inputValue.GetType()))
                 return outputTypeConverter.ConvertFrom(null, culture, inputValue);
 
             TypeConverter inputTypeConverter = TypeDescriptor.GetConverter(inputType);
@@ -69,7 +69,7 @@ namespace SD.Helpers
             return collection.GroupBy(property).Any(g => g.Count() > 1);
         }
 
-        public static string PathToLinuxRegexSlashReplace(string path)
+        public static string PathToLinuxRegexSlashReplace(string path, bool replaceDrive = false)
         {
             //if (string.IsNullOrEmpty(windowsPath))
             //    return windowsPath;
@@ -88,13 +88,17 @@ namespace SD.Helpers
             // Replace consecutive forward slashes with a single forward slash
             linuxPath = Regex.Replace(linuxPath, @"/+", "/");
 
-            // Remove the drive letter if present
-            if (linuxPath.Length >= 2 && linuxPath[1] == ':')
-                linuxPath = linuxPath.Substring(2);
 
-            // Ensure the path starts with a forward slash if it's not empty
-            if (!string.IsNullOrEmpty(linuxPath) && !linuxPath.StartsWith("/"))
-                linuxPath = "/" + linuxPath;
+            if (replaceDrive)
+            {
+                // Remove the drive letter if present
+                if (linuxPath.Length >= 2 && linuxPath[1] == ':')
+                    linuxPath = linuxPath.Substring(2);
+
+                // Ensure the path starts with a forward slash if it's not empty
+                if (!string.IsNullOrEmpty(linuxPath) && !linuxPath.StartsWith("/"))
+                    linuxPath = "/" + linuxPath;
+            }
 
             return linuxPath;
         }

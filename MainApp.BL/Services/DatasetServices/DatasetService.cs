@@ -4,10 +4,13 @@ using DAL.Interfaces.Repositories.DatasetRepositories;
 using DTOs.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
+using DTOs.MainApp.BL.TrainingDTOs;
 using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
+using MainApp.BL.Services.TrainingServices;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using SD;
@@ -25,9 +28,11 @@ namespace MainApp.BL.Services.DatasetServices
         private readonly IDatasetImagesRepository _datasetImagesRepository;
         private readonly IImageAnnotationsRepository _imageAnnotationsRepository;
         private readonly ICocoUtilsService _cocoUtilsService;
+        
 
         private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IMapper _mapper;
+        private readonly ILogger<DatasetService> _logger;
 
         public DatasetService(IDatasetsRepository datasetsRepository,
                               IDatasetClassesRepository datasetClassesRepository,
@@ -36,7 +41,8 @@ namespace MainApp.BL.Services.DatasetServices
                               IImageAnnotationsRepository imageAnnotationsRepository,
                               IAppSettingsAccessor appSettingsAccessor,
                               IMapper mapper,
-                              ICocoUtilsService cocoUtilsService)
+                              ICocoUtilsService cocoUtilsService,
+                              ILogger<DatasetService> logger)
         {
             _datasetsRepository = datasetsRepository;
             _datasetClassesRepository = datasetClassesRepository;
@@ -46,6 +52,7 @@ namespace MainApp.BL.Services.DatasetServices
             _appSettingsAccessor = appSettingsAccessor;
             _mapper = mapper;
             _cocoUtilsService = cocoUtilsService;
+            _logger = logger;
         }
 
         #region Read
@@ -67,6 +74,29 @@ namespace MainApp.BL.Services.DatasetServices
             var listDatasetsDTOs = _mapper.Map<List<DatasetDTO>>(data) ?? throw new Exception("Dataset list not found");
             return listDatasetsDTOs;
         }
+
+        public async Task<ResultDTO<List<DatasetDTO>>> GetAllPublishedDatasets()
+        {
+            try
+            {
+                ResultDTO<IEnumerable<Dataset>>? resultGetEntities = await _datasetsRepository.GetAll(x => x.IsPublished == true, includeProperties: "CreatedBy,ParentDataset");
+                if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
+                    return ResultDTO<List<DatasetDTO>>.Fail(resultGetEntities.ErrMsg!);
+
+                if (resultGetEntities.Data == null)
+                    return ResultDTO<List<DatasetDTO>>.Fail("Training runs not found");
+
+                List<DatasetDTO> dto = _mapper.Map<List<DatasetDTO>>(resultGetEntities.Data);
+
+                return ResultDTO<List<DatasetDTO>>.Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<List<DatasetDTO>>.ExceptionFail(ex.Message, ex);                
+            }
+        }
+
         public async Task<DatasetDTO> GetDatasetById(Guid datasetId)
         {
             //var datasetRawDto = GetDatasetJoinedClassesImagesAnnotationsById(datasetId);
@@ -837,7 +867,7 @@ namespace MainApp.BL.Services.DatasetServices
 
             string? applicationPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             if (string.IsNullOrEmpty(applicationPath))
-                return Path.Combine("\\", "wwwroot");
+                return Path.Combine(Path.DirectorySeparatorChar.ToString(), "wwwroot");
 
             return Path.Combine(applicationPath, "wwwroot");
         }
@@ -960,7 +990,7 @@ namespace MainApp.BL.Services.DatasetServices
                         IsEnabled = false,
                         Name = Path.GetFileNameWithoutExtension(img.FileName),
                         FileName = datasetImageId.ToString() + Path.GetExtension(img.FileName),
-                        ImagePath = "\\" + datasetImgUploadRelDir + "\\",
+                        ImagePath = Path.Combine(Path.DirectorySeparatorChar.ToString(), datasetImgUploadRelDir, Path.DirectorySeparatorChar.ToString()),
                         ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetEntityId.ToString()),
 
                         CreatedBy = null,
