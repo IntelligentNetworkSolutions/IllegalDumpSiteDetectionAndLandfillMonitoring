@@ -4,6 +4,7 @@ namespace DTOs.ObjectDetection.API.CocoFormatDTOs
 {
     public record CocoAnnotationDTO
     {
+        [JsonProperty(PropertyName = "id")]
         public int Id { get; init; }
         
         [JsonProperty(PropertyName = "image_id")]
@@ -11,12 +12,15 @@ namespace DTOs.ObjectDetection.API.CocoFormatDTOs
         
         [JsonProperty(PropertyName = "category_id")]
         public int CategoryId { get; init; }
-        
+
+        [JsonProperty(PropertyName = "bbox")]
         public required List<float> Bbox { get; init; }
-        
+
+        [JsonProperty(PropertyName = "segmentation")]
         [JsonConverter(typeof(SegmentationConverter))]
         public float[][] Segmentation { get; init; } = [];
-        
+
+        [JsonProperty(PropertyName = "area")]
         public float Area => CalculateArea();
         
         [JsonProperty(PropertyName = "iscrowd")]

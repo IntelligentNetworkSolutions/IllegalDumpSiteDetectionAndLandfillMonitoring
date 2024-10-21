@@ -50,10 +50,10 @@ namespace MainApp.BL.Services.TrainingServices
         }
 
         public static string GenerateConfigBaseModelOverrideStr(string baseModelConfigFilePath)
-            => $"_base_ = ['{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(baseModelConfigFilePath)}']";
+            => $"_base_ = ['{CommonHelper.PathToLinuxRegexSlashReplace(baseModelConfigFilePath)}']";
 
         public static string GenerateConfigDataRootOverrideStr(string dataRootAbsPath)
-            => $"data_root = '{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(dataRootAbsPath)}'\r\n";
+            => $"data_root = '{CommonHelper.PathToLinuxRegexSlashReplace(dataRootAbsPath)}'\r\n";
 
         public static string GenerateConfigMetaInfoOverrideStr(string[] classNames)
         {
@@ -76,7 +76,7 @@ namespace MainApp.BL.Services.TrainingServices
 
         public static string GenerateConfigModelOverrideStr(string backboneCheckpointAbsPath)
         {
-            backboneCheckpointAbsPath = CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(backboneCheckpointAbsPath);
+            backboneCheckpointAbsPath = CommonHelper.PathToLinuxRegexSlashReplace(backboneCheckpointAbsPath);
 
             string configModelOverrideStr =
                 $"model = dict(\r\n" +
@@ -135,6 +135,6 @@ namespace MainApp.BL.Services.TrainingServices
             => $"test_evaluator = dict(ann_file=data_root + '/test/annotations_coco.json',)\r\n";
 
         public static string GenerateConfigLoadFromOverrideStr(string baseModelFileAbsPath)
-            => $"load_from = '{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(baseModelFileAbsPath)}'\r\n";
+            => $"load_from = '{CommonHelper.PathToLinuxRegexSlashReplace(baseModelFileAbsPath)}'\r\n";
     }
 }

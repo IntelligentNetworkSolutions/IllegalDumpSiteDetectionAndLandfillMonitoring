@@ -20,8 +20,6 @@ namespace DAL.Repositories.DetectionRepositories
             _logger = logger;
         }
 
-        #region Read
-        #region Get DetectionRun/s
         public async Task<List<DetectionRun>> GetDetectionRunsWithClasses()
         {
             try
@@ -59,17 +57,5 @@ namespace DAL.Repositories.DetectionRepositories
             }
 
         }
-        #endregion
-        #endregion
-
-        #region Create
-        #endregion
-
-        #region Update
-        #endregion
-
-        #region Delete
-
-        #endregion
     }
 }

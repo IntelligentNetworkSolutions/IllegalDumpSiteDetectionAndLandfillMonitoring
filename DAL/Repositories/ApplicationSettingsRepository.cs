@@ -18,6 +18,8 @@ namespace DAL.Repositories
             _db = db;
         }
 
+        // TODO: Refactor to use Result
+
         #region Create
         public async Task<bool> CreateApplicationSetting(ApplicationSettings appSetting)
         {

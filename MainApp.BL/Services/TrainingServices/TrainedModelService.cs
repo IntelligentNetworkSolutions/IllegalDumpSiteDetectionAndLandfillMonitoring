@@ -86,6 +86,24 @@ namespace MainApp.BL.Services.TrainingServices
             throw new NotImplementedException();
         }
 
+        public async Task<ResultDTO<List<TrainedModelDTO>>> GetPublishedTrainedModelsIncludingTrainRuns()
+        {
+            // TODO: Return comment, for only published models
+            ResultDTO<IEnumerable<TrainedModel>> getPublishedModelsResult = 
+                await _trainedModelsRepository.GetAll(/*x => x.IsPublished, */track: false, includeProperties: "TrainingRun");
+            if (getPublishedModelsResult.IsSuccess == false && getPublishedModelsResult.HandleError())
+                return ResultDTO<List<TrainedModelDTO>>.Fail(getPublishedModelsResult.ErrMsg!);
+
+            if(getPublishedModelsResult.Data is null || getPublishedModelsResult.Data.Count() == 0)
+                return ResultDTO<List<TrainedModelDTO>>.Fail("No Published Trained Models found");
+
+            List<TrainedModelDTO>? publishedModelsDtos = _mapper.Map<List<TrainedModelDTO>>(getPublishedModelsResult.Data);
+            if(publishedModelsDtos is null)
+                return ResultDTO<List<TrainedModelDTO>>.Fail("Mapping failed from List<TrainedModels> to DTO");
+
+            return ResultDTO<List<TrainedModelDTO>>.Ok(publishedModelsDtos);
+        }
+
         public async Task<ResultDTO<TrainingRunResultsDTO>> GetBestEpochForTrainedModelById(Guid trainedModelId)
         {
             try

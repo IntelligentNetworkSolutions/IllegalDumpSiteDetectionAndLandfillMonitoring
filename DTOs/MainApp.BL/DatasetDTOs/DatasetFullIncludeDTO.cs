@@ -17,6 +17,9 @@
 
         public DatasetFullIncludeDTO(DatasetDTO datasetDTO)
         {
+            if(datasetDTO is null)
+                throw new ArgumentNullException(nameof(datasetDTO));
+
             Dataset = datasetDTO;
             DatasetClassForDataset = new List<DatasetClassForDatasetDTO>();
             DatasetImages = new List<DatasetImageDTO>();

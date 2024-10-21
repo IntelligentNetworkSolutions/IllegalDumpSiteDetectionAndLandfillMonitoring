@@ -9,6 +9,9 @@ namespace DTOs.Helpers
     {
         public static string GeometryToGeoJson(Geometry geom)
         {
+            if (geom == null)
+                throw new ArgumentNullException(nameof(geom));
+
             string geoJson;
 
             var serializer = GeoJsonSerializer.Create();
@@ -120,23 +123,6 @@ namespace DTOs.Helpers
             int height = Convert.ToInt32(envelope.Height);
 
             return new Dictionary<int, int> { { top, left }, { width, height } };
-        }
-
-        public static List<float>? GeometryBBoxToTopLeftWidthHeightListIgorche(Geometry geom)
-        {
-            if (geom == null)
-            {
-                return null;
-            }
-
-            var envelope = geom.EnvelopeInternal;
-
-            int top = Convert.ToInt32(envelope.MinX);
-            int left = Convert.ToInt32(envelope.MaxY);
-            float width = (float)envelope.Width;
-            float height = (float)envelope.Height;
-
-            return new List<float> { left, top, width, height };
         }
 
         /// <summary>

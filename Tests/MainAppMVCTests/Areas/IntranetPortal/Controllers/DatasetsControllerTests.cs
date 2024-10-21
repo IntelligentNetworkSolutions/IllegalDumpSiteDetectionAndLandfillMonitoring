@@ -18,38 +18,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
     public class DatasetsControllerTests
     {
-        //private readonly DatasetsController _controller;
-        //private readonly Mock<IDatasetService> _mockDatasetService;
-        //private readonly Mock<IMapper> _mockMapper;
-        //private readonly Mock<HttpContext> _mockHttpContext;
-        //private readonly Mock<ClaimsPrincipal> _mockClaimsPrincipal;
-        //private readonly Mock<IAppSettingsAccessor> _appSettingsAccessorMock;
-
-        //public DatasetsControllerTests()
-        //{
-        //    _mockDatasetService = new Mock<IDatasetService>();
-        //    _mockMapper = new Mock<IMapper>();
-        //    _mockHttpContext = new Mock<HttpContext>();
-        //    _mockClaimsPrincipal = new Mock<ClaimsPrincipal>();
-        //    _appSettingsAccessorMock = new Mock<IAppSettingsAccessor>();
-
-        //    _mockHttpContext.Setup(x => x.User).Returns(_mockClaimsPrincipal.Object);
-
-        //    _controller = new DatasetsController(
-        //        null, // IConfiguration not used in this test
-        //        _mockMapper.Object,
-        //        _mockDatasetService.Object,
-        //        null, // IDatasetImagesService not used in this test
-        //        null, // IWebHostEnvironment not used in this test
-        //        _appSettingsAccessorMock.Object  // IAppSettingsAccessor not used in this test
-        //    )
-        //    {
-        //        ControllerContext = new Microsoft.AspNetCore.Mvc.ControllerContext()
-        //        {
-        //            HttpContext = _mockHttpContext.Object
-        //        }
-        //    };
-        //}
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IDatasetService> _mockDatasetService;
