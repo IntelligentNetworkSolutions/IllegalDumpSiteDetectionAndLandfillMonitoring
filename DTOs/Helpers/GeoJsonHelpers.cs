@@ -9,6 +9,9 @@ namespace DTOs.Helpers
     {
         public static string GeometryToGeoJson(Geometry geom)
         {
+            if (geom == null)
+                throw new ArgumentNullException(nameof(geom));
+
             string geoJson;
 
             var serializer = GeoJsonSerializer.Create();
