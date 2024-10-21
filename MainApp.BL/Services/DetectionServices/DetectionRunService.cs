@@ -235,21 +235,21 @@ namespace MainApp.BL.Services.DetectionServices
             string trainedModelConfigPath, string trainedModelModelPath, Guid detectionRunId, bool isSmallImage = false, bool hasGPU = false)
         {
             string detectionCommandStr = string.Empty;
-            //string scriptName = isSmallImage ? "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\demo\\image_demo.py" : "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\demo\\large_image_demo.py";
             string scriptName = isSmallImage ? "demo\\image_demo.py" : "ins_development\\scripts\\large_image_annotated_inference.py";
+            scriptName = CommonHelper.PathToLinuxRegexSlashReplace(scriptName);
             string weightsCommandParamStr = isSmallImage ? "--weights" : string.Empty;
             string patchSizeCommand = isSmallImage ? string.Empty : "--patch-size 1280";
             string cpuDetectionCommandPart = hasGPU == false ? "--device cpu" : string.Empty;
 
             string outDirAbsPath = _MMDetectionConfiguration.GetDetectionRunOutputDirAbsPathByRunId(detectionRunId);
-            string outDirCommandPart = $"--out-dir {CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(outDirAbsPath)}";
+            string outDirCommandPart = $"--out-dir {CommonHelper.PathToLinuxRegexSlashReplace(outDirAbsPath)}";
 
             string openmmlabAbsPath = _MMDetectionConfiguration.GetOpenMMLabAbsPath();
 
             detectionCommandStr = $"run -p {openmmlabAbsPath} python {scriptName} " +
-                $"\"{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(imageToRunDetectionOnPath)}\" " +
-                $"{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(trainedModelConfigPath)} " +
-                $"{weightsCommandParamStr} {CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(trainedModelModelPath)} " +
+                $"\"{CommonHelper.PathToLinuxRegexSlashReplace(imageToRunDetectionOnPath)}\" " +
+                $"{CommonHelper.PathToLinuxRegexSlashReplace(trainedModelConfigPath)} " +
+                $"{weightsCommandParamStr} {CommonHelper.PathToLinuxRegexSlashReplace(trainedModelModelPath)} " +
                 $"{outDirCommandPart} {cpuDetectionCommandPart} {patchSizeCommand}";
 
             return detectionCommandStr;
@@ -350,8 +350,8 @@ namespace MainApp.BL.Services.DetectionServices
                 string detectionCommand =
                     GeneratePythonDetectionCommandByType(
                         imageToRunDetectionOnPath: detectionRunDTO.InputImgPath,
-                        trainedModelConfigPath: CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(detectionRunDTO.TrainedModel.ModelConfigPath!),
-                        trainedModelModelPath: CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(detectionRunDTO.TrainedModel.ModelFilePath!),
+                        trainedModelConfigPath: CommonHelper.PathToLinuxRegexSlashReplace(detectionRunDTO.TrainedModel.ModelConfigPath!),
+                        trainedModelModelPath: CommonHelper.PathToLinuxRegexSlashReplace(detectionRunDTO.TrainedModel.ModelFilePath!),
                         detectionRunId: detectionRunDTO.Id!.Value,
                         isSmallImage: false, hasGPU: hasGPU);
 
@@ -365,7 +365,7 @@ namespace MainApp.BL.Services.DetectionServices
                             Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"error_{detectionRunDTO.Id.Value}.txt")))
                         .ExecuteBufferedAsync();
 
-                if (powerShellResults.StandardOutput.Contains("Results have been saved") == false)
+                if (powerShellResults.IsSuccess == false)
                     return ResultDTO.Fail($"Detection Run failed with error: {powerShellResults.StandardError}");
 
                 return ResultDTO.Ok();

@@ -3,23 +3,19 @@ using CliWrap;
 using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories.TrainingRepositories;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Office2019.Presentation;
 using DTOs.MainApp.BL.DatasetDTOs;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
 using Entities.DatasetEntities;
-using Entities.DetectionEntities;
 using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
-using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SD;
 using SD.Enums;
-using System.Text;
+using SD.Helpers;
 
 namespace MainApp.BL.Services.TrainingServices
 {
@@ -97,11 +93,12 @@ namespace MainApp.BL.Services.TrainingServices
             try
             {
                 //get base trained model
-                ResultDTO<TrainedModel?> getInsBestTrainedModelResult = await _trainedModelsRepository.GetByIdInclude(Guid.Parse("a83f2202-f919-4b79-a181-b2747219ed46"), track: false);
+                ResultDTO<TrainedModel?> getInsBestTrainedModelResult = 
+                    await _trainedModelsRepository.GetByIdInclude(inputTrainingRunDTO.TrainedModelId.Value, track: false);
                 if (getInsBestTrainedModelResult.IsSuccess == false)
                     return ResultDTO<TrainingRunDTO>.Fail(getInsBestTrainedModelResult.ErrMsg!);
                 if (getInsBestTrainedModelResult.Data == null)
-                    return ResultDTO<TrainingRunDTO>.Fail("Base model not found");
+                    return ResultDTO<TrainingRunDTO>.Fail($"Base model not found, for id: {inputTrainingRunDTO.TrainedModelId}");
 
                 inputTrainingRunDTO.BaseModelId = getInsBestTrainedModelResult.Data.Id;
 
@@ -236,16 +233,24 @@ namespace MainApp.BL.Services.TrainingServices
                 string detectionCommandStr = string.Empty;
 
                 string scriptName = Path.Combine("tools", "train.py");
-                string scriptFileAbsPath = Path.Combine(_MMDetectionConfiguration.GetRootDirAbsPath(), scriptName);
+                string scriptFileAbsPath =
+                    CommonHelper.PathToLinuxRegexSlashReplace(
+                        Path.Combine(_MMDetectionConfiguration.GetRootDirAbsPath(), scriptName));
                 // TODO: Update Script with INS script
                 //string scriptFileAbsPath = Path.Combine(_MMDetectionConfiguration.GetScriptsDirAbsPath(), scriptName);
 
-                string trainingConfigDirAbsPath = Path.Combine(_MMDetectionConfiguration.GetConfigsDirAbsPath(), trainingRunId.ToString());
-                string trainingConfigFileAbsPath = Path.Combine(trainingConfigDirAbsPath, $"{trainingRunId}.py");
+                string trainingConfigDirAbsPath =
+                    CommonHelper.PathToLinuxRegexSlashReplace(
+                        Path.Combine(_MMDetectionConfiguration.GetConfigsDirAbsPath(), trainingRunId.ToString()));
+                string trainingConfigFileAbsPath =
+                    CommonHelper.PathToLinuxRegexSlashReplace(
+                        Path.Combine(trainingConfigDirAbsPath, $"{trainingRunId}.py"));
 
                 // Save/Output Directory
                 string workDirCommandParamStr = "--work-dir";
-                string workDirAbsPath = Path.Combine(_MMDetectionConfiguration.GetTrainingRunsBaseOutDirAbsPath(), trainingRunId.ToString());
+                string workDirAbsPath = 
+                    CommonHelper.PathToLinuxRegexSlashReplace(
+                        Path.Combine(_MMDetectionConfiguration.GetTrainingRunsBaseOutDirAbsPath(), trainingRunId.ToString()));
 
                 string openmmlabPath = _MMDetectionConfiguration.GetOpenMMLabAbsPath();
 

@@ -882,7 +882,7 @@ namespace MainApp.BL.Services.DatasetServices
 
             string? applicationPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             if (string.IsNullOrEmpty(applicationPath))
-                return Path.Combine("\\", "wwwroot");
+                return Path.Combine(Path.DirectorySeparatorChar.ToString(), "wwwroot");
 
             return Path.Combine(applicationPath, "wwwroot");
         }
@@ -1005,7 +1005,7 @@ namespace MainApp.BL.Services.DatasetServices
                         IsEnabled = false,
                         Name = Path.GetFileNameWithoutExtension(img.FileName),
                         FileName = datasetImageId.ToString() + Path.GetExtension(img.FileName),
-                        ImagePath = "\\" + datasetImgUploadRelDir + "\\",
+                        ImagePath = Path.Combine(Path.DirectorySeparatorChar.ToString(), datasetImgUploadRelDir, Path.DirectorySeparatorChar.ToString()),
                         ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetEntityId.ToString()),
 
                         CreatedBy = null,

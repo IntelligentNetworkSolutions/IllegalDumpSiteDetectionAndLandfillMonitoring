@@ -25,13 +25,5 @@ namespace Entities.Helpers
             }
             return geoJson;
         }
-
-        public static Geometry GeoJsonFeatureToGeometry(string geoJson)
-        {
-            GeoJsonReader reader = new GeoJsonReader();
-            Feature feature = reader.Read<Feature>(geoJson);
-            Geometry geometry = feature.Geometry;
-            return geometry;
-        }
     }
 }

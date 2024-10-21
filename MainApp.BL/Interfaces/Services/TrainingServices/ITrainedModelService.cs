@@ -19,5 +19,6 @@ namespace MainApp.BL.Interfaces.Services.TrainingServices
         Task<ResultDTO<TrainedModel>> EditTrainedModelById(Guid trainedModelId);
 
         Task<ResultDTO<TrainingRunResultsDTO>> GetBestEpochForTrainedModelById(Guid trainedModelId);
+        Task<ResultDTO<List<TrainedModelDTO>>> GetPublishedTrainedModelsIncludingTrainRuns();
     }
 }
