@@ -13,7 +13,6 @@ using SD;
 using System.Data;
 using System.IO.Compression;
 using System.Security.Claims;
-using Westwind.Globalization;
 using X.PagedList;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
@@ -150,11 +149,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return NotFound();
 
             DatasetDTO datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Object not found");
-            if (datasetDb.IsPublished == true)
-            {
-                TempData["ErrorDatasetIsPublished"] = DbRes.T("This dataset is published and cannot be edited.", "Resources");
-                return RedirectToAction(nameof(Index));
-            }
+            //if (datasetDb.IsPublished == true)
+            //{
+            //    TempData["ErrorDatasetIsPublished"] = DbRes.T("This dataset is published and cannot be edited.", "Resources");
+            //    return RedirectToAction(nameof(Index));
+            //}
 
             int pageSize = SearchByShowNumberOfImages ?? 20;
             int pageNumber = page ?? 1;
@@ -248,19 +247,24 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
 
+            string zipFilePath = string.Empty;
+            FileStream fileStream = null;
+
             try
             {
-                // Pass the download location to the service
                 ResultDTO<string> resultExportDatasetAsCoco =
                     await _datasetService.ExportDatasetAsCOCOFormat(datasetId, exportOption, downloadLocation, asSplit);
 
                 if (!resultExportDatasetAsCoco.IsSuccess)
                     return Json(new { responseError = DbResHtml.T(resultExportDatasetAsCoco.ErrMsg, "Resources") });
 
-                string zipFilePath = resultExportDatasetAsCoco.Data;
-                var fileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
+                zipFilePath = resultExportDatasetAsCoco.Data;
+                fileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
                 var contentType = "application/zip";
-                var fileName = $"{datasetId}-{exportOption}.zip";
+                var fileName = $"{datasetId}.zip";
+
+                Response.Headers.Add("Content-Disposition", zipFilePath);
+                Response.Headers.Add("Download-Disposition", fileName);
 
                 return File(fileStream, contentType, fileName);
             }
@@ -269,6 +273,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
             }
         }
+
+
+        [HttpPost]
+        public IActionResult CleanupTempFilesFromExportDataset(string fileGuid)
+        {
+            var filePath = Path.Combine(Path.GetTempPath(), fileGuid);
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+            return Ok();
+        }
+
         #endregion
 
         [HttpPost]

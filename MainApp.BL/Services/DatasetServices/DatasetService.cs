@@ -9,7 +9,6 @@ using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using SD;
 using System.IO.Compression;
 using System.Linq.Expressions;
@@ -79,10 +78,10 @@ namespace MainApp.BL.Services.DatasetServices
 
         public async Task<ResultDTO<DatasetDTO>> GetDatasetDTOFullyIncluded(Guid datasetId, bool track = false)
         {
-            ResultDTO<Dataset?> getDatasetFullyIncludedResult = 
+            ResultDTO<Dataset?> getDatasetFullyIncludedResult =
                 await _datasetsRepository.GetByIdIncludeThenAll(datasetId, track,
-                    includeProperties: 
-                    new (Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[] 
+                    includeProperties:
+                    new (Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]
                     {
                         (d => d.CreatedBy!, null),
                         (d => d.UpdatedBy, null),
@@ -97,7 +96,7 @@ namespace MainApp.BL.Services.DatasetServices
                 return ResultDTO<DatasetDTO>.Fail($"Dataset not found, for id: {datasetId}");
 
             DatasetDTO datasetDto = _mapper.Map<DatasetDTO>(getDatasetFullyIncludedResult.Data);
-            if(datasetDto is null)
+            if (datasetDto is null)
                 return ResultDTO<DatasetDTO>.Fail($"Dataset Mapping failed, for id: {datasetId}");
 
             return ResultDTO<DatasetDTO>.Ok(datasetDto);
@@ -124,7 +123,7 @@ namespace MainApp.BL.Services.DatasetServices
             var taskNumberOfImagesToPublish = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100) ?? throw new Exception("Object not found"); ;
             var taskNumberOfClassesToPublish = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1) ?? throw new Exception("Object not found"); ;
 
-            var imageResult = await _datasetImagesRepository.GetAll(x => x.DatasetId == datasetId, null, false) ?? throw new Exception("Object not found");
+            var imageResult = await _datasetImagesRepository.GetAll(x => x.DatasetId == datasetId, null, false, includeProperties: "ImageAnnotations") ?? throw new Exception("Object not found");
 
             var imageList = imageResult.Data;
 
@@ -135,6 +134,12 @@ namespace MainApp.BL.Services.DatasetServices
             if (searchByIsEnabledImage.HasValue)
             {
                 imageList = imageList.Where(x => x.IsEnabled == searchByIsEnabledImage).ToList();
+            }
+            if (searchByIsAnnotatedImage.HasValue)
+            {
+                imageList = imageList.Where(x => searchByIsAnnotatedImage.Value
+                            ? x.ImageAnnotations.Any()
+                            : !x.ImageAnnotations.Any()).ToList();
             }
 
             // Apply ordering
@@ -155,6 +160,11 @@ namespace MainApp.BL.Services.DatasetServices
 
 
             var annotatedImageIds = annotationsForPagedImages?.Select(x => x.DatasetImageId.Value).ToHashSet() ?? new HashSet<Guid>();
+
+            if (searchByIsAnnotatedImage.HasValue)
+            {
+                imageList = imageList.Where(x => annotatedImageIds.Contains(x.Id)).ToList();
+            }
 
             var listOfDatasetImages = pagedImagesData.Select(image => new DatasetImageDTO
             {
@@ -721,7 +731,7 @@ namespace MainApp.BL.Services.DatasetServices
                 await File.WriteAllTextAsync(Path.Combine(testDir, "annotations_coco.json"), testJson);
 
                 // Zip the directories
-                string zipFilePath = Path.Combine(Path.GetTempPath(), $"{dataset.Id}.zip");
+                string zipFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.zip");
                 if (File.Exists(zipFilePath))
                     File.Delete(zipFilePath);
 
@@ -810,16 +820,21 @@ namespace MainApp.BL.Services.DatasetServices
                     File.Copy(imagePath, destPath);
                 }
 
-                string zipFilePath = Path.Combine(Path.GetTempPath(), $"{dataset.Id}.zip");
-                if (File.Exists(zipFilePath))
-                    File.Delete(zipFilePath);
-
-                ZipFile.CreateFromDirectory(tempDirectory, zipFilePath);
-
                 if (downloadLocation == null)
+                {
+                    string zipFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.zip");
+                    if (File.Exists(zipFilePath))
+                        File.Delete(zipFilePath);
+
+                    ZipFile.CreateFromDirectory(tempDirectory, zipFilePath);
+
                     Directory.Delete(tempDirectory, true);
 
-                return ResultDTO<string>.Ok(zipFilePath);
+                    return ResultDTO<string>.Ok(zipFilePath);
+
+                }
+
+                return ResultDTO<string>.Ok(downloadLocation);
             }
             catch (Exception ex)
             {
