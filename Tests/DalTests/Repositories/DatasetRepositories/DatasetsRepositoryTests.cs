@@ -1005,5 +1005,201 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
         }
         #endregion
         #endregion
+
+        #region SaveChanges False
+        [Fact]
+        public async Task Create_ShouldNotPersistChanges_WhenSaveChangesIsFalse()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+            Dataset newDataset = new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset", Description = "Test Description", CreatedById = UserSeedData.FirstUser.Id };
+
+            // Act
+            ResultDTO result = await repository.Create(newDataset, saveChanges: false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Dataset? dbDataset = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == newDataset.Id);
+            Assert.Null(dbDataset); // The dataset should not be persisted
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task Update_ShouldNotPersistChanges_WhenSaveChangesIsFalse()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+            Dataset datasetToUpdate = DatasetsSeedData.FirstDataset;
+            datasetToUpdate.Name = "Updated Name";
+
+            // Act
+            ResultDTO result = await repository.Update(datasetToUpdate, saveChanges: false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Dataset? dbDataset = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(d => d.Id == datasetToUpdate.Id);
+            Assert.NotEqual("Updated Name", dbDataset.Name); // The change should not be persisted
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task Delete_ShouldNotPersistChanges_WhenSaveChangesIsFalse()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+            Dataset datasetToDelete = DatasetsSeedData.FirstDataset;
+
+            // Act
+            ResultDTO result = await repository.Delete(datasetToDelete, saveChanges: false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Dataset? dbDataset = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == datasetToDelete.Id);
+            Assert.NotNull(dbDataset); // The dataset should still exist
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task CreateRange_ShouldNotPersistChanges_WhenSaveChangesIsFalse()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+            List<Dataset> newDatasets =
+            [
+                new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset 1", Description = "Test Description 1", CreatedById = UserSeedData.FirstUser.Id },
+                new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset 2", Description = "Test Description 2", CreatedById = UserSeedData.FirstUser.Id }
+            ];
+
+            // Act
+            ResultDTO result = await repository.CreateRange(newDatasets, saveChanges: false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            foreach (Dataset dataset in newDatasets)
+            {
+                Dataset? dbDataset = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == dataset.Id);
+                Assert.Null(dbDataset); // The datasets should not be persisted
+            }
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task UpdateRange_ShouldNotPersistChanges_WhenSaveChangesIsFalse()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+            Dataset dataset1 = dbContext.Datasets.Find(DatasetsSeedData.FirstDataset.Id);
+            dataset1.Name = "Updated First Dataset";
+            Dataset dataset2 = dbContext.Datasets.Find(DatasetsSeedData.SecondDataset.Id);
+            dataset2.Name = "Updated Second Dataset";
+
+            List<Dataset> datasetsToUpdate = [ dataset1, dataset2 ];
+
+            // Act
+            ResultDTO result = await repository.UpdateRange(datasetsToUpdate, saveChanges: false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            foreach (Dataset dataset in datasetsToUpdate)
+            {
+                Dataset? dbDataset = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(d => d.Id == dataset.Id);
+                Assert.NotEqual(dataset.Name, dbDataset.Name); // The changes should not be persisted
+            }
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task DeleteRange_ShouldNotPersistChanges_WhenSaveChangesIsFalse()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+            List<Dataset> datasetsToDelete = [ DatasetsSeedData.FirstDataset, DatasetsSeedData.SecondDataset ];
+
+            // Act
+            ResultDTO result = await repository.DeleteRange(datasetsToDelete, saveChanges: false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            foreach (Dataset dataset in datasetsToDelete)
+            {
+                Dataset? dbDataset = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == dataset.Id);
+                Assert.NotNull(dbDataset); // The datasets should still exist
+            }
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task SaveChangesAsync_ShouldReturnExceptionFail_WhenSaveChangesFails()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+
+            // Add an invalid entity to force a save failure
+            dbContext.Datasets.Add(new Dataset { Id = Guid.Empty, Name = null });
+
+            // Act
+            ResultDTO<int> result = await repository.SaveChangesAsync();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+            Assert.IsType<DbUpdateException>(result.ExObj);
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task SaveChangesAsync_ShouldReturnExceptionFail_WhenCancellationIsRequested()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+            CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel(); // Cancel immediately
+            // Cause a change so to have possible return of rows
+            Dataset newDataset = new Dataset { Id = Guid.NewGuid(), Name = "Test Dataset", Description = "Test Description", CreatedById = UserSeedData.FirstUser.Id };
+            dbContext.Datasets.Add(newDataset);
+            // Act
+            ResultDTO<int> result = await repository.SaveChangesAsync(cts.Token);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+            Assert.IsType<OperationCanceledException>(result.ExObj);
+            transaction.Rollback();
+        }
+        #endregion
     }
 }

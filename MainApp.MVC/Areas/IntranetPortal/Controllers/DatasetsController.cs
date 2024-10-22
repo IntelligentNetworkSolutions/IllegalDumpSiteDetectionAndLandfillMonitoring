@@ -14,7 +14,7 @@ using SD;
 using System.Data;
 using System.IO.Compression;
 using System.Security.Claims;
-using Westwind.Globalization;
+using System.Text;
 using X.PagedList;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
@@ -165,11 +165,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return NotFound();
 
             DatasetDTO datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Object not found");
-            if (datasetDb.IsPublished == true)
-            {
-                TempData["ErrorDatasetIsPublished"] = DbRes.T("This dataset is published and cannot be edited.", "Resources");
-                return RedirectToAction(nameof(Index));
-            }
+            //if (datasetDb.IsPublished == true)
+            //{
+            //    TempData["ErrorDatasetIsPublished"] = DbRes.T("This dataset is published and cannot be edited.", "Resources");
+            //    return RedirectToAction(nameof(Index));
+            //}
 
             int pageSize = SearchByShowNumberOfImages ?? 20;
             int pageNumber = page ?? 1;
@@ -249,7 +249,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             catch (Exception ex)
             {
                 // TODO: ADD Logger
-                return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
+                return Json(new { responseError = DbResHtml.T(ex.InnerException is not null ? ex.InnerException.Message : ex.Message, "Resources") });
             }
         }
 
@@ -263,19 +263,24 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
 
+            string zipFilePath = string.Empty;
+            FileStream fileStream = null;
+
             try
             {
-                // Pass the download location to the service
                 ResultDTO<string> resultExportDatasetAsCoco =
                     await _datasetService.ExportDatasetAsCOCOFormat(datasetId, exportOption, downloadLocation, asSplit);
 
                 if (!resultExportDatasetAsCoco.IsSuccess)
                     return Json(new { responseError = DbResHtml.T(resultExportDatasetAsCoco.ErrMsg, "Resources") });
 
-                string zipFilePath = resultExportDatasetAsCoco.Data;
-                var fileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
+                zipFilePath = resultExportDatasetAsCoco.Data;
+                fileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
                 var contentType = "application/zip";
-                var fileName = $"{datasetId}-{exportOption}.zip";
+                var fileName = $"{datasetId}.zip";
+
+                Response.Headers.Add("Content-Disposition", zipFilePath);
+                Response.Headers.Add("Download-Disposition", fileName);
 
                 return File(fileStream, contentType, fileName);
             }
@@ -284,6 +289,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
             }
         }
+
+
+        [HttpPost]
+        public IActionResult CleanupTempFilesFromExportDataset(string fileGuid)
+        {
+            var filePath = Path.Combine(Path.GetTempPath(), fileGuid);
+            if (System.IO.File.Exists(filePath))
+            {
+                System.IO.File.Delete(filePath);
+            }
+            return Ok();
+        }
+
         #endregion
 
         [HttpPost]
@@ -321,15 +339,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 if (!importDatasetResult.IsSuccess)
                 {
                     CleanUpFoldersFromImportingDataset(tempFilePath, outputJsonPath);
-
                     return Json(new { responseError = DbResHtml.T("Error importing dataset file", "Resources") });
                 }
 
-                await GenerateThumbnailsForDataset(importDatasetResult.Data.Id);
+                ResultDTO<string> generateThumbsResult = await GenerateThumbnailsForDatasetWithErrors(importDatasetResult.Data!.Id);
+                if (generateThumbsResult.IsSuccess == false && generateThumbsResult.HandleError())
+                {
+                    CleanUpFoldersFromImportingDataset(tempFilePath, outputJsonPath);
+                    return Json(new { responseError = DbResHtml.T(generateThumbsResult.ErrMsg!, "Resources") });
+                }
 
                 CleanUpFoldersFromImportingDataset(tempFilePath, outputJsonPath);
 
-                return Json(new { responseSuccess = DbResHtml.T("Dataset imported and thumbnails generated", "Resources"), dataset = importDatasetResult.Data });
+                return Json(new { responseSuccess = DbResHtml.T($"Dataset imported and {generateThumbsResult.Data}", "Resources"), dataset = importDatasetResult.Data });
             }
             catch (Exception ex)
             {
@@ -348,7 +370,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 System.IO.Directory.Delete(outputJsonPath, true);
             }
         }
-
 
         #region Dataset Classes
         [HttpPost]
@@ -432,33 +453,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return Json(new { responseError = DbResHtml.T("Choosed option was not saved", "Resources") });
         }
         #endregion
-
-        //private string GetOptionDisplayName(DatasetViewModel item, string prefix)
-        //{
-        //    return $"{prefix}{item.Name}<br>";
-        //}
-
-        //private string GenerateDatasetOptionsHtml(List<DatasetViewModel> parentDatasetsList, List<DatasetViewModel> allDatasets,string prefix)
-        //{
-        //    StringBuilder options = new StringBuilder();
-        //    int count = 1;
-
-        //    foreach (var dataset in parentDatasetsList)
-        //    {
-        //        string optionPrefix = $"{prefix}{count}. ";
-        //        options.AppendLine($"<option value=\"{dataset.Id}\">{GetOptionDisplayName(dataset, optionPrefix)}</option>");
-
-        //        var children = allDatasets.Where(d => d.ParentDatasetId == dataset.Id).ToList();
-        //        if (children.Any())
-        //        {
-        //            options.AppendLine(GenerateDatasetOptionsHtml(children, allDatasets, $"{optionPrefix}"));
-        //        }
-        //        count++;
-        //    }
-
-        //    return options.ToString();
-        //}
-
+        
         private string ProcessZipFile(string zipFilePath, string webRootPath)
         {
             //coco dataset
@@ -557,7 +552,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return tempDir;
         }
 
-
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
         public async Task<IActionResult> GenerateThumbnailsForDataset(Guid datasetId)
@@ -589,7 +583,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                 foreach (var datasetImage in datasetImages)
                 {
-                    string imageFilePath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImage.ImagePath.TrimStart('\\'), datasetImage.FileName);
+                    string imageFilePath = 
+                        Path.Combine(_webHostEnvironment.WebRootPath, datasetImage.ImagePath.TrimStart(Path.DirectorySeparatorChar), datasetImage.FileName);
 
                     string thumbnailFileName = string.Format("{0}.jpg", datasetImage.Id);
                     string thumbnailFilePath = Path.Combine(thumbnailsFolder, thumbnailFileName);
@@ -614,6 +609,78 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
         }
 
+        private async Task<ResultDTO<string>> GenerateThumbnailsForDatasetWithErrors(Guid datasetId)
+        {
+            string? userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+                return ResultDTO<string>.Fail(DbResHtml.T("User id is not valid", "Resources").Value!);
 
+            if (datasetId == Guid.Empty)
+                return ResultDTO<string>.Fail(DbResHtml.T("Invalid dataset id", "Resources").Value!);
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            try
+            {
+                ResultDTO<DatasetDTO> getDatasetResult = await _datasetService.GetDatasetDTOFullyIncluded(datasetId);
+                if (getDatasetResult.IsSuccess == false && getDatasetResult.HandleError())
+                    return ResultDTO<string>.Fail(getDatasetResult.ErrMsg!);
+
+                DatasetDTO datasetDTO = getDatasetResult.Data!;
+
+                if (datasetDTO.IsPublished == true)
+                    return ResultDTO<string>.Fail(DbResHtml.T("Dataset is already published. No changes allowed", "Resources").Value!);
+
+                ResultDTO<string?> datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+                if (datasetThumbnailsFolder.IsSuccess == false || datasetThumbnailsFolder.Data == null)
+                    return ResultDTO<string>.Fail(DbResHtml.T("Could not retrieve thumbnail folder", "Resources").Value!);
+
+                string thumbnailsFolder = Path.Combine(_webHostEnvironment.WebRootPath, datasetThumbnailsFolder.Data, datasetDTO.Id.ToString());
+                if (Directory.Exists(thumbnailsFolder) == false)
+                    Directory.CreateDirectory(thumbnailsFolder);
+
+                List<DatasetImageDTO> datasetImages = await _datasetImagesService.GetImagesForDataset(datasetId);
+
+                foreach (DatasetImageDTO datasetImage in datasetImages)
+                {
+                    string imageFilePath =
+                        Path.Combine(_webHostEnvironment.WebRootPath, datasetImage.ImagePath.TrimStart(Path.DirectorySeparatorChar), datasetImage.FileName);
+
+                    string thumbnailFileName = string.Format("{0}.jpg", datasetImage.Id);
+                    string thumbnailFilePath = Path.Combine(thumbnailsFolder, thumbnailFileName);
+
+                    if (System.IO.File.Exists(imageFilePath) == false)
+                    {
+                        stringBuilder.AppendLine($"Image does not exist at path: {imageFilePath}");
+                        continue;
+                        //return ResultDTO<string>.Fail($"Image does not exist at path: {imageFilePath}");
+                    }
+
+                    try
+                    {
+                        using (MagickImage image = new MagickImage(imageFilePath))
+                        {
+                            image.Resize(192, 192);
+                            image.Quality = 95;
+                            image.Write(thumbnailFilePath);
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        stringBuilder.AppendLine($"Thumbnails Generation failed for Image at path: {imageFilePath}");
+                        stringBuilder.AppendLine(ex.Message);
+                        continue;
+                        //return ResultDTO<string>.Fail($"Image does not exist at path: {imageFilePath}");
+                    }
+                }
+
+                return ResultDTO<string>.Ok(DbResHtml.T("Thumbnails generated successfully", "Resources").Value! + " \n with Errors: " + stringBuilder.ToString());
+            }
+            catch (Exception ex)
+            {
+                // TODO: Add logging
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
+            }
+        }
     }
 }

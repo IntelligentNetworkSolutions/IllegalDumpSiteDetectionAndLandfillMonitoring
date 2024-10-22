@@ -28,7 +28,10 @@ div.show-image {
             top: 3px;
             left: 4px;           
         }
-
+        div.show-image input.editAnnotation {
+            top: 3px;
+            left: 50%;
+        }
         div.show-image a.editAnnotation {
             top: 3px;
             left: 50%;
@@ -37,3 +40,9 @@ div.show-image {
 .pagination-container ul{
    justify-content:center;
 }
+.disabled-link {
+    pointer-events: none;
+    cursor: not-allowed; 
+    opacity: 0.6;
+}
+

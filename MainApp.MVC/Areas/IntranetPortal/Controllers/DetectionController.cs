@@ -2,7 +2,6 @@
 using CliWrap;
 using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
-using DocumentFormat.OpenXml.Vml;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
@@ -10,28 +9,20 @@ using Entities.DetectionEntities;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.MVC.Helpers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
-using Microsoft.AspNetCore.Builder.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using OSGeo.GDAL;
 using SD;
 using Services.Interfaces.Services;
 using System.Security.Claims;
-using System.IO;
 using Hangfire.States;
 using Hangfire;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using MainApp.MVC.Filters;
 using SD.Enums;
-using System.Runtime.InteropServices;
 using System.Text;
-using Hangfire.Server;
-using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
-using MimeKit;
 using Hangfire.Storage.Monitoring;
 using Hangfire.Storage;
 using Microsoft.AspNetCore.Html;
 using MainApp.BL.Interfaces.Services.TrainingServices;
+using DTOs.MainApp.BL.TrainingDTOs;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -82,7 +73,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.CreateDetectionRun))]
         public async Task<IActionResult> CreateDetectionRun()
-        {           
+        {
             return View();
         }
 
@@ -216,6 +207,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultBBoxConversionToProjection.ErrMsg!);
                     return ResultDTO<string>.Fail(resHandleErrorProcess.Data!);
                 }
+
 
                 //Create detected dump sites in db
                 ResultDTO<List<DetectedDumpSite>> resultCreateDetectedDumpSites = await _detectionRunService.CreateDetectedDumpsSitesFromDetectionRun(detectionRunDTO.Id.Value, resultBBoxConversionToProjection.Data!);
@@ -526,13 +518,18 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (model.selectedConfidenceRates == null || model.selectedConfidenceRates.Count == 0)
                 return ResultDTO<List<DetectionRunDTO>>.Fail("No confidence rates selected");
 
-            ResultDTO<List<DetectionRunDTO>> selectedDetectionRuns = 
-                await _detectionRunService.GetSelectedDetectionRunsIncludingDetectedDumpSites(model.selectedDetectionRunsIds, 
-                                                                                                model.selectedConfidenceRates);
+            ResultDTO<List<DetectionRunDTO>> selectedDetectionRuns = await _detectionRunService.GetSelectedDetectionRunsIncludingDetectedDumpSites(model.selectedDetectionRunsIds, model.selectedConfidenceRates);
             if (selectedDetectionRuns.IsSuccess == false && selectedDetectionRuns.HandleError())
                 return ResultDTO<List<DetectionRunDTO>>.Fail(selectedDetectionRuns.ErrMsg!);
             if (selectedDetectionRuns.Data == null)
                 return ResultDTO<List<DetectionRunDTO>>.Fail("Data is null");
+
+            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
+
+            foreach (var item in selectedDetectionRuns.Data)
+            {
+                item.DetectionInputImage.ImagePath = $"{baseUrl}/{item.DetectionInputImage.ImagePath.Replace("\\", "/")}";
+            }
 
             ResultDTO<List<DetectionIgnoreZoneDTO>> ignoreZones = await _detectionIgnoreZoneService.GetAllIgnoreZonesDTOs();
             if (ignoreZones.IsSuccess == false && ignoreZones.HandleError())
@@ -860,12 +857,30 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
 
-
             foreach (var item in resultGetEntities.Data)
             {
                 item.ImagePath = $"{baseUrl}/{item.ImagePath?.Replace("\\", "/")}";
             }
             return ResultDTO<List<DetectionInputImageDTO>>.Ok(resultGetEntities.Data);
+        }
+
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.PreviewDetectionInputImages))]
+        public async Task<ResultDTO<List<TrainedModelDTO>>> GetPublishedTrainedModels()
+        {
+            try
+            {
+                ResultDTO<List<TrainedModelDTO>> getPublishedTrainedModelsResult =
+                    await _trainedModelService.GetPublishedTrainedModelsIncludingTrainRuns();
+                if (getPublishedTrainedModelsResult.IsSuccess == false && getPublishedTrainedModelsResult.HandleError())
+                    ResultDTO<List<TrainedModelDTO>>.Fail(getPublishedTrainedModelsResult.ErrMsg!);
+
+                return ResultDTO<List<TrainedModelDTO>>.Ok(getPublishedTrainedModelsResult.Data!);
+            }
+            catch(Exception ex)
+            {
+                return ResultDTO<List<TrainedModelDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
     }
 }

@@ -12,5 +12,6 @@ namespace MainApp.BL.Interfaces.Services.TrainingServices
         Task<ResultDTO> DeleteTrainedModelById(Guid trainedModelId);
         Task<ResultDTO> EditTrainedModelById(Guid trainedModelId, string? name = null, bool? isPublished = null);
         Task<ResultDTO<TrainingRunResultsDTO>> GetBestEpochForTrainedModelById(Guid trainedModelId);
+        Task<ResultDTO<List<TrainedModelDTO>>> GetPublishedTrainedModelsIncludingTrainRuns();
     }
 }

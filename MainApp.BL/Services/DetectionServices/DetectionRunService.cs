@@ -6,7 +6,9 @@ using DTOs.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
+using Entities.DatasetEntities;
 using Entities.DetectionEntities;
+using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using Microsoft.Extensions.Configuration;
@@ -235,21 +237,21 @@ namespace MainApp.BL.Services.DetectionServices
             string trainedModelConfigPath, string trainedModelModelPath, Guid detectionRunId, bool isSmallImage = false, bool hasGPU = false)
         {
             string detectionCommandStr = string.Empty;
-            //string scriptName = isSmallImage ? "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\demo\\image_demo.py" : "C:\\vs_code_workspaces\\mmdetection\\mmdetection\\demo\\large_image_demo.py";
             string scriptName = isSmallImage ? "demo\\image_demo.py" : "ins_development\\scripts\\large_image_annotated_inference.py";
+            scriptName = CommonHelper.PathToLinuxRegexSlashReplace(scriptName);
             string weightsCommandParamStr = isSmallImage ? "--weights" : string.Empty;
             string patchSizeCommand = isSmallImage ? string.Empty : "--patch-size 1280";
             string cpuDetectionCommandPart = hasGPU == false ? "--device cpu" : string.Empty;
 
             string outDirAbsPath = _MMDetectionConfiguration.GetDetectionRunOutputDirAbsPathByRunId(detectionRunId);
-            string outDirCommandPart = $"--out-dir {CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(outDirAbsPath)}";
+            string outDirCommandPart = $"--out-dir {CommonHelper.PathToLinuxRegexSlashReplace(outDirAbsPath)}";
 
             string openmmlabAbsPath = _MMDetectionConfiguration.GetOpenMMLabAbsPath();
 
             detectionCommandStr = $"run -p {openmmlabAbsPath} python {scriptName} " +
-                $"\"{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(imageToRunDetectionOnPath)}\" " +
-                $"{CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(trainedModelConfigPath)} " +
-                $"{weightsCommandParamStr} {CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(trainedModelModelPath)} " +
+                $"\"{CommonHelper.PathToLinuxRegexSlashReplace(imageToRunDetectionOnPath)}\" " +
+                $"{CommonHelper.PathToLinuxRegexSlashReplace(trainedModelConfigPath)} " +
+                $"{weightsCommandParamStr} {CommonHelper.PathToLinuxRegexSlashReplace(trainedModelModelPath)} " +
                 $"{outDirCommandPart} {cpuDetectionCommandPart} {patchSizeCommand}";
 
             return detectionCommandStr;
@@ -350,8 +352,8 @@ namespace MainApp.BL.Services.DetectionServices
                 string detectionCommand =
                     GeneratePythonDetectionCommandByType(
                         imageToRunDetectionOnPath: detectionRunDTO.InputImgPath,
-                        trainedModelConfigPath: CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(detectionRunDTO.TrainedModel.ModelConfigPath!),
-                        trainedModelModelPath: CommonHelper.ConvertWindowsPathToLinuxPathReplaceAllDashes(detectionRunDTO.TrainedModel.ModelFilePath!),
+                        trainedModelConfigPath: CommonHelper.PathToLinuxRegexSlashReplace(detectionRunDTO.TrainedModel.ModelConfigPath!),
+                        trainedModelModelPath: CommonHelper.PathToLinuxRegexSlashReplace(detectionRunDTO.TrainedModel.ModelFilePath!),
                         detectionRunId: detectionRunDTO.Id!.Value,
                         isSmallImage: false, hasGPU: hasGPU);
 
@@ -365,7 +367,7 @@ namespace MainApp.BL.Services.DetectionServices
                             Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"error_{detectionRunDTO.Id.Value}.txt")))
                         .ExecuteBufferedAsync();
 
-                if (powerShellResults.StandardOutput.Contains("Results have been saved") == false)
+                if (powerShellResults.IsSuccess == false)
                     return ResultDTO.Fail($"Detection Run failed with error: {powerShellResults.StandardError}");
 
                 return ResultDTO.Ok();
@@ -465,6 +467,23 @@ namespace MainApp.BL.Services.DetectionServices
             string detectedZonesDatasetClassIdStr = DetectionResultDummyDatasetClassId;
             Guid detectedZonesDatasetClassId = Guid.Parse(detectedZonesDatasetClassIdStr);
 
+            ResultDTO<DetectionRun?> getDetectionRunIncluded =
+                await _detectionRunRepository.GetByIdIncludeThenAll(detectionRunId, track: false, 
+                includeProperties:
+                    [ (dr => dr.TrainedModel!, 
+                        [tm => ((TrainedModel)tm).Dataset!, 
+                            d => ((Entities.DatasetEntities.Dataset)d).DatasetClasses, 
+                                ddc => ((Dataset_DatasetClass)ddc).DatasetClass]),
+                    ]);
+            if (getDetectionRunIncluded.IsSuccess == false && getDetectionRunIncluded.HandleError())
+                return ResultDTO<List<DetectedDumpSite>>.Fail(getDetectionRunIncluded.ErrMsg!);
+
+            if(getDetectionRunIncluded.Data is null)
+                return ResultDTO<List<DetectedDumpSite>>.Fail($"Detection Run with model, dataset, classes included not found for id: {detectionRunId}");
+
+            DetectionRun detectionRun = getDetectionRunIncluded.Data;
+            List<Dataset_DatasetClass> datasetDatasetClasses = detectionRun.TrainedModel.Dataset.DatasetClasses.ToList();
+
             List<DetectedDumpSiteDTO> detectedDumpSites = new List<DetectedDumpSiteDTO>();
 
             GeometryFactory factory = new GeometryFactory();
@@ -481,10 +500,16 @@ namespace MainApp.BL.Services.DetectionServices
                     lowerLeft  // Closed linear ring 
                 };
 
+                int labelValue = detectedDumpSitesProjectedResponse.labels[i];
+                Dataset_DatasetClass? datasetDatasetClassLabel = 
+                    datasetDatasetClasses.FirstOrDefault(c => c.DatasetClassValue == labelValue + 1);
+                if(datasetDatasetClassLabel is null)
+                    return ResultDTO<List<DetectedDumpSite>>.Fail($"Dataset Dataset Class not found with value: {labelValue}");
+
                 detectedDumpSites.Add(new DetectedDumpSiteDTO()
                 {
                     DetectionRunId = detectionRunId,
-                    DatasetClassId = detectedZonesDatasetClassId,
+                    DatasetClassId = datasetDatasetClassLabel.DatasetClassId,
                     ConfidenceRate = detectedDumpSitesProjectedResponse.scores[i],
                     Geom = factory.CreatePolygon(coordinates)
                 });

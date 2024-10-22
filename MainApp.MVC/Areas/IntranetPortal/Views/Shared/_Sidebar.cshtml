@@ -20,13 +20,13 @@
                         </p>
                     </a>
                 </li>
-                @if(User.HasAuthClaim(SD.AuthClaims.ViewDatasets) && User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasets) && User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
                 {
                     <li class="nav-item">
                         <a href="#" class="nav-link" id="NavlinkClasses">
                             <i class="fas fa-boxes"></i> &nbsp;&nbsp;
                             <p>
-                                @DbResHtml.T("Classes", "Resources")
+                                @DbResHtml.T("Datasets", "Resources")
                                 <i class="fas fa-angle-left right"></i>
                             </p>
                         </a>
@@ -40,6 +40,20 @@
                                     </p>
                                 </a>
                             </li>
+                        </ul>
+                    </li>
+                }
+                @if(User.HasAuthClaim(SD.AuthClaims.ViewDatasets) && User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
+                {
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" id="NavlinkClasses">
+                            <i class="fas fa-boxes"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Classes", "Resources")
+                                <i class="fas fa-angle-left right"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a asp-action="Index" asp-controller="DatasetClasses" asp-area="IntranetPortal" class="nav-link" id="NavlinkDatasetClasses"
                                    title="@DbResHtml.T("Dataset classes", "Resources")">
