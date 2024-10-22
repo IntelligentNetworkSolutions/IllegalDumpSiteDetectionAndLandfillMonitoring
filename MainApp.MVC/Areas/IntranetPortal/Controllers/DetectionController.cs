@@ -518,13 +518,18 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (model.selectedConfidenceRates == null || model.selectedConfidenceRates.Count == 0)
                 return ResultDTO<List<DetectionRunDTO>>.Fail("No confidence rates selected");
 
-            ResultDTO<List<DetectionRunDTO>> selectedDetectionRuns = 
-                await _detectionRunService.GetSelectedDetectionRunsIncludingDetectedDumpSites(model.selectedDetectionRunsIds, 
-                                                                                                model.selectedConfidenceRates);
+            ResultDTO<List<DetectionRunDTO>> selectedDetectionRuns = await _detectionRunService.GetSelectedDetectionRunsIncludingDetectedDumpSites(model.selectedDetectionRunsIds, model.selectedConfidenceRates);
             if (selectedDetectionRuns.IsSuccess == false && selectedDetectionRuns.HandleError())
                 return ResultDTO<List<DetectionRunDTO>>.Fail(selectedDetectionRuns.ErrMsg!);
             if (selectedDetectionRuns.Data == null)
                 return ResultDTO<List<DetectionRunDTO>>.Fail("Data is null");
+
+            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
+
+            foreach (var item in selectedDetectionRuns.Data)
+            {
+                item.DetectionInputImage.ImagePath = $"{baseUrl}/{item.DetectionInputImage.ImagePath.Replace("\\", "/")}";
+            }
 
             ResultDTO<List<DetectionIgnoreZoneDTO>> ignoreZones = await _detectionIgnoreZoneService.GetAllIgnoreZonesDTOs();
             if (ignoreZones.IsSuccess == false && ignoreZones.HandleError())
@@ -851,7 +856,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images are not found");
 
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
-
 
             foreach (var item in resultGetEntities.Data)
             {

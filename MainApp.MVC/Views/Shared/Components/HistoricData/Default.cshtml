@@ -191,7 +191,7 @@
                                 const source = new ol.source.GeoTIFF({
                                     sources: [
                                         {
-                                            url: "/" + detectionRun.detectionInputImage.imagePath.replace(/\\/g, '/')
+                                            url: detectionRun.detectionInputImage.imagePath
                                         },
                                     ],
                                 });
