@@ -382,48 +382,48 @@ namespace SD
             FromModule = Modules.LegalLandfillManagement,
             Description = "View Waste Volume Differential Analysis"
         };
-		public static readonly AuthClaim AddLegalLandfillTruck = new AuthClaim
-		{
-			Value = "14:1",
-			FromModule = Modules.LegalLandfillWasteManagement,
-			Description = "Add Legal Landfill Truck"
-		};		
+        public static readonly AuthClaim AddLegalLandfillTruck = new AuthClaim
+        {
+            Value = "14:1",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Add Legal Landfill Truck"
+        };
         public static readonly AuthClaim EditLegalLandfillTruck = new AuthClaim
-		{
-			Value = "14:2",
-			FromModule = Modules.LegalLandfillWasteManagement,
-			Description = "Edit Legal Landfill Truck"
-		};
-		public static readonly AuthClaim DeleteLegalLandfillTruck = new AuthClaim
-		{
-			Value = "14:3",
-			FromModule = Modules.LegalLandfillWasteManagement,
-			Description = "Delete Legal Landfill Truck"
-		};
-		public static readonly AuthClaim ViewLegalLandfillTrucks = new AuthClaim
-		{
-			Value = "14:4",
-			FromModule = Modules.LegalLandfillWasteManagement,
-			Description = "View Legal Landfill Trucks"
-		};
-		public static readonly AuthClaim AddLegalLandfillWasteType= new AuthClaim
-		{
-			Value = "14:5",
-			FromModule = Modules.LegalLandfillWasteManagement,
-			Description = "Add Legal Landfill Waste Type"
-		};
-		public static readonly AuthClaim EditLegalLandfillWasteType = new AuthClaim
-		{
-			Value = "14:6",
-			FromModule = Modules.LegalLandfillWasteManagement,
-			Description = "Edit Legal Landfill Waste Type"
-		};
-		public static readonly AuthClaim DeleteLegalLandfillWasteType = new AuthClaim
-		{
-			Value = "14:7",
-			FromModule = Modules.LegalLandfillWasteManagement,
-			Description = "Delete Legal Landfill Waste Type"
-		};
+        {
+            Value = "14:2",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Edit Legal Landfill Truck"
+        };
+        public static readonly AuthClaim DeleteLegalLandfillTruck = new AuthClaim
+        {
+            Value = "14:3",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Delete Legal Landfill Truck"
+        };
+        public static readonly AuthClaim ViewLegalLandfillTrucks = new AuthClaim
+        {
+            Value = "14:4",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "View Legal Landfill Trucks"
+        };
+        public static readonly AuthClaim AddLegalLandfillWasteType = new AuthClaim
+        {
+            Value = "14:5",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Add Legal Landfill Waste Type"
+        };
+        public static readonly AuthClaim EditLegalLandfillWasteType = new AuthClaim
+        {
+            Value = "14:6",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Edit Legal Landfill Waste Type"
+        };
+        public static readonly AuthClaim DeleteLegalLandfillWasteType = new AuthClaim
+        {
+            Value = "14:7",
+            FromModule = Modules.LegalLandfillWasteManagement,
+            Description = "Delete Legal Landfill Waste Type"
+        };
         public static readonly AuthClaim ViewLegalLandfillWasteTypes = new AuthClaim
         {
             Value = "14:8",
@@ -532,7 +532,7 @@ namespace SD
             Value = "16:1",
             FromModule = Modules.MapToolDetectionInputImages,
             Description = "View Detection Input Images"
-        };        
+        };
 
         public static readonly AuthClaim ManageDetectionIgnoreZones = new AuthClaim
         {
@@ -571,14 +571,21 @@ namespace SD
             FromModule = Modules.Training,
             Description = "Delete Training Run"
         };
-        public static readonly AuthClaim PublishTrainingRunTrainedModel = new AuthClaim
+        public static readonly AuthClaim EditTrainingRun = new AuthClaim
         {
             Value = "19:5",
+            FromModule = Modules.Training,
+            Description = "Edit Training Run"
+        };
+        public static readonly AuthClaim PublishTrainingRunTrainedModel = new AuthClaim
+        {
+            Value = "19:6",
             FromModule = Modules.Training,
             Description = "Publish Training Run Trained Model"
         };
 
-    } 
+
+    }
 }
 
 

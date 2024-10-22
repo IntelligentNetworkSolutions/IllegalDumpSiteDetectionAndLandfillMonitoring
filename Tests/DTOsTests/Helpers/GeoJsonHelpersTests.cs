@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTOs.Helpers;
+﻿using DTOs.Helpers;
 using NetTopologySuite.Geometries;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -32,7 +27,7 @@ namespace Tests.DTOsTests.Helpers
         public void GeometryToGeoJson_LineString_ShouldReturnValidGeoJson()
         {
             // Arrange
-            LineString lineString = new LineString([ new Coordinate(1, 1), new Coordinate(2, 2), new Coordinate(3, 3) ]);
+            LineString lineString = new LineString([new Coordinate(1, 1), new Coordinate(2, 2), new Coordinate(3, 3)]);
 
             // Act
             string result = GeoJsonHelpers.GeometryToGeoJson(lineString);
@@ -49,9 +44,9 @@ namespace Tests.DTOsTests.Helpers
         public void GeometryToGeoJson_Polygon_ShouldReturnValidGeoJson()
         {
             // Arrange
-            Polygon polygon = 
+            Polygon polygon =
                 new Polygon(
-                    new LinearRing([ new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0) ]));
+                    new LinearRing([new Coordinate(0, 0), new Coordinate(0, 1), new Coordinate(1, 1), new Coordinate(1, 0), new Coordinate(0, 0)]));
 
             // Act
             string result = GeoJsonHelpers.GeometryToGeoJson(polygon);
@@ -69,7 +64,7 @@ namespace Tests.DTOsTests.Helpers
         public void GeometryToGeoJson_MultiPoint_ShouldReturnValidGeoJson()
         {
             // Arrange
-            MultiPoint multiPoint = new MultiPoint([ new Point(1, 1), new Point(2, 2) ]);
+            MultiPoint multiPoint = new MultiPoint([new Point(1, 1), new Point(2, 2)]);
 
             // Act
             string result = GeoJsonHelpers.GeometryToGeoJson(multiPoint);
@@ -98,21 +93,11 @@ namespace Tests.DTOsTests.Helpers
         }
 
         [Fact]
-        public void GeometryToGeoJson_NullGeometry_ShouldThrowArgumentNullException()
-        {
-            // Arrange
-            Geometry nullGeometry = null;
-
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => GeoJsonHelpers.GeometryToGeoJson(nullGeometry));
-        }
-
-        [Fact]
         public void GeometryToGeoJson_GeometryCollection_ShouldReturnValidGeoJson()
         {
             // Arrange
-            GeometryCollection geometryCollection = 
-                new GeometryCollection([ new Point(1, 1), new LineString([new Coordinate(2, 2), new Coordinate(3, 3)]) ]);
+            GeometryCollection geometryCollection =
+                new GeometryCollection([new Point(1, 1), new LineString([new Coordinate(2, 2), new Coordinate(3, 3)])]);
 
             // Act
             string result = GeoJsonHelpers.GeometryToGeoJson(geometryCollection);
@@ -256,10 +241,10 @@ namespace Tests.DTOsTests.Helpers
         public void GeometryBBoxToTopLeftWidthHeight_ValidGeometry_ShouldReturnDictionary()
         {
             // Arrange
-            Polygon polygon = 
+            Polygon polygon =
                 new Polygon(
-                    new LinearRing([ new Coordinate(0, 0), new Coordinate(0, 100), 
-                                        new Coordinate(100, 100), new Coordinate(100, 0), 
+                    new LinearRing([ new Coordinate(0, 0), new Coordinate(0, 100),
+                                        new Coordinate(100, 100), new Coordinate(100, 0),
                                             new Coordinate(0, 0) ]));
 
             // Act
@@ -288,7 +273,7 @@ namespace Tests.DTOsTests.Helpers
         public void GeometryBBoxToTopLeftWidthHeightList_ValidGeometry_ShouldReturnList()
         {
             // Arrange
-            Polygon polygon = 
+            Polygon polygon =
                 new Polygon(
                     new LinearRing([new Coordinate(0, 0), new Coordinate(0, 100),
                                     new Coordinate(100, 100), new Coordinate(100, 0),

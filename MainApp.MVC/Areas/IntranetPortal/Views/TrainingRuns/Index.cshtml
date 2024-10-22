@@ -1,0 +1,419 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.Training
+@using Microsoft.AspNetCore.Localization
+@using SD.Helpers
+@model IEnumerable<TrainingRunIndexViewModel>
+
+
+@{
+    ViewData["Title"] = @DbResHtml.T("Training run list", "Resources");
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Run, Add, Edit, Delete and view all training runs", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
+                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+                        <div class="mt-5">
+                            <table id="trainingRunTable" class="table table-sm table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            @DbResHtml.T("Name", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Is Completed", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("CreatedBy", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("CreatedOn", "Resources")
+                                        </th>
+                                        <th class="notexport">
+                                            @DbResHtml.T("Action", "Resources")
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.Name</td>
+                                            <td>@item.IsCompleted</td>
+                                            <td>@item.CreatedBy?.UserName</td>
+                                            <td>@item.CreatedOn?.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editTrainingRunModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteTrainingRunModalFunction('@item.Id')" title="@DbResHtml.T("Delete Training Run", "Resources")">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        @{
+            var httpContext = ViewContext.HttpContext;
+            var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+            var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+            $(document).ready(function () {
+                $('#trainingRunTable').DataTable({
+                    paging: true,
+                    pageLength: 100,
+                    "columnDefs": [
+                        { "width": "20%", "targets": 2 }
+                    ],
+                    "language": {
+                        "url": "@langPath"
+                    },
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+                            text: '<i class="fas fa-file-alt"></i>',
+                            titleAttr: "Export to excel",
+                            filename: "Training Runs- @DateTime.Now.ToString("dd.MM.yyyy")",
+                            exportOptions: {
+                                columns: ':not(.notexport)'
+                            }
+                        }
+                    ]
+                });
+
+                $("#exportToExcelButton").click(function () {
+                    $(".export-to-excel-button").click();
+                });
+            });
+
+
+            //EDIT
+        function editTrainingRunConfirmed() {
+            var id = $("#textEditId").val();
+            var name = $("#txtEditName").val();
+            var isCompleted = $("#txtEditIsCompleted").val();
+            var status = $("#textEditStatus").val();
+            var createdById = $("#textEditCreatedById").val();
+            var createdOn = $("#textEditCreatedOn").val();
+
+            if (name == '' || isCompleted == ''){
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Name and IsCompleted is required property", "Resources")"
+                });
+                return;
+            }
+
+            var trainingRunIndexViewModel = {
+                Id: id,
+                Name: name,
+                IsCompleted: isCompleted,
+                Status: status,
+                CreatedById: createdById,
+                CreatedOn: createdOn,
+
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditTrainingRun", "TrainingRuns", new { Area = "IntranetPortal" })",
+                data: {
+                    trainingRunIndexViewModel: trainingRunIndexViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully edited training run", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function editTrainingRunModalFunction(trainingRunId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetTrainingRunById", "TrainingRuns", new { Area = "IntranetPortal" })",
+                data: {
+                    trainingRunId: trainingRunId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#editTrainingRunModalBody").html("");
+
+                            $("#editTrainingRunModalBody").append(
+                                '<div>'
+                                + `<input type="text" hidden id="textEditId">`
+                                + `<label class="form-control-label" for="txtEditName">@DbResHtml.T("Name:", "Resources")</label><input class="form-control" type="text" id="txtEditName" />`
+                                + `<label class="form-control-label mt-3" for="txtEditIsCompleted">@DbResHtml.T("IsCompleted:", "Resources")</label>`
+                                + `<select class="form-control" id="txtEditIsCompleted">`
+                                + `<option value="true">@DbResHtml.T("True", "Resources")</option>`
+                                + `<option value="false">@DbResHtml.T("False", "Resources")</option>`
+                                + `</select>`
+                                + `<input type="text" hidden id="textEditStatus">`
+                                + `<input type="text" hidden id="textEditCreatedById">`
+                                + `<input type="text" hidden id="textEditCreatedOn">`
+                                + '</div>'
+                            );
+                            $("#textEditId").val(data.data.id);
+                            $("#txtEditName").val(data.data.name);
+                            $("#txtEditIsCompleted").val(data.data.isCompleted.toString());
+                            $("#textEditStatus").val(data.data.status);
+                            $("#textEditCreatedById").val(data.data.createdById);
+                            $("#textEditCreatedOn").val(data.data.createdOn);
+
+                            $('#editTrainingRunModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+
+        function deleteTrainingRunConfirmed() {
+            var trainingRunId = $("#txtDeleteId").val();
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteTrainingRun", "TrainingRuns", new { Area = "IntranetPortal" })",
+                data: {
+                    trainingRunId: trainingRunId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully deleted Training run", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function deleteTrainingRunModalFunction(trainingRunId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetTrainingRunById", "TrainingRuns", new { Area = "IntranetPortal" })",
+                data: {
+                    trainingRunId: trainingRunId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#deleteTrainingRunModalBody").html("");
+
+                            $("#deleteTrainingRunModalBody").append(
+                                '<div>'
+                                + '<input type="text" id="txtDeleteId" hidden/>'
+                                + '<input type="text" id="txtDeleteName" hidden/>'
+                                + '<input type="text" id="txtDeleteIsCompleted" hidden/>'
+
+                                + '<table class="table table-striped my-4 w-100">'
+                                + '<thead>'
+                                + '<tr>'
+                                + '<th>@DbResHtml.T("Name", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Is Completed", "Resources")</th>'
+                                + '</tr>'
+                                + '</thead>'
+                                + '<tbody>'
+                                + '<tr>'
+                                + `<td>${data.data.name}</td>`
+                                + `<td>${data.data.isCompleted}</td>`
+                                + '</tr>'
+                                + '</tbody>'
+                                + '</table>'
+                                + '</div>'
+                            );
+
+                            $(`#txtDeleteId`).val(data.data.id);
+                            $(`#txtDeleteName`).val(data.data.name);
+                            $(`#txtDeleteIsCompleted`).val(data.data.isCompleted);
+
+                            $('#deleteTrainingRunModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+    </script>
+}
+
+
+
+@section Bodyarea
+    {
+    <div class="modal" id="deleteTrainingRunModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-danger">
+                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this Training Run?", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="deleteTrainingRunModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteTrainingRunConfirmed()" data-dismiss="modal" aria-label="Delete">
+                        <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="editTrainingRunModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-warning text-white">
+                    <h5 class="modal-title">@DbResHtml.T("Edit Training Run", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="editTrainingRunModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="editTrainingRunConfirmed()" data-dismiss="modal" aria-label="Edit">
+                        <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
