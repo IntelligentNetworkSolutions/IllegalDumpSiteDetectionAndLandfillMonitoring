@@ -6,7 +6,9 @@ using DTOs.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
+using Entities.DatasetEntities;
 using Entities.DetectionEntities;
+using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using Microsoft.Extensions.Configuration;
@@ -465,6 +467,23 @@ namespace MainApp.BL.Services.DetectionServices
             string detectedZonesDatasetClassIdStr = DetectionResultDummyDatasetClassId;
             Guid detectedZonesDatasetClassId = Guid.Parse(detectedZonesDatasetClassIdStr);
 
+            ResultDTO<DetectionRun?> getDetectionRunIncluded =
+                await _detectionRunRepository.GetByIdIncludeThenAll(detectionRunId, track: false, 
+                includeProperties:
+                    [ (dr => dr.TrainedModel!, 
+                        [tm => ((TrainedModel)tm).Dataset!, 
+                            d => ((Entities.DatasetEntities.Dataset)d).DatasetClasses, 
+                                ddc => ((Dataset_DatasetClass)ddc).DatasetClass]),
+                    ]);
+            if (getDetectionRunIncluded.IsSuccess == false && getDetectionRunIncluded.HandleError())
+                return ResultDTO<List<DetectedDumpSite>>.Fail(getDetectionRunIncluded.ErrMsg!);
+
+            if(getDetectionRunIncluded.Data is null)
+                return ResultDTO<List<DetectedDumpSite>>.Fail($"Detection Run with model, dataset, classes included not found for id: {detectionRunId}");
+
+            DetectionRun detectionRun = getDetectionRunIncluded.Data;
+            List<Dataset_DatasetClass> datasetDatasetClasses = detectionRun.TrainedModel.Dataset.DatasetClasses.ToList();
+
             List<DetectedDumpSiteDTO> detectedDumpSites = new List<DetectedDumpSiteDTO>();
 
             GeometryFactory factory = new GeometryFactory();
@@ -481,10 +500,16 @@ namespace MainApp.BL.Services.DetectionServices
                     lowerLeft  // Closed linear ring 
                 };
 
+                int labelValue = detectedDumpSitesProjectedResponse.labels[i];
+                Dataset_DatasetClass? datasetDatasetClassLabel = 
+                    datasetDatasetClasses.FirstOrDefault(c => c.DatasetClassValue == labelValue + 1);
+                if(datasetDatasetClassLabel is null)
+                    return ResultDTO<List<DetectedDumpSite>>.Fail($"Dataset Dataset Class not found with value: {labelValue}");
+
                 detectedDumpSites.Add(new DetectedDumpSiteDTO()
                 {
                     DetectionRunId = detectionRunId,
-                    DatasetClassId = detectedZonesDatasetClassId,
+                    DatasetClassId = datasetDatasetClassLabel.DatasetClassId,
                     ConfidenceRate = detectedDumpSitesProjectedResponse.scores[i],
                     Geom = factory.CreatePolygon(coordinates)
                 });

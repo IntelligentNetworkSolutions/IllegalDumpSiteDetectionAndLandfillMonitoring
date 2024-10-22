@@ -21,15 +21,15 @@ namespace MainApp.BL.Services.TrainingServices
                 $"{GenerateConfigModelOverrideStr(backboneCheckpointAbsPath)}\r\n" +
                 $"\r\n" +
                 $"{GenerateConfigTrainCfgOverrideStr}\r\n" +
-                $"{GenerateConfigTrainDataloaderOverrideStr(dataRootAbsPath)}\r\n" +
+                $"{GenerateConfigTrainDataloaderOverrideStr}\r\n" +
                 $"\r\n" +
                 $"{GenerateConfigValCfgOverrideStr}\r\n" +
-                $"{GenerateConfigValDataloaderOverrideStr(dataRootAbsPath)}\r\n" +
-                $"{GenerateConfigValEvaluatorOverrideStr(dataRootAbsPath)}\r\n" +
+                $"{GenerateConfigValDataloaderOverrideStr}\r\n" +
+                $"{GenerateConfigValEvaluatorOverrideStr}\r\n" +
                 $"\r\n" +
                 $"{GenerateConfigTestCfgOverrideStr}\r\n" +
-                $"{GenerateConfigTestDataloaderOverrideStr(dataRootAbsPath)}\r\n" +
-                $"{GenerateConfigTestEvaluatorOverrideStr(dataRootAbsPath)}\r\n" +
+                $"{GenerateConfigTestDataloaderOverrideStr}\r\n" +
+                $"{GenerateConfigTestEvaluatorOverrideStr}\r\n" +
                 $"\r\n" +
                 $"{GenerateConfigLoadFromOverrideStr(baseModelFileAbsPath)}\r\n" +
                 $"\r\n";
@@ -96,43 +96,47 @@ namespace MainApp.BL.Services.TrainingServices
 
         public const string GenerateConfigTrainCfgOverrideStr =
             "train_cfg = dict(max_epochs=num_epochs, type='EpochBasedTrainLoop', val_interval=1)\t\n";
-        public static string GenerateConfigTrainDataloaderOverrideStr(string dataRootAbsPath) 
-            => "train_dataloader = dict(\r\n" +
-                "\tbatch_size=num_batch_size,\r\n" +
-                "\tdataset=dict(\r\n" +
-                "\t\tdata_root=data_root,\r\n" +
-                "\t\tmetainfo=metainfo,\r\n" +
-                $"\t\tann_file='train/annotations_coco.json',\r\n" +
-                "\t\tdata_prefix=dict(img='train/'),),\r\n" +
-                "\tnum_workers=2,)\r\n";
+        public const string GenerateConfigTrainDataloaderOverrideStr =
+            "train_dataloader = dict(\r\n" +
+            "\tbatch_size=num_batch_size,\r\n" +
+            "\tdataset=dict(\r\n" +
+            "\t\tdata_root=data_root,\r\n" +
+            "\t\tmetainfo=metainfo,\r\n" +
+            "\t\tann_file='train/annotations_coco.json',\r\n" +
+            "\t\tdata_prefix=dict(img='train/'),),\r\n" +
+            "\tnum_workers=2,)\r\n";
 
         public const string GenerateConfigValCfgOverrideStr =
             "val_cfg = dict(type='ValLoop')\r\n";
-        public static string GenerateConfigValDataloaderOverrideStr(string dataRootAbsPath) 
-            => "val_dataloader = dict(\r\n" +
-                "\tbatch_size=num_batch_size,\r\n" +
-                "\tdataset=dict(\r\n" +
-                "\t\tdata_root=data_root,\r\n" +
-                "\t\tmetainfo=metainfo,\r\n" +
-                $"\t\tann_file='valid/annotations_coco.json',\r\n" +
-                "\t\tdata_prefix=dict(img='valid/'),),\r\n" +
-                "\tnum_workers=2,)\r\n";
-        public static string GenerateConfigValEvaluatorOverrideStr(string dataRootAbsPath) 
-            => $"val_evaluator = dict(ann_file=data_root + '/valid/annotations_coco.json',)\r\n";
+        
+        public const string GenerateConfigValDataloaderOverrideStr =  
+            "val_dataloader = dict(\r\n" +
+            "\tbatch_size=num_batch_size,\r\n" +
+            "\tdataset=dict(\r\n" +
+            "\t\tdata_root=data_root,\r\n" +
+            "\t\tmetainfo=metainfo,\r\n" +
+            "\t\tann_file='valid/annotations_coco.json',\r\n" +
+            "\t\tdata_prefix=dict(img='valid/'),),\r\n" +
+            "\tnum_workers=2,)\r\n";
+        
+        public const string GenerateConfigValEvaluatorOverrideStr =  
+            $"val_evaluator = dict(ann_file=data_root + '/valid/annotations_coco.json',)\r\n";
 
         public const string GenerateConfigTestCfgOverrideStr =
             "test_cfg = dict(type='TestLoop')\r\n";
-        public static string GenerateConfigTestDataloaderOverrideStr(string dataRootAbsPath)
-            => "test_dataloader = dict(\r\n" +
-                "\tbatch_size=num_batch_size,\r\n" +
-                "\tdataset=dict(\r\n" +
-                "\t\tdata_root=data_root,\r\n" +
-                "\t\tmetainfo=metainfo,\r\n" +
-                $"\t\tann_file='test/annotations_coco.json',\r\n" +
-                "\t\tdata_prefix=dict(img='test/'),),\r\n" +
-                "\tnum_workers=2,)\r\n";
-        public static string GenerateConfigTestEvaluatorOverrideStr(string dataRootAbsPath)
-            => $"test_evaluator = dict(ann_file=data_root + '/test/annotations_coco.json',)\r\n";
+        
+        public const string GenerateConfigTestDataloaderOverrideStr = 
+            "test_dataloader = dict(\r\n" +
+            "\tbatch_size=num_batch_size,\r\n" +
+            "\tdataset=dict(\r\n" +
+            "\t\tdata_root=data_root,\r\n" +
+            "\t\tmetainfo=metainfo,\r\n" +
+            "\t\tann_file='test/annotations_coco.json',\r\n" +
+            "\t\tdata_prefix=dict(img='test/'),),\r\n" +
+            "\tnum_workers=2,)\r\n";
+        
+        public const string GenerateConfigTestEvaluatorOverrideStr = 
+            $"test_evaluator = dict(ann_file=data_root + '/test/annotations_coco.json',)\r\n";
 
         public static string GenerateConfigLoadFromOverrideStr(string baseModelFileAbsPath)
             => $"load_from = '{CommonHelper.PathToLinuxRegexSlashReplace(baseModelFileAbsPath)}'\r\n";

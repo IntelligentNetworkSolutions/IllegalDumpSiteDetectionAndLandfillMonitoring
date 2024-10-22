@@ -75,12 +75,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public async Task<IActionResult> CreateDetectionRun()
         {
             return View();
-            ResultDTO<List<TrainedModelDTO>> getPublishedTrainedModelsResult = 
-                await _trainedModelService.GetPublishedTrainedModelsIncludingTrainRuns();
-            if(getPublishedTrainedModelsResult.IsSuccess == false && getPublishedTrainedModelsResult.HandleError())
-                return Json(new { isSuccess = false, errMsg = getPublishedTrainedModelsResult.ErrMsg! });
-
-            return View(getPublishedTrainedModelsResult.Data);
         }
 
         [HttpPost]
@@ -213,6 +207,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultBBoxConversionToProjection.ErrMsg!);
                     return ResultDTO<string>.Fail(resHandleErrorProcess.Data!);
                 }
+
 
                 //Create detected dump sites in db
                 ResultDTO<List<DetectedDumpSite>> resultCreateDetectedDumpSites = await _detectionRunService.CreateDetectedDumpsSitesFromDetectionRun(detectionRunDTO.Id.Value, resultBBoxConversionToProjection.Data!);

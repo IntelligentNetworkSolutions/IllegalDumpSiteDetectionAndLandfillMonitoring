@@ -415,19 +415,28 @@ namespace MainApp.BL.Services.DatasetServices
                                                                             .OrderBy(annotation => annotation.CreatedOn);
 
             // Delete Annotations
-            ResultDTO deleteDatasetImageAnnotationsResult = await _imageAnnotationsRepository.DeleteRange(annotations, false);
-            if (deleteDatasetImageAnnotationsResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetImageAnnotationsResult))
-                return ResultDTO.Fail(deleteDatasetImageAnnotationsResult.ErrMsg!);
+            if (annotations.Count() > 0)
+            {
+                ResultDTO deleteDatasetImageAnnotationsResult = await _imageAnnotationsRepository.DeleteRange(annotations, false);
+                if (deleteDatasetImageAnnotationsResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetImageAnnotationsResult))
+                    return ResultDTO.Fail(deleteDatasetImageAnnotationsResult.ErrMsg!);
+            }
 
             // Delete Images
-            ResultDTO deleteDatasetImagesResult = await _datasetImagesRepository.DeleteRange(datasetImages, false);
-            if (deleteDatasetImagesResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetImagesResult))
-                return ResultDTO.Fail(deleteDatasetImagesResult.ErrMsg!);
+            if (datasetImages.Count > 0)
+            {
+                ResultDTO deleteDatasetImagesResult = await _datasetImagesRepository.DeleteRange(datasetImages, false);
+                if (deleteDatasetImagesResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetImagesResult))
+                    return ResultDTO.Fail(deleteDatasetImagesResult.ErrMsg!);
+            }
 
             // Delete Dataset_DatasetClasses
-            ResultDTO deleteDatasetDatasetClassesResult = await _datasetDatasetClassRepository.DeleteRange(datasetDatasetClasses, false);
-            if (deleteDatasetDatasetClassesResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetDatasetClassesResult))
-                return ResultDTO.Fail(deleteDatasetDatasetClassesResult.ErrMsg!);
+            if (datasetDatasetClasses.Count > 0)
+            {
+                ResultDTO deleteDatasetDatasetClassesResult = await _datasetDatasetClassRepository.DeleteRange(datasetDatasetClasses, false);
+                if (deleteDatasetDatasetClassesResult.IsSuccess == false && ResultDTO.HandleError(deleteDatasetDatasetClassesResult))
+                    return ResultDTO.Fail(deleteDatasetDatasetClassesResult.ErrMsg!);
+            }
 
             // Delete Dataset
             ResultDTO deleteDatasetResult = await _datasetsRepository.Delete(getDatasetIncludeThenAllResult.Data, false);
@@ -1207,7 +1216,7 @@ namespace MainApp.BL.Services.DatasetServices
                         IsEnabled = false,
                         Name = Path.GetFileNameWithoutExtension(img.FileName),
                         FileName = datasetImageId.ToString() + Path.GetExtension(img.FileName),
-                        ImagePath = Path.Combine(Path.DirectorySeparatorChar.ToString(), datasetImgUploadRelDir, Path.DirectorySeparatorChar.ToString()),
+                        ImagePath = Path.Combine(Path.DirectorySeparatorChar.ToString(), datasetImgUploadRelDir),
                         ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetEntityId.ToString()),
                         CreatedById = userId,
                         CreatedOn = DateTime.UtcNow,
