@@ -2,8 +2,13 @@
   homepage: index.md
 - name: About
   href: about/intro.md
-- name: Development
-  href: development/intro.md
+- name: Documentation
+  href: documentation/
+- name: User Guides
+  href: guides/
+  items:
+    - name: Training Guide
+      href: guides/training-process/training-guide.md
 - name: Diagrams
   href: diagrams/intro.md
 

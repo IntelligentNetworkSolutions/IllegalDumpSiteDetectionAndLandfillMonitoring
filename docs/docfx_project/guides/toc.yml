@@ -1,0 +1,11 @@
+- name: User Guide
+  href: guides/
+  items:
+    - name: Dataset Management Overview
+      href: /dataset-management/dataset-management-guide.md
+    - name: Training Process Overview
+      href: /training-process/training-guide.md
+    - name: Detection Process Overview
+      href: /detection-process/detection-guide.md
+    - name: Landfill Management System Overview
+      href: /landfill-management/landfill-management-guide.md

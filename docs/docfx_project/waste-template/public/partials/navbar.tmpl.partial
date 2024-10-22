@@ -1,0 +1,77 @@
+{{!Copyright (c) Microsoft. All rights reserved. Licensed under the MIT license. See LICENSE file in the project root for full license information.}}
+
+<nav class="navbar">
+  <div class="container">
+    <a class="navbar-brand" href="{{_rel}}index.html">{{_appName}}</a>
+    
+    <ul class="navbar-nav">
+      <!-- Documentation Dropdown -->
+      <li class="nav-item dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="{{_rel}}documentation/training-process/overview.html">Training Process</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{{_rel}}documentation/training-process/entities.html">Entities</a></li>
+              <li><a class="dropdown-item" href="{{_rel}}documentation/training-process/services.html">Services</a></li>
+              <li><a class="dropdown-item" href="{{_rel}}documentation/training-process/controllers.html">Controllers</a></li>
+            </ul>
+          </li>
+          <li class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{{_rel}}documentation/detection-process/overview.html">Detection Process</a></li>
+          <li class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{{_rel}}documentation/dataset-management/overview.html">Dataset Management</a></li>
+          <li class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{{_rel}}documentation/landfill-management/overview.html">Landfill Management</a></li>
+        </ul>
+      </li>
+      
+      <!-- User Guide Dropdown -->
+      <li class="nav-item dropdown">
+        <a class="dropdown-toggle" data-toggle="dropdown">User Guide</a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="{{_rel}}guides/getting-started.html">Getting Started</a></li>
+          <li class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{{_rel}}guides/user-guide/overview.html">User Guide</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{{_rel}}guides/user-guide/creating-training-runs.html">Creating Training Runs</a></li>
+              <li><a class="dropdown-item" href="{{_rel}}guides/user-guide/managing-models.html">Managing Models</a></li>
+              <li><a class="dropdown-item" href="{{_rel}}guides/user-guide/troubleshooting.html">Troubleshooting</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Dropdown JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle dropdowns
+  document.querySelectorAll('.dropdown-toggle').forEach(function(element) {
+    element.addEventListener('click', function(e) {
+      e.preventDefault();
+      const parent = this.parentElement;
+      const menu = parent.querySelector('.dropdown-menu');
+      
+      // Close other dropdowns
+      document.querySelectorAll('.dropdown-menu.show').forEach(function(dropdown) {
+        if (dropdown !== menu) {
+          dropdown.classList.remove('show');
+        }
+      });
+      
+      menu.classList.toggle('show');
+    });
+  });
+  
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.matches('.dropdown-toggle')) {
+      document.querySelectorAll('.dropdown-menu.show').forEach(function(dropdown) {
+        dropdown.classList.remove('show');
+      });
+    }
+  });
+});
+</script>

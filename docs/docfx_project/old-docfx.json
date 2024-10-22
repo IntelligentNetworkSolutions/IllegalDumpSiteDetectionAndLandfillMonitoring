@@ -12,22 +12,13 @@
         "files": [
           "images/**",
           "**/images/**",
-          "**/*.{svg,png,jpg,jpeg}",
-          "styles/**"
+          "**/*.{svg,png,jpg,jpeg}"
         ]
       }
     ],
     "dest": "_site",
-    "globalMetadata": {
-      "_appTitle": "Illegal Dump Site Detection",
-      "_appFaviconPath": "waste-template/public/favicon.png",
-      "_enableSearch": true,
-      "_enableNewTab": true,
-      "_gitContribute": {
-        "repo": "https://github.com/YourOrg/YourRepo",
-        "branch": "master"
-      }
-    },
+    "globalMetadataFiles": [],
+    "fileMetadataFiles": [],
     "template": [
       "default",
       "waste-template/public"
