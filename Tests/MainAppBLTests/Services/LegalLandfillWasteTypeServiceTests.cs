@@ -68,6 +68,8 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Creation failed", result.ErrMsg);
         }
 
+        
+
         [Fact]
         public async Task EditLegalLandfillWasteType_ShouldUpdateWasteType()
         {
