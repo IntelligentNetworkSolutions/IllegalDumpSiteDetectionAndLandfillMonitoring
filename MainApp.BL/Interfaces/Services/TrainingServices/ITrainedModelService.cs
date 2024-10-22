@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DTOs.MainApp.BL.TrainingDTOs;
-using Entities.TrainingEntities;
+﻿using DTOs.MainApp.BL.TrainingDTOs;
 using SD;
 
 namespace MainApp.BL.Interfaces.Services.TrainingServices
@@ -16,8 +10,7 @@ namespace MainApp.BL.Interfaces.Services.TrainingServices
         Task<ResultDTO<List<TrainedModelDTO>>> GetAllTrainedModelsIncludingTrainRuns();
 
         Task<ResultDTO> DeleteTrainedModelById(Guid trainedModelId);
-        Task<ResultDTO<TrainedModel>> EditTrainedModelById(Guid trainedModelId);
-
+        Task<ResultDTO> EditTrainedModelById(Guid trainedModelId, string? name = null, bool? isPublished = null);
         Task<ResultDTO<TrainingRunResultsDTO>> GetBestEpochForTrainedModelById(Guid trainedModelId);
     }
 }
