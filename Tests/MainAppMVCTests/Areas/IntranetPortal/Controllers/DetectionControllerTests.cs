@@ -452,32 +452,49 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Image Input is null", result.ErrMsg);
         }
 
-        // TODO: Fails on Context null. should be refactored, then returned
-        //[Fact]
-        //public async Task GetDetectionInputImageById_ReturnsOkResult_WhenServiceReturnsSuccess()
-        //{
-        //    // Arrange
-        //    var detectionInputImageId = Guid.NewGuid();
-        //    var detectionInputImageDTO = new DetectionInputImageDTO { Id = detectionInputImageId, ImageFileName = "image.jpg" };
+        [Fact]
+        public async Task GetDetectionInputImageById_ReturnsOkResult_WhenServiceReturnsSuccess()
+        {
+            // Arrange
+            var detectionInputImageId = Guid.NewGuid();
+            var detectionInputImageDTO = new DetectionInputImageDTO
+            {
+                Id = detectionInputImageId,
+                ImageFileName = "image.jpg"
+            };
 
-        //    _mockDetectionRunService
-        //        .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
-        //        .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(detectionInputImageDTO));
+            _mockDetectionRunService
+                .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
+                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(detectionInputImageDTO));
 
-        //    var thumbnailsFolderPath = "Uploads\\DetectionUploads\\InputImageThumbnails";
-        //    _mockAppSettingsAccessor
-        //        .Setup(accessor => accessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", It.IsAny<string>()))
-        //        .ReturnsAsync(ResultDTO<string>.Ok(thumbnailsFolderPath));
+            var thumbnailsFolderPath = "Uploads\\DetectionUploads\\InputImageThumbnails";
+            _mockAppSettingsAccessor
+                .Setup(accessor => accessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok(thumbnailsFolderPath));
 
-        //    // Act
-        //    var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
+            var mockHttpContext = new Mock<HttpContext>();
+            var mockRequest = new Mock<HttpRequest>();
+            var mockUriHelper = new Mock<IUrlHelper>();
 
-        //    // Assert
-        //    Assert.True(result.IsSuccess);
-        //    Assert.Equal(detectionInputImageDTO.Id, result.Data.Id);
-        //    Assert.NotNull(result.Data.ThumbnailFilePath);
-        //    Assert.Contains("_thumbnail.jpg", result.Data.ThumbnailFilePath);
-        //}
+            mockRequest.Setup(x => x.Scheme).Returns("https");
+            mockRequest.Setup(x => x.Host).Returns(new HostString("localhost"));
+            mockRequest.Setup(x => x.PathBase).Returns(new PathString("/"));
+
+            mockHttpContext.Setup(x => x.Request).Returns(mockRequest.Object);
+            _controller.ControllerContext.HttpContext = mockHttpContext.Object;
+
+            // Act
+            var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.IsSuccess); 
+            Assert.NotNull(result.Data); 
+            Assert.Equal(detectionInputImageDTO.Id, result.Data.Id); 
+            Assert.NotNull(result.Data.ThumbnailFilePath); 
+            Assert.Contains("_thumbnail.jpg", result.Data.ThumbnailFilePath);  
+        }
+
 
         //[Fact]
         //public async Task EditDetectionImageInput_WithValidModel_ReturnsOkResult()
@@ -682,31 +699,42 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Service failure", result.ErrMsg);
         }
 
-        // TODO: Fails on Context null. should be refactored, then returned
-        //[Fact]
-        //public async Task GetSelectedDetectionInputImages_ReturnsOkResult_WhenImagesExist()
-        //{
-        //    // Arrange
-        //    var selectedImageIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        //    var images = new List<DetectionInputImageDTO>
-        //    {
-        //        new DetectionInputImageDTO { Id = selectedImageIds[0], ImagePath = "path1" },
-        //        new DetectionInputImageDTO { Id = selectedImageIds[1], ImagePath = "path2" }
-        //    };
-        //    var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Ok(images);
+        [Fact]
+        public async Task GetSelectedDetectionInputImages_ReturnsOkResult_WhenImagesExist()
+        {
+            // Arrange
+            var selectedImageIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+            var images = new List<DetectionInputImageDTO>
+            {
+                new DetectionInputImageDTO { Id = selectedImageIds[0], ImagePath = "path1" },
+                new DetectionInputImageDTO { Id = selectedImageIds[1], ImagePath = "path2" }
+            };
+            var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Ok(images);
 
-        //    _mockDetectionRunService.Setup(service => service.GetSelectedInputImagesById(selectedImageIds))
-        //        .ReturnsAsync(resultDto);
+            _mockDetectionRunService.Setup(service => service.GetSelectedInputImagesById(selectedImageIds))
+                .ReturnsAsync(resultDto);
 
-        //    // Act
-        //    var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
+            var mockHttpContext = new Mock<HttpContext>();
+            var mockRequest = new Mock<HttpRequest>();
 
-        //    // Assert
-        //    Assert.True(result.IsSuccess);
-        //    Assert.NotNull(result.Data);
-        //    Assert.Equal(images, result.Data);
-        //    Assert.All(result.Data, item => Assert.Contains("/", item.ImagePath)); 
-        //}
+            mockRequest.Setup(x => x.Scheme).Returns("https");
+            mockRequest.Setup(x => x.Host).Returns(new HostString("localhost"));
+            mockRequest.Setup(x => x.PathBase).Returns(new PathString("/"));
+
+            mockHttpContext.Setup(x => x.Request).Returns(mockRequest.Object);
+            _controller.ControllerContext.HttpContext = mockHttpContext.Object;
+
+            // Act
+            var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
+
+            // Assert
+            Assert.NotNull(result); 
+            Assert.True(result.IsSuccess); 
+            Assert.NotNull(result.Data); 
+            Assert.Equal(images, result.Data); 
+            Assert.All(result.Data, item => Assert.Contains("/", item.ImagePath));
+        }
+
 
         [Fact]
         public async Task GetSelectedDetectionInputImages_ReturnsFailResult_WhenImagesNotFound()
