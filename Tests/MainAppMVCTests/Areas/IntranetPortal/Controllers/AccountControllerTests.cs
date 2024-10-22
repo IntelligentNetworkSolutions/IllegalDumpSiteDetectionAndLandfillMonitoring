@@ -2,21 +2,18 @@
 using DTOs.MainApp.BL;
 using Entities;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
-using MainApp.MVC.ViewModels.IntranetPortal.Account;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Newtonsoft.Json;
 using SD;
 using Services.Interfaces.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -292,7 +289,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task Login_ReturnsViewWithModelErrorIfUsernameOrPasswordIsEmpty()
+        public async Task Login_ReturnsViewWithModelError_IfUsernameOrPasswordIsEmpty()
         {
             // Act
             var result = await _controller.Login("", "", false, null);
@@ -302,12 +299,263 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.False(viewResult.ViewData.ModelState.IsValid);
             Assert.True(viewResult.ViewData.ModelState.ContainsKey("msgError"));
         }
-               
+
+        [Fact]
+        public async Task Login_ReturnsViewWithModelError_IfUserIsNull()
+        {
+            // Arrange
+            var username = "nonexistentUser";
+            var password = "somePassword";
+            var remember = false;
+            string returnUrl = null;
+
+            var userManagerMock = MockUserManager<ApplicationUser>();
+            userManagerMock
+                .Setup(um => um.FindByNameAsync(It.IsAny<string>()))
+                .ReturnsAsync((ApplicationUser)null);
+            // Act
+            var result = await _controller.Login(username, password, remember, returnUrl);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.False(viewResult.ViewData.ModelState.IsValid);
+            Assert.True(viewResult.ViewData.ModelState.ContainsKey("msgError"));
+            Assert.Equal("Wrong username", viewResult.ViewData.ModelState["msgError"].Errors[0].ErrorMessage);
+        }
+
+        [Fact]
+        public async Task Login_ReturnsViewWithModelError_IfPasswordIsIncorrect()
+        {
+            // Arrange
+            var username = "existingUser";
+            var password = "wrongPassword";
+            var remember = false;
+            string returnUrl = null;
+
+            var userManagerMock = MockUserManager<ApplicationUser>();
+
+            var user = new ApplicationUser { UserName = username, Id = "testUserId" };
+
+            userManagerMock
+                .Setup(um => um.FindByNameAsync(username))
+                .ReturnsAsync(user);
+            userManagerMock
+                .Setup(um => um.CheckPasswordAsync(user, password))
+                .ReturnsAsync(false);
+
+            // Create the controller with the mocked UserManager
+            var controller = new AccountController(
+                userManagerMock.Object,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            );
+
+            // Act
+            var result = await controller.Login(username, password, remember, returnUrl);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.False(viewResult.ViewData.ModelState.IsValid);
+            Assert.True(viewResult.ViewData.ModelState.ContainsKey("msgError"));
+            Assert.Equal("Wrong password", viewResult.ViewData.ModelState["msgError"].Errors[0].ErrorMessage);
+        }
+
+        [Fact]
+        public async Task Login_ReturnsViewWithModelError_IfUserIsInactive()
+        {
+            // Arrange
+            var username = "inactiveUser";
+            var password = "somePassword";
+            var remember = false;
+            string returnUrl = null;
+
+            var userManagerMock = MockUserManager<ApplicationUser>();
+
+            var user = new ApplicationUser
+            {
+                UserName = username,
+                IsActive = false
+            };
+
+            userManagerMock
+                .Setup(um => um.FindByNameAsync(username))
+                .ReturnsAsync(user);
+            userManagerMock
+                .Setup(um => um.CheckPasswordAsync(user, It.IsAny<string>()))
+                .ReturnsAsync(true);
+
+            var controller = new AccountController(
+                userManagerMock.Object,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            );
+
+            // Act
+            var result = await controller.Login(username, password, remember, returnUrl);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.False(viewResult.ViewData.ModelState.IsValid);
+            Assert.True(viewResult.ViewData.ModelState.ContainsKey("msgError"));
+            Assert.Equal("Unable to log in because this user account is currently disabled!", viewResult.ViewData.ModelState["msgError"].Errors[0].ErrorMessage);
+        }
+
+        [Fact]
+        public async Task Login_RedirectsToHome_WhenLoginIsSuccessful()
+        {
+            // Arrange
+            var username = "validUser";
+            var password = "validPassword";
+            var remember = false;
+            string returnUrl = null;
+
+            // Create a mock UserManager
+            var userManagerMock = MockUserManager<ApplicationUser>();
+
+            // Simulate finding a user with the specified username
+            var user = new ApplicationUser
+            {
+                UserName = username,
+                IsActive = true, // Simulate an active user
+                Id = "testUserId",
+                FirstName = "FirstName",
+                LastName = "LastName",
+                Email = "test@test.com"
+            };
+
+            // Setup to return the user when FindByNameAsync is called with the correct username
+            userManagerMock
+                .Setup(um => um.FindByNameAsync(username))
+                .ReturnsAsync(user);
+
+            // Setup to return true for password check
+            userManagerMock
+                .Setup(um => um.CheckPasswordAsync(user, password))
+                .ReturnsAsync(true);
+
+            // Mock other dependencies if necessary
+            var userManagementServiceMock = new Mock<IUserManagementService>();
+
+            // Setup for GetUserClaims to return an empty list
+            userManagementServiceMock.Setup(s => s.GetUserClaims(user.Id))
+                .ReturnsAsync(new List<UserClaimDTO>());
+
+            // Mock for GetSuperAdminUserBySpecificClaim
+            var superAdmin = new UserDTO { UserName = "superadmin" }; // Mock a super admin user
+            userManagementServiceMock.Setup(s => s.GetSuperAdminUserBySpecificClaim())
+                .ReturnsAsync(superAdmin);
+
+            // Mock the HttpContext and SignInAsync method
+            var claimsIdentity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, user.UserName) }, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties();
+
+            var httpContextMock = new Mock<HttpContext>();
+            var authenticationServiceMock = new Mock<IAuthenticationService>();
+
+            // Setup the HttpContext.SignInAsync method
+            authenticationServiceMock
+                .Setup(s => s.SignInAsync(
+                    httpContextMock.Object,
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    It.IsAny<ClaimsPrincipal>(),
+                    It.IsAny<AuthenticationProperties>()))
+                .Returns(Task.CompletedTask); // Mimic the sign-in process
+
+            httpContextMock
+                .Setup(c => c.RequestServices.GetService(typeof(IAuthenticationService)))
+                .Returns(authenticationServiceMock.Object);
+
+            // Mock IUrlHelper and set it up
+            var urlHelperMock = new Mock<IUrlHelper>();
+            urlHelperMock.Setup(u => u.Action(It.IsAny<UrlActionContext>()))
+                .Returns("http://localhost/Home/Index");
+
+            // Create the controller with the mocked HttpContext and UrlHelper
+            var controllerContext = new ControllerContext
+            {
+                HttpContext = httpContextMock.Object
+            };
+
+            var controller = new AccountController(
+                userManagerMock.Object,
+                null, // Mock other dependencies as necessary
+                null,
+                null,
+                null,
+                userManagementServiceMock.Object,
+                null
+            )
+            {
+                ControllerContext = controllerContext,
+                Url = urlHelperMock.Object // Set the mock UrlHelper
+            };
+
+            // Act
+            var result = await controller.Login(username, password, remember, returnUrl);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectResult.ActionName); // Check that it redirects to the Index action
+            Assert.Equal("Home", redirectResult.ControllerName); // Check that it redirects to the Home controller
+            Assert.Equal("Common", redirectResult.RouteValues["area"]); // Check the area value if applicable
+        }
+
+
+        [Fact]
+        public void GetUserIdentityClaims_ReturnsEmptyList_WhenUserIsNull()
+        {
+            // Act
+            var result = _controller.GetUserIdentityClaims(null);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Empty(result); // Ensure the result is an empty list
+        }
+        [Fact]
+        public void GetUserIdentityClaims_ReturnsCorrectClaims_WhenUserIsValid()
+        {
+            // Arrange
+            var user = new ApplicationUser
+            {
+                Email = "test@example.com",
+                FirstName = "TestFirstName",
+                LastName = "TestLastName",
+                UserName = "TestUsername",
+                Id = "123"
+            };
+
+            // Act
+            var result = _controller.GetUserIdentityClaims(user);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(5, result.Count); // Ensure 5 claims are returned
+
+            Assert.Contains(result, c => c.Type == ClaimTypes.Name && c.Value == user.Email);
+            Assert.Contains(result, c => c.Type == "FirsName" && c.Value == user.FirstName);
+            Assert.Contains(result, c => c.Type == "Username" && c.Value == user.UserName);
+            Assert.Contains(result, c => c.Type == "UserId" && c.Value == user.Id);
+            Assert.Contains(result, c => c.Type == "LastName" && c.Value == user.LastName);
+        }
+
+
+
+
         private static Mock<UserManager<TUser>> MockUserManager<TUser>() where TUser : class
         {
             var store = new Mock<IUserStore<TUser>>();
             var mgr = new Mock<UserManager<TUser>>(store.Object, null, null, null, null, null, null, null, null);
             return mgr;
         }
+
+
     }
 }
