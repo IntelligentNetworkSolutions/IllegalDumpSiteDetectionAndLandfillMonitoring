@@ -69,7 +69,7 @@ namespace MainApp.BL.Services.TrainingServices
         {
             try
             {
-                ResultDTO<IEnumerable<TrainingRun>>? resultGetEntities =  await _trainingRunsRepository.GetAll(includeProperties: "CreatedBy,TrainedModel");
+                ResultDTO<IEnumerable<TrainingRun>>? resultGetEntities = await _trainingRunsRepository.GetAll(includeProperties: "CreatedBy,TrainedModel");
 
                 if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
                     return ResultDTO<List<TrainingRunDTO>>.Fail(resultGetEntities.ErrMsg!);
@@ -121,7 +121,7 @@ namespace MainApp.BL.Services.TrainingServices
                 TrainingRunDTO? outputTrainingRunDTO = _mapper.Map<TrainingRunDTO>(createTrainingRunResult.Data);
                 if (outputTrainingRunDTO == null)
                     return ResultDTO<TrainingRunDTO>.Fail("Mapping failed");
-                
+
                 outputTrainingRunDTO.BaseModel = trainedModelDTO;
 
                 return ResultDTO<TrainingRunDTO>.Ok(outputTrainingRunDTO);
@@ -187,8 +187,8 @@ namespace MainApp.BL.Services.TrainingServices
                 return ResultDTO<Guid>.ExceptionFail(ex.Message, ex);
             }
         }
-        
-        public async Task<ResultDTO> UpdateTrainingRunEntity(Guid trainingRunId, Guid? trainedModelId = null, string? status = null, bool? isCompleted = null)
+
+        public async Task<ResultDTO> UpdateTrainingRunEntity(Guid trainingRunId, Guid? trainedModelId = null, string? status = null, bool? isCompleted = null, string? name = null)
         {
             try
             {
@@ -211,6 +211,10 @@ namespace MainApp.BL.Services.TrainingServices
                 {
                     resultGetEntity.Data.IsCompleted = true;
                 }
+                if (name != null)
+                {
+                    resultGetEntity.Data.Name = name;
+                }
 
                 ResultDTO updateRunResult = await _trainingRunsRepository.Update(resultGetEntity.Data);
                 if (updateRunResult.IsSuccess == false && updateRunResult.HandleError())
@@ -223,7 +227,7 @@ namespace MainApp.BL.Services.TrainingServices
                 _logger.LogError(ex.Message, ex);
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
-                        
+
         }
 
         private string GeneratePythonTrainingCommandByRunId(Guid trainingRunId)
@@ -313,7 +317,7 @@ namespace MainApp.BL.Services.TrainingServices
                 return ResultDTO<string>.Fail("TrainingRunStartParams must have a Training Run Id");
 
             Dataset? dataset = _mapper.Map<Dataset>(datasetDTO);
-            if(dataset == null)
+            if (dataset == null)
                 return ResultDTO<string>.Fail("Mapping failed");
 
             TrainedModel? baseTrainedModel = _mapper.Map<TrainedModel>(baseTrainedModelDTO);
@@ -460,7 +464,7 @@ namespace MainApp.BL.Services.TrainingServices
                 return ResultDTO<TrainingRunResultsDTO>.ExceptionFail(ex.Message, ex);
             }
         }
-       
+
         // TODO: Implement, maybe one retry Clean up files regardless of outcome, someday
         public async Task<ResultDTO> CleanUpTrainingRunFiles()
         {
@@ -479,7 +483,7 @@ namespace MainApp.BL.Services.TrainingServices
             try
             {
                 //get training run entity
-                ResultDTO<TrainingRun?> resultGetEntity = await _trainingRunsRepository.GetById(trainingRunId, includeProperties:"TrainedModel");
+                ResultDTO<TrainingRun?> resultGetEntity = await _trainingRunsRepository.GetById(trainingRunId, includeProperties: "TrainedModel");
                 if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
                     return ResultDTO.Fail(resultGetEntity.ErrMsg!);
 

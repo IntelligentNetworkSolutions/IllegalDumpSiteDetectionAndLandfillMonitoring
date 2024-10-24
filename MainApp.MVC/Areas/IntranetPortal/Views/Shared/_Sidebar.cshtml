@@ -87,6 +87,28 @@
                                 </a>
                             </li>                           
                         </ul>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-action="Index" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
+                                   title="@DbResHtml.T("View Training Runs", "Resources")">
+                                    <i class="fas fa-tasks"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("View Training Runs", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-action="Index" asp-controller="TrainedModels" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
+                                   title="@DbResHtml.T("View Trained Models", "Resources")">
+                                    <i class="fas fa-database"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("View Trained Models", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 }
                 @if (User.HasAuthClaim(SD.AuthClaims.ManageDetectionRuns))

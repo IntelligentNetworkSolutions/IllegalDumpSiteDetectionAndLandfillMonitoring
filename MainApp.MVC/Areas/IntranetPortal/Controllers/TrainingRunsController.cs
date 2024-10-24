@@ -1,28 +1,18 @@
 ﻿using AutoMapper;
-using DAL.Helpers;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
-using DTOs.ObjectDetection.API;
-using Entities.DetectionEntities;
-using Entities.TrainingEntities;
 using Hangfire;
 using Hangfire.States;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
 using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Interfaces.Services.DatasetServices;
-using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
-using MainApp.BL.Services.DetectionServices;
-using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Filters;
-using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using MainApp.MVC.ViewModels.IntranetPortal.Training;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
 using SD;
 using SD.Enums;
 using Services.Interfaces.Services;
@@ -34,37 +24,102 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     [Area("IntranetPortal")]
     public class TrainingRunsController : Controller
     {
-        private readonly ITrainingRunService _trainingRunService;     
+        private readonly ITrainingRunService _trainingRunService;
         private readonly IWebHostEnvironment _webHostEnvironment;
-        private readonly IUserManagementService _userManagementService;     
+        private readonly IUserManagementService _userManagementService;
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IDatasetService _datasetService;
         protected readonly IMMDetectionConfigurationService _MMDetectionConfiguration;
-        
+        private readonly IConfiguration _configuration;
+        private readonly IMapper _mapper;
 
-        public TrainingRunsController(ITrainingRunService trainingRunService, 
-                                      IWebHostEnvironment webHostEnvironment, 
-                                      IUserManagementService userManagementService, 
+
+        public TrainingRunsController(ITrainingRunService trainingRunService,
+                                      IWebHostEnvironment webHostEnvironment,
+                                      IUserManagementService userManagementService,
                                       IBackgroundJobClient backgroundJobClient,
                                       IAppSettingsAccessor appSettingsAccessor,
                                       IDatasetService datasetService,
-                                      IMMDetectionConfigurationService MMDetectionConfiguration)
+                                      IMMDetectionConfigurationService MMDetectionConfiguration,
+                                      IConfiguration configuration,
+                                      IMapper mapper)
         {
-            _trainingRunService = trainingRunService;      
+            _trainingRunService = trainingRunService;
             _webHostEnvironment = webHostEnvironment;
             _userManagementService = userManagementService;
             _backgroundJobClient = backgroundJobClient;
             _appSettingsAccessor = appSettingsAccessor;
             _datasetService = datasetService;
             _MMDetectionConfiguration = MMDetectionConfiguration;
+            _configuration = configuration;
+            _mapper = mapper;
+        }
+
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
+        public async Task<IActionResult> Index()
+        {
+            var resultDtoList = await _trainingRunService.GetAllTrainingRuns();
+            if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error"];
+                if (errorPath == null)
+                {
+                    return BadRequest();
+                }
+                return Redirect(errorPath);
+            }
+            if (resultDtoList.Data == null)
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error404"];
+                if (errorPath == null)
+                {
+                    return NotFound();
+                }
+                return Redirect(errorPath);
+            }
+
+            var vmList = _mapper.Map<List<TrainingRunIndexViewModel>>(resultDtoList.Data);
+            if (vmList == null)
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error404"];
+                if (errorPath == null)
+                {
+                    return NotFound();
+                }
+                return Redirect(errorPath);
+            }
+
+            return View(vmList);
         }
 
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.CreateTrainingRun))]
         public async Task<IActionResult> CreateTrainingRun()
-        {           
+        {
             return View();
+        }
+
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.EditTrainingRun))]
+        public async Task<ResultDTO> EditTrainingRun(TrainingRunIndexViewModel trainingRunIndexViewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return ResultDTO.Fail(error);
+            }
+
+            ResultDTO resultEdit = await _trainingRunService.UpdateTrainingRunEntity(trainingRunIndexViewModel.Id, isCompleted: trainingRunIndexViewModel.IsCompleted, name: trainingRunIndexViewModel.Name);
+
+            if (!resultEdit.IsSuccess && resultEdit.HandleError())
+            {
+                return ResultDTO.Fail(resultEdit.ErrMsg!);
+            }
+
+            return ResultDTO.Ok();
+
         }
 
         [HttpPost]
@@ -75,7 +130,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
                 return ResultDTO.Fail(error);
-            }            
+            }
 
             string? userId = User.FindFirstValue("UserId");
             if (userId is null)
@@ -84,7 +139,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             UserDTO? currUserDTO = await _userManagementService.GetUserById(userId);
             if (currUserDTO is null)
                 return ResultDTO.Fail("User not found");
-                       
+
             TrainingRunDTO trainingRunDTO = new()
             {
                 Id = Guid.NewGuid(),
@@ -106,7 +161,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 connection.SetJobParameter(jobId, "trainingRunId", trainingRunDTO.Id.Value.ToString());
             }
-                            
+
             return ResultDTO.Ok();
         }
 
@@ -144,7 +199,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(trainingRunDTO.Id.Value, exportDatasetResult.ErrMsg!);
                     return ResultDTO.Fail(resHandleErrorProcess.Data!);
                 }
-                    
+
                 // Generate Training Config
                 ResultDTO<string> generateTrainRunConfigResult = await _trainingRunService.GenerateTrainingRunConfigFile(trainingRunDTO.Id.Value, resultDatasetIncludeThenAll.Data!, trainingRunDTO.BaseModel!, numEpochs, numFrozenStages, numBatchSize);
                 if (generateTrainRunConfigResult.IsSuccess == false && generateTrainRunConfigResult.HandleError())
@@ -174,7 +229,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
-            {               
+            {
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
             finally
@@ -187,7 +242,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
         public async Task<ResultDTO<string>> GetTrainingRunErrorLogMessage(Guid trainingRunId)
         {
-            if(trainingRunId == Guid.Empty)
+            if (trainingRunId == Guid.Empty)
             {
                 return ResultDTO<string>.Fail("Invalid training run id");
             }
@@ -351,7 +406,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO.Fail("Invalid training run id");
 
             ResultDTO? resultPublisheTrainedModel = await _trainingRunService.PublishTrainingRunTrainedModel(trainingRunId);
-            if(resultPublisheTrainedModel.IsSuccess == false && resultPublisheTrainedModel.HandleError())
+            if (resultPublisheTrainedModel.IsSuccess == false && resultPublisheTrainedModel.HandleError())
                 return ResultDTO.Fail(resultPublisheTrainedModel.ErrMsg!);
 
             return ResultDTO.Ok();
@@ -422,7 +477,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             IMonitoringApi monitoringApi = JobStorage.Current.GetMonitoringApi();
             JobList<ProcessingJobDto> processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
 
-            foreach (KeyValuePair<string,ProcessingJobDto> job in processingJobs)
+            foreach (KeyValuePair<string, ProcessingJobDto> job in processingJobs)
             {
                 using (IStorageConnection connection = JobStorage.Current.GetConnection())
                 {
@@ -454,5 +509,5 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
     }
 
-   
+
 }

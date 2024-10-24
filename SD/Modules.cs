@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SD.Helpers;
 using System.Collections.ObjectModel;
-using System.Data.SqlTypes;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using SD.Helpers;
 
 namespace SD
 {
@@ -78,7 +72,7 @@ namespace SD
         public static readonly Module MapToolDetectionInputImages = new Module { Value = "MapToolDetectionInputImages", Title = "Map Tool Detection Input Images", Description = "Map Tool Detection Input Images" };
         public static readonly Module ScheduleDetectionAndTrainingRuns = new Module { Value = "ScheduleDetectionAndTrainingRuns", Title = "Schedule Detection And Training Runs", Description = "Schedule Detection And Training Runs" };
         public static readonly Module Training = new Module { Value = "Training", Title = "Training", Description = "Training" };
-        
+
 
 
     }

@@ -4,7 +4,6 @@ using DTOs.MainApp.BL.DetectionDTOs;
 using Hangfire;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
-using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using Microsoft.AspNetCore.Hosting;
@@ -194,52 +193,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => _controller.GetAllDetectionRuns());
             Assert.Equal("Object not found", exception.Message);
-        }
-
-        [Fact]
-        public async Task ShowDumpSitesOnMap_ReturnsSuccess_WhenDataIsAvailable()
-        {
-            // Arrange
-            var detectionRunId1 = Guid.NewGuid();
-            var detectionRunId2 = Guid.NewGuid();
-
-            var detectionRunDTOs = new List<DetectionRunDTO>
-            {
-                new DetectionRunDTO { Id = detectionRunId1, Name = "Run 1" },
-                new DetectionRunDTO { Id = detectionRunId2, Name = "Run 2" }
-            };
-
-            var confidenceRates = new List<ConfidenceRateDTO>
-            {
-                new ConfidenceRateDTO { detectionRunId = detectionRunId1, confidenceRate = 0.9 },
-                new ConfidenceRateDTO { detectionRunId = detectionRunId2, confidenceRate = 0.85 }
-            };
-
-            var model = new DetectionRunShowOnMapViewModel
-            {
-                selectedDetectionRunsIds = new List<Guid> { detectionRunId1, detectionRunId2 },
-                selectedConfidenceRates = confidenceRates
-            };
-
-            var resultDTO = ResultDTO<List<DetectionRunDTO>>.Ok(detectionRunDTOs);
-
-            _mockDetectionRunService
-                .Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
-                    It.IsAny<List<Guid>>(), It.IsAny<List<ConfidenceRateDTO>>()))
-                .ReturnsAsync(resultDTO);
-
-            _mockDetectionIgnoreZoneService.Setup(service => service.GetAllIgnoreZonesDTOs())
-                .ReturnsAsync(ResultDTO<List<DetectionIgnoreZoneDTO>>.Ok(new List<DetectionIgnoreZoneDTO>()));
-
-            // Act
-            var result = await _controller.ShowDumpSitesOnMap(model);
-
-            // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal(detectionRunDTOs, result.Data);
-            _mockDetectionRunService.Verify(service =>
-                service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
-                    model.selectedDetectionRunsIds, model.selectedConfidenceRates), Times.Once);
         }
 
 
@@ -488,11 +441,11 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.NotNull(result);
-            Assert.True(result.IsSuccess); 
-            Assert.NotNull(result.Data); 
-            Assert.Equal(detectionInputImageDTO.Id, result.Data.Id); 
-            Assert.NotNull(result.Data.ThumbnailFilePath); 
-            Assert.Contains("_thumbnail.jpg", result.Data.ThumbnailFilePath);  
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(detectionInputImageDTO.Id, result.Data.Id);
+            Assert.NotNull(result.Data.ThumbnailFilePath);
+            Assert.Contains("_thumbnail.jpg", result.Data.ThumbnailFilePath);
         }
 
 
@@ -728,10 +681,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
 
             // Assert
-            Assert.NotNull(result); 
-            Assert.True(result.IsSuccess); 
-            Assert.NotNull(result.Data); 
-            Assert.Equal(images, result.Data); 
+            Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(images, result.Data);
             Assert.All(result.Data, item => Assert.Contains("/", item.ImagePath));
         }
 

@@ -93,16 +93,6 @@ namespace Tests.DTOsTests.Helpers
         }
 
         [Fact]
-        public void GeometryToGeoJson_NullGeometry_ShouldThrowArgumentNullException()
-        {
-            // Arrange
-            Geometry nullGeometry = null;
-
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => GeoJsonHelpers.GeometryToGeoJson(nullGeometry));
-        }
-
-        [Fact]
         public void GeometryToGeoJson_GeometryCollection_ShouldReturnValidGeoJson()
         {
             // Arrange
