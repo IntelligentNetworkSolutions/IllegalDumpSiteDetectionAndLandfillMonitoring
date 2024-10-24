@@ -2,7 +2,6 @@
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.MainApp.BL.TrainingDTOs;
 using ImageMagick;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.MVC.Filters;
@@ -77,7 +76,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         }
 
-        
+
         [HttpPost]
         public async Task<IActionResult> GetParentAndChildrenDatasets(Guid currentDatasetId)
         {
@@ -188,6 +187,23 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.EditDatasetImage))]
+        public async Task<IActionResult> EnableAllImages(Guid datasetId)
+        {
+            if (datasetId == Guid.Empty)
+            {
+                return NotFound();
+            }
+
+            ResultDTO updateDataset = await _datasetService.EnableAllImagesInDataset(datasetId);
+
+            if (updateDataset.IsSuccess == false && updateDataset.HandleError())
+                return Json(new { responseError = DbResHtml.T("An error occured while enabeling images.", "Resources") });
+
+            return Json(new { responseSuccess = DbResHtml.T("All dataset images have been enabled", "Resources") });
+
+        }
 
 
 
@@ -453,7 +469,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return Json(new { responseError = DbResHtml.T("Choosed option was not saved", "Resources") });
         }
         #endregion
-        
+
         private string ProcessZipFile(string zipFilePath, string webRootPath)
         {
             //coco dataset
@@ -583,7 +599,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                 foreach (var datasetImage in datasetImages)
                 {
-                    string imageFilePath = 
+                    string imageFilePath =
                         Path.Combine(_webHostEnvironment.WebRootPath, datasetImage.ImagePath.TrimStart(Path.DirectorySeparatorChar), datasetImage.FileName);
 
                     string thumbnailFileName = string.Format("{0}.jpg", datasetImage.Id);
@@ -665,7 +681,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                             image.Write(thumbnailFilePath);
                         }
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         stringBuilder.AppendLine($"Thumbnails Generation failed for Image at path: {imageFilePath}");
                         stringBuilder.AppendLine(ex.Message);

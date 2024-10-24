@@ -170,6 +170,11 @@
                         <span>@DbResHtml.T("Add new dataset image", "Resources")</span>
                         <i class="fas fa-image ml-1"></i>
                     </button>
+                        <button type="button" class="btn btn-success btn-block mb-3 sticky-top" onclick="enableAllImagesConfirmed('@Model.CurrentDataset.Id')">
+                            <span>@DbResHtml.T("Enable all dataset images", "Resources")</span>
+                            <i class="fas fa-image ml-1"></i>
+                        </button>
+
                     }
                 }
                 <!-- General Statistics -->
@@ -1172,6 +1177,40 @@
         updateImageStatusLabels();
         });
 
+        function enableAllImagesConfirmed(datasetId) {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("EnableAllImages", "Datasets", new { area = "IntranetPortal" })', 
+                data: {
+                    datasetId: datasetId
+                },
+                success: function (data) {
+                    if (data.responseError) {
+                        Swal.fire({
+                            text: data.responseError.value,
+                            icon: "error"
+                        });
+                    } else {
+                        Swal.fire({
+                            text: data.responseSuccess.value,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: "An error occurred",
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+
     </script>
 }
 
@@ -1345,6 +1384,7 @@
             </div>
         </div>
     </div>
+
 
     @foreach (var item in Model.ListOfDatasetImages)
     {
