@@ -1,9 +1,12 @@
 ﻿using DAL.Interfaces.Helpers;
+using DAL.Interfaces.Repositories;
 using DTOs.MainApp.BL;
 using Entities;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
+using MainApp.MVC.ViewModels.IntranetPortal.Account;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using Newtonsoft.Json;
 using SD;
+using Services.Interfaces;
 using Services.Interfaces.Services;
 using System.Security.Claims;
 
@@ -19,25 +23,40 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
     public class AccountControllerTests
     {
-        private readonly Mock<IUserManagementService> _userManagementServiceMock;
-        private readonly Mock<IConfiguration> _configurationMock;
+        private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
+        private readonly Mock<IIntranetPortalUsersTokenDa> _intranetPortalUsersTokenDaMock;
+        private readonly Mock<IForgotResetPasswordService> _forgotResetPasswordServiceMock;
         private readonly Mock<IAppSettingsAccessor> _appSettingsAccessorMock;
+        private readonly Mock<IConfiguration> _configurationMock;
+        private readonly Mock<IWebHostEnvironment> _webHostEnvironmentMock;
+        private readonly Mock<IUserManagementService> _userManagementServiceMock;
         private readonly AccountController _controller;
 
         public AccountControllerTests()
         {
-            var userManagerMock = MockUserManager<ApplicationUser>();
-            _userManagementServiceMock = new Mock<IUserManagementService>();
-            _configurationMock = new Mock<IConfiguration>();
+            _userManagerMock = MockUserManager<ApplicationUser>();
+            _intranetPortalUsersTokenDaMock = new Mock<IIntranetPortalUsersTokenDa>();
+            _forgotResetPasswordServiceMock = new Mock<IForgotResetPasswordService>();
             _appSettingsAccessorMock = new Mock<IAppSettingsAccessor>();
+            _configurationMock = new Mock<IConfiguration>();
+            _webHostEnvironmentMock = new Mock<IWebHostEnvironment>();
+            _userManagementServiceMock = new Mock<IUserManagementService>();
 
             var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
             {
-                new Claim("UserId", "test-user-id")
+            new Claim("UserId", "test-user-id")
             }, "mock"));
 
             var httpContext = new DefaultHttpContext() { User = user };
-            _controller = new AccountController(userManagerMock.Object, null, null, _configurationMock.Object, null, _userManagementServiceMock.Object, _appSettingsAccessorMock.Object)
+
+            _controller = new AccountController(
+                _userManagerMock.Object,
+                _intranetPortalUsersTokenDaMock.Object,
+                _forgotResetPasswordServiceMock.Object,
+                _configurationMock.Object,
+                _webHostEnvironmentMock.Object,
+                _userManagementServiceMock.Object,
+                _appSettingsAccessorMock.Object)
             {
                 ControllerContext = new ControllerContext
                 {
@@ -273,6 +292,76 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
+        public async Task MyProfile_ReturnsView_WithCorrectModel_WhenUserIdIsValid()
+        {
+            // Arrange
+            var userId = "validUserId";
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("UserId", userId) }));
+            _controller.ControllerContext.HttpContext.User = user;
+
+            var appUser = new UserDTO
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                Email = "john.doe@example.com",
+                UserName = "johndoe",
+                Id = userId
+            };
+
+            _userManagementServiceMock.Setup(um => um.GetUserById(userId)).ReturnsAsync(appUser);
+            _userManagementServiceMock.Setup(um => um.GetPreferredLanguageForUser(userId)).ReturnsAsync("English");
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+                                   .ReturnsAsync(ResultDTO<int>.Ok(8));
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+
+            // Act
+            var result = await _controller.MyProfile();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<MyProfileViewModel>(viewResult.Model);
+            Assert.Equal(appUser.FirstName, model.FirstName);
+            Assert.Equal(appUser.LastName, model.LastName);
+            Assert.Equal(appUser.Email, model.Email);
+            Assert.Equal(appUser.UserName, model.Username);
+            Assert.Equal(appUser.Id, model.UserId);
+            Assert.Equal(8, model.PasswordMinLength);
+            Assert.True(model.PasswordMustHaveLetters);
+            Assert.True(model.PasswordMustHaveNumbers);
+            Assert.Equal("English", model.PreferredLanguage);
+        }
+
+        //check this later
+        [Fact]
+        public async Task MyProfile_ThrowsException_WhenUserManagementServiceReturnsNull()
+        {
+            // Arrange
+            var userId = "validUserId";
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("UserId", userId) }));
+            _controller.ControllerContext.HttpContext.User = user;
+
+            // Set up the application settings accessor to return valid values
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+                       .ReturnsAsync(ResultDTO<int>.Ok(8));
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+
+            // Mock the user management service to throw an exception
+            _userManagementServiceMock.Setup(um => um.GetUserById(userId)).ThrowsAsync(new Exception("User not found"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.MyProfile());
+        }
+
+
+
+
+        [Fact]
         public async Task Login_ReturnsViewIfNotAuthenticated()
         {
             // Arrange
@@ -343,7 +432,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .Setup(um => um.CheckPasswordAsync(user, password))
                 .ReturnsAsync(false);
 
-            // Create the controller with the mocked UserManager
             var controller = new AccountController(
                 userManagerMock.Object,
                 null,
@@ -417,68 +505,57 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var remember = false;
             string returnUrl = null;
 
-            // Create a mock UserManager
             var userManagerMock = MockUserManager<ApplicationUser>();
 
-            // Simulate finding a user with the specified username
             var user = new ApplicationUser
             {
                 UserName = username,
-                IsActive = true, // Simulate an active user
+                IsActive = true,
                 Id = "testUserId",
                 FirstName = "FirstName",
                 LastName = "LastName",
                 Email = "test@test.com"
             };
 
-            // Setup to return the user when FindByNameAsync is called with the correct username
             userManagerMock
                 .Setup(um => um.FindByNameAsync(username))
                 .ReturnsAsync(user);
 
-            // Setup to return true for password check
             userManagerMock
                 .Setup(um => um.CheckPasswordAsync(user, password))
                 .ReturnsAsync(true);
 
-            // Mock other dependencies if necessary
             var userManagementServiceMock = new Mock<IUserManagementService>();
 
-            // Setup for GetUserClaims to return an empty list
             userManagementServiceMock.Setup(s => s.GetUserClaims(user.Id))
                 .ReturnsAsync(new List<UserClaimDTO>());
 
-            // Mock for GetSuperAdminUserBySpecificClaim
-            var superAdmin = new UserDTO { UserName = "superadmin" }; // Mock a super admin user
+            var superAdmin = new UserDTO { UserName = "superadmin" };
             userManagementServiceMock.Setup(s => s.GetSuperAdminUserBySpecificClaim())
                 .ReturnsAsync(superAdmin);
 
-            // Mock the HttpContext and SignInAsync method
             var claimsIdentity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, user.UserName) }, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties();
 
             var httpContextMock = new Mock<HttpContext>();
             var authenticationServiceMock = new Mock<IAuthenticationService>();
 
-            // Setup the HttpContext.SignInAsync method
             authenticationServiceMock
                 .Setup(s => s.SignInAsync(
                     httpContextMock.Object,
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     It.IsAny<ClaimsPrincipal>(),
                     It.IsAny<AuthenticationProperties>()))
-                .Returns(Task.CompletedTask); // Mimic the sign-in process
+                .Returns(Task.CompletedTask);
 
             httpContextMock
                 .Setup(c => c.RequestServices.GetService(typeof(IAuthenticationService)))
                 .Returns(authenticationServiceMock.Object);
 
-            // Mock IUrlHelper and set it up
             var urlHelperMock = new Mock<IUrlHelper>();
             urlHelperMock.Setup(u => u.Action(It.IsAny<UrlActionContext>()))
                 .Returns("http://localhost/Home/Index");
 
-            // Create the controller with the mocked HttpContext and UrlHelper
             var controllerContext = new ControllerContext
             {
                 HttpContext = httpContextMock.Object
@@ -486,7 +563,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             var controller = new AccountController(
                 userManagerMock.Object,
-                null, // Mock other dependencies as necessary
+                null,
                 null,
                 null,
                 null,
@@ -495,7 +572,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             )
             {
                 ControllerContext = controllerContext,
-                Url = urlHelperMock.Object // Set the mock UrlHelper
+                Url = urlHelperMock.Object
             };
 
             // Act
@@ -503,9 +580,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName); // Check that it redirects to the Index action
-            Assert.Equal("Home", redirectResult.ControllerName); // Check that it redirects to the Home controller
-            Assert.Equal("Common", redirectResult.RouteValues["area"]); // Check the area value if applicable
+            Assert.Equal("Index", redirectResult.ActionName);
+            Assert.Equal("Home", redirectResult.ControllerName);
+            Assert.Equal("Common", redirectResult.RouteValues["area"]);
         }
 
 
@@ -517,7 +594,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.NotNull(result);
-            Assert.Empty(result); // Ensure the result is an empty list
+            Assert.Empty(result);
         }
         [Fact]
         public void GetUserIdentityClaims_ReturnsCorrectClaims_WhenUserIsValid()
@@ -537,7 +614,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(5, result.Count); // Ensure 5 claims are returned
+            Assert.Equal(5, result.Count);
 
             Assert.Contains(result, c => c.Type == ClaimTypes.Name && c.Value == user.Email);
             Assert.Contains(result, c => c.Type == "FirsName" && c.Value == user.FirstName);
@@ -546,6 +623,220 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Contains(result, c => c.Type == "LastName" && c.Value == user.LastName);
         }
 
+
+        //[Fact]
+        //public async Task ForgotPassword_UserFoundByEmail_EmailSent_ReturnsResetPasswordConfirmationView()
+        //{
+        //    // Arrange
+        //    var model = new IntranetUsersForgotPasswordViewModel { UsernameOrEmail = "validUser@test.com" };
+
+        //    var user = new ApplicationUser
+        //    {
+        //        Email = "validUser@test.com",
+        //        UserName = "validUser",
+        //        Id = "userId123"
+        //    };
+
+        //    var token = Guid.NewGuid().ToString();
+        //    var domain = "example.com";
+        //    var webRootPath = "wwwroot";
+        //    var url = $"https://{domain}/IntranetPortal/Account/ResetPassword?userId={user.Id}&token={token}";
+
+        //    var userManagerMock = MockUserManager<ApplicationUser>();
+
+        //    userManagerMock
+        //        .Setup(um => um.FindByEmailAsync(model.UsernameOrEmail))
+        //        .ReturnsAsync(user);
+
+
+        //    // Mock the token creation
+        //    _intranetPortalUsersTokenDaMock
+        //        .Setup(da => da.CreateIntranetPortalUserToken(token, user.Id))
+        //        .ReturnsAsync(1);
+
+        //    // Mock sending the email
+        //    _forgotResetPasswordServiceMock
+        //        .Setup(s => s.SendPasswordResetEmail(user.Email, user.UserName, url, webRootPath))
+        //        .ReturnsAsync(true);
+
+        //    // Mock the configuration settings
+        //    _configurationMock
+        //        .Setup(c => c["DomainSettings:MainDomain"])
+        //        .Returns(domain);
+
+        //    _webHostEnvironmentMock
+        //        .Setup(he => he.WebRootPath)
+        //        .Returns(webRootPath);
+
+
+        //    // Act
+        //    var result = await _controller.ForgotPassword(model);
+
+        //    // Assert
+        //    var viewResult = Assert.IsType<ViewResult>(result);
+        //    Assert.Equal("ResetPasswordConfirmation", viewResult.ViewName);
+        //}
+
+        [Fact]
+        public async Task ResetPassword_TokenIsNotUsed_ReturnsViewWithModel()
+        {
+            // Arrange
+            var userId = "testUserId";
+            var token = "validToken";
+            var mockTokenCheck = true;
+            _intranetPortalUsersTokenDaMock.Setup(x => x.IsTokenNotUsed(token, userId)).ReturnsAsync(mockTokenCheck);
+            _configurationMock.Setup(c => c["ErrorViewsPath:Error403"]).Returns("");
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+                       .ReturnsAsync(ResultDTO<int>.Ok(10));
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+
+
+            // Act
+            var result = await _controller.ResetPassword(userId, token);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<IntranetUsersResetPasswordViewModel>(viewResult.Model);
+            Assert.Equal(userId, model.UserId);
+            Assert.Equal(token, model.Token);
+        }
+        [Fact]
+        public async Task ResetPassword_TokenIsUsed_RedirectsToError403()
+        {
+            // Arrange
+            var userId = "testUserId";
+            var token = "usedToken";
+            var mockTokenCheck = false;
+
+            _intranetPortalUsersTokenDaMock.Setup(x => x.IsTokenNotUsed(token, userId)).ReturnsAsync(mockTokenCheck);
+            _configurationMock.Setup(c => c["ErrorViewsPath:Error403"]).Returns("/Error403");
+
+
+            // Act
+            var result = await _controller.ResetPassword(userId, token);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/Error403", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task ResetPassword_TokenIsUsed_NoErrorPath_Retuns403Status()
+        {
+            // Arrange
+            var userId = "testUserId";
+            var token = "usedToken";
+            var mockTokenCheck = false;
+
+            _intranetPortalUsersTokenDaMock.Setup(x => x.IsTokenNotUsed(token, userId)).ReturnsAsync(mockTokenCheck);
+            _configurationMock.Setup(c => c["ErrorViewsPath:Error403"]).Returns("");
+
+            // Act
+            var result = await _controller.ResetPassword(userId, token);
+
+            // Assert
+            var statusCodeResult = Assert.IsType<StatusCodeResult>(result);
+            Assert.Equal(403, statusCodeResult.StatusCode);
+        }
+
+
+        [Fact]
+        public async Task ResetPassword_ReturnsView_WhenModelStateIsInvalid()
+        {
+            // Arrange
+            var model = new IntranetUsersResetPasswordViewModel
+            {
+                UserId = "userId",
+                Token = "token",
+                NewPassword = "short" // Invalid password for testing
+            };
+            _controller.ModelState.AddModelError("NewPassword", "The password is too short.");
+
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+                .ReturnsAsync(ResultDTO<int>.Ok(10));
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
+                .ReturnsAsync(ResultDTO<bool>.Ok(true));
+            _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
+                .ReturnsAsync(ResultDTO<bool>.Ok(true));
+
+            // Act
+            var result = await _controller.ResetPassword(model);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var returnedModel = Assert.IsType<IntranetUsersResetPasswordViewModel>(viewResult.Model);
+            Assert.Equal(10, returnedModel.PasswordMinLength);
+            Assert.True(returnedModel.PasswordMustHaveLetters);
+            Assert.True(returnedModel.PasswordMustHaveNumbers);
+        }
+
+        [Fact]
+        public async Task ResetPassword_RedirectsToLogin_WhenPasswordIsUpdatedSuccessfully()
+        {
+            // Arrange
+            var model = new IntranetUsersResetPasswordViewModel
+            {
+                UserId = "userId",
+                Token = "token",
+                NewPassword = "ValidPassword123" // Valid password
+            };
+
+            var user = new ApplicationUser { Id = "userId" };
+            _intranetPortalUsersTokenDaMock.Setup(da => da.GetUser(model.UserId)).ReturnsAsync(user);
+            _intranetPortalUsersTokenDaMock.Setup(da => da.UpdateAndHashUserPassword(user, model.NewPassword)).ReturnsAsync(1);
+            _intranetPortalUsersTokenDaMock.Setup(da => da.UpdateIsTokenUsedForUser(model.Token, model.UserId)).ReturnsAsync(1);
+
+            // Act
+            var result = await _controller.ResetPassword(model);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Login", redirectResult.ActionName);
+        }
+
+        [Fact]
+        public async Task ResetPassword_RedirectsToLogin_WhenUserNotFound()
+        {
+            // Arrange
+            var model = new IntranetUsersResetPasswordViewModel
+            {
+                UserId = "invalidUserId",
+                Token = "token",
+                NewPassword = "ValidPassword123" // Valid password
+            };
+
+            _intranetPortalUsersTokenDaMock.Setup(da => da.GetUser(model.UserId)).ReturnsAsync((ApplicationUser)null);
+
+            // Act
+            var result = await _controller.ResetPassword(model);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Login", redirectResult.ActionName);
+        }
+
+
+        [Fact]
+        public async Task ResetPassword_ThrowsException_WhenUpdatePasswordFails()
+        {
+            // Arrange
+            var model = new IntranetUsersResetPasswordViewModel
+            {
+                UserId = "userId",
+                Token = "token",
+                NewPassword = "ValidPassword123" // Valid password
+            };
+
+            var user = new ApplicationUser { Id = "userId" };
+            _intranetPortalUsersTokenDaMock.Setup(da => da.GetUser(model.UserId)).ReturnsAsync(user);
+            _intranetPortalUsersTokenDaMock.Setup(da => da.UpdateAndHashUserPassword(user, model.NewPassword)).ThrowsAsync(new Exception("Error updating password"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _controller.ResetPassword(model));
+        }
 
 
 
