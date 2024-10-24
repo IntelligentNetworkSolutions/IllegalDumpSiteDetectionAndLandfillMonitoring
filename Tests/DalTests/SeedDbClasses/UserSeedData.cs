@@ -10,14 +10,14 @@ namespace DAL.ApplicationStorage.SeedDatabase.TestSeedData
             ArgumentNullException.ThrowIfNull(dbContext);
 
             dbContext.Roles.AddRange([FirstRole, SecondRole, ThirdRole]);
-            dbContext.RoleClaims.AddRange([FirstRoleFirstClaim, FirstRoleSecondClaim, SecondRoleFirstClaim, SecondRoleSecondClaim, ThirdRoleFirstClaim]);
+            dbContext.RoleClaims.AddRange([FirstRoleFirstClaim, FirstRoleSecondClaim, SecondRoleFirstClaim, SecondRoleSecondClaim, ThirdRoleFirstClaim, ThirdRoleSecondClaim]);
 
             dbContext.Users.AddRange([FirstUser, SecondUser, ThirdUser]);
             dbContext.UserRoles.AddRange([FirstUserFirstRole, SecondUserSecondRole, ThirdUserFirstRole]);
 
             dbContext.UserClaims.AddRange([FirstUserFirstUserClaim, FirstUserSecondUserClaim]);
             dbContext.UserClaims.AddRange([SecondUserFirstUserClaim, SecondUserSecondUserClaim]);
-            dbContext.UserClaims.AddRange([ThirdUserFirstUserClaim]);
+            dbContext.UserClaims.AddRange([ThirdUserFirstUserClaim, ThirdUserSecondUserClaim]);
         }
 
         public static readonly ApplicationUser FirstUser = new()
@@ -99,6 +99,8 @@ namespace DAL.ApplicationStorage.SeedDatabase.TestSeedData
 
         public static readonly IdentityRoleClaim<string> ThirdRoleFirstClaim =
             new() { Id = 5, RoleId = ThirdRole.Id, ClaimType = "SpecialAuthClain", ClaimValue = "superadmin" };
+        public static readonly IdentityRoleClaim<string> ThirdRoleSecondClaim =
+            new() { Id = 6, RoleId = ThirdRole.Id, ClaimType = "PreferedLanguageClaim", ClaimValue = "superadmin" };
 
         public static readonly IdentityUserClaim<string> FirstUserFirstUserClaim =
             new() { Id = 1, UserId = FirstUser.Id, ClaimValue = "First User First Claim", ClaimType = "AuthClaim" };
@@ -112,5 +114,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.TestSeedData
 
         public static readonly IdentityUserClaim<string> ThirdUserFirstUserClaim =
             new() { Id = 5, UserId = ThirdUser.Id, ClaimType = "SpecialAuthClaim", ClaimValue = "superadmin" };
+        public static readonly IdentityUserClaim<string> ThirdUserSecondUserClaim =
+    new() { Id = 6, UserId = ThirdUser.Id, ClaimType = "PreferedLanguageClaim", ClaimValue = "PreferedLanguageClaim" };
     }
 }
