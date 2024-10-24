@@ -2,6 +2,7 @@
 using CliWrap;
 using CliWrap.Buffered;
 using DAL.Interfaces.Repositories.DetectionRepositories;
+using DAL.Repositories.DetectionRepositories;
 using DTOs.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
@@ -25,6 +26,7 @@ namespace MainApp.BL.Services.DetectionServices
         private readonly IDetectionRunsRepository _detectionRunRepository;
         private readonly IDetectedDumpSitesRepository _detectedDumpSitesRepository;
         private readonly IDetectionInputImageRepository _detectionInputImageRepository;
+        private readonly IDetectionIgnoreZonesRepository _detectionIgnoreZoneRepository;
         protected readonly IMMDetectionConfigurationService _MMDetectionConfiguration;
         private readonly IMapper _mapper;
         private readonly ILogger<DetectionRunService> _logger;
@@ -34,13 +36,14 @@ namespace MainApp.BL.Services.DetectionServices
         private string DetectionResultDummyDatasetClassId = string.Empty;
         private string HasGPU = string.Empty;
 
-        public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository, IMMDetectionConfigurationService mMDetectionConfiguration)
+        public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository, IMMDetectionConfigurationService mMDetectionConfiguration, IDetectionIgnoreZonesRepository detectionIgnoreZoneRepository)
         {
             _detectionRunRepository = detectionRunRepository;
             _detectionInputImageRepository = detectionInputImageRepository;
             _mapper = mapper;
             _logger = logger;
             _configuration = configuration;
+            _detectionIgnoreZoneRepository = detectionIgnoreZoneRepository;
 
            
             string? hasGPU = _configuration["AppSettings:MMDetection:HasGPU"];
@@ -131,14 +134,24 @@ namespace MainApp.BL.Services.DetectionServices
             }
         }
         
-        public async Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds)
+        public async Task<ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds, int selectedConfidenceRate)
         {
-            List<DetectionRun> list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds) ?? throw new Exception("Object not found");
+            List<DetectionRun> list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds);
+            if (list == null || !list.Any())
+            {
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail("No detection runs found.");
+            }
+
+            ResultDTO<IEnumerable<DetectionIgnoreZone>> resultIgnoreZones = await _detectionIgnoreZoneRepository.GetAll();
+            if (resultIgnoreZones.IsSuccess == false && resultIgnoreZones.HandleError())
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail(resultIgnoreZones.ErrMsg!);
+            if(resultIgnoreZones.Data == null)
+                 return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail("Ignore zones not found");
 
             var groupedDumpSites = list.Select(detectionRun => new
             {
                 DetectionRun = detectionRun,
-                GroupedDumpSites = detectionRun.DetectedDumpSites
+                GroupedDumpSites = detectionRun.DetectedDumpSites.Where(x => x.ConfidenceRate*100 >= selectedConfidenceRate)
             .GroupBy(dumpSite => dumpSite.DatasetClass.ClassName)
             .ToDictionary(group => group.Key, group => group.ToList())
             }).ToList();
@@ -155,19 +168,44 @@ namespace MainApp.BL.Services.DetectionServices
                 model.IsCompleted = group.DetectionRun?.IsCompleted;
                 model.GroupedDumpSitesList = new();
                 model.AllConfidenceRates = new();
+
+                GroupedDumpSitesListHistoricDataDTO dumpSiteModel = new();
                 foreach (var item in group.GroupedDumpSites)
                 {
-                    GroupedDumpSitesListHistoricDataDTO dumpSiteModel = new();
-
                     dumpSiteModel.ClassName = item.Key;
                     dumpSiteModel.Geoms = new();
                     dumpSiteModel.GeomAreas = new();
+                    dumpSiteModel.GeomsInIgnoreZone = new();
+                    dumpSiteModel.GeomsOutsideOfIgnoreZone = new();
+                    dumpSiteModel.GeomAreasInIgnoreZone = new();
+                    dumpSiteModel.GeomAreasOutsideOfIgnoreZone = new();
                     foreach (var i in item.Value)
                     {
+                        bool intersectsIgnoreZone = false;
+
+                        foreach (var ignoreZone in resultIgnoreZones.Data)
+                        {
+                            if (ignoreZone.Geom.Intersects(i.Geom)) 
+                            {
+                                intersectsIgnoreZone = true;
+                                dumpSiteModel.GeomsInIgnoreZone.Add(i.Geom);
+                                dumpSiteModel.GeomAreasInIgnoreZone.Add(i.Geom.Area); 
+                                break; 
+                            }
+                        }
+
+                        if (!intersectsIgnoreZone)
+                        {
+                            dumpSiteModel.GeomsOutsideOfIgnoreZone.Add(i.Geom);
+                            dumpSiteModel.GeomAreasOutsideOfIgnoreZone.Add(i.Geom.Area);
+                        }
+
+                        model.AllConfidenceRates.Add(i.ConfidenceRate);
                         dumpSiteModel.Geoms.Add(i.Geom);
                         dumpSiteModel.GeomAreas.Add(i.Geom.Area);
-                        model.AllConfidenceRates.Add(i.ConfidenceRate);
                     }
+                    dumpSiteModel.TotalGroupAreaInIgnoreZone = dumpSiteModel.GeomAreasInIgnoreZone.Sum();
+                    dumpSiteModel.TotalGroupAreaOutOfIgnoreZone = dumpSiteModel.GeomAreasOutsideOfIgnoreZone.Sum();
                     dumpSiteModel.TotalGroupArea = dumpSiteModel.GeomAreas.Sum();
                     model.GroupedDumpSitesList.Add(dumpSiteModel);
                     model.TotalAreaOfDetectionRun = model.GroupedDumpSitesList.Sum(x => x.TotalGroupArea);
@@ -175,7 +213,7 @@ namespace MainApp.BL.Services.DetectionServices
                 }
                 listDTO.Add(model);
             }
-            return listDTO;
+            return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(listDTO);
         }
 
         public async Task<ResultDTO<DetectionRunDTO>> GetDetectionRunById(Guid id, bool track = false)

@@ -281,17 +281,19 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 }
             };
 
-            _mockDetectionRunService.Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>()))
-                .ReturnsAsync(detectionRunDTOs);
+            _mockDetectionRunService
+                .Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>(), It.IsAny<int>()))
+                .ReturnsAsync(ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(detectionRunDTOs)); 
 
             // Act
-            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds);
+            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds, 1);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Single(result);
-            Assert.Equal(detectionRunId, result.First().DetectionRunId);
+            Assert.Single(result.Data);
+            Assert.Equal(detectionRunId, result.Data.First().DetectionRunId);
         }
+
 
         [Fact]
         public async Task GenerateAreaComparisonAvgConfidenceRateReport_ReturnsEmptyList_WhenNoData()
@@ -299,14 +301,17 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var detectionRunsIds = new List<Guid>();
 
-            _mockDetectionRunService.Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>()))
-                .ReturnsAsync(new List<AreaComparisonAvgConfidenceRateReportDTO>());
+            // Corrected mock setup for GenerateAreaComparisonAvgConfidenceRateData
+            _mockDetectionRunService
+                .Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>(), It.IsAny<int>()))
+                .ReturnsAsync(ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(new List<AreaComparisonAvgConfidenceRateReportDTO>()));
+
 
             // Act
-            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds);
+            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds, 1);
 
             // Assert
-            Assert.Empty(result);
+            Assert.Empty(result.Data);
         }
 
         #region InputImages
