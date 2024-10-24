@@ -554,9 +554,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDetectedZones))]
-        public async Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateReport(List<Guid> selectedDetectionRunsIds)
+        public async Task<ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>> GenerateAreaComparisonAvgConfidenceRateReport(List<Guid> selectedDetectionRunsIds, int selectedConfidenceRate)
         {
-            return await _detectionRunService.GenerateAreaComparisonAvgConfidenceRateData(selectedDetectionRunsIds);
+            return await _detectionRunService.GenerateAreaComparisonAvgConfidenceRateData(selectedDetectionRunsIds, selectedConfidenceRate);
         }
 
         //images
