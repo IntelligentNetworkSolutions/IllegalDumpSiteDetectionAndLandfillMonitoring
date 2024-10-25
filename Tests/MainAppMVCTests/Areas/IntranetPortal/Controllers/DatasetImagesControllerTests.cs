@@ -229,12 +229,19 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetDto = new DatasetDTO { IsPublished = false };
             _mockDatasetService.Setup(ds => ds.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
 
-            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages"))
-                .ReturnsAsync(ResultDTO<string?>.Ok("DatasetImages"));
-            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
-                .ReturnsAsync(ResultDTO<string?>.Ok("DatasetThumbnails"));
+            var tempImagesFolder = Path.Combine(Path.GetTempPath(), "DatasetImages");
+            var tempThumbnailsFolder = Path.Combine(Path.GetTempPath(), "DatasetThumbnails");
 
-            _mockWebHostEnvironment.Setup(wh => wh.WebRootPath).Returns("/mock/path");
+            // Ensure directories exist
+            Directory.CreateDirectory(tempImagesFolder);
+            Directory.CreateDirectory(tempThumbnailsFolder);
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages"))
+                .ReturnsAsync(ResultDTO<string?>.Ok(tempImagesFolder));
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
+                .ReturnsAsync(ResultDTO<string?>.Ok(tempThumbnailsFolder));
+
+            _mockWebHostEnvironment.Setup(wh => wh.WebRootPath).Returns(Path.GetTempPath());
 
             var resultGuid = Guid.NewGuid();
             _mockDatasetImagesService
@@ -257,6 +264,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var data = JObject.FromObject(jsonResult.Value);
             Assert.Equal("Successfully added dataset image", data["responseSuccess"]["Value"].ToString());
         }
+
 
 
 
