@@ -19,9 +19,9 @@ namespace DTOs.MainApp.BL.DatasetDTOs
 
         public string GeoJson { get => GeoJsonHelpers.GeometryToGeoJson(Geom); }
 
-        public Dictionary<int, int>? TopLeftBottomRight { get => GeoJsonHelpers.GeometryBBoxToTopLeftBottomRight(Geom); }
+        //public Dictionary<int, int>? TopLeftBottomRight { get => GeoJsonHelpers.GeometryBBoxToTopLeftBottomRight(Geom); }
 
-        public Dictionary<int, int>? TopLeftWidthHeight { get => GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeight(Geom); }
+        //public Dictionary<int, int>? TopLeftWidthHeight { get => GeoJsonHelpers.GeometryBBoxToTopLeftWidthHeight(Geom); }
 
         public bool IsEnabled { get; init; } = false;
 

@@ -414,6 +414,27 @@ namespace Tests.DalTests.Repositories
             transaction.Rollback();
 
         }
+        [Fact]
+        public async Task GetRole_DatabaseDisposed_LogsErrorAndThrowsException()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            ILogger<UserManagementDa> logger = loggerFactory.CreateLogger<UserManagementDa>();
+
+            var repository = new UserManagementDa(dbContext, logger);
+
+            dbContext.Dispose();
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ObjectDisposedException>(async () => await repository.GetRole(UserSeedData.FirstRole.Id));
+
+        }
+
 
         [Fact]
         public async void GetAllRoleClaims_ReturnsRoleClaimsList()
@@ -933,7 +954,7 @@ namespace Tests.DalTests.Repositories
 
             var newRoleClaim = new IdentityRoleClaim<string>
             {
-                Id = 6,
+                Id = 7,
                 RoleId = UserSeedData.FirstRole.Id,
                 ClaimType = "NewClaimType",
                 ClaimValue = "NewClaimValue"
@@ -992,7 +1013,7 @@ namespace Tests.DalTests.Repositories
 
             IdentityUserClaim<string> newUserClaim = new IdentityUserClaim<string>
             {
-                Id = 6,
+                Id = 7,
                 UserId = UserSeedData.FirstUser.Id,
                 ClaimType = "NewUserClaimType",
                 ClaimValue = "NewUserClaimValue"
@@ -1011,27 +1032,30 @@ namespace Tests.DalTests.Repositories
             await transaction.RollbackAsync();
         }
 
-        //[Fact]
-        //public async Task AddClaimsForUserRange_ThrowsObjectDisposedException()
-        //{
-        //    // Arrange
-        //    using ApplicationDbContext dbContext = _fixture.CreateDbContext();
-        //    dbContext.AuditDisabled = true;
-        //    using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
-        //    _fixture.SeedDatabase();
-        //    var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        //    ILogger<UserManagementDa> logger = loggerFactory.CreateLogger<UserManagementDa>();
+        [Fact]
+        public async Task AddClaimsForUserRange_DatabaseThrowsException_LogsErrorAndRollsBackTransaction()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
 
-        //    var userManagementDa = new UserManagementDa(dbContext, logger);
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            ILogger<UserManagementDa> logger = loggerFactory.CreateLogger<UserManagementDa>();
 
-        //    transaction.Rollback();
-        //    dbContext.Dispose();
+            var repository = new UserManagementDa(dbContext, logger);
 
-        //    // Act & Assert
-        //    await Assert.ThrowsAsync<ObjectDisposedException>(async () => await userManagementDa.AddClaimsForUserRange(null, transaction));
+            var userClaims = new List<IdentityUserClaim<string>>
+                    {
+                        new IdentityUserClaim<string> { UserId = "validUserId", ClaimType = "PreferedLanguageClaim", ClaimValue = "en" }
+                    };
+            dbContext.Dispose();
 
-        //    transaction.Rollback();
-        //}
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ObjectDisposedException>(async () =>
+                await repository.AddClaimsForUserRange(userClaims, transaction)
+            );
+        }
 
         [Fact]
         public async Task AddLanguageClaimForUser_ValidUserClaim_AddsClaimSuccessfully()
@@ -1048,7 +1072,7 @@ namespace Tests.DalTests.Repositories
 
             var newLanguageClaim = new IdentityUserClaim<string>
             {
-                Id = 6,
+                Id = 7,
                 UserId = UserSeedData.FirstUser.Id,
                 ClaimType = "Language",
                 ClaimValue = "English"
@@ -1473,6 +1497,89 @@ namespace Tests.DalTests.Repositories
 
             transaction.Rollback();
         }
+        [Fact]
+        public async Task GetPreferredLanguage_ClaimExists_ReturnsClaimValue()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            ILogger<UserManagementDa> logger = loggerFactory.CreateLogger<UserManagementDa>();
+
+            var repository = new UserManagementDa(dbContext, logger);
+
+            // Act
+            var language = await repository.GetPreferredLanguage(UserSeedData.ThirdUser.Id);
+
+            // Assert
+            Assert.NotNull(language);
+            Assert.Equal(UserSeedData.ThirdUserSecondUserClaim.ClaimType, language);
+            transaction.Rollback();
+        }
+        [Fact]
+        public async Task GetPreferredLanguage_ClaimNotExists_ReturnsEmptyString()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            ILogger<UserManagementDa> logger = loggerFactory.CreateLogger<UserManagementDa>();
+
+            var repository = new UserManagementDa(dbContext, logger);
+
+            // Act
+            var language = await repository.GetPreferredLanguage(UserSeedData.FirstUser.Id);
+
+            // Assert
+            Assert.Equal("", language);
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task GetPreferredLanguage_DatabaseDisposed_LogsErrorAndThrowsException()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            ILogger<UserManagementDa> logger = loggerFactory.CreateLogger<UserManagementDa>();
+
+            var repository = new UserManagementDa(dbContext, logger);
+
+            dbContext.Dispose();
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ObjectDisposedException>(async () => await repository.GetPreferredLanguage(UserSeedData.FirstUser.Id));
+        }
+
+        [Fact]
+        public void CheckUserBeforeDelete_DatabaseDisposed_LogsErrorAndThrowsException()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            ILogger<UserManagementDa> logger = loggerFactory.CreateLogger<UserManagementDa>();
+
+            var repository = new UserManagementDa(dbContext, logger);
+
+            dbContext.Dispose();
+
+            // Act & Assert
+            var exception = Assert.Throws<ObjectDisposedException>(() =>
+                repository.CheckUserBeforeDelete(UserSeedData.FirstUser.Id)
+            );
+        }
+
 
     }
 }

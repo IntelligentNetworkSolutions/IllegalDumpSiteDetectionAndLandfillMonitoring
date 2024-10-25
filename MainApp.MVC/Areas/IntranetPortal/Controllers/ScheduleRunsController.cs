@@ -58,7 +58,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return RedirectToErrorPage("Error404");
             }
 
-            //check if the detection run status is stuck in PROCESSING status for too long, chage status to error or success
+            //check if the detection run status is stuck in PROCESSING status for too long, change status to error or success
             bool hasProcessingStatus = resultGetDetectionRuns.Data.Any(d => d.Status == nameof(ScheduleRunsStatus.Processing));
             if (hasProcessingStatus)
             {
@@ -98,6 +98,46 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
             }
 
+            //check if the training run status is stuck in PROCESSING status for too long, change status to error or success
+            bool isProcessingStatus = resultGetTrainingRuns.Data.Any(d => d.Status == nameof(ScheduleRunsStatus.Processing));
+            if (isProcessingStatus)
+            {
+                List<TrainingRunDTO> allProcessingRuns = resultGetTrainingRuns.Data.Where(x => x.Status.Equals(nameof(ScheduleRunsStatus.Processing))).ToList();
+
+                var monitoringApi = JobStorage.Current.GetMonitoringApi();
+                var processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
+                var succeededJobs = monitoringApi.SucceededJobs(0, int.MaxValue);
+                var failedJobs = monitoringApi.FailedJobs(0, int.MaxValue);
+
+                //Get jobs parameter trainingRunId 
+                List<string> processingJobsDetectionRunIds = GetProcessingJobTrainingRunIds(processingJobs);
+
+                foreach (var run in allProcessingRuns)
+                {
+                    if (!processingJobsDetectionRunIds.Contains(run.Id.Value.ToString()))
+                    {
+                        //check if the job is in failed jobs 
+                        bool jobFoundInFailedJobs = await CheckFailedJobsAndUpdateStatusForTrainingRuns(run, failedJobs);
+                        if (!jobFoundInFailedJobs)
+                        {
+                            //check if the job is in success jobs 
+                            await CheckSucceededJobsAndUpdateStatusForTrainingRuns(run, succeededJobs, monitoringApi);
+                        }
+                    }
+                }
+
+                //re-fetch detectionRuns after status updated to ERROR or SUCCESS
+                resultGetTrainingRuns = await _trainingRunService.GetAllTrainingRuns();
+                if (!resultGetTrainingRuns.IsSuccess && resultGetTrainingRuns.HandleError())
+                {
+                    return RedirectToErrorPage("Error");
+                }
+                if (resultGetTrainingRuns.Data == null)
+                {
+                    return RedirectToErrorPage("Error404");
+                }
+            }
+
             ViewScheduledRunsViewModel vm = new()
             {
                 DetectionRuns = resultGetDetectionRuns.Data,
@@ -106,6 +146,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             return View(vm);
         }
+
+        //detection runs
         private List<string> GetProcessingJobDetectionRunIds(JobList<ProcessingJobDto> processingJobs)
         {
             List<string> processingJobsDetectionRunIds = new();
@@ -160,6 +202,66 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                         else
                         {
                             await _detectionRunService.UpdateStatus(run.Id.Value, nameof(ScheduleRunsStatus.Error));
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        //training runs
+        private List<string> GetProcessingJobTrainingRunIds(JobList<ProcessingJobDto> processingJobs)
+        {
+            List<string> processingJobsTrainingRunIds = new();
+            foreach (var job in processingJobs)
+            {
+                using (var connection = JobStorage.Current.GetConnection())
+                {
+                    var storedKey = connection.GetJobParameter(job.Key, "trainingRunId");
+                    if (!string.IsNullOrEmpty(storedKey))
+                    {
+                        processingJobsTrainingRunIds.Add(storedKey);
+                    }
+                }
+            }
+            return processingJobsTrainingRunIds;
+        }
+        private async Task<bool> CheckFailedJobsAndUpdateStatusForTrainingRuns(TrainingRunDTO run, JobList<FailedJobDto> failedJobs)
+        {
+            foreach (var fJob in failedJobs)
+            {
+                using (var connection = JobStorage.Current.GetConnection())
+                {
+                    var storedKey = connection.GetJobParameter(fJob.Key, "trainingRunId");
+                    if (!string.IsNullOrEmpty(storedKey) && storedKey == run.Id.Value.ToString())
+                    {
+                        await _trainingRunService.UpdateTrainingRunEntity(run.Id.Value, null, nameof(ScheduleRunsStatus.Error), false);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        private async Task CheckSucceededJobsAndUpdateStatusForTrainingRuns(TrainingRunDTO run, JobList<SucceededJobDto> succeededJobs, IMonitoringApi monitoringApi)
+        {
+            foreach (var succJob in succeededJobs)
+            {
+                using (var connection = JobStorage.Current.GetConnection())
+                {
+                    var storedKey = connection.GetJobParameter(succJob.Key, "trainingRunId");
+                    if (!string.IsNullOrEmpty(storedKey) && storedKey == run.Id.Value.ToString())
+                    {
+                        var jobDetails = monitoringApi.JobDetails(succJob.Key);
+                        var historyData = jobDetails?.History.FirstOrDefault()?.Data;
+                        var resValue = historyData.FirstOrDefault().Value;
+
+                        if (resValue.Contains("\"IsSuccess\":true"))
+                        {
+                            await _trainingRunService.UpdateTrainingRunEntity(run.Id.Value, run.TrainedModelId.Value, nameof(ScheduleRunsStatus.Success), true);
+                        }
+                        else
+                        {
+                            await _trainingRunService.UpdateTrainingRunEntity(run.Id.Value, null, nameof(ScheduleRunsStatus.Error), false);
                         }
                         return;
                     }

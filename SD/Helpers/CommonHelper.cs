@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace SD.Helpers
 {
@@ -7,7 +8,7 @@ namespace SD.Helpers
     {
         public static object? CastTo<ReturnType>(object? inputValue)
         {
-            if(inputValue is null) 
+            if (inputValue is null)
                 return null;
 
             try
@@ -22,14 +23,14 @@ namespace SD.Helpers
 
                 return castValueAsReturnType;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 // TODO: Handle
                 return null;
             }
         }
 
-        private static object? CastToType(object inputValue, Type outputType) 
+        private static object? CastToType(object inputValue, Type outputType)
         {
             if (inputValue is null)
                 return null;
@@ -41,7 +42,7 @@ namespace SD.Helpers
             CultureInfo culture = CultureInfo.InvariantCulture;
 
             TypeConverter outputTypeConverter = TypeDescriptor.GetConverter(outputType);
-            if (outputTypeConverter.CanConvertFrom(inputValue.GetType())) 
+            if (outputTypeConverter.CanConvertFrom(inputValue.GetType()))
                 return outputTypeConverter.ConvertFrom(null, culture, inputValue);
 
             TypeConverter inputTypeConverter = TypeDescriptor.GetConverter(inputType);
@@ -68,15 +69,34 @@ namespace SD.Helpers
             return collection.GroupBy(property).Any(g => g.Count() > 1);
         }
 
-        public static string ConvertWindowsPathToLinuxPathReplaceAllDashes(string windowsPath)
+        public static string PathToLinuxRegexSlashReplace(string path)
         {
-            if (windowsPath.Contains("\\\\"))
-                windowsPath = windowsPath.Replace("\\\\", "/");
+            if (string.IsNullOrEmpty(path))
+                return path;
 
-            if (windowsPath.Contains("\\"))
-                windowsPath = windowsPath.Replace("\\", "/");
+            // Replace consecutive backslashes with a single forward slash
+            string linuxPath = Regex.Replace(path, @"\\+", "/");
 
-            return windowsPath;
+            // Replace consecutive forward slashes with a single forward slash
+            linuxPath = Regex.Replace(linuxPath, @"/+", "/");
+
+
+            if (Path.DirectorySeparatorChar == '/')
+            {
+                // Remove the drive letter if present
+                if (linuxPath.Length >= 2 
+                    && char.IsLetter(linuxPath[0]) == true 
+                    && linuxPath[1] == ':')
+                    linuxPath = linuxPath.Substring(2);
+
+                // Ensure the path starts with a forward slash if it's not empty
+                if (string.IsNullOrEmpty(linuxPath) ==false 
+                    && linuxPath.StartsWith("/") == false
+                    && linuxPath.StartsWith("..") == false)
+                    linuxPath = "/" + linuxPath;
+            }
+
+            return linuxPath;
         }
     }
 }

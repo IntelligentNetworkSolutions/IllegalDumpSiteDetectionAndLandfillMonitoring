@@ -20,7 +20,8 @@ namespace DAL.Repositories
             _logger = logger;
         }
 
-        // TODO: Test
+        // TODO: Refactor to use Result
+
         public async Task<int> CreateIntranetPortalUserToken(string token, string userId)
         {
             try

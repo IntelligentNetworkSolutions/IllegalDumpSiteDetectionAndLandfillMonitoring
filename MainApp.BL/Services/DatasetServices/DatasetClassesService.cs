@@ -24,8 +24,8 @@ namespace MainApp.BL.Services.DatasetServices
             _datasetDatasetClassRepository = datasetDatasetClassRepository;
             _mapper = mapper;
         }
+
         #region Read
-        #region Get Datasetclass/es
         public async Task<List<DatasetClassDTO>> GetAllDatasetClasses()
         {
             var list = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets") ?? throw new Exception("Model not found");
@@ -42,13 +42,13 @@ namespace MainApp.BL.Services.DatasetServices
             return model;
 
         }
+        
         public async Task<DatasetClassDTO> GetDatasetClassById(Guid classId)
         {
             var datasetClass = await _datasetClassesRepository.GetById(classId,includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
             var model = _mapper.Map<DatasetClassDTO>(datasetClass.Data) ?? throw new Exception("Model not found");
             return model;
         }
-        #endregion
         #endregion
 
         #region Create

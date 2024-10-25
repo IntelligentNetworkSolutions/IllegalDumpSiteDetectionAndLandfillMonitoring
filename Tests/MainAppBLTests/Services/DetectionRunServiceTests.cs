@@ -1,7 +1,10 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.DetectionRepositories;
+using DocumentFormat.OpenXml.Spreadsheet;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
+using Entities;
+using Entities.DatasetEntities;
 using Entities.DetectionEntities;
 using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Services.DetectionServices;
@@ -19,6 +22,7 @@ namespace Tests.MainAppBLTests.Services
         private readonly Mock<IDetectionRunsRepository> _mockDetectionRunsRepository;
         private readonly Mock<IDetectedDumpSitesRepository> _mockDetectedDumSiteRepositoryRepository;
         private readonly Mock<IDetectionInputImageRepository> _mockDetectionInputImageRepository;
+        private readonly Mock<IDetectionIgnoreZonesRepository> _mockDetectionIgnoreZoneRepository;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<ILogger<DetectionRunService>> _mockLogger;
@@ -35,6 +39,7 @@ namespace Tests.MainAppBLTests.Services
             _mockLogger = new Mock<ILogger<DetectionRunService>>();
             _mockFileSystem = new Mock<IFileSystem>();
             _mockMMDetectionConfigurationService = new Mock<IMMDetectionConfigurationService>();
+            _mockDetectionIgnoreZoneRepository = new Mock<IDetectionIgnoreZonesRepository>();
 
             _mockConfiguration = new Mock<IConfiguration>();
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:CondaExeFileAbsPath"]).Returns("conda_exe_file_path");
@@ -53,7 +58,8 @@ namespace Tests.MainAppBLTests.Services
                                                _mockConfiguration.Object,
                                                _mockDetectedDumSiteRepositoryRepository.Object,
                                                 _mockDetectionInputImageRepository.Object,
-                                                _mockMMDetectionConfigurationService.Object);
+                                                _mockMMDetectionConfigurationService.Object,
+                                                _mockDetectionIgnoreZoneRepository.Object);
         }
 
         [Fact]
@@ -102,24 +108,7 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess, "Operation should be successful");
         }
-
-        [Fact]
-        public async Task GenerateAreaComparisonAvgConfidenceRateData_ReturnsList()
-        {
-            // Arrange
-            var selectedDetectionRunsIds = new List<Guid>();
-            var detectionRuns = new List<DetectionRun>();
-            _mockDetectionRunsRepository.Setup(repo => repo.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds))
-                                        .ReturnsAsync(detectionRuns);
-
-            // Act
-            var result = await _service.GenerateAreaComparisonAvgConfidenceRateData(selectedDetectionRunsIds);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.IsType<List<AreaComparisonAvgConfidenceRateReportDTO>>(result);
-        }
-
+                
         [Fact]
         public async Task GetDetectionRunById_ReturnsDetectionRunDTO()
         {

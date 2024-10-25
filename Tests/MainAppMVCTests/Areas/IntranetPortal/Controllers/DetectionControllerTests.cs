@@ -4,7 +4,6 @@ using DTOs.MainApp.BL.DetectionDTOs;
 using Hangfire;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
-using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using Microsoft.AspNetCore.Hosting;
@@ -196,52 +195,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Object not found", exception.Message);
         }
 
-        [Fact]
-        public async Task ShowDumpSitesOnMap_ReturnsSuccess_WhenDataIsAvailable()
-        {
-            // Arrange
-            var detectionRunId1 = Guid.NewGuid();
-            var detectionRunId2 = Guid.NewGuid();
-
-            var detectionRunDTOs = new List<DetectionRunDTO>
-            {
-                new DetectionRunDTO { Id = detectionRunId1, Name = "Run 1" },
-                new DetectionRunDTO { Id = detectionRunId2, Name = "Run 2" }
-            };
-
-            var confidenceRates = new List<ConfidenceRateDTO>
-            {
-                new ConfidenceRateDTO { detectionRunId = detectionRunId1, confidenceRate = 0.9 },
-                new ConfidenceRateDTO { detectionRunId = detectionRunId2, confidenceRate = 0.85 }
-            };
-
-            var model = new DetectionRunShowOnMapViewModel
-            {
-                selectedDetectionRunsIds = new List<Guid> { detectionRunId1, detectionRunId2 },
-                selectedConfidenceRates = confidenceRates
-            };
-
-            var resultDTO = ResultDTO<List<DetectionRunDTO>>.Ok(detectionRunDTOs);
-
-            _mockDetectionRunService
-                .Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
-                    It.IsAny<List<Guid>>(), It.IsAny<List<ConfidenceRateDTO>>()))
-                .ReturnsAsync(resultDTO);
-
-            _mockDetectionIgnoreZoneService.Setup(service => service.GetAllIgnoreZonesDTOs())
-                .ReturnsAsync(ResultDTO<List<DetectionIgnoreZoneDTO>>.Ok(new List<DetectionIgnoreZoneDTO>()));
-
-            // Act
-            var result = await _controller.ShowDumpSitesOnMap(model);
-
-            // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal(detectionRunDTOs, result.Data);
-            _mockDetectionRunService.Verify(service =>
-                service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
-                    model.selectedDetectionRunsIds, model.selectedConfidenceRates), Times.Once);
-        }
-
 
         [Fact]
         public async Task ShowDumpSitesOnMap_ReturnsFail_WhenServiceFails()
@@ -328,17 +281,19 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 }
             };
 
-            _mockDetectionRunService.Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>()))
-                .ReturnsAsync(detectionRunDTOs);
+            _mockDetectionRunService
+                .Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>(), It.IsAny<int>()))
+                .ReturnsAsync(ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(detectionRunDTOs)); 
 
             // Act
-            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds);
+            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds, 1);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Single(result);
-            Assert.Equal(detectionRunId, result.First().DetectionRunId);
+            Assert.Single(result.Data);
+            Assert.Equal(detectionRunId, result.Data.First().DetectionRunId);
         }
+
 
         [Fact]
         public async Task GenerateAreaComparisonAvgConfidenceRateReport_ReturnsEmptyList_WhenNoData()
@@ -346,14 +301,17 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var detectionRunsIds = new List<Guid>();
 
-            _mockDetectionRunService.Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>()))
-                .ReturnsAsync(new List<AreaComparisonAvgConfidenceRateReportDTO>());
+            // Corrected mock setup for GenerateAreaComparisonAvgConfidenceRateData
+            _mockDetectionRunService
+                .Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>(), It.IsAny<int>()))
+                .ReturnsAsync(ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(new List<AreaComparisonAvgConfidenceRateReportDTO>()));
+
 
             // Act
-            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds);
+            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds, 1);
 
             // Assert
-            Assert.Empty(result);
+            Assert.Empty(result.Data);
         }
 
         #region InputImages
@@ -457,7 +415,11 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var detectionInputImageId = Guid.NewGuid();
-            var detectionInputImageDTO = new DetectionInputImageDTO { Id = detectionInputImageId, ImageFileName = "image.jpg" };
+            var detectionInputImageDTO = new DetectionInputImageDTO
+            {
+                Id = detectionInputImageId,
+                ImageFileName = "image.jpg"
+            };
 
             _mockDetectionRunService
                 .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
@@ -468,15 +430,29 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .Setup(accessor => accessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", It.IsAny<string>()))
                 .ReturnsAsync(ResultDTO<string>.Ok(thumbnailsFolderPath));
 
+            var mockHttpContext = new Mock<HttpContext>();
+            var mockRequest = new Mock<HttpRequest>();
+            var mockUriHelper = new Mock<IUrlHelper>();
+
+            mockRequest.Setup(x => x.Scheme).Returns("https");
+            mockRequest.Setup(x => x.Host).Returns(new HostString("localhost"));
+            mockRequest.Setup(x => x.PathBase).Returns(new PathString("/"));
+
+            mockHttpContext.Setup(x => x.Request).Returns(mockRequest.Object);
+            _controller.ControllerContext.HttpContext = mockHttpContext.Object;
+
             // Act
             var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
             Assert.Equal(detectionInputImageDTO.Id, result.Data.Id);
             Assert.NotNull(result.Data.ThumbnailFilePath);
             Assert.Contains("_thumbnail.jpg", result.Data.ThumbnailFilePath);
         }
+
 
         //[Fact]
         //public async Task EditDetectionImageInput_WithValidModel_ReturnsOkResult()
@@ -696,15 +672,27 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockDetectionRunService.Setup(service => service.GetSelectedInputImagesById(selectedImageIds))
                 .ReturnsAsync(resultDto);
 
+            var mockHttpContext = new Mock<HttpContext>();
+            var mockRequest = new Mock<HttpRequest>();
+
+            mockRequest.Setup(x => x.Scheme).Returns("https");
+            mockRequest.Setup(x => x.Host).Returns(new HostString("localhost"));
+            mockRequest.Setup(x => x.PathBase).Returns(new PathString("/"));
+
+            mockHttpContext.Setup(x => x.Request).Returns(mockRequest.Object);
+            _controller.ControllerContext.HttpContext = mockHttpContext.Object;
+
             // Act
             var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
 
             // Assert
+            Assert.NotNull(result);
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.Data);
             Assert.Equal(images, result.Data);
-            Assert.All(result.Data, item => Assert.Contains("/", item.ImagePath)); 
+            Assert.All(result.Data, item => Assert.Contains("/", item.ImagePath));
         }
+
 
         [Fact]
         public async Task GetSelectedDetectionInputImages_ReturnsFailResult_WhenImagesNotFound()

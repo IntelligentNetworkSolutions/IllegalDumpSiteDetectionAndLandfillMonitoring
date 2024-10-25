@@ -67,6 +67,7 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Repository error", result.ErrMsg);
         }
 
+
         [Fact]
         public async Task GetLegalLandfillById_ShouldReturnLandfill()
         {
@@ -86,7 +87,25 @@ namespace Tests.MainAppBLTests.Services
             Assert.True(result.IsSuccess);
             Assert.Equal(dto, result.Data);
         }
-                
+
+        [Fact]
+        public async Task GetLegalLandfillById_ReturnsFailure_WhenEntityIsNotFound()
+        {
+            // Arrange
+            var legalLandfillId = Guid.NewGuid();
+            var resultFromRepo = ResultDTO<LegalLandfill?>.Fail("Entity not found");
+
+            _mockRepository.Setup(repo => repo.GetById(legalLandfillId, false,null)).ReturnsAsync(resultFromRepo);
+
+            // Act
+            var result = await _service.GetLegalLandfillById(legalLandfillId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Entity not found", result.ErrMsg);
+        }
+
+       
         [Fact]
         public async Task CreateLegalLandfill_ShouldCreateLandfill()
         {
