@@ -13,6 +13,7 @@ using Moq;
 using Newtonsoft.Json.Linq;
 using SD;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -2005,11 +2006,12 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockDatasetImagesService.Setup(s => s.GetImagesForDataset(datasetId))
                                      .ReturnsAsync(new List<DatasetImageDTO>
                                      {
-                                 new DatasetImageDTO { Id = imageId, ImagePath = "/images/", FileName = "missing-image.jpg" }
+                                 new DatasetImageDTO { Id = imageId, ImagePath = "images", FileName = "missing-image.jpg" }
                                      });
 
             _mockWebHostEnvironment.Setup(env => env.WebRootPath).Returns(Path.Combine("..", "..", "wwwroot"));
 
+            // Act
             // Act
             var result = await _controller.GenerateThumbnailsForDatasetWithErrors(datasetId);
             var resultMessage = result.Data.ToString();
@@ -2017,15 +2019,12 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.True(result.IsSuccess, "The operation should succeed even with errors logged.");
 
-            var expectedMessage = "Thumbnails generated successfully \n with Errors: Image does not exist at path: /images/missing-image.jpg";
+            var expectedMessage = "Thumbnails generated successfully with Errors: Image does not exist at path: ..\\..\\wwwroot\\images\\missing-image.jpg";
 
-            // Normalize line endings and slashes for comparison
-            resultMessage = resultMessage.Replace("\r\n", "\n").Replace("\n", "").Replace("/", "").Trim();
-            expectedMessage = expectedMessage.Replace("\r\n", "\n").Replace("\n", "").Replace("/", "").Trim();
+            resultMessage = Regex.Replace(resultMessage.Replace("\r\n", "").Replace("\n", ""), @"\s+", " ").Trim();
+            expectedMessage = Regex.Replace(expectedMessage, @"\s+", " ").Trim();
 
-            // Assert that the expected message is contained within the result message
             Assert.Contains(expectedMessage, resultMessage, StringComparison.InvariantCulture);
-
 
         }
 
