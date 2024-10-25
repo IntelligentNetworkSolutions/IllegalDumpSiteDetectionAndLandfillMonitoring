@@ -117,7 +117,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var model = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Name = "TestImage" };
-            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync((DatasetDTO)null); // Simulate dataset not found
+            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync((DatasetDTO)null);
 
             // Act
             var result = await _controller.EditDatasetImage(model);

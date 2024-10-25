@@ -2,7 +2,6 @@
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.MainApp.BL.TrainingDTOs;
 using ImageMagick;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.MVC.Filters;
@@ -77,14 +76,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         }
 
-        
+
         [HttpPost]
         public async Task<IActionResult> GetParentAndChildrenDatasets(Guid currentDatasetId)
         {
             if (currentDatasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
             List<DatasetDTO> allDatasetsDb = await _datasetService.GetAllDatasets() ?? throw new Exception("Object not found");
-            DatasetDTO currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId) ?? throw new Exception("Object not found");
+            DatasetDTO currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId) ?? throw new Exception(message: "Object not found");
             if (currentDatasetDb == null)
                 return Json(new { responseError = DbResHtml.T("Invalid current dataset", "Resources") });
 
