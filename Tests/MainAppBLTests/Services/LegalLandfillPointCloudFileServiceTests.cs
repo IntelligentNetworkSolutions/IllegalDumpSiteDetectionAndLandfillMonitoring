@@ -14,6 +14,7 @@ using SD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -27,6 +28,7 @@ namespace Tests.MainAppBLTests.Services
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<ILogger<LegalLandfillPointCloudFileService>> _mockLogger;
         private readonly LegalLandfillPointCloudFileService _service;
+
 
         public LegalLandfillPointCloudFileServiceTests()
         {
@@ -102,6 +104,25 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task GetLegalLandfillPointCloudFilesById_ReturnsFailureResult_WhenRepositoryFails()
+        {
+            // Arrange
+            var legalLandfillPointCloudFileId = Guid.NewGuid();
+
+            var resultGetEntity = ResultDTO<LegalLandfillPointCloudFile?>.Fail("Error retrieving data");
+
+            _mockRepository.Setup(repo => repo.GetById(legalLandfillPointCloudFileId, It.IsAny<bool>(),It.IsAny<string>()))
+                .ReturnsAsync(resultGetEntity);
+
+            // Act
+            var result = await _service.GetLegalLandfillPointCloudFilesById(legalLandfillPointCloudFileId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error retrieving data", result.ErrMsg);
+        }
+       
+        [Fact]
         public async Task CreateLegalLandfillPointCloudFile_ShouldCreateAndReturnFile()
         {
             // Arrange
@@ -138,6 +159,68 @@ namespace Tests.MainAppBLTests.Services
             Assert.True(result.IsSuccess);
         }
 
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFile_ReturnsFailureResult_WhenEntityNotFound()
+        {
+            // Arrange
+            var legalLandfillPointCloudFileId = Guid.NewGuid();
+
+            var resultGetEntity = ResultDTO<LegalLandfillPointCloudFile?>.Fail("Entity not found");
+        
+            _mockRepository.Setup(repo => repo.GetFirstOrDefault(It.IsAny<Expression<Func<LegalLandfillPointCloudFile, bool>>>(), false, null))
+                .ReturnsAsync(resultGetEntity);
+
+            // Act
+            var result = await _service.DeleteLegalLandfillPointCloudFile(legalLandfillPointCloudFileId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Entity not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFile_ReturnsFailureResult_WhenDataIsNull()
+        {
+            // Arrange
+            var legalLandfillPointCloudFileId = Guid.NewGuid();
+
+            var resultGetEntity = ResultDTO<LegalLandfillPointCloudFile?>.Ok(null);
+
+            _mockRepository.Setup(repo => repo.GetFirstOrDefault(It.IsAny<Expression<Func<LegalLandfillPointCloudFile, bool>>>(), false, null))
+                .ReturnsAsync(resultGetEntity);
+
+            // Act
+            var result = await _service.DeleteLegalLandfillPointCloudFile(legalLandfillPointCloudFileId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Data is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillPointCloudFile_ReturnsFailureResult_WhenDeleteFails()
+        {
+            // Arrange
+            var legalLandfillPointCloudFileId = Guid.NewGuid();
+            var legalLandfillPointCloudFile = new LegalLandfillPointCloudFile { Id = legalLandfillPointCloudFileId };
+
+            var resultGetEntity = ResultDTO<LegalLandfillPointCloudFile?>.Ok(legalLandfillPointCloudFile);
+
+            _mockRepository.Setup(repo => repo.GetFirstOrDefault(It.IsAny<Expression<Func<LegalLandfillPointCloudFile, bool>>>(), false, null))
+                .ReturnsAsync(resultGetEntity);
+
+            var resultDeleteEntity = ResultDTO.Fail("Error deleting entity");
+            _mockRepository.Setup(repo => repo.Delete(legalLandfillPointCloudFile, true, default))
+                .ReturnsAsync(resultDeleteEntity);
+
+            // Act
+            var result = await _service.DeleteLegalLandfillPointCloudFile(legalLandfillPointCloudFileId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error deleting entity", result.ErrMsg);
+        }
+       
         [Fact]
         public async Task GetAllLegalLandfillPointCloudFiles_WhenRepositoryFails_ShouldReturnFailResult()
         {
@@ -226,6 +309,42 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Update failed", result.ErrMsg);
         }
 
+        [Fact]
+        public async Task EditLegalLandfillPointCloudFile_WhenLegalLandfillIdChanges_ShouldUpdateFilePath()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO
+            {
+                Id = Guid.NewGuid(),
+                LegalLandfillId = Guid.NewGuid()
+            };
+
+            var existingEntity = new LegalLandfillPointCloudFile
+            {
+                Id = dto.Id,
+                LegalLandfillId = Guid.NewGuid()
+            };
+
+            _mockRepository.Setup(r => r.GetById(dto.Id, true, null))
+                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFile?>.Ok(existingEntity));
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileUploads", "Uploads\\LegalLandfillUploads\\PointCloudUploads"))
+                .ReturnsAsync(ResultDTO<string>.Ok("C:\\Uploads"));
+
+            _mockMapper.Setup(m => m.Map(dto, existingEntity)).Returns(existingEntity);
+
+            var updatedEntity = new LegalLandfillPointCloudFile { Id = dto.Id, LegalLandfillId = dto.LegalLandfillId };
+            _mockRepository.Setup(r => r.UpdateAndReturnEntity(existingEntity, true, default))
+                .ReturnsAsync(ResultDTO<LegalLandfillPointCloudFile>.Ok(updatedEntity));
+
+            // Act
+            var result = await _service.EditLegalLandfillPointCloudFile(dto);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal("C:\\Uploads\\" + dto.LegalLandfillId.ToString() + "\\", dto.FilePath);
+        }
+               
         [Fact]
         public async Task ReadAndDeleteDiffWasteVolumeComparisonFile_FileDoesNotExist_ReturnsFail()
         {
@@ -363,6 +482,44 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task EditFileInUploads_ReturnsFail_WhenUploadFolderPathIsNull()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { LegalLandfillId = Guid.NewGuid(), Id = Guid.NewGuid(), FileName = "file.txt" };
+            string webRootPath = "path/to/webroot";
+            string filePath = "uploads";
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileUploads", "Uploads\\LegalLandfillUploads\\PointCloudUploads"))
+                .ReturnsAsync(ResultDTO<string>.Ok(null));
+
+            // Act
+            var result = await _service.EditFileInUploads(webRootPath, filePath, dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Point cloud upload folder path is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditFileInUploads_ReturnsFail_WhenUploadFolderRetrievalFails()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { LegalLandfillId = Guid.NewGuid(), Id = Guid.NewGuid(), FileName = "file.txt" };
+            string webRootPath = "path/to/webroot";
+            string filePath = "uploads";
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileUploads", "Uploads\\LegalLandfillUploads\\PointCloudUploads"))
+                .ReturnsAsync(ResultDTO<string>.Fail("Failed to retrieve upload folder path"));
+
+            // Act
+            var result = await _service.EditFileInUploads(webRootPath, filePath, dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve upload folder path", result.ErrMsg);
+        }
+               
+        [Fact]
         public async Task EditFileConverts_AppSettingsFail_ReturnsFail()
         {
             // Arrange
@@ -402,6 +559,74 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Point cloud upload folder path is null", result.ErrMsg);
         }
 
+       
+        [Fact]
+        public async Task EditFileConverts_SuccessfullyMovesFiles()
+        {
+            // Arrange
+            string webRootPath = "mockWebRootPath";
+            var oldLegalLandfillId = Guid.NewGuid();
+            var newLegalLandfillId = Guid.NewGuid();
+
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), LegalLandfillId = newLegalLandfillId };
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts"))
+                .ReturnsAsync(ResultDTO<string>.Ok("uploads/legal_landfill_uploads/point_cloud_converts"));
+
+            string oldSubfolderPath = Path.Combine(webRootPath, "uploads/legal_landfill_uploads/point_cloud_converts", oldLegalLandfillId.ToString(), dto.Id.ToString());
+            Directory.CreateDirectory(oldSubfolderPath);
+
+            string oldFilePath = Path.Combine(oldSubfolderPath, "file.txt");
+            using (var fs = File.Create(oldFilePath)) { }
+
+            // Act
+            var result = await _service.EditFileConverts(webRootPath, oldLegalLandfillId, dto);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+
+            string newSubfolderPath = Path.Combine(webRootPath, "uploads/legal_landfill_uploads/point_cloud_converts", newLegalLandfillId.ToString(), dto.Id.ToString());
+
+            Assert.True(File.Exists(Path.Combine(newSubfolderPath, "file.txt")), "Expected file to be moved to the new subfolder.");
+        }
+
+        [Fact]
+        public async Task EditFileConverts_DeletesOldDirectory_WhenEmpty()
+        {
+            // Arrange
+            string webRootPath = "mockWebRootPath";
+            var oldLegalLandfillId = Guid.NewGuid();
+
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), LegalLandfillId = Guid.NewGuid() };
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts"))
+                .ReturnsAsync(ResultDTO<string>.Ok("uploads/legal_landfill_uploads/point_cloud_converts"));
+
+            string oldSubfolderPath = Path.Combine(webRootPath, "uploads/legal_landfill_uploads/point_cloud_converts", oldLegalLandfillId.ToString(), dto.Id.ToString());
+
+            Directory.CreateDirectory(oldSubfolderPath);
+            string oldDirectoryPath = Path.Combine(webRootPath, "uploads/legal_landfill_uploads/point_cloud_converts", oldLegalLandfillId.ToString());
+            Directory.CreateDirectory(oldDirectoryPath);
+
+            string oldFilePath = Path.Combine(oldSubfolderPath, "file.txt");
+            using (var fs = File.Create(oldFilePath)) { }
+
+            string newSubfolderPath = Path.Combine(webRootPath, "uploads/legal_landfill_uploads/point_cloud_converts", dto.LegalLandfillId.ToString(), dto.Id.ToString());
+            Directory.CreateDirectory(newSubfolderPath);
+
+            File.Move(oldFilePath, Path.Combine(newSubfolderPath, "file.txt"));
+
+            // Act
+            var result = await _service.EditFileConverts(webRootPath, oldLegalLandfillId, dto);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+
+            Assert.False(Directory.Exists(oldSubfolderPath), "Expected old subfolder to be deleted.");
+            Assert.False(Directory.Exists(oldDirectoryPath), "Expected old directory to be deleted.");
+        }
+
+        
         [Fact]
         public async Task CheckSupportingFiles_AppSettingsFail_ReturnsFail()
         {
@@ -546,5 +771,273 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(result.IsSuccess);
             Assert.Contains("Test Exception", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task GetFilteredLegalLandfillPointCloudFiles_ReturnsSuccessResult_WhenDataIsRetrieved()
+        {
+            // Arrange
+            var selectedIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+
+            var legalLandfillFiles = new List<LegalLandfillPointCloudFile>
+            {
+                new LegalLandfillPointCloudFile { Id = selectedIds[0] },
+                new LegalLandfillPointCloudFile { Id = selectedIds[1] }
+            };
+
+            var resultGetAllEntities = ResultDTO<IEnumerable<LegalLandfillPointCloudFile>>.Ok(legalLandfillFiles);
+
+            _mockRepository.Setup(repo => repo.GetAll(
+                    It.IsAny<Expression<Func<LegalLandfillPointCloudFile, bool>>>(),
+                    It.IsAny<Func<IQueryable<LegalLandfillPointCloudFile>, IOrderedQueryable<LegalLandfillPointCloudFile>>>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<string>(),
+                    It.IsAny<int?>()))
+                .ReturnsAsync(resultGetAllEntities);
+
+            var expectedDtos = new List<LegalLandfillPointCloudFileDTO>
+            {
+                new LegalLandfillPointCloudFileDTO { /* Set properties matching legalLandfillFiles[0] */ },
+                new LegalLandfillPointCloudFileDTO { /* Set properties matching legalLandfillFiles[1] */ }
+            };
+
+            _mockMapper.Setup(m => m.Map<List<LegalLandfillPointCloudFileDTO>>(It.IsAny<IEnumerable<LegalLandfillPointCloudFile>>()))
+                .Returns(expectedDtos);
+
+            // Act
+            var result = await _service.GetFilteredLegalLandfillPointCloudFiles(selectedIds);
+
+            // Assert
+            Assert.True(result.IsSuccess, "Expected success but got failure.");
+            Assert.Equal(expectedDtos, result.Data);
+        }
+
+        [Fact]
+        public async Task GetFilteredLegalLandfillPointCloudFiles_ReturnsFailureResult_WhenRepositoryFails()
+        {
+            // Arrange
+            var selectedIds = new List<Guid> { Guid.NewGuid() };
+
+            var resultGetAllEntities = ResultDTO<IEnumerable<LegalLandfillPointCloudFile>>.Fail("Error retrieving filtered data");
+
+            _mockRepository.Setup(repo => repo.GetAll(
+                    It.IsAny<Expression<Func<LegalLandfillPointCloudFile, bool>>>(),
+                    It.IsAny<Func<IQueryable<LegalLandfillPointCloudFile>, IOrderedQueryable<LegalLandfillPointCloudFile>>>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<string>(),
+                    It.IsAny<int?>()))
+                .ReturnsAsync(resultGetAllEntities);
+
+            // Act
+            var result = await _service.GetFilteredLegalLandfillPointCloudFiles(selectedIds);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Error retrieving filtered data", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task ConvertToPointCloud_CreatesDirectory_WhenItDoesNotExist()
+        {
+            // Arrange
+            var potreeConverterFilePath = "path/to/potreeConverter";
+            var uploadResultData = "upload/result/data";
+            var convertsFolder = "path/to/converts"; // This folder should not exist initially
+            var filePath = "path/to/file";
+
+            // Ensure the directory does not exist before the test
+            if (Directory.Exists(convertsFolder))
+            {
+                Directory.Delete(convertsFolder, true);
+            }
+
+            // Act
+            var result = await _service.ConvertToPointCloud(potreeConverterFilePath, uploadResultData, convertsFolder, filePath);
+
+            // Assert
+            Assert.True(Directory.Exists(convertsFolder), "Expected directory to be created.");
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromUploads_ShouldFail_WhenFilePathIsNull()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { FilePath = null };
+
+            // Act
+            var result = await _service.DeleteFilesFromUploads(dto, "webRootPath");
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("File path is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromUploads_ReturnsFail_WhenMainFileDoesNotExist()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO
+            {
+                Id = Guid.NewGuid(),
+                FilePath = "uploads",
+                FileName = "file.txt"
+            };
+
+            string webRootPath = "path/to/webroot";
+
+            // Create the directory without the file to simulate the scenario
+            Directory.CreateDirectory(Path.Combine(webRootPath, dto.FilePath));
+
+            // Act
+            var result = await _service.DeleteFilesFromUploads(dto, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains($"File '{Path.Combine(webRootPath, dto.FilePath, dto.Id + Path.GetExtension(dto.FileName))}' does not exist.", result.ErrMsg);
+
+            // Cleanup
+            Directory.Delete(Path.Combine(webRootPath, dto.FilePath));
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromUploads_ReturnsFail_WhenTiffFileDoesNotExist()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO
+            {
+                Id = Guid.NewGuid(),
+                FilePath = "uploads",
+                FileName = "file.txt"
+            };
+
+            string webRootPath = "path/to/webroot";
+            Directory.CreateDirectory(Path.Combine(webRootPath, dto.FilePath));
+
+            string mainFilePath = Path.Combine(webRootPath, dto.FilePath, dto.Id + Path.GetExtension(dto.FileName));
+
+            using (var fs = File.Create(mainFilePath)) { }
+
+            // Act
+            var result = await _service.DeleteFilesFromUploads(dto, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+
+            Assert.Contains($"File '{Path.Combine(webRootPath, dto.FilePath, dto.Id + "_dsm.tif")}' does not exist.", result.ErrMsg);
+
+            File.Delete(mainFilePath);
+            Directory.Delete(Path.Combine(webRootPath, dto.FilePath));
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromUploads_ReturnsSuccess_WhenFilesAreDeleted()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO
+            {
+                Id = Guid.NewGuid(),
+                FilePath = "uploads",
+                FileName = "file.txt"
+            };
+
+            string webRootPath = "path/to/webroot";
+
+            Directory.CreateDirectory(Path.Combine(webRootPath, dto.FilePath));
+
+            string mainFilePath = Path.Combine(webRootPath, dto.FilePath, dto.Id + Path.GetExtension(dto.FileName));
+            string tiffFilePath = Path.Combine(webRootPath, dto.FilePath, dto.Id + "_dsm.tif");
+
+            using (var fs1 = File.Create(mainFilePath)) { } 
+            using (var fs2 = File.Create(tiffFilePath)) { }  
+
+            // Act
+            var result = await _service.DeleteFilesFromUploads(dto, webRootPath);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+
+            Assert.False(File.Exists(mainFilePath), "Main file should be deleted.");
+            Assert.False(File.Exists(tiffFilePath), "TIF file should be deleted.");
+            Assert.False(Directory.Exists(Path.Combine(webRootPath, dto.FilePath)), "Directory should be deleted.");
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromConverts_ReturnsFail_WhenConvertFolderPathIsNull()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { LegalLandfillId = Guid.NewGuid(), Id = Guid.NewGuid() };
+            string webRootPath = "path/to/webroot";
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts"))
+                .ReturnsAsync(ResultDTO<string>.Ok(null));
+
+            // Act
+            var result = await _service.DeleteFilesFromConverts(dto, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Point cloud convert folder path is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromConverts_ReturnsFail_WhenConvertFolderRetrievalFails()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { LegalLandfillId = Guid.NewGuid(), Id = Guid.NewGuid() };
+            string webRootPath = "path/to/webroot";
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts"))
+                .ReturnsAsync(ResultDTO<string>.Fail("Failed to retrieve convert folder path"));
+
+            // Act
+            var result = await _service.DeleteFilesFromConverts(dto, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve convert folder path", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromConverts_ReturnsFail_WhenConvertedFileDirectoryDoesNotExist()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { LegalLandfillId = Guid.NewGuid(), Id = Guid.NewGuid() };
+            string webRootPath = "path/to/webroot";
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts"))
+                .ReturnsAsync(ResultDTO<string>.Ok("uploads/legal_landfill_uploads/point_cloud_converts"));
+
+            // Act
+            var result = await _service.DeleteFilesFromConverts(dto, webRootPath);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("directory does not exist and files were not deleted", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromConverts_ReturnsSuccess_WhenDirectoriesExistAndDeleted()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { LegalLandfillId = Guid.NewGuid(), Id = Guid.NewGuid() };
+            string webRootPath = "path/to/webroot";
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts"))
+                .ReturnsAsync(ResultDTO<string>.Ok("uploads/legal_landfill_uploads/point_cloud_converts"));
+
+            string currentFolderOfConvertedFilePath = Path.Combine(webRootPath, "uploads/legal_landfill_uploads/point_cloud_converts", dto.LegalLandfillId.ToString(), dto.Id.ToString());
+
+            Directory.CreateDirectory(currentFolderOfConvertedFilePath);
+            Directory.CreateDirectory(Path.Combine(webRootPath, "uploads/legal_landfill_uploads/point_cloud_converts", dto.LegalLandfillId.ToString()));
+
+            // Act
+            var result = await _service.DeleteFilesFromConverts(dto, webRootPath);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+
+            Assert.False(Directory.Exists(currentFolderOfConvertedFilePath), "Expected converted file directory to be deleted.");
+        }
+
+       
+
     }
 }

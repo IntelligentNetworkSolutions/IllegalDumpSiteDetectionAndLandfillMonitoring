@@ -23,7 +23,7 @@ namespace MainApp.MVC.Infrastructure.Register
         {
             services.TryAddScoped<IApplicationSettingsRepo, ApplicationSettingsRepository>();
             services.TryAddScoped<IUserManagementDa, UserManagementDa>();
-            services.TryAddScoped<IntranetPortalUsersTokenDa>();
+            services.TryAddScoped<IIntranetPortalUsersTokenDa, IntranetPortalUsersTokenDa>();
             services.TryAddScoped<IUserManagementService, UserManagementService>();
             services.TryAddScoped<IAuditLogsDa, AuditLogsDa>();
             services.TryAddScoped<IDatasetsRepository, DatasetsRepository>();
@@ -44,7 +44,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ILegalLandfillTruckRepository, LegalLandfillTruckRepository>();
             services.TryAddScoped<ILegalLandfillWasteImportRepository, LegalLandfillWasteImportRepository>();
             services.TryAddScoped<ILegalLandfillWasteTypeRepository, LegalLandfillWasteTypeRepository>();
-            services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();            
+            services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();
             services.TryAddScoped<IDetectionInputImageRepository, DetectionInputImageRepository>();
             services.TryAddScoped<ITrainingRunsRepository, TrainingRunsRepository>();
             services.TryAddScoped<ITrainedModelsRepository, TrainedModelsRepository>();

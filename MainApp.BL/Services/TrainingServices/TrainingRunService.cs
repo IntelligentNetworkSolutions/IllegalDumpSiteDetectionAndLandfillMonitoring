@@ -3,23 +3,19 @@ using CliWrap;
 using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories.TrainingRepositories;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Office2019.Presentation;
 using DTOs.MainApp.BL.DatasetDTOs;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
 using Entities.DatasetEntities;
-using Entities.DetectionEntities;
 using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
-using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SD;
 using SD.Enums;
-using System.Text;
+using SD.Helpers;
 
 namespace MainApp.BL.Services.TrainingServices
 {
@@ -73,7 +69,7 @@ namespace MainApp.BL.Services.TrainingServices
         {
             try
             {
-                ResultDTO<IEnumerable<TrainingRun>>? resultGetEntities =  await _trainingRunsRepository.GetAll(includeProperties: "CreatedBy,TrainedModel");
+                ResultDTO<IEnumerable<TrainingRun>>? resultGetEntities = await _trainingRunsRepository.GetAll(includeProperties: "CreatedBy,TrainedModel");
 
                 if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
                     return ResultDTO<List<TrainingRunDTO>>.Fail(resultGetEntities.ErrMsg!);
@@ -97,11 +93,12 @@ namespace MainApp.BL.Services.TrainingServices
             try
             {
                 //get base trained model
-                ResultDTO<TrainedModel?> getInsBestTrainedModelResult = await _trainedModelsRepository.GetByIdInclude(Guid.Parse("a83f2202-f919-4b79-a181-b2747219ed46"), track: false);
+                ResultDTO<TrainedModel?> getInsBestTrainedModelResult = 
+                    await _trainedModelsRepository.GetByIdInclude(inputTrainingRunDTO.TrainedModelId.Value, track: false);
                 if (getInsBestTrainedModelResult.IsSuccess == false)
                     return ResultDTO<TrainingRunDTO>.Fail(getInsBestTrainedModelResult.ErrMsg!);
                 if (getInsBestTrainedModelResult.Data == null)
-                    return ResultDTO<TrainingRunDTO>.Fail("Base model not found");
+                    return ResultDTO<TrainingRunDTO>.Fail($"Base model not found, for id: {inputTrainingRunDTO.TrainedModelId}");
 
                 inputTrainingRunDTO.BaseModelId = getInsBestTrainedModelResult.Data.Id;
 
@@ -124,7 +121,7 @@ namespace MainApp.BL.Services.TrainingServices
                 TrainingRunDTO? outputTrainingRunDTO = _mapper.Map<TrainingRunDTO>(createTrainingRunResult.Data);
                 if (outputTrainingRunDTO == null)
                     return ResultDTO<TrainingRunDTO>.Fail("Mapping failed");
-                
+
                 outputTrainingRunDTO.BaseModel = trainedModelDTO;
 
                 return ResultDTO<TrainingRunDTO>.Ok(outputTrainingRunDTO);
@@ -190,8 +187,8 @@ namespace MainApp.BL.Services.TrainingServices
                 return ResultDTO<Guid>.ExceptionFail(ex.Message, ex);
             }
         }
-        
-        public async Task<ResultDTO> UpdateTrainingRunEntity(Guid trainingRunId, Guid? trainedModelId = null, string? status = null, bool? isCompleted = null)
+
+        public async Task<ResultDTO> UpdateTrainingRunEntity(Guid trainingRunId, Guid? trainedModelId = null, string? status = null, bool? isCompleted = null, string? name = null)
         {
             try
             {
@@ -214,6 +211,10 @@ namespace MainApp.BL.Services.TrainingServices
                 {
                     resultGetEntity.Data.IsCompleted = true;
                 }
+                if (name != null)
+                {
+                    resultGetEntity.Data.Name = name;
+                }
 
                 ResultDTO updateRunResult = await _trainingRunsRepository.Update(resultGetEntity.Data);
                 if (updateRunResult.IsSuccess == false && updateRunResult.HandleError())
@@ -226,7 +227,7 @@ namespace MainApp.BL.Services.TrainingServices
                 _logger.LogError(ex.Message, ex);
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
-                        
+
         }
 
         private string GeneratePythonTrainingCommandByRunId(Guid trainingRunId)
@@ -236,16 +237,24 @@ namespace MainApp.BL.Services.TrainingServices
                 string detectionCommandStr = string.Empty;
 
                 string scriptName = Path.Combine("tools", "train.py");
-                string scriptFileAbsPath = Path.Combine(_MMDetectionConfiguration.GetRootDirAbsPath(), scriptName);
+                string scriptFileAbsPath =
+                    CommonHelper.PathToLinuxRegexSlashReplace(
+                        Path.Combine(_MMDetectionConfiguration.GetRootDirAbsPath(), scriptName));
                 // TODO: Update Script with INS script
                 //string scriptFileAbsPath = Path.Combine(_MMDetectionConfiguration.GetScriptsDirAbsPath(), scriptName);
 
-                string trainingConfigDirAbsPath = Path.Combine(_MMDetectionConfiguration.GetConfigsDirAbsPath(), trainingRunId.ToString());
-                string trainingConfigFileAbsPath = Path.Combine(trainingConfigDirAbsPath, $"{trainingRunId}.py");
+                string trainingConfigDirAbsPath =
+                    CommonHelper.PathToLinuxRegexSlashReplace(
+                        Path.Combine(_MMDetectionConfiguration.GetConfigsDirAbsPath(), trainingRunId.ToString()));
+                string trainingConfigFileAbsPath =
+                    CommonHelper.PathToLinuxRegexSlashReplace(
+                        Path.Combine(trainingConfigDirAbsPath, $"{trainingRunId}.py"));
 
                 // Save/Output Directory
                 string workDirCommandParamStr = "--work-dir";
-                string workDirAbsPath = Path.Combine(_MMDetectionConfiguration.GetTrainingRunsBaseOutDirAbsPath(), trainingRunId.ToString());
+                string workDirAbsPath = 
+                    CommonHelper.PathToLinuxRegexSlashReplace(
+                        Path.Combine(_MMDetectionConfiguration.GetTrainingRunsBaseOutDirAbsPath(), trainingRunId.ToString()));
 
                 string openmmlabPath = _MMDetectionConfiguration.GetOpenMMLabAbsPath();
 
@@ -308,7 +317,7 @@ namespace MainApp.BL.Services.TrainingServices
                 return ResultDTO<string>.Fail("TrainingRunStartParams must have a Training Run Id");
 
             Dataset? dataset = _mapper.Map<Dataset>(datasetDTO);
-            if(dataset == null)
+            if (dataset == null)
                 return ResultDTO<string>.Fail("Mapping failed");
 
             TrainedModel? baseTrainedModel = _mapper.Map<TrainedModel>(baseTrainedModelDTO);
@@ -455,7 +464,7 @@ namespace MainApp.BL.Services.TrainingServices
                 return ResultDTO<TrainingRunResultsDTO>.ExceptionFail(ex.Message, ex);
             }
         }
-       
+
         // TODO: Implement, maybe one retry Clean up files regardless of outcome, someday
         public async Task<ResultDTO> CleanUpTrainingRunFiles()
         {
@@ -474,7 +483,7 @@ namespace MainApp.BL.Services.TrainingServices
             try
             {
                 //get training run entity
-                ResultDTO<TrainingRun?> resultGetEntity = await _trainingRunsRepository.GetById(trainingRunId, includeProperties:"TrainedModel");
+                ResultDTO<TrainingRun?> resultGetEntity = await _trainingRunsRepository.GetById(trainingRunId, includeProperties: "TrainedModel");
                 if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
                     return ResultDTO.Fail(resultGetEntity.ErrMsg!);
 
@@ -601,11 +610,23 @@ namespace MainApp.BL.Services.TrainingServices
                     return ResultDTO.Fail(resultGetTrainedModel.ErrMsg!);
                 if (resultGetTrainedModel.Data == null)
                     return ResultDTO.Fail("Training model not found");
+                
+                //get all training runs
+                ResultDTO<IEnumerable<TrainingRun>> resultGetAllTrainingRuns = await _trainingRunsRepository.GetAll();
+                if (!resultGetAllTrainingRuns.IsSuccess && resultGetAllTrainingRuns.HandleError())
+                    return ResultDTO.Fail(resultGetAllTrainingRuns.ErrMsg!);
+                if (resultGetAllTrainingRuns.Data == null)
+                    return ResultDTO.Fail("Training runs not found");
 
-                //detele trained model from db
-                ResultDTO resultDeleteTrainedModel = await _trainedModelsRepository.Delete(resultGetTrainedModel.Data);
-                if (!resultDeleteTrainedModel.IsSuccess && resultDeleteTrainedModel.HandleError())
-                    return ResultDTO.Fail(resultDeleteTrainedModel.ErrMsg!);
+                //all trained model ids from training runs
+                var trainingModelIdsList = resultGetAllTrainingRuns.Data.Select(x => x.TrainedModelId).ToList();
+                if (!trainingModelIdsList.Contains(resultGetTrainedModel.Data.Id))
+                {
+                    //detele trained model from db if it is not contained in other training runs
+                    ResultDTO resultDeleteTrainedModel = await _trainedModelsRepository.Delete(resultGetTrainedModel.Data);
+                    if (!resultDeleteTrainedModel.IsSuccess && resultDeleteTrainedModel.HandleError())
+                        return ResultDTO.Fail(resultDeleteTrainedModel.ErrMsg!);
+                } 
 
                 //delete training run from db
                 TrainingRun trainingRun = _mapper.Map<TrainingRun>(resultGetEntity.Data);

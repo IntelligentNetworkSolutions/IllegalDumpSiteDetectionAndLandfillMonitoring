@@ -4,10 +4,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using SD;
+using SD.Helpers;
 
 public class MMDetectionConfigurationService : IMMDetectionConfigurationService
 {
-    MMDetectionConfiguration _MMDetectionConfiguration;
+    private readonly MMDetectionConfiguration _MMDetectionConfiguration;
     private readonly IConfiguration _configuration;
 
     public MMDetectionConfigurationService(IConfiguration configuration)
@@ -42,41 +43,51 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
         => _MMDetectionConfiguration;
 
     public string GetRootDirAbsPath()
-        => _MMDetectionConfiguration.Base.RootDirAbsPath;
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            _MMDetectionConfiguration.Base.RootDirAbsPath);
 
     public string GetOpenMMLabAbsPath()
-        => _MMDetectionConfiguration.Base.OpenMMLabAbsPath;    
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            _MMDetectionConfiguration.Base.OpenMMLabAbsPath);    
 
     public string GetCondaExeAbsPath()
-        => _MMDetectionConfiguration.Base.CondaExeAbsPath;
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            _MMDetectionConfiguration.Base.CondaExeAbsPath);
 
     public string GetScriptsDirAbsPath()
-        => Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Base.ScriptsDirRelPath);
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Base.ScriptsDirRelPath));
 
 
     public string GetBackboneCheckpointAbsPath()
-        => _MMDetectionConfiguration.Training.BackboneCheckpointAbsPath;
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            _MMDetectionConfiguration.Training.BackboneCheckpointAbsPath);
 
     public string GetDatasetsDirAbsPath()
-        => Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Training.DatasetsDirRelPath);
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Training.DatasetsDirRelPath));
 
     public string GetTrainingRunDatasetDirAbsPath(Guid trainingRunId)
-        => Path.Combine(GetDatasetsDirAbsPath(), trainingRunId.ToString());
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(GetDatasetsDirAbsPath(), trainingRunId.ToString()));
 
     public string GetConfigsDirAbsPath()
-        => Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Training.ConfigsDirRelPath);
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Training.ConfigsDirRelPath));
 
     public string GetTrainingRunConfigDirAbsPathByRunId(Guid trainingRunId)
-        => Path.Combine(GetConfigsDirAbsPath(), trainingRunId.ToString());
+        => CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(GetConfigsDirAbsPath(), trainingRunId.ToString()));
 
     public string GetTrainingRunConfigFileAbsPathByRunId(Guid trainingRunId)
-        => Path.Combine(GetTrainingRunConfigDirAbsPathByRunId(trainingRunId), $"{trainingRunId}.py");
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(GetTrainingRunConfigDirAbsPathByRunId(trainingRunId), $"{trainingRunId}.py"));
 
     public string GetTrainingRunsBaseOutDirAbsPath()
-        => Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Training.OutputDirRelPath);
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Training.OutputDirRelPath));
 
     public string GetTrainingRunOutDirAbsPathByRunId(Guid trainingRunId)
-        => Path.Combine(GetTrainingRunsBaseOutDirAbsPath(), trainingRunId.ToString());
+        => CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(GetTrainingRunsBaseOutDirAbsPath(), trainingRunId.ToString()));
 
     public ResultDTO<string> GetTrainingRunResultLogFileAbsPath(Guid trainingRunId)
     {
@@ -104,6 +115,8 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
         if (string.IsNullOrEmpty(resultLogFile))
             return ResultDTO<string>.Fail($"No Result Log File found in Training Run Output vis_data Directory, no file named scalars.json");
 
+        resultLogFile = CommonHelper.PathToLinuxRegexSlashReplace(resultLogFile);
+
         return ResultDTO<string>.Ok(resultLogFile);
     }
 
@@ -125,6 +138,8 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
             return ResultDTO<string>.Fail($"No Trained Model Config File found in Training Run Output Directory, no file named {trainingRunId}.py");
         if (File.Exists(configFile) == false)
             return ResultDTO<string>.Fail("Failed to Access Trained Model Config File found in Training Run Output Directory, No Permissions or File does Not Exist");
+
+        configFile = CommonHelper.PathToLinuxRegexSlashReplace(configFile);
 
         return ResultDTO<string>.Ok(configFile);
     }
@@ -164,22 +179,29 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
         if (File.Exists(bestEpoch) == false)
             return ResultDTO<string>.Fail("Failed to Access Epoch File found in Training Run Output Directory, No Permissions or File does Not Exist");
 
+        bestEpoch = CommonHelper.PathToLinuxRegexSlashReplace(bestEpoch);
+
         return ResultDTO<string>.Ok(bestEpoch);
     }
 
     public string GetTrainingRunCliOutDirAbsPath()
-        => _MMDetectionConfiguration.Training.CliLogsAbsPath;
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            _MMDetectionConfiguration.Training.CliLogsAbsPath);
 
 
     public string GetDetectionRunOutputDirAbsPath()
-        => Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Detection.OutputDirRelPath);
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(_MMDetectionConfiguration.Base.RootDirAbsPath, _MMDetectionConfiguration.Detection.OutputDirRelPath));
 
     public string GetDetectionRunOutputDirAbsPathByRunId(Guid detectionRunId)
-        => Path.Combine(GetDetectionRunOutputDirAbsPath(), detectionRunId.ToString());
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(GetDetectionRunOutputDirAbsPath(), detectionRunId.ToString()));
 
     public string GetDetectionRunOutputAnnotationsFileAbsPathByRunId(Guid detectionRunId)
-        => Path.Combine(GetDetectionRunOutputDirAbsPathByRunId(detectionRunId), "detection_bboxes.json");
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            Path.Combine(GetDetectionRunOutputDirAbsPathByRunId(detectionRunId), "detection_bboxes.json"));
 
     public string GetDetectionRunCliOutDirAbsPath()
-        => _MMDetectionConfiguration.Detection.CliLogsAbsPath;
+        => CommonHelper.PathToLinuxRegexSlashReplace(
+            _MMDetectionConfiguration.Detection.CliLogsAbsPath);
 }

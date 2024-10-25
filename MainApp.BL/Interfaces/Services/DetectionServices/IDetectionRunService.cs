@@ -10,7 +10,7 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
         Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRuns();
         Task<ResultDTO<List<DetectionRunDTO>>> GetAllDetectionRunsIncludingDetectedDumpSites();
         Task<ResultDTO<List<DetectionRunDTO>>> GetSelectedDetectionRunsIncludingDetectedDumpSites(List<Guid> selectedDetectionRunsIds, List<ConfidenceRateDTO> selectedConfidenceRates);
-        Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds);
+        Task<ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds, int selectedConfidenceRate);
         Task<ResultDTO<DetectionRunDTO>> GetDetectionRunById(Guid id, bool track = false);
         Task<ResultDTO> DeleteDetectionRun(DetectionRunDTO detectionRunDTO);
         Task<ResultDTO> CreateDetectionRun(DetectionRunDTO detectionRunDTO);

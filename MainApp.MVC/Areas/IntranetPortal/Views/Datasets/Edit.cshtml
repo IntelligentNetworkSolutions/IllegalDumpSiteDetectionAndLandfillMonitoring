@@ -43,10 +43,21 @@
                         <div class="card-tools">
                             @if (User.HasAuthClaim(SD.AuthClaims.AddDatasetClass))
                             {
-                                <button class="btn btn-sm btn-outline-primary"
-                                        data-toggle="modal" data-target="#addNewDatasetClassModal">
-                                    @DbResHtml.T("Add Class", "Resources")
-                                </button>
+                                if (Model.CurrentDataset.IsPublished)
+                                {
+                                     <button class="btn btn-sm btn-outline-primary"
+                                            disabled>
+                                        @DbResHtml.T("Add Class", "Resources")
+                                    </button>                                    
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            data-toggle="modal" data-target="#addNewDatasetClassModal">
+                                        @DbResHtml.T("Add Class", "Resources")
+                                    </button>
+                                }
+
                             }
                             <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
                                 <i class="fas fa-minus"></i>
@@ -82,7 +93,14 @@
                             {
                                 @if (User.HasAuthClaim(SD.AuthClaims.ChooseDatasetClassType))
                                 {
+                                    if (Model.CurrentDataset.IsPublished)
+                                    {
+                                        <button class="mt-3 mr-3 float-right btn btn-sm bg-gradient-primary" disabled>@DbResHtml.T("Choose Class Type", "Resources")</button>
+                                    }
+                                    else
+                                    {
                                     <button class="mt-3 mr-3 float-right btn btn-sm bg-gradient-primary" data-toggle="modal" data-target="#chooseDatasetClassTypeModal">@DbResHtml.T("Choose Class Type", "Resources")</button>
+                                    }
                                 }
                             }
                             else
@@ -117,9 +135,15 @@
                                                 <td class="text-right py-0 align-middle">
                                                     @if (User.HasAuthClaim(SD.AuthClaims.DeleteDatasetClass))
                                                     {
+                                                        if (Model.CurrentDataset.IsPublished)
+                                                        {
+                                                        }
+                                                        else
+                                                        {
                                                         <div class="btn-group btn-group-sm">
                                                             <a class="btn btn-outline-danger" data-toggle="modal" data-target="#deleteDatasetClassModal_@item.Id" title="@DbResHtml.T("Delete Class", "Resources")"><i class="fas fa-trash"></i></a>
                                                         </div>
+                                                        }
                                                     }
                                                 </td>
                                             </tr>
@@ -134,10 +158,24 @@
                 </div>
                 @if (User.HasAuthClaim(SD.AuthClaims.AddDatasetImage))
                 {
+                    if (Model.CurrentDataset.IsPublished)
+                    {
+                        <button type="submit" class="btn btn-success btn-block mb-3 sticky-top" disabled>
+                            <span>@DbResHtml.T("Add new dataset image", "Resources")</span>
+                            <i class="fas fa-image ml-1"></i>
+                        </button>
+                    }
+                    else{
                     <button type="submit" class="btn btn-success btn-block mb-3 sticky-top" data-toggle="modal" data-target="#addNewDatasetImageModal">
                         <span>@DbResHtml.T("Add new dataset image", "Resources")</span>
                         <i class="fas fa-image ml-1"></i>
                     </button>
+                        <button type="button" class="btn btn-success btn-block mb-3 sticky-top" onclick="enableAllImagesConfirmed('@Model.CurrentDataset.Id')">
+                            <span>@DbResHtml.T("Enable all dataset images", "Resources")</span>
+                            <i class="fas fa-image ml-1"></i>
+                        </button>
+
+                    }
                 }
                 <!-- General Statistics -->
                 <div class="card card-light">
@@ -208,10 +246,20 @@
                 <!-- Publish Btn -->
                 @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
                 {
+                    if (Model.CurrentDataset.IsPublished)
+                    {
+                    <button class="btn btn-outline-primary btn-block" disabled>
+                        @DbResHtml.T("Publish Dataset", "Resources")
+                        <i class=" mx-1 fas fa-upload"></i>
+                    </button>                        
+                    }
+                    else
+                    {
                     <button class="btn btn-outline-primary btn-block" data-toggle="modal" data-target="#publishDatasetModal">
                         @DbResHtml.T("Publish Dataset", "Resources")
                         <i class=" mx-1 fas fa-upload"></i>
                     </button>
+                    }
                 }
                 <!-- Export Btn TODO: Change Auth Claim-->
 @*                 @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
@@ -337,9 +385,19 @@
                                         <h5 class="text-center text-white d-inline pl-3">@item.Name</h5>
                                         @if (User.HasAuthClaim(SD.AuthClaims.DeleteDatasetImage))
                                         {
-                                            <button onclick="deleteDatasetImage('@item.Id','@item.FileName')" type="button" class="close text-white float-right" aria-label="Close">
-                                                <span aria-hidden="true" class="pr-1">&times;</span>
-                                            </button>
+                                            if (Model.CurrentDataset.IsPublished)
+                                            {
+                                                <button type="button" class="close text-white float-right" aria-label="Close" disabled>
+                                                    <span aria-hidden="true" readonly class="pr-1">&times;</span>
+                                                </button>
+
+                                            }
+                                            else
+                                            {
+                                                <button onclick="deleteDatasetImage('@item.Id','@item.FileName')" type="button" class="close text-white float-right" aria-label="Close">
+                                                    <span aria-hidden="true" class="pr-1">&times;</span>
+                                                </button>
+                                            }
                                         }
                                     </div>
                                     <div class="card-body border border-top-0 d-flex flex-column align-items-center @cardBodyClass">
@@ -347,11 +405,26 @@
                                             <img id="@item.Id" class="rounded" src="@Url.Content("~" + thumbPath)" />
                                             @if (User.HasAuthClaim(SD.AuthClaims.EditDatasetImage))
                                             {
-                                                <input id="@($"{item.Id}_editImage")" class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" data-toggle="modal" data-target="#editDatasetImageModal_@item.Id" />
+                                                if (Model.CurrentDataset.IsPublished)
+                                                {
+                                                    <input class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" disabled readonly/>
+                                                    
+                                                }
+                                                else
+                                                {
+                                                    <input id="@($"{item.Id}_editImage")" class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" data-toggle="modal" data-target="#editDatasetImageModal_@item.Id" />
+                                                }
                                             }
                                             @if (User.HasAuthClaim(SD.AuthClaims.EditDatasetImageAnnotations))
                                             {
-                                                <a id="@($"{item.Id}_editImageAnnotation")" href="@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = item.Id })" class="editAnnotation btn btn-xs bg-gradient-orange text-white">Edit annotations</a>
+                                                if (Model.CurrentDataset.IsPublished)
+                                                {
+                                                    <input class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" disabled readonly/>
+                                                }
+                                                else
+                                                {
+                                                    <a id="@($"{item.Id}_editImageAnnotation")" href="@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = item.Id })" class="editAnnotation btn btn-xs bg-gradient-orange text-white">Edit annotations</a>
+                                                }
                                             }
                                             <input type="hidden" id="annotationStatus_@item.Id" value="@isAnnotated" />
 
@@ -551,7 +624,7 @@
                         success: function (data) {
                             if (data.responseAnnotated) {
                                 Swal.fire({
-                                    text: data.responseError,
+                                    text: data.responseError.value,
                                     confirmButtonText: '@DbResHtml.T("Delete", "Resources")',
                                     cancelButtonText: '@DbResHtml.T("Cancel", "Resources")',
                                     showCancelButton: true,
@@ -979,20 +1052,25 @@
         }
 
         function startExport() {
-            const toggleAllImages = document.getElementById('toggleAllImages').checked; // "All Images" or "Enabled Images"
-            const asSplit = $('#splitDataset').is(':checked'); // "Export as Split Dataset"
+            const toggleAllImages = document.getElementById('toggleAllImages').checked;
+            const asSplit = $('#toggleExportStatus').is(':checked');
             let exportOption = '';
 
-            // If "All Images" is selected, get the image type (Annotated/Unannotated)
             if (toggleAllImages) {
-                const imageType = document.getElementById('imageTypeDropdown').value; // Get dropdown value (Annotated/Unannotated)
-                exportOption = imageType; // Set exportOption to either "AnnotatedImages" or "UnannotatedImages"
+                const imageType = document.getElementById('imageTypeDropdown').value;
+                exportOption = imageType;
             } else {
-                // If "Enabled Images" is selected, set exportOption to "EnabledImages"
                 exportOption = 'EnabledImages';
             }
 
             $('#exportModal').modal('hide');
+
+            Swal.fire({
+                icon: 'info',
+                text: 'Exporting dataset, please wait...',
+                allowOutsideClick: false,
+                showConfirmButton: false
+            });
 
             exportDatasetAnnotationsToCOCO(exportOption, asSplit);
         }
@@ -1008,17 +1086,24 @@
                     responseType: 'blob'
                 },
                 success: function (data, status, xhr) {
-                    const filename = xhr.getResponseHeader('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'dataset.zip';
-                    const blob = new Blob([data], { type: 'application/zip' });
+                    Swal.close(); 
 
+                    const contentDisposition = xhr.getResponseHeader('Content-Disposition');
+                    const downloadDisposition = xhr.getResponseHeader('Download-Disposition');
+                    const fileGuid = contentDisposition?.match(/[\w-]+\.zip/)?.[0] || '';
+                    const fileName = downloadDisposition || 'default-filename.zip';
+
+                    const blob = new Blob([data], { type: 'application/zip' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = filename;
+                    a.download = fileName;
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
+
+                    $.post('@Url.Action("CleanupTempFilesFromExportDataset", "Datasets", new { area = "IntranetPortal" })', { fileGuid: fileGuid });
 
                     Swal.fire({
                         text: 'Download initiated successfully!',
@@ -1027,6 +1112,8 @@
                     });
                 },
                 error: function (req, status, error) {
+                    Swal.close(); 
+
                     Swal.fire({
                         text: 'An error occurred while processing your request.',
                         icon: 'error',
@@ -1037,11 +1124,13 @@
         }
 
 
+
+
         function handleSwitchChange() {
-            var toggleAllImages = document.getElementById('toggleAllImages').checked;
-            var imageTypeDropdown = document.getElementById('imageTypeDropdown');
-            var allImagesLabel = document.getElementById('allImagesLabel');
-            var enabledImagesLabel = document.getElementById('enabledImagesLabel');
+            const toggleAllImages = document.getElementById('toggleAllImages').checked;
+            const imageTypeDropdown = document.getElementById('imageTypeDropdown');
+            const allImagesLabel = document.getElementById('allImagesLabel');
+            const enabledImagesLabel = document.getElementById('enabledImagesLabel');
 
             if (toggleAllImages) {
                 imageTypeDropdown.disabled = false;
@@ -1070,10 +1159,58 @@
                 toggleLabel.classList.remove('text-success');
             }
         }
+        function initializeExportOptions() {
+            const toggleAllImages = document.getElementById('toggleAllImages');
+            const imageTypeDropdown = document.getElementById('imageTypeDropdown');
+            const allImagesLabel = document.getElementById('allImagesLabel');
+            const enabledImagesLabel = document.getElementById('enabledImagesLabel');
 
+            toggleAllImages.checked = false;
+            imageTypeDropdown.disabled = true;
+            allImagesLabel.style.display = "none";
+            enabledImagesLabel.style.display = "inline";
+        }
 
-        handleSwitchChange();
+        $(document).ready(function () {
+            initializeExportOptions();
+                    handleSwitchChange();
         updateImageStatusLabels();
+        });
+
+        function enableAllImagesConfirmed(datasetId) {
+            $.ajax({
+                type: "POST",
+                url: '@Url.Action("EnableAllImages", "Datasets", new { area = "IntranetPortal" })', 
+                data: {
+                    datasetId: datasetId
+                },
+                success: function (data) {
+                    if (data.responseError) {
+                        Swal.fire({
+                            text: data.responseError.value,
+                            icon: "error"
+                        });
+                    } else {
+                        Swal.fire({
+                            text: data.responseSuccess.value,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            }
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: "An error occurred",
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+
     </script>
 }
 
@@ -1248,6 +1385,7 @@
         </div>
     </div>
 
+
     @foreach (var item in Model.ListOfDatasetImages)
     {
         <div class="modal" id="editDatasetImageModal_@item.Id" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
@@ -1340,26 +1478,25 @@
                 <div class="modal-body">
                     <form id="exportConfigForm">
                         <h5 class="mb-4">Export options for dataset</h5>
-
-                        <div class="form-group row mb-3">
-                            <label class="col-12 col-md-4 col-form-label">Export Option</label>
-                            <div class="col-12 col-md-8 d-flex justify-content-center align-items-center">
-                                <div class="custom-control custom-switch">
-                                    <input type="checkbox"
-                                           class="custom-control-input"
-                                           id="toggleAllImages"
-                                           onchange="handleSwitchChange()">
-                                    <label class="custom-control-label" for="toggleAllImages">
-                                        <span id="allImagesLabel">
-                                            <i class="fas fa-images"></i> All Images
-                                        </span>
-                                        <span id="enabledImagesLabel" style="display: none;">
-                                            <i class="fas fa-image"></i> Enabled Images
-                                        </span>
-                                    </label>
+                            <div class="form-group row mb-3">
+                                <label class="col-12 col-md-4 col-form-label">Export Option</label>
+                                <div class="col-12 col-md-8 d-flex justify-content-center align-items-center">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox"
+                                               class="custom-control-input"
+                                               id="toggleAllImages"
+                                               onchange="handleSwitchChange()">
+                                        <label class="custom-control-label" for="toggleAllImages">
+                                            <span id="allImagesLabel" style="display: none;">
+                                                <i class="fas fa-images"></i> All Images
+                                            </span>
+                                            <span id="enabledImagesLabel">
+                                                <i class="fas fa-image"></i> Enabled Images
+                                            </span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         <div class="form-group row mb-3">
                             <label class="col-12 col-md-4 col-form-label">Image Type</label>
                             <div class="col-12 col-md-8">

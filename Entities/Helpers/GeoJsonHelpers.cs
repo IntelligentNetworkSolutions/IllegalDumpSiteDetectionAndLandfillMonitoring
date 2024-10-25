@@ -14,6 +14,9 @@ namespace Entities.Helpers
     {
         public static string GeometryToGeoJson(Geometry geom)
         {
+            if(geom == null) 
+                throw new ArgumentNullException(nameof(geom));
+
             string geoJson;
 
             var serializer = GeoJsonSerializer.Create();
@@ -24,14 +27,6 @@ namespace Entities.Helpers
                 geoJson = stringWriter.ToString();
             }
             return geoJson;
-        }
-
-        public static Geometry GeoJsonFeatureToGeometry(string geoJson)
-        {
-            GeoJsonReader reader = new GeoJsonReader();
-            Feature feature = reader.Read<Feature>(geoJson);
-            Geometry geometry = feature.Geometry;
-            return geometry;
         }
     }
 }

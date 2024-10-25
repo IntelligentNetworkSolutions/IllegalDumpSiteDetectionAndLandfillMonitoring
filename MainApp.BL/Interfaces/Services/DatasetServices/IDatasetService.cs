@@ -1,6 +1,5 @@
 ﻿using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using Entities.DatasetEntities;
 using SD;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
@@ -37,6 +36,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         #region Update
         Task<ResultDTO<int>> PublishDataset(Guid datasetId, string userId);
         Task<ResultDTO<int>> SetAnnotationsPerSubclass(Guid datasetId, bool annotationsPerSubclass, string userId);
+        Task<ResultDTO> EnableAllImagesInDataset(Guid datasetId);
         #endregion
 
         #region Delete

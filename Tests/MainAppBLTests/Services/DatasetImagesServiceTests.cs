@@ -323,7 +323,7 @@ namespace Tests.MainAppBLTests.Services
             var datasetImageId = Guid.NewGuid();
 
             _mockDatasetImagesRepository
-                .Setup(repo => repo.GetById(It.IsAny<Guid>(), false, null))
+                .Setup(repo => repo.GetById(It.IsAny<Guid>(), false, "ImageAnnotations"))
                 .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(new DatasetImage()));
 
             _mockDatasetImagesRepository
@@ -380,7 +380,7 @@ namespace Tests.MainAppBLTests.Services
             };
             //var includeProperties = "ImageAnnotations";
             _mockDatasetImagesRepository
-                .Setup(repo => repo.GetById(datasetImageId, false, null))
+                .Setup(repo => repo.GetById(datasetImageId, false, "ImageAnnotations"))
                 .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
 
             _mockImageAnnotationsRepository
@@ -411,7 +411,7 @@ namespace Tests.MainAppBLTests.Services
             };
 
             _mockDatasetImagesRepository
-                .Setup(repo => repo.GetById(datasetImageId, false, null))
+                .Setup(repo => repo.GetById(datasetImageId, false, "ImageAnnotations"))
                 .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
 
             _mockImageAnnotationsRepository

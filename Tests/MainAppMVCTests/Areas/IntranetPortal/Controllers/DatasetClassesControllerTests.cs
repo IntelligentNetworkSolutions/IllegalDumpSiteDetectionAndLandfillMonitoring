@@ -9,12 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using Newtonsoft.Json.Linq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -270,7 +265,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var result = await _controller.EditClass(model);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);            
+            var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
             Assert.Equal("Successfully updated dataset class", jsonData["responseSuccess"]["Value"].ToString());
         }
@@ -425,7 +420,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
         }
 
-        
+
         private void SetupUser(string userId)
         {
             var claims = new List<Claim>();
