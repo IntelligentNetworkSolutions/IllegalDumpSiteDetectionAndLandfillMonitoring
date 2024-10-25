@@ -1951,6 +1951,72 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("An error occurred", result.ErrMsg);
         }
 
+        [Fact]
+        public async Task GenerateThumbnailsForDatasetWithErrors_ReturnsFail_WhenThumbnailFolderCannotBeRetrieved()
+        {
+            // Arrange
+            string userId = "test-user-id";
+            var datasetId = Guid.NewGuid();
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }))
+                }
+            };
+
+            var datasetDb = new DatasetDTO { IsPublished = false };
+            _mockDatasetService.Setup(s => s.GetDatasetDTOFullyIncluded(datasetId, false))
+                               .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDb));
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
+                                    .ReturnsAsync(new ResultDTO<string>(false, null, "Error retrieving folder", null));
+
+            // Act
+            var result = await _controller.GenerateThumbnailsForDatasetWithErrors(datasetId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Could not retrieve thumbnail folder", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GenerateThumbnailsForDatasetWithErrors_AppendsError_WhenImageDoesNotExist()
+        {
+            // Arrange
+            string userId = "test-user-id";
+            var datasetId = Guid.NewGuid();
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }))
+                }
+            };
+
+            var datasetDb = new DatasetDTO { IsPublished = false };
+            _mockDatasetService.Setup(s => s.GetDatasetDTOFullyIncluded(datasetId, false))
+                               .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDb));
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
+                                    .ReturnsAsync(new ResultDTO<string>(true, "Thumbnails", null, null));
+
+            var imageId = Guid.NewGuid();
+            _mockDatasetImagesService.Setup(s => s.GetImagesForDataset(datasetId))
+                                     .ReturnsAsync(new List<DatasetImageDTO>
+                                     {
+                                 new DatasetImageDTO { Id = imageId, ImagePath = "/images/", FileName = "missing-image.jpg" }
+                                     });
+
+            _mockWebHostEnvironment.Setup(env => env.WebRootPath).Returns(Path.Combine("..", "..", "wwwroot"));
+
+            // Act
+            var result = await _controller.GenerateThumbnailsForDatasetWithErrors(datasetId);
+
+            // Assert
+            Assert.True(result.IsSuccess); // It should succeed but with errors logged
+            Assert.Contains("Thumbnails generated successfully \n with Errors: Image does not exist at path: /images/missing-image.jpg\r\n", result.Data.ToString());
+        }
 
     }
 }
