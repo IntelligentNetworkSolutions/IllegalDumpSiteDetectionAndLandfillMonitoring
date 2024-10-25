@@ -624,7 +624,7 @@
                         success: function (data) {
                             if (data.responseAnnotated) {
                                 Swal.fire({
-                                    text: data.responseError,
+                                    text: data.responseError.value,
                                     confirmButtonText: '@DbResHtml.T("Delete", "Resources")',
                                     cancelButtonText: '@DbResHtml.T("Cancel", "Resources")',
                                     showCancelButton: true,

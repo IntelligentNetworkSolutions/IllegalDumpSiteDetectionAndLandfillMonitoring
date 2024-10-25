@@ -1,14 +1,10 @@
-﻿using Azure;
-using DAL.Interfaces.Helpers;
+﻿using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using MainApp.MVC.Filters;
 using MainApp.MVC.Helpers;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SD;
-using System.Security.Policy;
 using System.Text;
-using Westwind.Globalization;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -49,7 +45,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 HttpResponseMessage responsePublicPortal = await client.GetAsync(translationClearCachePublicPortalUrl.Data);
 
                 var resultIntranetPortal = StringBuilderAppend(responseIntranetPortal, "Intranet portal");
-                if(resultIntranetPortal.StringBuilderSuccess != null)
+                if (resultIntranetPortal.StringBuilderSuccess != null)
                 {
                     stringBuilderSuccess.Append(resultIntranetPortal.StringBuilderSuccess);
                 }
@@ -57,7 +53,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 {
                     stringBuilderError.Append(resultIntranetPortal.StringBuilderError);
                 }
-                
+
                 var resultPublicPortal = StringBuilderAppend(responsePublicPortal, "Public portal");
                 if (resultPublicPortal.StringBuilderSuccess != null)
                 {
@@ -74,8 +70,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             catch (Exception ex)
             {
                 var generalError = $"An error occurred while resetting translation cache: {ex.Message}";
-                return Json(new {generalError = generalError});
-                
+                return Json(new { generalError = generalError });
+
             }
         }
 
@@ -100,6 +96,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             return result;
         }
-        
+
     }
 }
