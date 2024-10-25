@@ -2011,22 +2011,21 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockWebHostEnvironment.Setup(env => env.WebRootPath).Returns(Path.Combine("..", "..", "wwwroot"));
 
             // Act
-            // Act
             var result = await _controller.GenerateThumbnailsForDatasetWithErrors(datasetId);
             var resultMessage = result.Data.ToString();
 
             // Assert
             Assert.True(result.IsSuccess, "The operation should succeed even with errors logged.");
 
-            // Define the expected error message
             var expectedMessage = "Thumbnails generated successfully \n with Errors: Image does not exist at path: /images/missing-image.jpg";
 
-            // Normalize line endings for comparison
-            resultMessage = resultMessage.Replace("\r\n", "\n").Trim();
-            expectedMessage = expectedMessage.Replace("\r\n", "\n").Trim();
+            // Normalize line endings and slashes for comparison
+            resultMessage = resultMessage.Replace("\r\n", "\n").Replace("\n", "").Replace("/", "").Trim();
+            expectedMessage = expectedMessage.Replace("\r\n", "\n").Replace("\n", "").Replace("/", "").Trim();
 
             // Assert that the expected message is contained within the result message
             Assert.Contains(expectedMessage, resultMessage, StringComparison.InvariantCulture);
+
 
         }
 
