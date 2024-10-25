@@ -138,6 +138,50 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             await Assert.ThrowsAsync<Exception>(async () => await _controller.GetParentAndChildrenDatasets(datasetId));
         }
 
+        [Fact]
+        public async Task GetParentAndChildrenDatasets_ReturnsJsonResult_WhenCurrentDatasetIsNotNull()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var grandparentDataset = new DatasetDTO { Id = Guid.NewGuid(), Name = "Grandparent Dataset" };
+            var parentDataset = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = "Parent Dataset",
+                ParentDataset = grandparentDataset // Correctly set the parent dataset
+            };
+            var childDataset1 = new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 1", ParentDatasetId = datasetId };
+            var childDataset2 = new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 2", ParentDatasetId = datasetId };
+
+            _mockDatasetService.Setup(s => s.GetAllDatasets())
+                .ReturnsAsync(new List<DatasetDTO> { childDataset1, childDataset2 });
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId))
+                .ReturnsAsync(parentDataset);
+
+            // Act
+            var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
+            var data = JObject.FromObject(result.Value);
+
+            // Assert
+            Assert.NotNull(result);
+
+            // Check the parent dataset
+            var returnedParentDataset = data["parent"].ToObject<DatasetDTO>();
+            Assert.NotNull(returnedParentDataset);
+            Assert.Equal(grandparentDataset.Id, returnedParentDataset.Id); // Ensure the correct parent dataset is being checked
+            Assert.Equal(grandparentDataset.Name, returnedParentDataset.Name);
+
+            // Check children list
+            var childrenList = data["childrenList"].ToObject<List<DatasetDTO>>();
+            Assert.Equal(2, childrenList.Count());
+
+            // Check the current dataset
+            var returnedCurrentDataset = data["currentDataset"].ToObject<DatasetDTO>();
+            Assert.Equal(parentDataset.Id, returnedCurrentDataset.Id);
+            Assert.Equal(parentDataset.Name, returnedCurrentDataset.Name);
+        }
+
+
 
 
         [Fact]
@@ -720,6 +764,28 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Dataset class was not added", jsonData["responseError"]["Value"].ToString());
         }
 
+        [Fact]
+        public async Task AddDatasetClass_ThrowsException_WhenDatasetNotFound()
+        {
+            // Arrange
+            string userId = "test-user-id";
+            var datasetId = Guid.NewGuid();
+            var selectedClassId = Guid.NewGuid();
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }))
+                }
+            };
+
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _controller.AddDatasetClass(selectedClassId, datasetId));
+        }
+
 
         [Fact]
         public async Task ExportDataset_ReturnsJsonError_WhenExceptionOccurs()
@@ -787,6 +853,28 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
             Assert.Equal("User id is not valid", jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClass_ThrowsException_WhenDatasetNotFound()
+        {
+            // Arrange
+            string userId = "test-user-id";
+            var datasetId = Guid.NewGuid();
+            var datasetClassId = Guid.NewGuid();
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }))
+                }
+            };
+
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _controller.DeleteDatasetClass(datasetClassId, datasetId));
         }
 
         [Fact]
@@ -1098,6 +1186,28 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
+        public async Task GetAllDatasets_ThrowsException_WhenDatasetServiceReturnsNull()
+        {
+            // Arrange
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync((List<DatasetDTO>)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _controller.GetAllDatasets());
+        }
+
+
+        [Fact]
+        public async Task Index_ThrowsException_WhenModelMappingFails()
+        {
+            // Arrange
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(new List<DatasetDTO>());
+            _mockMapper.Setup(m => m.Map<List<DatasetViewModel>>(It.IsAny<List<DatasetDTO>>())).Returns((List<DatasetViewModel>)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _controller.Index());
+        }
+
+        [Fact]
         public async Task CreateConfirmed_ReturnsJsonError_WhenParentDatasetIsNotPublished()
         {
             // Arrange
@@ -1114,6 +1224,30 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonData = JObject.FromObject(result.Value);
             Assert.Equal("User id is not valid", jsonData["responseError"]["Value"].ToString());
         }
+
+        [Fact]
+        public async Task CreateConfirmed_ThrowsException_WhenDatasetCreationFails()
+        {
+            // Arrange
+            var datasetViewModel = new CreateDatasetViewModel { ParentDatasetId = null };
+            string userId = "test-user-id";
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }))
+                }
+            };
+
+            _mockDatasetService.Setup(s => s.GetDatasetById(It.IsAny<Guid>())).ReturnsAsync(new DatasetDTO { IsPublished = true });
+            _mockMapper.Setup(m => m.Map<DatasetDTO>(It.IsAny<CreateDatasetViewModel>())).Returns(new DatasetDTO());
+            _mockDatasetService.Setup(s => s.CreateDataset(It.IsAny<DatasetDTO>())).ReturnsAsync((DatasetDTO)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _controller.CreateConfirmed(datasetViewModel));
+        }
+
 
         // Check why model state error is not initiated
         //[Fact]
@@ -1723,6 +1857,98 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
             Assert.Equal("An error occurred while getting images", jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task GenerateThumbnailsForDatasetWithErrors_ReturnsFail_WhenUserIdIsInvalid()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid(); // Example dataset ID
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity()) // No UserId claim
+                }
+            };
+
+            // Act
+            var result = await _controller.GenerateThumbnailsForDatasetWithErrors(datasetId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("User id is not valid", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GenerateThumbnailsForDatasetWithErrors_ReturnsFail_WhenDatasetIdIsEmpty()
+        {
+            // Arrange
+            string userId = "test-user-id";
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }))
+                }
+            };
+
+            // Act
+            var result = await _controller.GenerateThumbnailsForDatasetWithErrors(Guid.Empty);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Invalid dataset id", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GenerateThumbnailsForDatasetWithErrors_ReturnsFail_WhenDatasetIsPublished()
+        {
+            // Arrange
+            string userId = "test-user-id";
+            var datasetId = Guid.NewGuid();
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }))
+                }
+            };
+
+            var datasetDb = new DatasetDTO { IsPublished = true };
+            _mockDatasetService.Setup(s => s.GetDatasetDTOFullyIncluded(datasetId, false))
+                               .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDb));
+
+            // Act
+            var result = await _controller.GenerateThumbnailsForDatasetWithErrors(datasetId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset is already published. No changes allowed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GenerateThumbnailsForDatasetWithErrors_ReturnsFail_WhenExceptionOccurs()
+        {
+            // Arrange
+            string userId = "test-user-id";
+            var datasetId = Guid.NewGuid();
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[] { new Claim("UserId", userId) }))
+                }
+            };
+
+            _mockDatasetService.Setup(s => s.GetDatasetDTOFullyIncluded(datasetId, false)).ThrowsAsync(new Exception("An error occurred"));
+
+            // Act
+            var result = await _controller.GenerateThumbnailsForDatasetWithErrors(datasetId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("An error occurred", result.ErrMsg);
         }
 
 
