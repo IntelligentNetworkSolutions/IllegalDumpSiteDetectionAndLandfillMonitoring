@@ -168,7 +168,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Check the parent dataset
             var returnedParentDataset = data["parent"].ToObject<DatasetDTO>();
             Assert.NotNull(returnedParentDataset);
-            Assert.Equal(grandparentDataset.Id, returnedParentDataset.Id); // Ensure the correct parent dataset is being checked
+            Assert.Equal(grandparentDataset.Id, returnedParentDataset.Id);
             Assert.Equal(grandparentDataset.Name, returnedParentDataset.Name);
 
             // Check children list
