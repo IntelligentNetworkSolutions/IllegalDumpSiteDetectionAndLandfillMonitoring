@@ -308,7 +308,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
 
         [HttpPost]
-        public IActionResult CleanupTempFilesFromExportDataset(string fileGuid)
+        public async Task<IActionResult> CleanupTempFilesFromExportDataset(string fileGuid)
         {
             var filePath = Path.Combine(Path.GetTempPath(), fileGuid);
             if (System.IO.File.Exists(filePath))
