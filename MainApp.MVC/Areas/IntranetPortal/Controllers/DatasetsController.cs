@@ -83,7 +83,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (currentDatasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
             List<DatasetDTO> allDatasetsDb = await _datasetService.GetAllDatasets() ?? throw new Exception("Object not found");
-            DatasetDTO currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId) ?? throw new Exception("Object not found");
+            DatasetDTO currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId) ?? throw new Exception(message: "Object not found");
             if (currentDatasetDb == null)
                 return Json(new { responseError = DbResHtml.T("Invalid current dataset", "Resources") });
 
@@ -308,7 +308,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
 
         [HttpPost]
-        public IActionResult CleanupTempFilesFromExportDataset(string fileGuid)
+        public async Task<IActionResult> CleanupTempFilesFromExportDataset(string fileGuid)
         {
             var filePath = Path.Combine(Path.GetTempPath(), fileGuid);
             if (System.IO.File.Exists(filePath))
