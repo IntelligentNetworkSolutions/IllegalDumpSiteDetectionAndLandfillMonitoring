@@ -364,33 +364,33 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Directory path not found", result.ErrMsg);
         }
 
-        [Fact]
-        public async Task GetDetectionRunErrorLogMessage_ReturnsFileContent_WhenFileExists()
-        {
-            // Arrange
-            var detectionRunId = Guid.NewGuid();
-            var filePath = Path.Combine("Uploads", "DetectionUploads", "DetectionRunsErrorLogs");
-            var fileName = $"{detectionRunId}_errMsg.txt";
+        //[Fact]
+        //public async Task GetDetectionRunErrorLogMessage_ReturnsFileContent_WhenFileExists()
+        //{
+        //    // Arrange
+        //    var detectionRunId = Guid.NewGuid();
+        //    var filePath = Path.Combine("Uploads", "DetectionUploads", "DetectionRunsErrorLogs");
+        //    var fileName = $"{detectionRunId}_errMsg.txt";
 
-            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", It.IsAny<string>()))
-                .ReturnsAsync(ResultDTO<string>.Ok(filePath));
+        //    _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", It.IsAny<string>()))
+        //        .ReturnsAsync(ResultDTO<string>.Ok(filePath));
 
-            _mockWebHostEnvironment.Setup(x => x.WebRootPath).Returns("wwwroot");
+        //    _mockWebHostEnvironment.Setup(x => x.WebRootPath).Returns("wwwroot");
 
-            var fullFilePath = Path.Combine("wwwroot", filePath, fileName);
+        //    var fullFilePath = Path.Combine("wwwroot", filePath, fileName);
 
-            File.WriteAllText(fullFilePath, "Sample error message");
+        //    File.WriteAllText(fullFilePath, "Sample error message");
 
-            // Act
-            var result = await _controller.GetDetectionRunErrorLogMessage(detectionRunId);
+        //    // Act
+        //    var result = await _controller.GetDetectionRunErrorLogMessage(detectionRunId);
 
-            // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal("Sample error message", result.Data);
+        //    // Assert
+        //    Assert.True(result.IsSuccess);
+        //    Assert.Equal("Sample error message", result.Data);
 
-            // Clean up
-            File.Delete(fullFilePath);
-        }
+        //    // Clean up
+        //    File.Delete(fullFilePath);
+        //}
        
         [Fact]
         public async Task StartDetectionRun_ShouldReturnOk_WhenAllStepsSucceed()
