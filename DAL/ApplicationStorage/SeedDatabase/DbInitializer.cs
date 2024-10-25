@@ -81,16 +81,16 @@ namespace DAL.ApplicationStorage.SeedDatabase
                                 {
                                     Console.WriteLine("MMDetectionSetup Started");
                                     var mm = new MMDetectionSetupService(_configuration, _db);
-                                    ResultDTO seedTrainedModelsResult = mm.GetAndSeedTrainedModelsFromSeedFile();
+                                    ResultDTO seedResult = mm.SeedMMDetection();
                                     
-                                    if (seedTrainedModelsResult.IsSuccess == false && seedTrainedModelsResult.ExObj is null)
-                                        Console.WriteLine(seedTrainedModelsResult.ErrMsg!);
-                                    else if (seedTrainedModelsResult.IsSuccess == false && seedTrainedModelsResult.ExObj is not null)
-                                        Console.WriteLine(((Exception)seedTrainedModelsResult.ExObj).InnerException is null
-                                            ? ((Exception)seedTrainedModelsResult.ExObj).Message
-                                            : ((Exception)seedTrainedModelsResult.ExObj).InnerException!.Message);
+                                    if (seedResult.IsSuccess == false && seedResult.ExObj is null)
+                                        Console.WriteLine(seedResult.ErrMsg!);
+                                    else if (seedResult.IsSuccess == false && seedResult.ExObj is not null)
+                                        Console.WriteLine(((Exception)seedResult.ExObj).InnerException is null
+                                            ? ((Exception)seedResult.ExObj).Message
+                                            : ((Exception)seedResult.ExObj).InnerException!.Message);
                                     else
-                                        Console.WriteLine("SUCCESSFULL Seed of TrainedModels");
+                                        Console.WriteLine("SUCCESSFULL Seed of MMDetection Setup Resources");
 
                                     Console.WriteLine("MMDetectionSetup Ended");
                                     break;

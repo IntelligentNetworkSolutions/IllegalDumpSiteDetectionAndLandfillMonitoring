@@ -1,8 +1,8 @@
 {
-  "Scripts": [
+  "CopyScripts": [
     {
-      "ScriptFileName": "large_image_annotated_inference.py",
-      "ScriptPath": "../ins_development/scripts/large_image_annotated_inference.py"
+      "Name": "large_image_annotated_inference",
+      "FileUrl": "https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/seed_mmdetection/ins_development/scripts/large_image_annotated_inference.py"
     }
   ],
   "Training": {
