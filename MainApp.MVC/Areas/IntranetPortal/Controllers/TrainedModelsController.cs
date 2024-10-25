@@ -60,6 +60,21 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return View(vmList);
         }
 
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
+        public async Task<ResultDTO<List<TrainedModelDTO>>> GetAllTrainedModels()
+        {
+            ResultDTO<List<TrainedModelDTO>> resultDtoList = await _trainedModelService.GetAllTrainedModels();
+
+            if (resultDtoList.IsSuccess == false && resultDtoList.HandleError())
+                return ResultDTO<List<TrainedModelDTO>>.Fail(resultDtoList.ErrMsg!);
+
+            if (resultDtoList.Data == null)
+                return ResultDTO<List<TrainedModelDTO>>.Fail("Trained models are not found");
+
+            return ResultDTO<List<TrainedModelDTO>>.Ok(resultDtoList.Data);
+        }
+
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
         public async Task<ResultDTO<TrainedModelDTO>> GetTrainedModelById(Guid trainedModelId)

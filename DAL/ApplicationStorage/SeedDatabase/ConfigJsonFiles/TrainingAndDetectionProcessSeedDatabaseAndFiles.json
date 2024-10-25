@@ -1,0 +1,31 @@
+{
+  "Scripts": [
+    {
+      "ScriptFileName": "large_image_annotated_inference.py",
+      "ScriptPath": "../ins_development/scripts/large_image_annotated_inference.py"
+    }
+  ],
+  "Training": {
+    "InitialBaseModels": [
+      {
+        "Name": "ResNet101COCOx1",
+        "ConfigDownloadUrl": "https://huggingface.co/INS-IntelligentNetworkSolutions/waste-detection-faster_rcnn-mmdetection/resolve/main/faster_rcnn_resnet101_1xcoco-default-mmdetection-config.py?download=true",
+        "ModelFile": "https://huggingface.co/INS-IntelligentNetworkSolutions/waste-detection-faster_rcnn-mmdetection/resolve/main/faster_rcnn_r101_fpn_1x_coco_mmdetection.pth?download=true"
+      },
+      {
+        "Name": "INSWasteDetection",
+        "ConfigDownloadUrl": "https://huggingface.co/INS-IntelligentNetworkSolutions/waste-detection-faster_rcnn-mmdetection/resolve/main/ins-waste-detection-faster_rcnn_1xcoco-mmdetection-config.py?download=true",
+        "ModelFile": "https://huggingface.co/INS-IntelligentNetworkSolutions/waste-detection-faster_rcnn-mmdetection/resolve/main/ins-waste-detection-faster_rcnn_1xcoco-mmdetection.pth?download=true"
+
+      }
+    ]
+  },
+  "Detection": {
+    "DetectionInputImage": [
+      {
+        "Name": "",
+        "ImageFileUrl": ""
+      }
+    ]
+  }
+}

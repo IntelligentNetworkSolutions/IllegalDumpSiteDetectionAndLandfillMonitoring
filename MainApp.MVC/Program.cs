@@ -312,10 +312,10 @@ app.Use(async (context, next) =>
     await next();
 });
 
-var seed = args.Contains("/seed");
-var runMigrations = args.Contains("/runMigrations");
-var loadModules = args.Contains("/loadModules");
-var modulesToLoad = args.Where(x => x.StartsWith("/module:")).ToList();
+bool seed = args.Contains("/seed");
+bool runMigrations = args.Contains("/runMigrations");
+bool loadModules = args.Contains("/loadModules");
+List<string> modulesToLoad = args.Where(x => x.StartsWith("/module:")).ToList();
 if (seed)
 {
     SeedDatabase(runMigrations, loadModules, modulesToLoad);
@@ -353,20 +353,24 @@ app.Run();
 
 void SeedDatabase(bool? runMigrations, bool? loadModules, List<string> modulesToLoad)
 {
-    using (var scope = app.Services.CreateScope())
+
+    Console.WriteLine(modulesToLoad.Count);
+    Console.WriteLine(modulesToLoad.ElementAt(0));
+
+    using (IServiceScope scope = app.Services.CreateScope())
     {
-        var services = scope.ServiceProvider;
-        var logger = services.GetRequiredService<ILogger<Program>>();
+        IServiceProvider services = scope.ServiceProvider;
+        ILogger<Program> logger = services.GetRequiredService<ILogger<Program>>();
         try
         {
             logger.LogInformation("Seeding database...");
-            var dbInitializer = services.GetRequiredService<IDbInitializer>();
+            IDbInitializer dbInitializer = services.GetRequiredService<IDbInitializer>();
+            Console.WriteLine("Initialize Called");
             dbInitializer.Initialize(runMigrations, loadModules, modulesToLoad);
             logger.LogInformation("Done seeding database.");
         }
         catch (Exception ex)
         {
-            
             logger.LogError(ex, "An error occurred while seeding the database.");
         }
     }
