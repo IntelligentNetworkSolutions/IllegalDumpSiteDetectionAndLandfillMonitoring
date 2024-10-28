@@ -625,7 +625,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
         }
 
-        private async Task<ResultDTO<string>> GenerateThumbnailsForDatasetWithErrors(Guid datasetId)
+        public async Task<ResultDTO<string>> GenerateThumbnailsForDatasetWithErrors(Guid datasetId)
         {
             string? userId = User.FindFirstValue("UserId");
             if (string.IsNullOrEmpty(userId))
