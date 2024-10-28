@@ -32,6 +32,9 @@
     <None Update="ApplicationStorage\SeedDatabase\ConfigJsonFiles\applicationSettingsSeedDatabase.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="ApplicationStorage\SeedDatabase\ConfigJsonFiles\TrainingAndDetectionProcessSeedDatabaseAndFiles.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="ApplicationStorage\SeedDatabase\ConfigJsonFiles\usersSeedDatabase.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
