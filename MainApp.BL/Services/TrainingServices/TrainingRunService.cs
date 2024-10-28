@@ -209,7 +209,7 @@ namespace MainApp.BL.Services.TrainingServices
                 }
                 if (isCompleted != null)
                 {
-                    resultGetEntity.Data.IsCompleted = true;
+                    resultGetEntity.Data.IsCompleted = isCompleted.Value;
                 }
                 if (name != null)
                 {

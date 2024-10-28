@@ -58,18 +58,21 @@ namespace DAL.ApplicationStorage.SeedDatabase
                     }
                 }
 
-                //Seed application settings 
+                // Seed Application Settings 
                 Console.WriteLine("SeedApplicationSettings Started");
                 SeedApplicationSettings();
                 Console.WriteLine("SeedApplicationSettings Ended");
-                //Seed roles
+                
+                // Seed Roles
                 Console.WriteLine("SeedRoles Started");
                 SeedRoles();
                 Console.WriteLine("SeedRoles Ended");
-                //Seed users
+                
+                // Seed Users
                 Console.WriteLine("SeedUsers Started");
                 SeedUsers();
                 Console.WriteLine("SeedUsers Ended");
+
                 //TODO: load modules logic
                 if (loadModules.HasValue && loadModules.Value)
                 {
@@ -104,6 +107,7 @@ namespace DAL.ApplicationStorage.SeedDatabase
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
+                throw;
             }
         }
 
