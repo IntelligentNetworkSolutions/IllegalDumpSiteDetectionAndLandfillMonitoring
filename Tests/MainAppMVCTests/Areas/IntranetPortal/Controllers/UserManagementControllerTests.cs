@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
-using DAL.Helpers;
+﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
@@ -26,7 +20,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IUserManagementService> _mockUserManagementService;
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
         private readonly Mapper _mapper;
-        
+
         private readonly UserManagementController _controller;
 
         public UserManagementControllerTests()
@@ -48,7 +42,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var mapperConfig = new MapperConfiguration(cfg => cfg.AddProfile<UserManagementProfile>());
             _mapper = new Mapper(mapperConfig);
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
-            _controller = new UserManagementController(_modulesAndAuthClaimsHelper, _configuration, 
+            _controller = new UserManagementController(_modulesAndAuthClaimsHelper, _configuration,
                 _mockUserManagementService.Object, _mockAppSettingsAccessor.Object, _mapper);
         }
 
@@ -56,7 +50,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task Index_ReturnsViewResult()
         {
             // Arrange
-            var users = new List<UserDTO>() { new UserDTO() { Id = "123", UserName = "TestUser", Email = "testuser@gmail.com"} };
+            var users = new List<UserDTO>() { new UserDTO() { Id = "123", UserName = "TestUser", Email = "testuser@gmail.com" } };
             var roles = new List<RoleDTO>();
             var userRoles = new List<UserRoleDTO>();
             _mockUserManagementService.Setup(x => x.GetAllIntanetPortalUsers()).ReturnsAsync(users);
@@ -87,7 +81,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             //    .Returns(viewModel);
 
             //_mockModulesAndAuthClaimsHelper.Setup(h => h.GetAuthClaims())
-              //  .ReturnsAsync(claims);
+            //  .ReturnsAsync(claims);
 
             // Act
             var result = await _controller.FillUserManagementCreateUserViewModel();
@@ -152,8 +146,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                                         .ReturnsAsync(ResultDTO<UserManagementDTO>.Ok(new UserManagementDTO()));
 
             //mapperMock
-              //  .Setup(x => x.Map<UserManagementCreateUserViewModel>(It.IsAny<UserManagementDTO>()))
-                //.Returns(new UserManagementCreateUserViewModel());
+            //  .Setup(x => x.Map<UserManagementCreateUserViewModel>(It.IsAny<UserManagementDTO>()))
+            //.Returns(new UserManagementCreateUserViewModel());
 
             // Act
             var result = await _controller.GetViewWithUserManagementCreateVM();
@@ -346,6 +340,45 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal(expectedRole.Name, result.Name);
         }
 
-        
+        [Fact]
+        public void GetModules_ShouldReturnCorrectModules()
+        {
+            // Arrange
+            var expectedModules = new[] { "UserManagement", "AuditLog", "Admin", "SpecialActions" };
+
+            // Act
+            var activeModules = _modulesAndAuthClaimsHelper.GetModules().Result;
+
+            // Assert
+            Assert.Equal(expectedModules.Length, activeModules.Count);
+            Assert.All(expectedModules, module =>
+                Assert.Contains(activeModules, m => m.Value == module));
+        }
+
+        [Fact]
+        public void HasModule_ShouldReturnTrue_WhenModuleIsActive()
+        {
+            // Arrange
+            var moduleToCheck = new Module { Value = "UserManagement" };
+
+            // Act
+            var result = _modulesAndAuthClaimsHelper.HasModule(moduleToCheck);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void HasModule_ShouldReturnFalse_WhenModuleIsNotActive()
+        {
+            // Arrange
+            var moduleToCheck = new Module { Value = "NonExistentModule" };
+
+            // Act
+            var result = _modulesAndAuthClaimsHelper.HasModule(moduleToCheck);
+
+            // Assert
+            Assert.False(result);
+        }
     }
 }
