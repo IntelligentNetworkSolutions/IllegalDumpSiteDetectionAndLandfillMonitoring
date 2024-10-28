@@ -176,7 +176,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 int numFrozenStages = 4;
 
                 // Update Training Run only status PROCESSING
-                ResultDTO updateTrainRunResult = await _trainingRunService.UpdateTrainingRunEntity(trainingRunDTO.Id!.Value, null, nameof(ScheduleRunsStatus.Processing), null);
+                ResultDTO updateTrainRunResult = await _trainingRunService.UpdateTrainingRunEntity(trainingRunDTO.Id!.Value, null, nameof(ScheduleRunsStatus.Processing), isCompleted: false);
                 if (updateTrainRunResult.IsSuccess == false && updateTrainRunResult.HandleError())
                 {
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(trainingRunDTO.Id.Value, updateTrainRunResult.ErrMsg!);
@@ -222,7 +222,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     return ResultDTO.Fail(createTrainedModelResultReturnId.ErrMsg!);
 
                 // Update Training Run SUCCESS, TRAINED MODEL ID, ISCOMPLETED
-                ResultDTO updateTrainRunResultSuccess = await _trainingRunService.UpdateTrainingRunEntity(trainingRunDTO.Id!.Value, createTrainedModelResultReturnId.Data!, nameof(ScheduleRunsStatus.Success), true);
+                ResultDTO updateTrainRunResultSuccess = await _trainingRunService.UpdateTrainingRunEntity(trainingRunDTO.Id!.Value, createTrainedModelResultReturnId.Data!, nameof(ScheduleRunsStatus.Success), isCompleted: true);
                 if (updateTrainRunResultSuccess.IsSuccess == false && updateTrainRunResultSuccess.HandleError())
                     return ResultDTO.Fail(updateTrainRunResultSuccess.ErrMsg!);
 
@@ -417,7 +417,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             StringBuilder errMsgBuilder = new();
             errMsgBuilder.AppendLine(inputErrMsg);
             //UPDATE STATUS: ERROR
-            ResultDTO resStatusUpdate = await _trainingRunService.UpdateTrainingRunEntity(trainingRunId, null, nameof(ScheduleRunsStatus.Error), null);
+            ResultDTO resStatusUpdate = await _trainingRunService.UpdateTrainingRunEntity(trainingRunId, null, nameof(ScheduleRunsStatus.Error), isCompleted:false);
             if (resStatusUpdate.IsSuccess == false && resStatusUpdate.HandleError())
                 errMsgBuilder.AppendLine(resStatusUpdate.ErrMsg!);
 
