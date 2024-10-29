@@ -230,7 +230,7 @@ namespace MainApp.BL.Services.TrainingServices
 
         }
 
-        private string GeneratePythonTrainingCommandByRunId(Guid trainingRunId)
+        public string GeneratePythonTrainingCommandByRunId(Guid trainingRunId)
         {
             try
             {
@@ -465,19 +465,6 @@ namespace MainApp.BL.Services.TrainingServices
             }
         }
 
-        // TODO: Implement, maybe one retry Clean up files regardless of outcome, someday
-        public async Task<ResultDTO> CleanUpTrainingRunFiles()
-        {
-            throw new NotImplementedException();
-        }
-
-        // TODO: Implement 
-        public async Task<ResultDTO<TrainingRunDTO>> EditTrainingRunById(Guid trainingRunId)
-        {
-            // Allowed Update only for Name and IsPublished
-            throw new NotImplementedException();
-        }
-
         public async Task<ResultDTO> PublishTrainingRunTrainedModel(Guid trainingRunId)
         {
             try
@@ -491,7 +478,8 @@ namespace MainApp.BL.Services.TrainingServices
                     return ResultDTO.Fail("Training run not found");
 
                 //get trained model
-                ResultDTO<TrainedModel?> resultGetTrainedModel = await _trainedModelsRepository.GetById(resultGetEntity.Data.TrainedModelId!.Value, track: true);
+                ResultDTO<TrainedModel?> resultGetTrainedModel = 
+                    await _trainedModelsRepository.GetById(resultGetEntity.Data.TrainedModelId!.Value, track: true);
                 if (!resultGetTrainedModel.IsSuccess && resultGetTrainedModel.HandleError())
                     return ResultDTO.Fail(resultGetTrainedModel.ErrMsg!);
                 if (resultGetTrainedModel.Data == null)

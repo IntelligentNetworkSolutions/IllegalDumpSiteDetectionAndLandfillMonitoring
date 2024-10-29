@@ -9,6 +9,7 @@ using Entities.DatasetEntities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using SD;
 
 namespace Tests.DalTests.ApplicationStorage.SeedDatabase.ModuleConfigs
 {
@@ -205,6 +206,136 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase.ModuleConfigs
                 CreatedById = testUser.Id
             };
             await dbContext.DatasetClasses.AddAsync(datasetClass);
+            await dbContext.SaveChangesAsync();
+
+            var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
+
+            try
+            {
+                // Act
+                var result = service.GetAndSeedTrainedModelsFromSeedFile(transaction);
+
+                // Assert
+                Assert.True(result.IsSuccess);
+                var trainedModels = await dbContext.TrainedModels.ToListAsync();
+                Assert.NotEmpty(trainedModels);
+                Assert.Equal("TestModel", trainedModels[0].Name);
+            }
+            finally
+            {
+                File.Delete(seedFilePath);
+                if (Directory.Exists(_testRootDir))
+                    Directory.Delete(_testRootDir, true);
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
+        public async Task GetAndSeedTrainedModelsFromSeedFile_ThrowsException_WhenDbError()
+        {
+            // Arrange
+            using var dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using var transaction = dbContext.Database.BeginTransaction();
+
+            Directory.CreateDirectory(_testRootDir);
+
+            var seedFilePath = Path.GetTempFileName();
+            var seedJson = @"{
+                ""Training"": {
+                    ""InitialBaseModels"": [
+                        {
+                            ""Name"": ""TestModel"",
+                            ""ConfigDownloadUrl"": ""https://onlinetestcase.com/wp-content/uploads/2023/06/200KB.csv"",
+                            ""ModelFile"": ""https://onlinetestcase.com/wp-content/uploads/2023/06/200KB.csv""
+                        }
+                    ]
+                }
+            }";
+            File.WriteAllText(seedFilePath, seedJson);
+
+            _mockConfiguration.Setup(c => c["SeedDatabaseFilePaths:SeedTrainingAndDetectionProcess"])
+                .Returns(seedFilePath);
+
+            // Add test user
+            var testUser = new ApplicationUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = "testuser",
+                Email = "test@test.com"
+            };
+            await dbContext.Users.AddAsync(testUser);
+            await dbContext.SaveChangesAsync();
+
+            // Add test dataset class
+            var datasetClass = new DatasetClass
+            {
+                Id = Guid.NewGuid(),
+                ClassName = "waste",
+                CreatedById = testUser.Id
+            };
+            await dbContext.DatasetClasses.AddAsync(datasetClass);
+            await dbContext.SaveChangesAsync();
+
+            var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
+
+            try
+            {
+                // Act
+                await dbContext.Users.AddAsync(testUser);
+
+                // Act & Assert
+                ResultDTO result = service.GetAndSeedTrainedModelsFromSeedFile(transaction);
+
+                //// Assert
+                Assert.False(result.IsSuccess);
+                var trainedModels = await dbContext.TrainedModels.ToListAsync();
+                Assert.Empty(trainedModels);
+            }
+            finally
+            {
+                File.Delete(seedFilePath);
+                if (Directory.Exists(_testRootDir))
+                    Directory.Delete(_testRootDir, true);
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
+        public async Task GetAndSeedTrainedModelsFromSeedFile_ShouldSeedModels_WhenNoClassIsPresent()
+        {
+            // Arrange
+            using var dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using var transaction = dbContext.Database.BeginTransaction();
+
+            Directory.CreateDirectory(_testRootDir);
+
+            var seedFilePath = Path.GetTempFileName();
+            var seedJson = @"{
+                ""Training"": {
+                    ""InitialBaseModels"": [
+                        {
+                            ""Name"": ""TestModel"",
+                            ""ConfigDownloadUrl"": ""https://onlinetestcase.com/wp-content/uploads/2023/06/200KB.csv"",
+                            ""ModelFile"": ""https://onlinetestcase.com/wp-content/uploads/2023/06/200KB.csv""
+                        }
+                    ]
+                }
+            }";
+            File.WriteAllText(seedFilePath, seedJson);
+
+            _mockConfiguration.Setup(c => c["SeedDatabaseFilePaths:SeedTrainingAndDetectionProcess"])
+                .Returns(seedFilePath);
+
+            // Add test user
+            var testUser = new ApplicationUser
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserName = "testuser",
+                Email = "test@test.com"
+            };
+            await dbContext.Users.AddAsync(testUser);
             await dbContext.SaveChangesAsync();
 
             var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
