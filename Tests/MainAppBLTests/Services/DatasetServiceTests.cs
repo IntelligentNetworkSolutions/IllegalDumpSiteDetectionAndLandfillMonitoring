@@ -2614,6 +2614,391 @@ namespace Tests.MainAppBLTests.Services
             Assert.NotNull(result.Data);
         }
 
+        //[Fact]
+        //public async Task ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset_ShouldReturnSuccessResult_WhenValidDatasetProvided()
+        //{
+        //    // Arrange
+        //    var mockDatasetService = new Mock<IDatasetService>();
+        //    var mockMapper = new Mock<IMapper>();
+        //    var mockFileSystem = new Mock<IFileSystem>(); // If you have a mock for file operations, otherwise use File directly.
+
+        //    var dataset = new Dataset
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        Name = "Test Dataset",
+        //        Description = "This is a test dataset.",
+        //        IsPublished = true,
+        //        CreatedById = "user-id",
+        //        CreatedOn = DateTime.UtcNow,
+        //        DatasetImages = new List<DatasetImage>
+        //{
+        //    new DatasetImage
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        FileName = "image1.jpg",
+        //        ImagePath = "/images/image1.jpg",
+        //        IsEnabled = true
+        //    },
+        //    new DatasetImage
+        //    {
+        //        Id = Guid.NewGuid(),
+        //        FileName = "image2.jpg",
+        //        ImagePath = "/images/image2.jpg",
+        //        IsEnabled = true
+        //    }
+        //}
+        //    };
+
+        //    // Setup mock for GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
+        //    mockDatasetService
+        //        .Setup(service => service.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(
+        //            It.IsAny<Dataset>(),
+        //            It.IsAny<string>(),
+        //            It.IsAny<bool>(),
+        //            It.IsAny<bool>()))
+        //        .Returns(ResultDTO<DatasetFullIncludeDTO>.Ok(new DatasetFullIncludeDTO
+        //        {
+        //            DatasetImages = dataset.DatasetImages.Select(img => new DatasetImageDTO
+        //            {
+        //                IdInt = img.IdInt, // Assuming you have IdInt in your DatasetImage model
+        //                FileName = img.FileName,
+        //                ImagePath = img.ImagePath,
+        //            }).ToList(),
+        //            DatasetClassForDataset = new List<DatasetClassDTO>
+        //            {
+        //        new DatasetClassDTO
+        //        {
+        //            ClassValue = 1,
+        //            ClassName = "Class1",
+        //            DatasetClassId = Guid.NewGuid()
+        //        }
+        //            },
+        //            ImageAnnotations = new List<ImageAnnotation>
+        //            {
+        //        new ImageAnnotation
+        //        {
+        //            DatasetImageIdInt = dataset.DatasetImages.First().IdInt, // or appropriate IdInt
+        //            DatasetClass = new DatasetClass { Id = dataset.DatasetClasses.First().Id },
+        //            Geom = new Geometry() // Mock appropriate geometry if necessary
+        //        }
+        //            }
+        //        }));
+
+
+        //    // Act
+        //    var result = await service.ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(dataset, "exportOption", null);
+
+        //    // Assert
+        //    Assert.True(result.IsSuccess);
+        //    Assert.NotNull(result.Data);
+        //    Assert.Contains("zip", result.Data); // Check if the returned data is a zip file
+        //    Assert.True(File.Exists(result.Data)); // Verify that the zip file exists
+        //}
+
+        [Fact]
+        public void GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity_ShouldReturnExpectedResult()
+        {
+            var datasetId = Guid.NewGuid();
+
+            // Arrange
+            var dataset = new Dataset
+            {
+                Id = datasetId,
+                Name = "Test Dataset",
+                Description = "This is a test dataset.",
+                IsPublished = true,
+                CreatedById = "user-id",
+                AnnotationsPerSubclass = false,
+                DatasetImages = new List<DatasetImage>
+        {
+            new DatasetImage { Id = Guid.NewGuid(), FileName = "Image1.jpg", ImagePath = "path/to/Image1.jpg" }
+            // Add more DatasetImage objects as necessary
+        },
+                DatasetClasses = new List<Dataset_DatasetClass>
+        {
+            new Dataset_DatasetClass
+            {
+                DatasetId = datasetId,
+                DatasetClass = new DatasetClass
+                {
+                    Id = Guid.NewGuid(),
+                    ClassName = "Class1"
+                },
+                DatasetClassValue = 1 // Set a valid class value
+            }
+        }
+            };
+
+            string exportOption = "AllImages";
+
+            // Mock the mapping from Dataset to DatasetDTO
+            var datasetDTO = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = dataset.Name,
+                Description = dataset.Description,
+                IsPublished = dataset.IsPublished,
+                // Add other necessary properties
+            };
+
+            _mockMapper
+                .Setup(m => m.Map<DatasetDTO>(It.IsAny<Dataset>()))
+                .Returns(datasetDTO); // Mock the return value for mapping
+
+            _mockMapper
+                .Setup(m => m.Map<List<DatasetImageDTO>>(It.IsAny<List<DatasetImage>>()))
+                .Returns(new List<DatasetImageDTO>
+                {
+            new DatasetImageDTO { IdInt = 0, FileName = "Image1.jpg", ImagePath = "path/to/Image1.jpg" }
+                });
+
+            _mockMapper
+                .Setup(m => m.Map<List<ImageAnnotationDTO>>(It.IsAny<List<ImageAnnotation>>()))
+                .Returns(new List<ImageAnnotationDTO> { /* Add expected ImageAnnotationDTOs if necessary */ });
+
+            // Act
+            var result = _datasetService.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(dataset, exportOption);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(dataset.DatasetImages.Count, result.Data.DatasetImages.Count);
+            // Add more assertions as necessary to validate the properties of the returned DatasetFullIncludeDTO
+        }
+
+        [Fact]
+        public async Task ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset_ShouldReturnZipFilePath_WhenSuccessful()
+        {
+            // Create a temporary test directory
+            var _testDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(_testDirectory);
+
+            // Prepare the image directory and file
+            var unitTestImgPath = Path.Combine(Path.GetFullPath("wwwroot"), "unit-test-img");
+            Directory.CreateDirectory(unitTestImgPath);
+
+            // Create a sample image file for testing
+            var _imagePath = Path.Combine(unitTestImgPath, "00000000-0000-0000-0000-000000000000.jpg");
+            File.WriteAllText(_imagePath, "This is a test image file.");
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var dataset = new Dataset
+            {
+                Id = datasetId,
+                Name = "Test Dataset",
+                Description = "This is a test dataset.",
+                IsPublished = true,
+                CreatedById = "user-id",
+                AnnotationsPerSubclass = false,
+                DatasetImages = new List<DatasetImage>
+        {
+            new DatasetImage { Id = Guid.NewGuid(), FileName = "00000000-0000-0000-0000-000000000000.jpg", ImagePath = unitTestImgPath } // Adjusted image path
+        },
+                DatasetClasses = new List<Dataset_DatasetClass>
+        {
+            new Dataset_DatasetClass
+            {
+                DatasetId = datasetId,
+                DatasetClass = new DatasetClass
+                {
+                    Id = Guid.NewGuid(),
+                    ClassName = "Class1"
+                },
+                DatasetClassValue = 1 // Set a valid class value
+            }
+        }
+            };
+
+            string exportOption = "AllImages";
+
+            // Mock the mapping from Dataset to DatasetDTO
+            var datasetDTO = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = dataset.Name,
+                Description = dataset.Description,
+                IsPublished = dataset.IsPublished,
+                // Add other necessary properties
+            };
+
+            _mockMapper
+                .Setup(m => m.Map<DatasetDTO>(It.IsAny<Dataset>()))
+                .Returns(datasetDTO); // Mock the return value for mapping
+
+            _mockMapper
+                .Setup(m => m.Map<List<DatasetImageDTO>>(It.IsAny<List<DatasetImage>>()))
+                .Returns(new List<DatasetImageDTO>
+                {
+            new DatasetImageDTO { IdInt = 0, FileName = "00000000-0000-0000-0000-000000000000.jpg", ImagePath = unitTestImgPath } // Adjusted image path
+                });
+
+            _mockMapper
+                .Setup(m => m.Map<List<ImageAnnotationDTO>>(It.IsAny<List<ImageAnnotation>>()))
+                .Returns(new List<ImageAnnotationDTO> { /* Add expected ImageAnnotationDTOs if necessary */ });
+
+            // Create a temporary download location
+            string tempDownloadPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDownloadPath); // Ensure the temp directory exists
+            string downloadLocation = Path.Combine(tempDownloadPath, "dataset.zip"); // Define a zip file path
+
+            var datasetFullIncludeDTO = new DatasetFullIncludeDTO(
+                dataset: datasetDTO,
+                datasetClassForDataset: new List<DatasetClassForDatasetDTO>
+                {
+            new DatasetClassForDatasetDTO
+            {
+                ClassName = "Class1",
+                ClassValue = 1,
+                DatasetClassId = Guid.NewGuid(),
+                DatasetDatasetClassId = Guid.NewGuid()
+            }
+                },
+                datasetImages: new List<DatasetImageDTO>
+                {
+            new DatasetImageDTO { IdInt = 0, FileName = "00000000-0000-0000-0000-000000000000.jpg", ImagePath = unitTestImgPath }
+                },
+                imageAnnotations: new List<ImageAnnotationDTO>
+                {
+                    // Add your image annotations here, if any
+                }
+            );
+
+            _mockMapper
+                .Setup(m => m.Map<DatasetFullIncludeDTO>(It.IsAny<Dataset>()))
+                .Returns(datasetFullIncludeDTO);
+
+            // Act
+            var result = await _datasetService.ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(dataset, exportOption, downloadLocation);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.True(result.Data.EndsWith(".zip")); // Check if it's a zip file path
+            Assert.True(File.Exists(result.Data)); // Check if the file was created
+
+            // Cleanup the created file if necessary
+            File.Delete(result.Data);
+            // Delete directories recursively
+            Directory.Delete(_testDirectory, true);
+            Directory.Delete(unitTestImgPath, true);
+            Directory.Delete(tempDownloadPath, true);
+        }
+
+        [Fact]
+        public async Task ConvertDatasetEntityToCocoDatasetWithAssignedIdInts_ShouldReturnZipFilePath_WhenSuccessful()
+        {
+            // Create a temporary test directory
+            var _testDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(_testDirectory);
+
+            // Prepare the image directory and file
+            var unitTestImgPath = Path.Combine(Path.GetFullPath("wwwroot"), "unit-test-img");
+            Directory.CreateDirectory(unitTestImgPath);
+
+            // Create a sample image file for testing
+            var _imagePath = Path.Combine(unitTestImgPath, "00000000-0000-0000-0000-000000000000.jpg");
+            File.WriteAllText(_imagePath, "This is a test image file.");
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var dataset = new Dataset
+            {
+                Id = datasetId,
+                Name = "Test Dataset",
+                Description = "This is a test dataset.",
+                IsPublished = true,
+                CreatedById = "user-id",
+                AnnotationsPerSubclass = false,
+                DatasetImages = new List<DatasetImage>
+        {
+            new DatasetImage { Id = Guid.NewGuid(), FileName = "00000000-0000-0000-0000-000000000000.jpg", ImagePath = unitTestImgPath } // Adjusted image path
+        },
+                DatasetClasses = new List<Dataset_DatasetClass>
+        {
+            new Dataset_DatasetClass
+            {
+                DatasetId = datasetId,
+                DatasetClass = new DatasetClass
+                {
+                    Id = Guid.NewGuid(),
+                    ClassName = "Class1"
+                },
+                DatasetClassValue = 1 // Set a valid class value
+            }
+        }
+            };
+
+            string exportOption = "AllImages";
+
+            // Mock the mapping from Dataset to DatasetDTO
+            var datasetDTO = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = dataset.Name,
+                Description = dataset.Description,
+                IsPublished = dataset.IsPublished,
+                // Add other necessary properties
+            };
+
+            _mockMapper
+                .Setup(m => m.Map<DatasetDTO>(It.IsAny<Dataset>()))
+                .Returns(datasetDTO); // Mock the return value for mapping
+
+            _mockMapper
+                .Setup(m => m.Map<List<DatasetImageDTO>>(It.IsAny<List<DatasetImage>>()))
+                .Returns(new List<DatasetImageDTO>
+                {
+            new DatasetImageDTO { IdInt = 0, FileName = "00000000-0000-0000-0000-000000000000.jpg", ImagePath = unitTestImgPath } // Adjusted image path
+                });
+
+            _mockMapper
+                .Setup(m => m.Map<List<ImageAnnotationDTO>>(It.IsAny<List<ImageAnnotation>>()))
+                .Returns(new List<ImageAnnotationDTO> { /* Add expected ImageAnnotationDTOs if necessary */ });
+
+            // Create a temporary download location
+            string tempDownloadPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDownloadPath); // Ensure the temp directory exists
+            string downloadLocation = Path.Combine(tempDownloadPath, "dataset.zip"); // Define a zip file path
+
+            var datasetFullIncludeDTO = new DatasetFullIncludeDTO(
+                dataset: datasetDTO,
+                datasetClassForDataset: new List<DatasetClassForDatasetDTO>
+                {
+            new DatasetClassForDatasetDTO
+            {
+                ClassName = "Class1",
+                ClassValue = 1,
+                DatasetClassId = Guid.NewGuid(),
+                DatasetDatasetClassId = Guid.NewGuid()
+            }
+                },
+                datasetImages: new List<DatasetImageDTO>
+                {
+            new DatasetImageDTO { IdInt = 0, FileName = "00000000-0000-0000-0000-000000000000.jpg", ImagePath = unitTestImgPath }
+                },
+                imageAnnotations: new List<ImageAnnotationDTO>
+                {
+                    // Add your image annotations here, if any
+                }
+            );
+
+            _mockMapper
+                .Setup(m => m.Map<DatasetFullIncludeDTO>(It.IsAny<Dataset>()))
+                .Returns(datasetFullIncludeDTO);
+
+            // Act
+            var result = await _datasetService.ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(dataset, exportOption, downloadLocation);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            //Assert.True(result.Data.EndsWith(".zip"));
+            //Assert.True(File.Exists(result.Data));
+
+        }
+
+
 
     }
+
+
 }
