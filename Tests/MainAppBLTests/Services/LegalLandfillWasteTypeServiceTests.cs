@@ -6,11 +6,6 @@ using MainApp.BL.Services.LegalLandfillManagementServices;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppBLTests.Services
 {
@@ -68,7 +63,28 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Creation failed", result.ErrMsg);
         }
 
-        
+        [Fact]
+        public async Task CreateLegalLandfillWasteType_WhenExceptionThrownInRepository_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var entity = new LegalLandfillWasteType();
+            var dto = new LegalLandfillWasteTypeDTO();
+
+            // Setup mapping and simulate an exception from the repository
+            _mockMapper.Setup(m => m.Map<LegalLandfillWasteType>(dto)).Returns(entity);
+            _mockRepository.Setup(r => r.Create(entity, true, default))
+                           .ThrowsAsync(new Exception("Creation failed"));
+
+            // Act
+            var result = await _service.CreateLegalLandfillWasteType(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess, "Expected operation to fail.");
+            Assert.Equal("Creation failed", result.ErrMsg);
+        }
+
+
+
 
         [Fact]
         public async Task EditLegalLandfillWasteType_ShouldUpdateWasteType()
@@ -106,6 +122,26 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task EditLegalLandfillWasteType_WhenRepositoryThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var dto = new LegalLandfillWasteTypeDTO();
+            var entity = new LegalLandfillWasteType();
+
+            _mockMapper.Setup(m => m.Map<LegalLandfillWasteType>(dto)).Returns(entity);
+            _mockRepository.Setup(r => r.Update(entity, true, default))
+                           .ThrowsAsync(new Exception("Update failed"));
+
+            // Act
+            var result = await _service.EditLegalLandfillWasteType(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess, "Expected operation to fail.");
+            Assert.Equal("Update failed", result.ErrMsg);
+        }
+
+
+        [Fact]
         public async Task DeleteLegalLandfillWasteType_ShouldDeleteWasteType()
         {
             // Arrange
@@ -136,6 +172,23 @@ namespace Tests.MainAppBLTests.Services
             var result = await _service.DeleteLegalLandfillWasteType(dto);
 
             // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Delete failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillWasteType_WhenRepositoryThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var dto = new LegalLandfillWasteTypeDTO();
+            var entity = new LegalLandfillWasteType();
+            _mockMapper.Setup(m => m.Map<LegalLandfillWasteType>(dto)).Returns(entity);
+            _mockRepository.Setup(r => r.Delete(entity, true, default)).ThrowsAsync(new Exception("Delete failed"));
+
+            // Act
+            var result = await _service.DeleteLegalLandfillWasteType(dto);
+
+            //Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Delete failed", result.ErrMsg);
         }
@@ -175,6 +228,20 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task GetAllLegalLandfillWasteTypes_WhenRepositoryThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            _mockRepository.Setup(r => r.GetAll(null, null, false, null, null)).ThrowsAsync(new Exception("Get all failed"));
+
+            // Act
+            var result = await _service.GetAllLegalLandfillWasteTypes();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Get all failed", result.ErrMsg);
+        }
+
+        [Fact]
         public async Task GetLegalLandfillWasteTypeById_ShouldReturnWasteType()
         {
             // Arrange
@@ -208,6 +275,21 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Repository error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetLegalLandfillWasteTypeById_WhenRepositoryThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var wasteTypeId = Guid.NewGuid();
+            _mockRepository.Setup(r => r.GetById(wasteTypeId, false, null)).ThrowsAsync(new Exception("Get by ID failed"));
+
+            // Act
+            var result = await _service.GetLegalLandfillWasteTypeById(wasteTypeId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Get by ID failed", result.ErrMsg);
         }
     }
 

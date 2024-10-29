@@ -37,6 +37,71 @@ namespace Tests.MainAppBLTests
             Assert.False(result.IsSuccess);
             Assert.Equal("UserManagementDTO Must Not be Null", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task AddUser_ReturnsFail_WhenPasswordHashFails()
+        {
+            // Arrange
+            var dto = new UserManagementDTO
+            {
+                UserName = "testuser",
+                Email = "testuser@example.com",
+                ConfirmPassword = "Password123!"
+            };
+
+            var mappedUser = new ApplicationUser();
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+                        .ReturnsAsync(ResultDTO<int>.Ok(13));
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
+                                    .ReturnsAsync(ResultDTO<bool>.Ok(false));
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
+                                    .ReturnsAsync(ResultDTO<bool>.Ok(false));
+            _mockMapper.Setup(m => m.Map<ApplicationUser>(dto)).Returns(mappedUser);
+
+            // Act
+            var result = await _userManagementService.AddUser(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Password does not meet requirements", result.ErrMsg);
+        }
+
+        //[Fact]
+        //public async Task AddUser_ReturnsFail_WhenUserRolesFail()
+        //{
+        //    // Arrange
+        //    var dto = new UserManagementDTO
+        //    {
+        //        UserName = "testuser",
+        //        Email = "testuser@example.com",
+        //        ConfirmPassword = "Password123!",
+        //        IsActive = true,
+        //        FirstName = "test first name",
+        //        LastName = "test Last Name"
+        //        Roles = new List<RoleDTO>
+        //        {
+        //            new RoleDTO { Name = "Admin" },
+        //            new RoleDTO { Name = "User" }
+        //        }
+
+        //    };
+
+        //    var mappedUser = new ApplicationUser();
+        //    _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+        //                .ReturnsAsync(ResultDTO<int>.Ok(10));
+        //    _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
+        //                            .ReturnsAsync(ResultDTO<bool>.Ok(false));
+        //    _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
+        //                            .ReturnsAsync(ResultDTO<bool>.Ok(false));
+        //    _mockMapper.Setup(m => m.Map<ApplicationUser>(dto)).Returns(mappedUser);
+
+        //    // Act
+        //    var result = await _userManagementService.AddUser(dto);
+
+        //    // Assert
+        //    Assert.False(result.IsSuccess);
+        //    Assert.Equal("Password does not meet requirements", result.ErrMsg);
+        //}
         #endregion
 
         #region AddLanguageClaimForUser
