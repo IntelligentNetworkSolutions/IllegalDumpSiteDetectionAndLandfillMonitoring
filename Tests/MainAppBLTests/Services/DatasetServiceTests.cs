@@ -2859,7 +2859,7 @@ namespace Tests.MainAppBLTests.Services
                     Id = Guid.NewGuid(),
                     ClassName = "Class1"
                 },
-                DatasetClassValue = 1 // Set a valid class value
+                DatasetClassValue = 1
             }
         }
             };
