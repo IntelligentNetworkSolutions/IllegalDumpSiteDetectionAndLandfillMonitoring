@@ -2589,21 +2589,21 @@ namespace Tests.MainAppBLTests.Services
                 .Setup(m => m.Map<DatasetDTO>(It.IsAny<Dataset>()))
                 .Returns(new DatasetDTO
                 {
-                    Id = Guid.NewGuid(), // Assign a new Guid for the Id
-                    Name = "Mapped Dataset", // Example name
-                    Description = "This is a mapped dataset.", // Example description
-                    IsPublished = true, // Example published status
-                    ParentDatasetId = null, // or assign a valid Guid if applicable
-                    ParentDataset = null, // or assign a valid DatasetDTO if applicable
-                    CreatedById = "user-id", // Example user ID
-                    CreatedOn = DateTime.UtcNow, // Current date/time for created
-                    CreatedBy = null, // Example user name
-                    UpdatedById = null, // or assign a valid Guid if applicable
-                    UpdatedOn = null, // or assign a valid DateTime if applicable
-                    UpdatedBy = null, // or assign a valid user name if applicable
-                    AnnotationsPerSubclass = true, // Example count
-                    DatasetClasses = new List<Dataset_DatasetClassDTO>(), // Initialize as needed
-                    DatasetImages = new List<DatasetImageDTO>() // Initialize as needed
+                    Id = Guid.NewGuid(),
+                    Name = "Mapped Dataset",
+                    Description = "This is a mapped dataset.",
+                    IsPublished = true,
+                    ParentDatasetId = null,
+                    ParentDataset = null,
+                    CreatedById = "user-id",
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedBy = null,
+                    UpdatedById = null,
+                    UpdatedOn = null,
+                    UpdatedBy = null,
+                    AnnotationsPerSubclass = true,
+                    DatasetClasses = new List<Dataset_DatasetClassDTO>(),
+                    DatasetImages = new List<DatasetImageDTO>()
                 });
 
 
