@@ -201,7 +201,8 @@ namespace Tests.MainAppBLTests.Services
 
             imageAnnotationsRepositoryMock.Setup(repo => repo.BulkUpdateImageAnnotations(It.IsAny<List<ImageAnnotation>>(),
                                                                                         It.IsAny<List<ImageAnnotation>>(),
-                                                                                        It.IsAny<List<ImageAnnotation>>()))
+                                                                                        It.IsAny<List<ImageAnnotation>>(),
+                                                                                        null))
                                          .ReturnsAsync(true); // Simulating a successful update
 
             // Act
@@ -247,7 +248,8 @@ namespace Tests.MainAppBLTests.Services
             imageAnnotationsRepositoryMock.Setup(repo => repo.BulkUpdateImageAnnotations(
                     It.IsAny<List<ImageAnnotation>>(),
                     It.IsAny<List<ImageAnnotation>>(),
-                    It.IsAny<List<ImageAnnotation>>()
+                    It.IsAny<List<ImageAnnotation>>(),
+                    null
                 ))
                 .ReturnsAsync(true);
 

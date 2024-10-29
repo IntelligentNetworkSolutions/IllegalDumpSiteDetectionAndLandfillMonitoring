@@ -153,7 +153,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                     if (downloadAndCopyResult.IsSuccess == false && downloadAndCopyResult.ExObj is null)
                         return ResultDTO.Fail(downloadAndCopyResult.ErrMsg!);
                     if (downloadAndCopyResult.IsSuccess == false && downloadAndCopyResult.ExObj is not null)
-                        return ResultDTO.Fail(((Exception)downloadAndCopyResult.ExObj).Message);
+                        return ResultDTO.ExceptionFail(((Exception)downloadAndCopyResult.ExObj).Message, downloadAndCopyResult.ExObj);
                     if (string.IsNullOrEmpty(downloadAndCopyResult.Data))
                         return ResultDTO.Fail($"Null path of downloaded model file {copyScriptObj.FileUrl}");
 
@@ -357,7 +357,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 if (File.Exists(fileDestPath) == false)
                 {
                     ResultDTO<string> downloadAndCopyResult = await DownloadFromUrlToFileAbsPath(scriptUrl, fileDestPath);
-                    if (downloadAndCopyResult.IsSuccess == false)
+                    if (downloadAndCopyResult.IsSuccess == false && downloadAndCopyResult.HandleError())
                         return ResultDTO<string>.Fail(downloadAndCopyResult.ErrMsg!);
                 }
 

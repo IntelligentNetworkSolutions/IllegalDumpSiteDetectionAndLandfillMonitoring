@@ -140,7 +140,7 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase.ModuleConfigs
             _mockConfiguration.Setup(c => c["SeedDatabaseFilePaths:SeedTrainingAndDetectionProcess"])
                 .Returns(seedFilePath);
 
-            var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
+            MMDetectionSetupService service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
 
             try
             {
@@ -151,6 +151,51 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase.ModuleConfigs
                 Assert.True(result.IsSuccess);
                 // Note: We can't verify actual file copying since we mock the HTTP client,
                 // but we can verify the process completed successfully
+            }
+            finally
+            {
+                File.Delete(seedFilePath);
+                if (Directory.Exists(_testRootDir))
+                    Directory.Delete(_testRootDir, true);
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
+        public void CopyScriptsToMMDetectionRoot_ReturnResultException()
+        {
+            // Arrange
+            using var dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using var transaction = dbContext.Database.BeginTransaction();
+
+            Directory.CreateDirectory(_testRootDir);
+            Directory.CreateDirectory(Path.Combine(_testRootDir, "scripts"));
+
+            var seedFilePath = Path.GetTempFileName();
+            var seedJson = @"{
+                ""CopyScripts"": [
+                    {
+                        ""Name"": ""test_script"",
+                        ""FileUrl"": ""htaatps://onlinetestcase.com/wp-content/uploads/2023/06/200KB.csv""
+                    }
+                ]
+            }";
+            File.WriteAllText(seedFilePath, seedJson);
+
+            _mockConfiguration.Setup(c => c["SeedDatabaseFilePaths:SeedTrainingAndDetectionProcess"])
+                .Returns(seedFilePath);
+
+            var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
+
+            try
+            {
+                // Act
+                var result = service.CopyScriptsToMMDetectionRoot();
+
+                // Assert
+                Assert.False(result.IsSuccess);
+                Assert.NotNull(result.ExObj);
             }
             finally
             {
@@ -420,6 +465,66 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase.ModuleConfigs
         }
 
         [Fact]
+        public async Task DownloadAndCopyTrainedModelToMMDetection_ShouldReturnResultError()
+        {
+            // Arrange
+            using var dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using var transaction = dbContext.Database.BeginTransaction();
+
+            Directory.CreateDirectory(_testRootDir);
+            var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
+            var modelName = "TestModel";
+            var fileUrl = "https://onlinetestcase.com/wp-content/uploads/2023/06/200000KB.csv";
+
+            try
+            {
+                // Act
+                var result = await service.DownloadAndCopyTrainedModelToMMDetection(modelName, fileUrl);
+
+                // Assert
+                Assert.False(result.IsSuccess);
+                Assert.Null(result.ExObj);
+            }
+            finally
+            {
+                if (Directory.Exists(_testRootDir))
+                    Directory.Delete(_testRootDir, true);
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
+        public async Task DownloadAndCopyTrainedModelToMMDetection_ShouldReturnResultException()
+        {
+            // Arrange
+            using var dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using var transaction = dbContext.Database.BeginTransaction();
+
+            Directory.CreateDirectory(_testRootDir);
+            var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
+            var modelName = "TestModel";
+            var fileUrl = "hadsdttps://onlinetestcase.com/wp-content/uploads/2023/06/200000KB.csv";
+
+            try
+            {
+                // Act
+                var result = await service.DownloadAndCopyTrainedModelToMMDetection(modelName, fileUrl);
+
+                // Assert
+                Assert.False(result.IsSuccess);
+                Assert.NotNull(result.ExObj);
+            }
+            finally
+            {
+                if (Directory.Exists(_testRootDir))
+                    Directory.Delete(_testRootDir, true);
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
         public async Task DownloadAndCopyScriptToMMDetection_ShouldDownloadAndSaveScript()
         {
             // Arrange
@@ -443,6 +548,70 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase.ModuleConfigs
                 Assert.True(result.IsSuccess);
                 Assert.Contains("200KB.csv", result.Data);
                 Assert.True(File.Exists(result.Data));
+            }
+            finally
+            {
+                if (Directory.Exists(_testRootDir))
+                    Directory.Delete(_testRootDir, true);
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
+        public async Task DownloadAndCopyScriptToMMDetection_ShouldReturnResultException()
+        {
+            // Arrange
+            using var dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using var transaction = dbContext.Database.BeginTransaction();
+
+            Directory.CreateDirectory(_testRootDir);
+            var scriptsDir = Path.Combine(_testRootDir, "scripts");
+            Directory.CreateDirectory(scriptsDir);
+
+            var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
+            var scriptUrl = "httadadps://onlinetestcase.com/wp-content/uploads/2023/06/200KB.csv";
+
+            try
+            {
+                // Act
+                var result = await service.DownloadAndCopyScriptToMMDetection(scriptUrl, scriptsDir);
+
+                // Assert
+                Assert.False(result.IsSuccess);
+                Assert.NotNull(result.ExObj);
+            }
+            finally
+            {
+                if (Directory.Exists(_testRootDir))
+                    Directory.Delete(_testRootDir, true);
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
+        public async Task DownloadAndCopyScriptToMMDetection_ShouldReturnResultError()
+        {
+            // Arrange
+            using var dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using var transaction = dbContext.Database.BeginTransaction();
+
+            Directory.CreateDirectory(_testRootDir);
+            var scriptsDir = Path.Combine(_testRootDir, "scripts");
+            Directory.CreateDirectory(scriptsDir);
+
+            var service = new MMDetectionSetupService(_mockConfiguration.Object, dbContext);
+            var scriptUrl = "https://onlinetestcase.com/wp-content/uploads/2023/06/200000KB.csv";
+
+            try
+            {
+                // Act
+                var result = await service.DownloadAndCopyScriptToMMDetection(scriptUrl, scriptsDir);
+
+                // Assert
+                Assert.False(result.IsSuccess);
+                Assert.Null(result.ExObj);
             }
             finally
             {

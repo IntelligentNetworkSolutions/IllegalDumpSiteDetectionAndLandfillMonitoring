@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Entities;
 using Entities.DatasetEntities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace DAL.Interfaces.Repositories.DatasetRepositories
 {
@@ -17,7 +18,7 @@ namespace DAL.Interfaces.Repositories.DatasetRepositories
         #endregion
 
         #region Update
-        public Task<bool> BulkUpdateImageAnnotations(List<ImageAnnotation> insertList, List<ImageAnnotation> updateList, List<ImageAnnotation> deleteList);
+        public Task<bool> BulkUpdateImageAnnotations(List<ImageAnnotation> insertList, List<ImageAnnotation> updateList, List<ImageAnnotation> deleteList, IDbContextTransaction? dbContextTransaction = null);
         #endregion
 
         #region Delete

@@ -6,7 +6,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.TestSeedData
     public static class ImageAnnotationsSeedData
     {
         public static void SeedData(ApplicationDbContext dbContext)
-            => dbContext.ImageAnnotations.AddRange([FirstImageFirstAnnotationFirstClass]);
+            => dbContext.ImageAnnotations.AddRange([FirstImageFirstAnnotationFirstClass, SecondImageSecondAnnotationFirstClass]);
 
         public static readonly ImageAnnotation FirstImageFirstAnnotationFirstClass = new ImageAnnotation() 
         { 

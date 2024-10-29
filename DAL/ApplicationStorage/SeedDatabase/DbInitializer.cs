@@ -272,10 +272,5 @@ namespace DAL.ApplicationStorage.SeedDatabase
                 }
             }
         }
-
-        private void SeedMMDetection()
-        {
-
-        }
     }
 }
