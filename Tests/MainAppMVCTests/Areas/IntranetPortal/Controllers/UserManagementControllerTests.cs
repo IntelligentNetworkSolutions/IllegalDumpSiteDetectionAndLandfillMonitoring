@@ -693,6 +693,5 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Role ids not found", exception.Message);
         }
 
-
     }
 }
