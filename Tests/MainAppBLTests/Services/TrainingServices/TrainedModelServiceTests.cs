@@ -282,18 +282,24 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
             Assert.Equal("Error getting best epoch", result.ErrMsg);
         }
 
-        //[Fact]
-        //public async Task GetBestEpochForTrainedModelById_Logs_Error_On_Exception()
-        //{
-        //    var trainedModelId = Guid.NewGuid();
+        [Fact]
+        public async Task GetBestEpochForTrainedModelById_Logs_Error_On_Exception()
+        {
+            // Arrange
+            var trainedModelId = Guid.NewGuid();
 
-        //    _trainedModelsRepositoryMock.Setup(repo => repo.GetById(trainedModelId, false, "CreatedBy"))
-        //        .ThrowsAsync(new Exception("Database error"));
+            // Mock the GetById method to throw an exception
+            _trainedModelsRepositoryMock.Setup(repo => repo.GetById(trainedModelId, false, "CreatedBy"))
+                .ThrowsAsync(new Exception("Database error"));
 
+            // Act
+            var result = await _service.GetBestEpochForTrainedModelById(trainedModelId);
 
-        //    var exception = await Assert.ThrowsAsync<Exception>(async () => await _service.GetPublishedTrainedModelsIncludingTrainRuns());
-        //    Assert.Equal("Database error", exception.Message);
-        //}
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Database error", result.ErrMsg);
+        }
+
 
 
         [Fact]
@@ -377,6 +383,91 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
             Assert.False(result.IsSuccess);
             Assert.Equal("Database error", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task DeleteTrainedModelById_Returns_Failure_When_TrainedModel_Is_Null()
+        {
+            // Arrange
+            var trainedModelId = Guid.NewGuid();
+
+            _trainedModelsRepositoryMock.Setup(repo => repo.GetById(trainedModelId, false, null))
+                .ReturnsAsync(ResultDTO<TrainedModel>.Ok(null)); // Simulating a null trained model
+
+            // Act
+            var result = await _service.DeleteTrainedModelById(trainedModelId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Trained model not found.", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteTrainedModelById_Does_Not_Delete_Config_File_When_Path_Is_Null()
+        {
+            // Arrange
+            var trainedModelId = Guid.NewGuid();
+            var tempModelFilePath = Path.GetTempFileName(); // Create a temp file for the model file path
+            var trainedModel = new TrainedModel { ModelConfigPath = null, ModelFilePath = tempModelFilePath };
+
+            _trainedModelsRepositoryMock.Setup(repo => repo.GetById(trainedModelId, false, null))
+                .ReturnsAsync(ResultDTO<TrainedModel>.Ok(trainedModel));
+            _trainedModelsRepositoryMock.Setup(repo => repo.Delete(trainedModel, true, default))
+    .ReturnsAsync(ResultDTO.Ok());
+            // Act
+            var result = await _service.DeleteTrainedModelById(trainedModelId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            _trainedModelsRepositoryMock.Verify(repo => repo.Delete(It.IsAny<TrainedModel>(), true, default), Times.Once);
+
+        }
+
+        [Fact]
+        public async Task DeleteTrainedModelById_Does_Not_Delete_Model_File_When_Path_Is_Null()
+        {
+            // Arrange
+            var trainedModelId = Guid.NewGuid();
+            var trainedModel = new TrainedModel { Id = trainedModelId, ModelConfigPath = "test", ModelFilePath = null };
+            var trainedModelDTO = new TrainedModelDTO();
+
+
+            _trainedModelsRepositoryMock.Setup(repo => repo.GetById(trainedModelId, false, null))
+                .ReturnsAsync(ResultDTO<TrainedModel>.Ok(trainedModel));
+
+            _trainedModelsRepositoryMock.Setup(repo => repo.Delete(trainedModel, true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _service.DeleteTrainedModelById(trainedModelId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            _trainedModelsRepositoryMock.Verify(repo => repo.Delete(It.IsAny<TrainedModel>(), true, default), Times.Once);
+        }
+
+
+        [Fact]
+        public async Task DeleteTrainedModelById_Does_Not_Delete_Config_File_When_File_Does_Not_Exist()
+        {
+            // Arrange
+            var trainedModelId = Guid.NewGuid();
+            var trainedModel = new TrainedModel { ModelConfigPath = "nonExistentConfigPath", ModelFilePath = "modelPath" };
+
+            _trainedModelsRepositoryMock.Setup(repo => repo.GetById(trainedModelId, false, null))
+                .ReturnsAsync(ResultDTO<TrainedModel>.Ok(trainedModel));
+            _trainedModelsRepositoryMock.Setup(repo => repo.Delete(trainedModel, true, default))
+    .ReturnsAsync(ResultDTO.Ok());
+            // Ensure the file doesn't exist
+            Assert.False(File.Exists("nonExistentConfigPath"));
+
+            // Act
+            var result = await _service.DeleteTrainedModelById(trainedModelId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            _trainedModelsRepositoryMock.Verify(repo => repo.Delete(It.IsAny<TrainedModel>(), true, default), Times.Once);
+        }
+
 
         [Fact]
         public async Task EditTrainedModelById_Returns_Success_When_Model_Exists_And_Updated()

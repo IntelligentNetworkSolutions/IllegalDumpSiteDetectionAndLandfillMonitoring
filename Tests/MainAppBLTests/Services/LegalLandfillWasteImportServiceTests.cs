@@ -206,7 +206,7 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Update failed", result.ErrMsg);
         }
 
-        
+
         [Fact]
         public async Task DeleteLegalLandfillWasteImport_ShouldDeleteImport()
         {
@@ -239,7 +239,7 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(result.IsSuccess);
             Assert.Contains("Mapping error", result.ErrMsg);
         }
-                
+
 
         [Fact]
         public async Task DeleteLegalLandfillWasteImport_WhenDeleteFails_ShouldReturnFailResult()
@@ -258,6 +258,64 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(result.IsSuccess);
             Assert.Equal("Delete failed", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task CreateLegalLandfillWasteImport_WhenRepositoryThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var dto = new LegalLandfillWasteImportDTO();
+            var entity = new LegalLandfillWasteImport();
+            _mockMapper.Setup(m => m.Map<LegalLandfillWasteImport>(dto)).Returns(entity);
+            _mockRepository.Setup(r => r.Create(entity, true, default)).ThrowsAsync(new Exception("Creation failed"));
+
+            var result = await _service.CreateLegalLandfillWasteImport(dto);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Creation failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllLegalLandfillWasteImports_WhenRepositoryThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            _mockRepository.Setup(r => r.GetAll(null, null, false, It.IsAny<string>(), null)).ThrowsAsync(new Exception("Get all failed"));
+
+            var result = await _service.GetAllLegalLandfillWasteImports();
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Get all failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetLegalLandfillWasteImportById_WhenRepositoryThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var wasteImportId = Guid.NewGuid();
+            _mockRepository
+                .Setup(r => r.GetByIdInclude(wasteImportId, false, It.IsAny<Expression<Func<LegalLandfillWasteImport, object>>[]>()))
+                .ThrowsAsync(new Exception("Get by ID failed"));
+
+            var result = await _service.GetLegalLandfillWasteImportById(wasteImportId);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Get by ID failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillWasteImport_WhenRepositoryThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var dto = new LegalLandfillWasteImportDTO();
+            var entity = new LegalLandfillWasteImport();
+            _mockMapper.Setup(m => m.Map<LegalLandfillWasteImport>(dto)).Returns(entity);
+            _mockRepository.Setup(r => r.Update(entity, true, default)).ThrowsAsync(new Exception("Update failed"));
+
+            var result = await _service.EditLegalLandfillWasteImport(dto);
+
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Update failed", result.ErrMsg);
+        }
+
     }
 
 }

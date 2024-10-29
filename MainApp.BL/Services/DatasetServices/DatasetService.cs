@@ -510,7 +510,7 @@ namespace MainApp.BL.Services.DatasetServices
 
         #region Export
         // TODO: Create DatsetExportOption Enum/Static Class to replace magic string param
-        private ResultDTO<DatasetFullIncludeDTO> GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
+        public ResultDTO<DatasetFullIncludeDTO> GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
             (Dataset datasetIncluded, string exportOption, bool includeDisabledImages = true, bool includeDisabledAnnotations = true)
         {
             try
@@ -637,7 +637,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
-        private async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(Dataset dataset, string exportOption, string? downloadLocation)
+        public async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(Dataset dataset, string exportOption, string? downloadLocation)
         {
 
             // TODO: Implement for multiple classes
@@ -808,7 +808,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
-        private async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(Dataset dataset, string exportOption, string? downloadLocation)
+        public async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(Dataset dataset, string exportOption, string? downloadLocation)
         {
             if (dataset == null)
                 return ResultDTO<string>.Fail("Dataset is null");

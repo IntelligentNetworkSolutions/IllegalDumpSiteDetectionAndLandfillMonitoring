@@ -3,7 +3,6 @@ using DAL.Interfaces.Repositories.LegalLandfillManagementRepositories;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
 using Entities.LegalLandfillsManagementEntites;
 using MainApp.BL.Services.LegalLandfillManagementServices;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SD;
@@ -118,7 +117,7 @@ namespace Tests.MainAppBLTests.Services
                     It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
                 Times.Once);
         }
-       
+
         [Fact]
         public async Task CreateLegalLandfillTruck_WithNullDTO_ShouldReturnExceptionFail()
         {
@@ -213,7 +212,7 @@ namespace Tests.MainAppBLTests.Services
             };
             var entity = new LegalLandfillTruck();
             _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(dto)).Returns(entity);
-            _mockTruckRepository.Setup(r => r.Update(entity,true,default))
+            _mockTruckRepository.Setup(r => r.Update(entity, true, default))
                 .ThrowsAsync(new Exception("Database connection failed"));
 
             // Act
@@ -254,7 +253,7 @@ namespace Tests.MainAppBLTests.Services
                 Times.Once);
         }
 
-        
+
 
         [Fact]
         public async Task DeleteLegalLandfillTruck_ShouldDeleteTruck()
@@ -411,7 +410,7 @@ namespace Tests.MainAppBLTests.Services
             var resultDTO = ResultDTO.Ok();
 
             _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(legalLandfillTruckDTO)).Returns(legalLandfillTruckEntity);
-            _mockTruckRepository.Setup(r => r.Update(legalLandfillTruckEntity,true, default)).ReturnsAsync(resultDTO);
+            _mockTruckRepository.Setup(r => r.Update(legalLandfillTruckEntity, true, default)).ReturnsAsync(resultDTO);
 
             // Act
             var result = await _service.DisableLegalLandfillTruck(legalLandfillTruckDTO);
@@ -455,7 +454,62 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Mapping error", result.ErrMsg);
         }
 
-       
+        [Fact]
+        public async Task GetLegalLandfillTruckById_ShouldReturnExceptionFail_WhenExceptionThrown()
+        {
+            // Arrange
+            var truckId = Guid.NewGuid();
+            _mockTruckRepository
+                .Setup(r => r.GetById(truckId, false, null))
+                .ThrowsAsync(new Exception("Get by ID failed"));
+
+            // Act
+            var result = await _service.GetLegalLandfillTruckById(truckId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Get by ID failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllLegalLandfillTrucks_ShouldReturnExceptionFail_WhenExceptionThrown()
+        {
+            // Arrange
+            _mockTruckRepository
+                .Setup(r => r.GetAll(It.IsAny<Expression<Func<LegalLandfillTruck, bool>>>(), null, false, null, null))
+                .ThrowsAsync(new Exception("Get all trucks failed"));
+
+            // Act
+            var result = await _service.GetAllLegalLandfillTrucks();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Get all trucks failed", result.ErrMsg);
+        }
+
+        // Fix IsTruckInUse
+        //[Fact]
+        //public async Task DeleteLegalLandfillTruck_ShouldReturnExceptionFail_WhenExceptionThrown()
+        //{
+        //    // Arrange
+        //    var truckDto = new LegalLandfillTruckDTO { Id = Guid.NewGuid() };
+        //    var truckEntity = new LegalLandfillTruck { Id = truckDto.Id };
+        //    var legalLandfillWasteImport = new LegalLandfillWasteImport { Id = Guid.NewGuid(), LegalLandfillTruckId = truckDto.Id };
+        //    _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(truckDto)).Returns(truckEntity);
+
+        //    _mockTruckRepository
+        //        .Setup(r => r.Delete(truckEntity, true, default))
+        //        .ThrowsAsync(new Exception("Delete truck failed"));
+
+        //    // Act
+        //    var result = await _service.DeleteLegalLandfillTruck(truckDto);
+
+        //    // Assert
+        //    Assert.False(result.IsSuccess);
+        //    Assert.Equal("Delete truck failed", result.ErrMsg);
+        //}
+
+
     }
 
 }
