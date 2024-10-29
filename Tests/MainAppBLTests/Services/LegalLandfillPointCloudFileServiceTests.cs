@@ -315,6 +315,27 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Creation failed", result.ErrMsg);
         }
 
+
+        [Fact]
+        public async Task CreateLegalLandfillPointCloudFile_WhenExceptionThrown_ShouldReturnExceptionFailResult()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO();
+            var entity = new LegalLandfillPointCloudFile();
+            _mockMapper.Setup(m => m.Map<LegalLandfillPointCloudFile>(dto)).Returns(entity);
+
+            // Set up the repository to throw an exception
+            _mockRepository.Setup(r => r.CreateAndReturnEntity(entity, true, default))
+                .ThrowsAsync(new Exception("Database error"));
+
+            // Act
+            var result = await _service.CreateLegalLandfillPointCloudFile(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Database error", result.ErrMsg);
+        }
+
         [Fact]
         public async Task EditLegalLandfillPointCloudFile_WhenFileNotFound_ShouldReturnFailResult()
         {
@@ -1259,6 +1280,73 @@ namespace Tests.MainAppBLTests.Services
         }
 
 
+        [Fact]
+        public async Task EditFileInUploads_ShouldMoveFiles_WhenPathsAreValid()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), FileName = "testfile.txt", LegalLandfillId = Guid.NewGuid() };
+            string webRootPath = Path.GetTempPath();
+            string filePath = Path.Combine(webRootPath, "Uploads", "TestFolder");
+
+            // Create test directories and files
+            Directory.CreateDirectory(filePath);
+            string oldFileUploadPath = Path.Combine(filePath, dto.Id + Path.GetExtension(dto.FileName));
+            string oldTifFilePath = Path.Combine(filePath, dto.Id + "_dsm.tif");
+
+            // Create dummy files
+            File.WriteAllText(oldFileUploadPath, "Dummy content for test file.");
+            File.WriteAllText(oldTifFilePath, "Dummy content for test TIFF file.");
+
+            // Set up mock for the app settings accessor
+            _mockAppSettingsAccessor.Setup(m => m.GetApplicationSettingValueByKey<string>(
+                "LegalLandfillPointCloudFileUploads",
+                It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok("Uploads/LegalLandfillUploads/PointCloudUploads"));
+
+            // Act
+            var result = await _service.EditFileInUploads(webRootPath, filePath, dto);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.True(File.Exists(Path.Combine(webRootPath, "Uploads", "LegalLandfillUploads", "PointCloudUploads", dto.LegalLandfillId.ToString(), dto.Id + Path.GetExtension(dto.FileName))));
+            Assert.True(File.Exists(Path.Combine(webRootPath, "Uploads", "LegalLandfillUploads", "PointCloudUploads", dto.LegalLandfillId.ToString(), dto.Id + "_dsm.tif")));
+        }
+
+
+        //[Fact]
+        //public async Task EditFileInUploads_ShouldReturnFailResult_WhenDirectoryCreationFails()
+        //{
+        //    // Arrange
+        //    var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), FileName = "testfile.txt", LegalLandfillId = Guid.NewGuid() };
+        //    string webRootPath = Path.GetTempPath();
+        //    string filePath = Path.Combine(webRootPath, "Uploads", "TestFolder");
+
+        //    // Create dummy files in a directory with restricted permissions
+        //    Directory.CreateDirectory(filePath);
+        //    string oldFileUploadPath = Path.Combine(filePath, dto.Id + Path.GetExtension(dto.FileName));
+        //    File.WriteAllText(oldFileUploadPath, "Dummy content for test file.");
+
+        //    // Set up mock for the app settings accessor
+        //    _mockAppSettingsAccessor.Setup(m => m.GetApplicationSettingValueByKey<string>(
+        //        "LegalLandfillPointCloudFileUploads",
+        //        It.IsAny<string>()))
+        //        .ReturnsAsync(ResultDTO<string>.Ok("Uploads/LegalLandfillUploads/PointCloudUploads"));
+
+        //    // Simulate a failure by trying to create a directory in a read-only location
+        //    var readOnlyPath = Path.Combine(webRootPath, "Uploads");
+        //    Directory.(readOnlyPath, FileAttributes.ReadOnly);
+
+        //    // Act
+        //    var result = await _service.EditFileInUploads(webRootPath, filePath, dto);
+
+        //    // Assert
+        //    Assert.False(result.IsSuccess);
+        //    Assert.Contains("Error creating directory", result.ErrMsg);
+
+        //    // Cleanup
+        //    Directory.SetAttributes(readOnlyPath, FileAttributes.Normal); // Restore attributes for cleanup
+        //    Directory.Delete(filePath, true);
+        //}
 
     }
 }
