@@ -877,7 +877,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var trainingRunDTO = new TrainingRunDTO { Id = Guid.NewGuid() };
 
             _mockTrainingRunService
-                .Setup(service => service.UpdateTrainingRunEntity(trainingRunDTO.Id.Value, null, nameof(ScheduleRunsStatus.Processing), null,null))
+                .Setup(service => service.UpdateTrainingRunEntity(trainingRunDTO.Id.Value, null, nameof(ScheduleRunsStatus.Processing), false,null))
                 .Throws(new Exception("Unexpected error"));
 
             // Act
@@ -966,7 +966,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                     trainingRunId,
                     null,
                     nameof(ScheduleRunsStatus.Processing),
-                    null,
+                    false,
                     It.IsAny<string>()))
                 .ReturnsAsync(ResultDTO.Ok());
 
@@ -1019,7 +1019,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 trainingRunId,
                 null,
                 nameof(ScheduleRunsStatus.Processing),
-                null,
+                false,
                 It.IsAny<string>()), Times.Once);
 
             _mockDatasetService.Verify(s => s.GetDatasetDTOFullyIncluded(datasetId, false), Times.Once);

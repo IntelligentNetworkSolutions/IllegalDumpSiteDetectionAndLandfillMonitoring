@@ -17,7 +17,7 @@ using SD.Helpers;
 
 namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
 {
-    internal class MMDetectionSetupService
+    public class MMDetectionSetupService
     {
         private readonly MMDetectionConfiguration _mmConfiguration;
         private readonly IConfiguration _configuration;
@@ -62,7 +62,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
             return mmDetectionConfiguration;
         }
 
-        public ResultDTO SeedMMDetection()
+        public ResultDTO SeedMMDetection(IDbContextTransaction? dbContextTransaction = null)
         {
             Console.WriteLine("CreateTrainingAndDetectionProcessDirsInMMDetectionRoot Start");
             ResultDTO createDirsResult = CreateTrainingAndDetectionProcessDirsInMMDetectionRoot();
@@ -81,7 +81,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
             Console.WriteLine("CopyScriptsToMMDetectionRoot End");
 
             Console.WriteLine("GetAndSeedTrainedModelsFromSeedFile Start");
-            ResultDTO seedTrainedModelsResult = GetAndSeedTrainedModelsFromSeedFile();
+            ResultDTO seedTrainedModelsResult = GetAndSeedTrainedModelsFromSeedFile(dbContextTransaction);
             if (seedTrainedModelsResult.IsSuccess == false && seedTrainedModelsResult.ExObj is null)
                 return ResultDTO.Fail(createDirsResult.ErrMsg!);
             if (seedTrainedModelsResult.IsSuccess == false && seedTrainedModelsResult.ExObj is not null)
@@ -106,7 +106,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 Directory.CreateDirectory(scriptsDirAbsPath);
 
             // Resources
-            string resourcesDirAbsPath = Path.Combine(mmRootDir, _mmConfiguration.Base.RootDirAbsPath);
+            string resourcesDirAbsPath = Path.Combine(mmRootDir, _mmConfiguration.Base.ResourcesDirRelPath);
             if (Directory.Exists(resourcesDirAbsPath) == false)
                 Directory.CreateDirectory(resourcesDirAbsPath);
 
@@ -168,9 +168,9 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
             }
         }
 
-        public ResultDTO GetAndSeedTrainedModelsFromSeedFile()
+        public ResultDTO GetAndSeedTrainedModelsFromSeedFile(IDbContextTransaction? dbContextTransaction = null)
         {
-            IDbContextTransaction? dbTransaction = null;
+            IDbContextTransaction? dbTransaction = dbContextTransaction;
             try
             {
                 if (_db.TrainedModels.Count() > 0)
@@ -220,7 +220,8 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 Console.WriteLine("Dataset Class: " + datasetClassEntity.Id);
 
                 List<TrainedModel> trainedModels = new();
-                dbTransaction = _db.Database.BeginTransaction();
+                if(dbContextTransaction is null)
+                    dbTransaction = _db.Database.BeginTransaction();
                 foreach (SeedTrainedModel model in initialBaseModels)
                 {
                     Console.WriteLine("name: " + model.Name);
@@ -269,8 +270,6 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                     };
                     Console.WriteLine($"Added Dataset Dataset Class Id: {dataset_DatasetClass.Id}");
                     dummyBaseTrainedModelDataset.DatasetClasses = [dataset_DatasetClass];
-                    
-                    
 
                     TrainedModel baseTrainedModel = new TrainedModel
                     {
@@ -293,13 +292,14 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 if (numRows <= 0)
                     throw new RowNotInTableException(nameof(numRows));
 
-                dbTransaction.Commit();
+                if(dbContextTransaction is null)
+                    dbTransaction.Commit();
 
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
             {
-                if (dbTransaction is not null)
+                if (dbTransaction is not null && dbContextTransaction is null)
                     dbTransaction.Rollback();
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
