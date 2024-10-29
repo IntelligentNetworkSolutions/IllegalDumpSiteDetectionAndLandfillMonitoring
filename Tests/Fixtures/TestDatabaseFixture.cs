@@ -1,6 +1,7 @@
 ﻿using DAL.ApplicationStorage;
 using DAL.ApplicationStorage.SeedDatabase.TestSeedData;
 using Microsoft.EntityFrameworkCore;
+using Tests.DalTests.SeedDbClasses;
 
 public class TestDatabaseFixture : IDisposable
 {
@@ -39,6 +40,7 @@ public class TestDatabaseFixture : IDisposable
             DatasetDatasetClassesSeedData.SeedData(dbContext is null ? DbContext : dbContext);
             DatasetImagesSeedData.SeedData(dbContext is null ? DbContext : dbContext);
             ImageAnnotationsSeedData.SeedData(dbContext is null ? DbContext : dbContext);
+            MapConfigurationSeedData.SeedData(dbContext is null ? DbContext : dbContext);
 
             if (dbContext is null)
                 DbContext.SaveChanges();
