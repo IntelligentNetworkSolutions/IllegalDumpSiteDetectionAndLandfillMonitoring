@@ -690,6 +690,34 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(Directory.Exists(oldDirectoryPath), "Expected old directory to be deleted.");
         }
 
+        [Fact]
+        public async Task EditFileConverts_WhenDirectoryCreationThrowsException_ShouldReturnExceptionFail()
+        {
+            // Arrange
+            string webRootPath = "mockWebRootPath";
+            var oldLegalLandfillId = Guid.NewGuid();
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), LegalLandfillId = Guid.NewGuid() };
+
+            _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts"))
+                .ReturnsAsync(ResultDTO<string>.Ok("uploads/legal_landfill_uploads/point_cloud_converts"));
+
+            // Simulate exception during directory creation
+            _mockLogger.Setup(l => l.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => true),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)
+            )).Verifiable();
+
+            // Act
+            var result = await _service.EditFileConverts(webRootPath, oldLegalLandfillId, dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task CheckSupportingFiles_AppSettingsFail_ReturnsFail()
@@ -1067,6 +1095,41 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task DeleteFilesFromUploads_WhenDeleteThrowsException_ShouldReturnExceptionFail()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO
+            {
+                Id = Guid.NewGuid(),
+                FilePath = "uploads",
+                FileName = "file.txt"
+            };
+
+            string webRootPath = Path.GetTempPath();
+            string filePath = Path.Combine(webRootPath, dto.FilePath);
+            string mainFilePath = Path.Combine(filePath, dto.Id + Path.GetExtension(dto.FileName));
+            string tiffFilePath = Path.Combine(filePath, dto.Id + "_dsm.tif");
+
+            // Create directory and files
+            Directory.CreateDirectory(filePath);
+            File.WriteAllText(mainFilePath, "Dummy content for main file.");
+            File.WriteAllText(tiffFilePath, "Dummy content for TIF file.");
+
+            // Lock the main file to simulate deletion failure
+            using (var fs = new FileStream(mainFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                // Act
+                var result = await _service.DeleteFilesFromUploads(dto, webRootPath);
+
+                // Assert
+                Assert.False(result.IsSuccess);
+                Assert.NotNull(result.ErrMsg); // Adjust to match your exception message format
+            } // File lock is released here
+        }
+
+
+
+        [Fact]
         public async Task DeleteFilesFromConverts_ReturnsFail_WhenConvertFolderPathIsNull()
         {
             // Arrange
@@ -1311,6 +1374,37 @@ namespace Tests.MainAppBLTests.Services
             Assert.True(File.Exists(Path.Combine(webRootPath, "Uploads", "LegalLandfillUploads", "PointCloudUploads", dto.LegalLandfillId.ToString(), dto.Id + Path.GetExtension(dto.FileName))));
             Assert.True(File.Exists(Path.Combine(webRootPath, "Uploads", "LegalLandfillUploads", "PointCloudUploads", dto.LegalLandfillId.ToString(), dto.Id + "_dsm.tif")));
         }
+
+        [Fact]
+        public async Task EditFileInUploads_WhenFileMoveThrowsException_ShouldReturnExceptionFail()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), FileName = "testfile.txt", LegalLandfillId = Guid.NewGuid() };
+            string webRootPath = Path.GetTempPath();
+            string filePath = Path.Combine(webRootPath, "Uploads", "TestFolder");
+
+            // Set up mock for the app settings accessor to return a valid path
+            _mockAppSettingsAccessor.Setup(m => m.GetApplicationSettingValueByKey<string>(
+                "LegalLandfillPointCloudFileUploads",
+                It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok("Uploads/LegalLandfillUploads/PointCloudUploads"));
+
+            // Create the directory but make the file path invalid or restricted to force a file move failure
+            Directory.CreateDirectory(filePath);
+            string oldFileUploadPath = Path.Combine(filePath, dto.Id + Path.GetExtension(dto.FileName));
+            File.WriteAllText(oldFileUploadPath, "Dummy content for test file.");
+
+            string newFolderPath = Path.Combine(webRootPath, "Uploads", "LegalLandfillUploads", "PointCloudUploads", dto.LegalLandfillId.ToString());
+            Directory.CreateDirectory(newFolderPath);
+
+            // Act
+            var result = await _service.EditFileInUploads(webRootPath, filePath, dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+        }
+
 
     }
 }
