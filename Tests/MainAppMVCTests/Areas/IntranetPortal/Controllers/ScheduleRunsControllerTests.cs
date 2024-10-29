@@ -1,24 +1,17 @@
 ﻿using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
+using Hangfire;
+using Hangfire.Storage;
+using Hangfire.Storage.Monitoring;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.ScheduleRuns;
 using Microsoft.AspNetCore.Mvc;
-using Moq;
-using SD.Enums;
-using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Hangfire.Storage.Monitoring;
-using Hangfire.Storage;
-using Hangfire;
-using Hangfire.Common;
-using NuGet.Protocol.Plugins;
+using Moq;
+using SD;
+using SD.Enums;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -184,6 +177,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             JobStorage.Current = null;
         }
 
-       
+
     }
 }
