@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Linq.Expressions;
+using Microsoft.Extensions.Configuration;
 using Moq;
+using SD.Helpers;
 
 namespace Tests.MainAppBLTests
 {
@@ -299,6 +301,47 @@ namespace Tests.MainAppBLTests
             var path = _service.GetTrainingRunOutDirAbsPathByRunId(guid);
             Assert.Equal(ExpectedPath($"C:\\path\\to\\root\\output\\{guid}"), path);
         }
+
+        // TODO: As Integration Test
+        //[Fact]
+        //public void GetTrainingRunResultLogFileAbsPath_ReturnsSuccess_WhenDirectoryExists()
+        //{
+        //    var guid = Guid.NewGuid();
+        //    _mockConfiguration.Setup(x => x["Base:RootDirAbsPath"]).Returns(Path.GetTempPath());
+        //    _mockConfiguration.Object["MMDetectionConfiguration:Base:RootDirAbsPath"] = Path.GetTempPath();
+        //    string runDirPath = _service.GetTrainingRunOutDirAbsPathByRunId(guid);
+        //    string timeRunDirPath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(runDirPath, DateTime.UtcNow.ToString("ffffff")));
+        //    string visDataPath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(timeRunDirPath, "vis_data"));
+        //    string resultsFilePath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(visDataPath, "scalars.json"));
+
+        //    try
+        //    {
+        //        if (!Directory.Exists(runDirPath))
+        //            Directory.Delete(runDirPath);
+        //        if (!Directory.Exists(timeRunDirPath))
+        //            Directory.Delete(timeRunDirPath);
+        //        if (!Directory.Exists(visDataPath))
+        //            Directory.Delete(visDataPath);
+        //        if (!File.Exists(resultsFilePath))
+        //            File.Delete(resultsFilePath);
+
+        //        var result = _service.GetTrainingRunResultLogFileAbsPath(guid);
+        //        Assert.True(result.IsSuccess);
+        //    }
+        //    finally
+        //    {
+        //        if(File.Exists(resultsFilePath))
+        //            File.Delete(resultsFilePath);
+        //        if (Directory.Exists(visDataPath))
+        //            Directory.Delete(visDataPath);
+        //        if (Directory.Exists(timeRunDirPath))
+        //            Directory.Delete(timeRunDirPath);
+        //        if (Directory.Exists(runDirPath))
+        //            Directory.Delete(runDirPath);
+
+        //        _mockConfiguration.Setup(x => x["Base:RootDirAbsPath"]).Returns("C:\\path\\to\\root");
+        //    }
+        //}
 
         [Fact]
         public void GetTrainingRunResultLogFileAbsPath_ReturnsFailure_WhenDirectoryDoesNotExist()

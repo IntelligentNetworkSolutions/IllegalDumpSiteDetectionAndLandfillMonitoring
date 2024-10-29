@@ -493,7 +493,7 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase
                 ""InitialUsers"": [
                     {
                         ""UserName"": ""admin1"",
-                        ""Roles"": [""Admin""]
+                        ""Roles"": [""AdminSeed""]
                     }
                 ]
             }]";
@@ -524,6 +524,79 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase
                 _mockUserManager.Verify(
                     um => um.CreateAsync(It.Is<ApplicationUser>(u => u.UserName == "admin1"), "AdminPass123!"),
                     Times.Once);
+            }
+            finally
+            {
+                File.Delete(usersPath);
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
+        public void Initialize_ShouldSeedInitialSuperAdminUsers_WithRoles()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+
+            var usersPath = Path.GetTempFileName();
+            var usersJson = @"[{
+                    ""Superadmin"": {
+                      ""Email"": ""super_admin@msn.com"",
+                      ""EmailConfirmed"": true,
+                      ""FirstName"": ""SuperAdmin"",
+                      ""IsActive"": true,
+                      ""LastName"": ""Administrator"",
+                      ""NormalizedEmail"": ""SUPER_ADMIN@MSN.COM"",
+                      ""PhoneNumber"": ""077321321"",
+                      ""PhoneNumberConfirmed"": true,
+                      ""UserName"": ""superadmin"",
+                      ""NormalizedUserName"": ""SUPERADMIN""
+                    },
+                ""InitialUsers"": [
+                    {
+                        ""UserName"": ""admin1"",
+                        ""Roles"": [""Admin""]
+                    }
+                ]
+            }]";
+            File.WriteAllText(usersPath, usersJson);
+
+            _mockConfiguration.Setup(c => c["SeedDatabaseFilePaths:SeedDatabaseUsers"])
+                .Returns(usersPath);
+            //SeedDatabaseDefaultSuperAdminUserName
+            _mockConfiguration.Setup(c => c["SeedDatabaseDefaultValues:SeedDatabaseDefaultSuperAdminUserName"])
+                .Returns("superadmin");
+            _mockConfiguration.Setup(c => c["SeedDatabaseDefaultValues:SeedDatabaseDefaultPasswordForSuperAdmin"])
+                .Returns("SuperAdminPass123!");
+
+            _mockUserManager
+                .Setup(um => um.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+                .ReturnsAsync(IdentityResult.Success);
+
+            List<Claim> claims = new List<Claim>
+                                {
+                                    new Claim("SpecialAuthClaim", "superadmin"),
+                                    new Claim("PreferedLanguageClaim", "en")
+                                };
+
+            var initializer = new DbInitializer(
+                dbContext,
+                _mockUserManager.Object,
+                _mockLogger.Object,
+                _mockAppSettingsAccessor.Object,
+                _mockConfiguration.Object);
+
+            try
+            {
+                // Act
+                initializer.Initialize(false, false, new List<string>());
+
+                // Assert
+                _mockUserManager.Verify(
+                    um => um.CreateAsync(It.Is<ApplicationUser>(u => u.UserName == "superadmin"), "SuperAdminPass123!"),
+                    Times.Once);                
             }
             finally
             {

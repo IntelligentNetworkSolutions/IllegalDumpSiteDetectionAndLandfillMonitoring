@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using DAL.ApplicationStorage;
 using DAL.Interfaces.Repositories.DatasetRepositories;
 using Entities.DatasetEntities;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Logging;
 
 namespace DAL.Repositories.DatasetRepositories
 {
@@ -19,23 +15,15 @@ namespace DAL.Repositories.DatasetRepositories
         {
             _db = db;            
         }
-        #region Read
-        #region Get Annotation/s
-        #endregion
-        #endregion
-
-        #region Create
-
-        #endregion
 
         #region Update
-
-        public async Task<bool> BulkUpdateImageAnnotations(List<ImageAnnotation> insertList, List<ImageAnnotation> updateList, List<ImageAnnotation> deleteList)
+        public async Task<bool> BulkUpdateImageAnnotations(List<ImageAnnotation> insertList, List<ImageAnnotation> updateList, List<ImageAnnotation> deleteList, IDbContextTransaction? dbContextTransaction = null)
         {
-            IDbContextTransaction? transaction = null;
+            IDbContextTransaction? transaction = dbContextTransaction;
             try
             {
-                transaction = await _db.Database.BeginTransactionAsync();
+                if(dbContextTransaction is null)
+                    transaction = await _db.Database.BeginTransactionAsync();
 
                 //foreach (var claim in userClaims)
                 if (deleteList != null)
@@ -50,22 +38,18 @@ namespace DAL.Repositories.DatasetRepositories
 
                 await _db.SaveChangesAsync();
 
-                await transaction.CommitAsync();
+                if(dbContextTransaction is null)
+                    await transaction.CommitAsync();
 
                 return true;
             }
             catch (Exception ex)
             {
-                if (transaction is not null)
+                if (transaction is not null && dbContextTransaction is null)
                     await transaction.RollbackAsync();                
                 throw;
             }
         }
-
-        #endregion
-
-        #region Delete
-
         #endregion
     }
 }

@@ -522,7 +522,7 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
         //    var trainedModel = new TrainedModel { Id = Guid.NewGuid() };
         //    _mockTrainedModelsRepository.Setup(x => x.CreateAndReturnEntity(It.IsAny<TrainedModel>(), true, default))
         //        .ReturnsAsync(ResultDTO<TrainedModel>.Ok(trainedModel));
-            
+
         //    // Act
         //    var result = await _service.CreateTrainedModelByTrainingRunId(trainingRunId);
 
@@ -687,7 +687,7 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
                 {
                     Id = trainedModelId,
                 }
-            
+
             };
 
             _mockMMDetectionConfiguration.Setup(x => x.GetTrainingRunCliOutDirAbsPath()).Returns("logs/trainings/path");
@@ -700,7 +700,7 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
             _mockTrainedModelsRepository.Setup(x => x.GetById(trainedModelId, true, null))
                 .ReturnsAsync(ResultDTO<TrainedModel?>.Ok(trainedModel));
 
-            _mockTrainingRunsRepository.Setup(x=> x.GetAll(null, null, false, null, null))
+            _mockTrainingRunsRepository.Setup(x => x.GetAll(null, null, false, null, null))
                 .ReturnsAsync(ResultDTO<IEnumerable<TrainingRun>>.Ok([trainingRun]));
 
             _mockMapper.Setup(x => x.Map<TrainingRunDTO>(It.IsAny<TrainingRun>()))
@@ -788,5 +788,200 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
             File.WriteAllText(tempFile, content);
             return tempFile;
         }
+
+        [Fact]
+        public async Task GetTrainingRunById_CatchesException()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            _mockTrainingRunsRepository.Setup(x => x.GetById(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<string>()))
+                .ThrowsAsync(new Exception("Database error"));
+
+            // Act
+            var result = await _service.GetTrainingRunById(trainingRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+            _mockLogger.Verify(x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => true),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception, string>>((o, t) => true)),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task GetAllTrainingRuns_CatchesException()
+        {
+            // Arrange
+            _mockTrainingRunsRepository.Setup(x => x.GetAll(null, null, false, "CreatedBy,TrainedModel", null))
+                .ThrowsAsync(new InvalidOperationException("Repository error"));
+
+            // Act
+            var result = await _service.GetAllTrainingRuns();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+            _mockLogger.Verify(x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => true),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception, string>>((o, t) => true)),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateTrainingRunWithBaseModel_CatchesMapperException()
+        {
+            // Arrange
+            var inputDto = new TrainingRunDTO { TrainedModelId = Guid.NewGuid() };
+            var baseModel = new TrainedModel { Id = Guid.NewGuid() };
+
+            _mockTrainedModelsRepository.Setup(x => x.GetByIdInclude(It.IsAny<Guid>(), It.IsAny<bool>(), null))
+                .ReturnsAsync(ResultDTO<TrainedModel?>.Ok(baseModel));
+
+            _mockMapper.Setup(x => x.Map<TrainedModelDTO>(It.IsAny<TrainedModel>()))
+                .Throws(new AutoMapperMappingException("Mapping error"));
+
+            // Act
+            var result = await _service.CreateTrainingRunWithBaseModel(inputDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Mapping error", result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+        }
+
+        [Fact]
+        public async Task StartTrainingRun_CatchesDirectoryException()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            _mockMMDetectionConfiguration.Setup(x => x.GetTrainingRunCliOutDirAbsPath())
+                .Returns(Path.Combine("invalid:", "path"));
+
+            // Act
+            var result = await _service.StartTrainingRun(trainingRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+        }
+
+        [Fact]
+        public async Task CreateTrainedModelByTrainingRunId_CatchesGetBestEpochException()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            var trainingRun = new TrainingRun { Id = trainingRunId };
+
+            _mockTrainingRunsRepository.Setup(x => x.GetById(trainingRunId, false, null))
+                .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(trainingRun));
+
+            _mockMMDetectionConfiguration.Setup(x => x.GetTrainedModelConfigFileAbsPath(trainingRunId))
+                .Returns(ResultDTO<string>.Ok("config.py"));
+
+            _mockMMDetectionConfiguration.Setup(x => x.GetTrainedModelBestEpochFileAbsPath(trainingRunId, It.IsAny<int>()))
+                .Throws(new FileNotFoundException("Model file not found"));
+
+            // Act
+            var result = await _service.CreateTrainedModelByTrainingRunId(trainingRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ExObj);
+        }
+
+        [Fact]
+        public async Task DeleteTrainingRun_CatchesFileDeleteException()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            var trainingRunDto = new TrainingRunDTO
+            {
+                Id = trainingRunId,
+                Status = "Error",
+                TrainedModelId = Guid.NewGuid()
+            };
+
+            _mockTrainingRunsRepository.Setup(x => x.GetById(trainingRunId, It.IsAny<bool>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(new TrainingRun { Id = trainingRunId }));
+
+            _mockMapper.Setup(x => x.Map<TrainingRunDTO>(It.IsAny<TrainingRun>()))
+                .Returns(trainingRunDto);
+
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>(
+                "TrainingRunsErrorLogsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Ok("invalid:path"));
+
+            // Act
+            var result = await _service.DeleteTrainingRun(trainingRunId, "wwwroot");
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+        }
+
+        [Fact]
+        public async Task GenerateTrainingRunConfigFile_CatchesConfigGenerationException()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            var datasetDTO = new DatasetDTO
+            {
+                DatasetClasses = new List<Dataset_DatasetClassDTO>() // Empty classes to trigger error
+            };
+            var baseTrainedModelDTO = new TrainedModelDTO();
+
+            _mockMapper.Setup(x => x.Map<Dataset>(datasetDTO))
+                .Returns(new Dataset());
+
+            _mockMapper.Setup(x => x.Map<TrainedModel>(baseTrainedModelDTO))
+                .Returns(new TrainedModel());
+
+            // Act
+            var result = await _service.GenerateTrainingRunConfigFile(
+                trainingRunId,
+                datasetDTO,
+                baseTrainedModelDTO
+            );
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("must have a BaseTrainedModel", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdateTrainingRunEntity_CatchesUpdateException()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            _mockTrainingRunsRepository.Setup(x => x.GetById(trainingRunId, true, null))
+                .ThrowsAsync(new Exception("Database update error"));
+
+            // Act
+            var result = await _service.UpdateTrainingRunEntity(trainingRunId, null, "Processing", true);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.NotNull(result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+            _mockLogger.Verify(x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => true),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception, string>>((o, t) => true)),
+                Times.Once);
+        }
+
     }
 }
