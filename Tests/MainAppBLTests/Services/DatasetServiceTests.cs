@@ -2793,7 +2793,7 @@ namespace Tests.MainAppBLTests.Services
         }
             };
 
-            string exportOption = "UnannotatedImages";
+            string exportOption = "";
 
             // Mock the mapping from Dataset to DatasetDTO
             var datasetDTO = new DatasetDTO
@@ -2892,7 +2892,7 @@ namespace Tests.MainAppBLTests.Services
                 .Returns(new List<ImageAnnotationDTO> { /* Add expected ImageAnnotationDTOs if necessary */ });
 
             // Act
-            var result = _datasetService.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(dataset, exportOption, false, false);
+            var result = _datasetService.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(dataset, exportOption, false, true);
 
             // Assert
             Assert.True(result.IsSuccess);
