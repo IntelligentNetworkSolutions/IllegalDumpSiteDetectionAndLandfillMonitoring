@@ -1312,41 +1312,5 @@ namespace Tests.MainAppBLTests.Services
             Assert.True(File.Exists(Path.Combine(webRootPath, "Uploads", "LegalLandfillUploads", "PointCloudUploads", dto.LegalLandfillId.ToString(), dto.Id + "_dsm.tif")));
         }
 
-
-        //[Fact]
-        //public async Task EditFileInUploads_ShouldReturnFailResult_WhenDirectoryCreationFails()
-        //{
-        //    // Arrange
-        //    var dto = new LegalLandfillPointCloudFileDTO { Id = Guid.NewGuid(), FileName = "testfile.txt", LegalLandfillId = Guid.NewGuid() };
-        //    string webRootPath = Path.GetTempPath();
-        //    string filePath = Path.Combine(webRootPath, "Uploads", "TestFolder");
-
-        //    // Create dummy files in a directory with restricted permissions
-        //    Directory.CreateDirectory(filePath);
-        //    string oldFileUploadPath = Path.Combine(filePath, dto.Id + Path.GetExtension(dto.FileName));
-        //    File.WriteAllText(oldFileUploadPath, "Dummy content for test file.");
-
-        //    // Set up mock for the app settings accessor
-        //    _mockAppSettingsAccessor.Setup(m => m.GetApplicationSettingValueByKey<string>(
-        //        "LegalLandfillPointCloudFileUploads",
-        //        It.IsAny<string>()))
-        //        .ReturnsAsync(ResultDTO<string>.Ok("Uploads/LegalLandfillUploads/PointCloudUploads"));
-
-        //    // Simulate a failure by trying to create a directory in a read-only location
-        //    var readOnlyPath = Path.Combine(webRootPath, "Uploads");
-        //    Directory.(readOnlyPath, FileAttributes.ReadOnly);
-
-        //    // Act
-        //    var result = await _service.EditFileInUploads(webRootPath, filePath, dto);
-
-        //    // Assert
-        //    Assert.False(result.IsSuccess);
-        //    Assert.Contains("Error creating directory", result.ErrMsg);
-
-        //    // Cleanup
-        //    Directory.SetAttributes(readOnlyPath, FileAttributes.Normal); // Restore attributes for cleanup
-        //    Directory.Delete(filePath, true);
-        //}
-
     }
 }
