@@ -2614,86 +2614,6 @@ namespace Tests.MainAppBLTests.Services
             Assert.NotNull(result.Data);
         }
 
-        //[Fact]
-        //public async Task ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset_ShouldReturnSuccessResult_WhenValidDatasetProvided()
-        //{
-        //    // Arrange
-        //    var mockDatasetService = new Mock<IDatasetService>();
-        //    var mockMapper = new Mock<IMapper>();
-        //    var mockFileSystem = new Mock<IFileSystem>(); // If you have a mock for file operations, otherwise use File directly.
-
-        //    var dataset = new Dataset
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        Name = "Test Dataset",
-        //        Description = "This is a test dataset.",
-        //        IsPublished = true,
-        //        CreatedById = "user-id",
-        //        CreatedOn = DateTime.UtcNow,
-        //        DatasetImages = new List<DatasetImage>
-        //{
-        //    new DatasetImage
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        FileName = "image1.jpg",
-        //        ImagePath = "/images/image1.jpg",
-        //        IsEnabled = true
-        //    },
-        //    new DatasetImage
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        FileName = "image2.jpg",
-        //        ImagePath = "/images/image2.jpg",
-        //        IsEnabled = true
-        //    }
-        //}
-        //    };
-
-        //    // Setup mock for GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
-        //    mockDatasetService
-        //        .Setup(service => service.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(
-        //            It.IsAny<Dataset>(),
-        //            It.IsAny<string>(),
-        //            It.IsAny<bool>(),
-        //            It.IsAny<bool>()))
-        //        .Returns(ResultDTO<DatasetFullIncludeDTO>.Ok(new DatasetFullIncludeDTO
-        //        {
-        //            DatasetImages = dataset.DatasetImages.Select(img => new DatasetImageDTO
-        //            {
-        //                IdInt = img.IdInt, // Assuming you have IdInt in your DatasetImage model
-        //                FileName = img.FileName,
-        //                ImagePath = img.ImagePath,
-        //            }).ToList(),
-        //            DatasetClassForDataset = new List<DatasetClassDTO>
-        //            {
-        //        new DatasetClassDTO
-        //        {
-        //            ClassValue = 1,
-        //            ClassName = "Class1",
-        //            DatasetClassId = Guid.NewGuid()
-        //        }
-        //            },
-        //            ImageAnnotations = new List<ImageAnnotation>
-        //            {
-        //        new ImageAnnotation
-        //        {
-        //            DatasetImageIdInt = dataset.DatasetImages.First().IdInt, // or appropriate IdInt
-        //            DatasetClass = new DatasetClass { Id = dataset.DatasetClasses.First().Id },
-        //            Geom = new Geometry() // Mock appropriate geometry if necessary
-        //        }
-        //            }
-        //        }));
-
-
-        //    // Act
-        //    var result = await service.ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(dataset, "exportOption", null);
-
-        //    // Assert
-        //    Assert.True(result.IsSuccess);
-        //    Assert.NotNull(result.Data);
-        //    Assert.Contains("zip", result.Data); // Check if the returned data is a zip file
-        //    Assert.True(File.Exists(result.Data)); // Verify that the zip file exists
-        //}
 
         [Fact]
         public void GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity_ShouldReturnExpectedResult()
@@ -2757,7 +2677,222 @@ namespace Tests.MainAppBLTests.Services
                 .Returns(new List<ImageAnnotationDTO> { /* Add expected ImageAnnotationDTOs if necessary */ });
 
             // Act
-            var result = _datasetService.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(dataset, exportOption);
+            var result = _datasetService.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(dataset, exportOption, true, false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(dataset.DatasetImages.Count, result.Data.DatasetImages.Count);
+            // Add more assertions as necessary to validate the properties of the returned DatasetFullIncludeDTO
+        }
+
+
+
+        [Fact]
+        public void GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity_ShouldReturnExpectedResult_WithAnnotatedImages()
+        {
+            var datasetId = Guid.NewGuid();
+
+            // Arrange
+            var dataset = new Dataset
+            {
+                Id = datasetId,
+                Name = "Test Dataset",
+                Description = "This is a test dataset.",
+                IsPublished = true,
+                CreatedById = "user-id",
+                AnnotationsPerSubclass = false,
+                DatasetImages = new List<DatasetImage>
+        {
+            new DatasetImage { Id = Guid.NewGuid(), FileName = "Image1.jpg", ImagePath = "path/to/Image1.jpg" }
+            // Add more DatasetImage objects as necessary
+        },
+                DatasetClasses = new List<Dataset_DatasetClass>
+        {
+            new Dataset_DatasetClass
+            {
+                DatasetId = datasetId,
+                DatasetClass = new DatasetClass
+                {
+                    Id = Guid.NewGuid(),
+                    ClassName = "Class1"
+                },
+                DatasetClassValue = 1 // Set a valid class value
+            }
+        }
+            };
+
+            string exportOption = "AnnotatedImages";
+
+            // Mock the mapping from Dataset to DatasetDTO
+            var datasetDTO = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = dataset.Name,
+                Description = dataset.Description,
+                IsPublished = dataset.IsPublished,
+                // Add other necessary properties
+            };
+
+            _mockMapper
+                .Setup(m => m.Map<DatasetDTO>(It.IsAny<Dataset>()))
+                .Returns(datasetDTO); // Mock the return value for mapping
+
+            _mockMapper
+                .Setup(m => m.Map<List<DatasetImageDTO>>(It.IsAny<List<DatasetImage>>()))
+                .Returns(new List<DatasetImageDTO>
+                {
+            new DatasetImageDTO { IdInt = 0, FileName = "Image1.jpg", ImagePath = "path/to/Image1.jpg" }
+                });
+
+            _mockMapper
+                .Setup(m => m.Map<List<ImageAnnotationDTO>>(It.IsAny<List<ImageAnnotation>>()))
+                .Returns(new List<ImageAnnotationDTO> { /* Add expected ImageAnnotationDTOs if necessary */ });
+
+            // Act
+            var result = _datasetService.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(dataset, exportOption, true, false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(dataset.DatasetImages.Count, result.Data.DatasetImages.Count);
+            // Add more assertions as necessary to validate the properties of the returned DatasetFullIncludeDTO
+        }
+
+        [Fact]
+        public void GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity_ShouldReturnExpectedResult_WithUnannotatedImages()
+        {
+            var datasetId = Guid.NewGuid();
+
+            // Arrange
+            var dataset = new Dataset
+            {
+                Id = datasetId,
+                Name = "Test Dataset",
+                Description = "This is a test dataset.",
+                IsPublished = true,
+                CreatedById = "user-id",
+                AnnotationsPerSubclass = false,
+                DatasetImages = new List<DatasetImage>
+        {
+            new DatasetImage { Id = Guid.NewGuid(), FileName = "Image1.jpg", ImagePath = "path/to/Image1.jpg" }
+            // Add more DatasetImage objects as necessary
+        },
+                DatasetClasses = new List<Dataset_DatasetClass>
+        {
+            new Dataset_DatasetClass
+            {
+                DatasetId = datasetId,
+                DatasetClass = new DatasetClass
+                {
+                    Id = Guid.NewGuid(),
+                    ClassName = "Class1"
+                },
+                DatasetClassValue = 1 // Set a valid class value
+            }
+        }
+            };
+
+            string exportOption = "";
+
+            // Mock the mapping from Dataset to DatasetDTO
+            var datasetDTO = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = dataset.Name,
+                Description = dataset.Description,
+                IsPublished = dataset.IsPublished,
+                // Add other necessary properties
+            };
+
+            _mockMapper
+                .Setup(m => m.Map<DatasetDTO>(It.IsAny<Dataset>()))
+                .Returns(datasetDTO); // Mock the return value for mapping
+
+            _mockMapper
+                .Setup(m => m.Map<List<DatasetImageDTO>>(It.IsAny<List<DatasetImage>>()))
+                .Returns(new List<DatasetImageDTO>
+                {
+            new DatasetImageDTO { IdInt = 0, FileName = "Image1.jpg", ImagePath = "path/to/Image1.jpg" }
+                });
+
+            _mockMapper
+                .Setup(m => m.Map<List<ImageAnnotationDTO>>(It.IsAny<List<ImageAnnotation>>()))
+                .Returns(new List<ImageAnnotationDTO> { /* Add expected ImageAnnotationDTOs if necessary */ });
+
+            // Act
+            var result = _datasetService.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(dataset, exportOption, false, false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(dataset.DatasetImages.Count, result.Data.DatasetImages.Count);
+            // Add more assertions as necessary to validate the properties of the returned DatasetFullIncludeDTO
+        }
+
+        [Fact]
+        public void GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity_ShouldReturnExpectedResult_WithEnabledImages()
+        {
+            var datasetId = Guid.NewGuid();
+
+            // Arrange
+            var dataset = new Dataset
+            {
+                Id = datasetId,
+                Name = "Test Dataset",
+                Description = "This is a test dataset.",
+                IsPublished = true,
+                CreatedById = "user-id",
+                AnnotationsPerSubclass = false,
+                DatasetImages = new List<DatasetImage>
+        {
+            new DatasetImage { Id = Guid.NewGuid(), FileName = "Image1.jpg", ImagePath = "path/to/Image1.jpg" }
+            // Add more DatasetImage objects as necessary
+        },
+                DatasetClasses = new List<Dataset_DatasetClass>
+        {
+            new Dataset_DatasetClass
+            {
+                DatasetId = datasetId,
+                DatasetClass = new DatasetClass
+                {
+                    Id = Guid.NewGuid(),
+                    ClassName = "Class1"
+                },
+                DatasetClassValue = 1
+            }
+        }
+            };
+
+            string exportOption = "EnabledImages";
+
+            // Mock the mapping from Dataset to DatasetDTO
+            var datasetDTO = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = dataset.Name,
+                Description = dataset.Description,
+                IsPublished = dataset.IsPublished,
+                // Add other necessary properties
+            };
+
+            _mockMapper
+                .Setup(m => m.Map<DatasetDTO>(It.IsAny<Dataset>()))
+                .Returns(datasetDTO); // Mock the return value for mapping
+
+            _mockMapper
+                .Setup(m => m.Map<List<DatasetImageDTO>>(It.IsAny<List<DatasetImage>>()))
+                .Returns(new List<DatasetImageDTO>
+                {
+            new DatasetImageDTO { IdInt = 0, FileName = "Image1.jpg", ImagePath = "path/to/Image1.jpg" }
+                });
+
+            _mockMapper
+                .Setup(m => m.Map<List<ImageAnnotationDTO>>(It.IsAny<List<ImageAnnotation>>()))
+                .Returns(new List<ImageAnnotationDTO> { /* Add expected ImageAnnotationDTOs if necessary */ });
+
+            // Act
+            var result = _datasetService.GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity(dataset, exportOption, false, true);
 
             // Assert
             Assert.True(result.IsSuccess);
