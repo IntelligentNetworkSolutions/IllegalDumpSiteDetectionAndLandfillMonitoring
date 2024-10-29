@@ -2543,38 +2543,78 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(result.IsSuccess);
             Assert.Contains("Unexpected error", result.ErrMsg);
         }
+        [Fact]
+        public async Task ImportDatasetCocoFormatedAtDirectoryPath_ShouldReturnSuccess_WhenValidDatasetIsImported()
+        {
+            // Arrange
+            string datasetName = "Test Dataset";
+            string cocoDirPath = "/path/to/coco";
+            string userId = "test-user-id";
 
-        //[Fact]
-        //public async Task ImportDatasetCocoFormatedAtDirectoryPath_ShouldReturnFail_WhenDatasetCreationFails()
-        //{
-        //    // Arrange
-        //    string datasetName = "Test Dataset";
-        //    string cocoDirPath = "/path/to/coco";
-        //    string userId = "test-user-id";
+            var cocoDataset = new CocoDatasetDTO
+            {
+                Info = new CocoInfoDTO { Description = "Test Coco Dataset" },
+                Categories = new List<CocoCategoryDTO> { new CocoCategoryDTO { Id = 1, Name = "Category1" } },
+                Images = new List<CocoImageDTO> { new CocoImageDTO { Id = 1, FileName = "image1.jpg", Height = 100, Width = 100 } },
+                Annotations = new List<CocoAnnotationDTO> { new CocoAnnotationDTO { Id = 1, CategoryId = 1, ImageId = 1, Bbox = new List<float> { 0, 0, 100, 100 } } }
+            };
 
-        //    var cocoDataset = new CocoDatasetDTO
-        //    {
-        //        Info = new CocoInfoDTO { Description = "Test Coco Dataset" },
-        //        Categories = new List<CocoCategoryDTO> { new CocoCategoryDTO { Id = 1, Name = "Category1" } },
-        //        Images = new List<CocoImageDTO> { new CocoImageDTO { Id = 1, FileName = "image1.jpg", Height = 1, Width = 1 } },
-        //        Annotations = new List<CocoAnnotationDTO> { new CocoAnnotationDTO { Id = 1, CategoryId = 1, ImageId = 1, Bbox = new List<float> { 0, 0, 100, 100 } } }
-        //    };
+            _mockCocoUtilsService
+                .Setup(service => service.GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(cocoDirPath, false))
+                .ReturnsAsync(ResultDTO<CocoDatasetDTO>.Ok(cocoDataset));
 
-        //    _mockCocoUtilsService
-        //        .Setup(service => service.GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(cocoDirPath, false))
-        //        .ReturnsAsync(ResultDTO<CocoDatasetDTO>.Ok(cocoDataset));
+            _mockDatasetClassesRepository
+                .Setup(repo => repo.GetFirstOrDefault(It.IsAny<Expression<Func<DatasetClass, bool>>>(), false, null))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Fail("Not found"));
 
-        //    _mockDatasetRepository
-        //        .Setup(repo => repo.Create(It.IsAny<Dataset>(), true, default))
-        //        .ReturnsAsync(ResultDTO.Fail("Failed to create dataset"));
+            _mockDatasetClassesRepository
+                .Setup(repo => repo.Create(It.IsAny<DatasetClass>(), true, default))
+                .ReturnsAsync(ResultDTO.Ok());
 
-        //    // Act
-        //    var result = await _datasetService.ImportDatasetCocoFormatedAtDirectoryPath(datasetName, cocoDirPath, userId);
+            _mockDatasetRepository
+                .Setup(repo => repo.Create(It.IsAny<Dataset>(), true, default))
+                .ReturnsAsync(ResultDTO.Ok());
 
-        //    // Assert
-        //    Assert.False(result.IsSuccess);
-        //    Assert.Equal("Failed to create dataset", result.ErrMsg);
-        //}
+            // Mock the setting for "DatasetImagesFolder"
+            _mockAppSettingsAccessor
+                .Setup(m => m.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages"))
+                .ReturnsAsync(ResultDTO<string>.Ok("Base/Path"));
+
+            // Mock the setting for "DatasetThumbnailsFolder"
+            _mockAppSettingsAccessor
+                .Setup(m => m.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
+                .ReturnsAsync(ResultDTO<string>.Ok("Base/Thumbnails"));
+            // Mock the mapper to return a fully initialized DatasetDTO
+            _mockMapper
+                .Setup(m => m.Map<DatasetDTO>(It.IsAny<Dataset>()))
+                .Returns(new DatasetDTO
+                {
+                    Id = Guid.NewGuid(), // Assign a new Guid for the Id
+                    Name = "Mapped Dataset", // Example name
+                    Description = "This is a mapped dataset.", // Example description
+                    IsPublished = true, // Example published status
+                    ParentDatasetId = null, // or assign a valid Guid if applicable
+                    ParentDataset = null, // or assign a valid DatasetDTO if applicable
+                    CreatedById = "user-id", // Example user ID
+                    CreatedOn = DateTime.UtcNow, // Current date/time for created
+                    CreatedBy = null, // Example user name
+                    UpdatedById = null, // or assign a valid Guid if applicable
+                    UpdatedOn = null, // or assign a valid DateTime if applicable
+                    UpdatedBy = null, // or assign a valid user name if applicable
+                    AnnotationsPerSubclass = true, // Example count
+                    DatasetClasses = new List<Dataset_DatasetClassDTO>(), // Initialize as needed
+                    DatasetImages = new List<DatasetImageDTO>() // Initialize as needed
+                });
+
+
+            // Act
+            var result = await _datasetService.ImportDatasetCocoFormatedAtDirectoryPath(datasetName, cocoDirPath, userId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+        }
+
 
     }
 }
