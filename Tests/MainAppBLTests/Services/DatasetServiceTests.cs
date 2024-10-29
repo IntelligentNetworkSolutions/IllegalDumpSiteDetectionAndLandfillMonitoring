@@ -2575,7 +2575,6 @@ namespace Tests.MainAppBLTests.Services
                 .Setup(repo => repo.Create(It.IsAny<Dataset>(), true, default))
                 .ReturnsAsync(ResultDTO.Ok());
 
-            // Mock the setting for "DatasetImagesFolder"
             _mockAppSettingsAccessor
                 .Setup(m => m.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages"))
                 .ReturnsAsync(ResultDTO<string>.Ok("Base/Path"));
