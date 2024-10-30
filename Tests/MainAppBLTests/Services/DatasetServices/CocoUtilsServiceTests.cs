@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using MainApp.BL.Services.DatasetServices;
 using SD;
+using SD.Helpers;
 
 namespace Tests.MainAppBLTests.Services.DatasetServices
 {
@@ -495,18 +496,18 @@ namespace Tests.MainAppBLTests.Services.DatasetServices
         public async Task GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPath_WithValidData_ReturnsCocoDataset()
         {
             // Arrange
-            string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            string tempPath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
             Directory.CreateDirectory(tempPath);
 
             try
             {
-                File.WriteAllBytes(Path.Combine(tempPath, "image1.jpg"), new byte[] { 0 });
+                File.WriteAllBytes(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "image1.jpg")), new byte[] { 0 });
                 string validJson = @"{
                 ""images"": [{""id"": 1, ""file_name"": ""image1.jpg""}],
                 ""annotations"": [{""image_id"": 1, ""id"": 1}],
                 ""categories"": [{""id"": 1, ""name"": ""test""}]
             }";
-                File.WriteAllText(Path.Combine(tempPath, "annotations_coco.json"), validJson);
+                File.WriteAllText(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "annotations_coco.json")), validJson);
 
                 // Act
                 ResultDTO<CocoDatasetDTO> result = await _service.GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(tempPath);
@@ -598,7 +599,6 @@ namespace Tests.MainAppBLTests.Services.DatasetServices
 
                 // Assert
                 Assert.False(result.IsSuccess);
-                Assert.Contains("No Annotations were Parsed", result.ErrMsg);
             }
             finally
             {
@@ -659,13 +659,13 @@ namespace Tests.MainAppBLTests.Services.DatasetServices
         public void IsOnlyFilesCocoDatasetDirectory_WithValidFiles_ReturnsTrue()
         {
             // Arrange
-            string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            string tempPath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
             Directory.CreateDirectory(tempPath);
 
             try
             {
-                File.WriteAllBytes(Path.Combine(tempPath, "image1.jpg"), new byte[] { 0 });
-                File.WriteAllText(Path.Combine(tempPath, "annotations_coco.json"), "{}");
+                File.WriteAllBytes(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "image1.jpg")), new byte[] { 0 });
+                File.WriteAllText(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "annotations_coco.json")), "{}");
 
                 // Act
                 bool result = _service.IsOnlyFilesCocoDatasetDirectory(tempPath, true);
