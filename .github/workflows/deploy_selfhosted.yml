@@ -46,8 +46,6 @@ jobs:
         dotnet publish --output publish_output `
           -p:PublishProfile=Staging `
           -p:EnvironmentName=Staging `
-          -p:Configuration=Release `
-          --self-contained true `
           /p:EnvironmentName=Staging
       
     - name: Copy vendor directory to publish output
