@@ -32,6 +32,7 @@ namespace Tests.DTOsTests.MainAppBL.DatasetDTOsTests
             var updatedOn = DateTime.UtcNow.AddHours(1);
             var createdBy = new UserDTO();
             var updatedBy = new UserDTO();
+            var idInt = 1;
 
             // Act
             var dto = new ImageAnnotationDTO
@@ -49,7 +50,8 @@ namespace Tests.DTOsTests.MainAppBL.DatasetDTOsTests
                 UpdatedById = updatedById,
                 UpdatedOn = updatedOn,
                 CreatedBy = createdBy,
-                UpdatedBy = updatedBy
+                UpdatedBy = updatedBy,
+                IdInt = idInt
             };
 
             // Assert
@@ -67,6 +69,7 @@ namespace Tests.DTOsTests.MainAppBL.DatasetDTOsTests
             Assert.Equal(updatedOn, dto.UpdatedOn);
             Assert.Equal(createdBy, dto.CreatedBy);
             Assert.Equal(updatedBy, dto.UpdatedBy);
+            Assert.Equal(idInt, dto.IdInt);
         }
 
         [Fact]
