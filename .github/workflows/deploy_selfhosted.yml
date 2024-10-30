@@ -91,9 +91,6 @@ jobs:
           -RedirectStandardOutput $outputFile `
           -RedirectStandardError $errorFile `
           -NoNewWindow -PassThru
-          -Environment @{
-            "ASPNETCORE_ENVIRONMENT" = "Staging"
-          }
     
         # Wait for either completion or error
         while (!$process.HasExited) {
