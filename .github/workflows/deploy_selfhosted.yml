@@ -41,8 +41,14 @@ jobs:
       run: Start-Sleep -Seconds 25
       
     - name: Publish
-      run: dotnet publish --output publish_output -p:PublishProfile=Staging
-      #run: dotnet publish --output publish_output -p:PublishProfile=Staging
+      run: |
+        $env:ASPNETCORE_ENVIRONMENT = "Staging"
+        dotnet publish --output publish_output `
+          -p:PublishProfile=Staging `
+          -p:EnvironmentName=Staging `
+          -p:Configuration=Release `
+          --self-contained true `
+          /p:EnvironmentName=Staging
       
     - name: Copy vendor directory to publish output
       run: |        
@@ -70,19 +76,56 @@ jobs:
           New-Item -ItemType Directory -Force -Path "C:\continous_delivery\waste_sniffer"
         }
         Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_sniffer" -Recurse -Force
-        
+
     - name: Run Migrations and Seed Database
       run: |
-        Start-Process -FilePath "dotnet" -ArgumentList "./MainApp.MVC.dll", "/seed", "/runMigrations", "/module:MMDetectionSetup" -WorkingDirectory "C:/continous_delivery/waste_sniffer" -RedirectStandardOutput "output.log" -NoNewWindow
-        $process = Get-Process dotnet -ErrorAction SilentlyContinue
-        while ($process -and !(Select-String -Path "output.log" -Pattern "Done seeding database." -Quiet)) {
+        # Set environment variable for the process
+        $env:ASPNETCORE_ENVIRONMENT = "Staging"
+
+        # Create a temporary file to capture all output
+        $outputFile = "output.log"
+        $errorFile = "error.log"
+    
+        # Start the process with output redirection
+        $process = Start-Process -FilePath "dotnet" `
+          -ArgumentList "./MainApp.MVC.dll", "/seed", "/runMigrations", "/module:MMDetectionSetup" `
+          -WorkingDirectory "C:/continous_delivery/waste_sniffer" `
+          -RedirectStandardOutput $outputFile `
+          -RedirectStandardError $errorFile `
+          -NoNewWindow -PassThru
+          -Environment @{
+            "ASPNETCORE_ENVIRONMENT" = "Staging"
+          }
+    
+        # Wait for either completion or error
+        while (!$process.HasExited) {
           Start-Sleep -Seconds 1
-          $process = Get-Process dotnet -ErrorAction SilentlyContinue
+      
+          # Check for success message
+          if (Select-String -Path $outputFile -Pattern "Done seeding database." -Quiet) {
+            Stop-Process -Id $process.Id -Force
+            Get-Content $outputFile
+            Write-Host "Seeding completed successfully!"
+            exit 0
+          }
+      
+          # Check for error messages
+          if ((Get-Content $errorFile) -or (Select-String -Path $outputFile -Pattern "Error|Exception|Failed" -Quiet)) {
+            Stop-Process -Id $process.Id -Force
+            Write-Host "Errors found during seeding:"
+            Get-Content $errorFile
+            Get-Content $outputFile
+            exit 1  # This will fail the GitHub Action step
+          }
         }
-        if ($process) {
-          Stop-Process -Id $process.Id -Force
+    
+        # Final check of process exit code
+        if ($process.ExitCode -ne 0) {
+          Write-Host "Process failed with exit code: $($process.ExitCode)"
+          Get-Content $errorFile
+          Get-Content $outputFile
+          exit 1
         }
-        Get-Content "output.log"
       
     # - name: Start App Pool
     #   run: Start-WebAppPool -Name "WasteSniffer"
