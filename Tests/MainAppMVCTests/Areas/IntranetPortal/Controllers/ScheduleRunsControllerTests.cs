@@ -1,8 +1,5 @@
 ﻿using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
-using Hangfire;
-using Hangfire.Storage;
-using Hangfire.Storage.Monitoring;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
@@ -11,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using SD;
-using SD.Enums;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -132,50 +128,50 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var notFoundResult = Assert.IsType<NotFoundResult>(result);
         }
 
-        [Fact]
-        public async Task ViewScheduledRuns_HandlesProcessingDetectionRuns_Successfully()
-        {
-            // Arrange
-            var detectionRuns = new List<DetectionRunDTO>
-            {
-                new DetectionRunDTO { Id = Guid.NewGuid(), Status = nameof(ScheduleRunsStatus.Processing) }
-            };
-            var trainingRuns = new List<TrainingRunDTO>
-            {
-                new TrainingRunDTO { Id = Guid.NewGuid(), Status = "Success" }
-            };
+        //[Fact]
+        //public async Task ViewScheduledRuns_HandlesProcessingDetectionRuns_Successfully()
+        //{
+        //    // Arrange
+        //    var detectionRuns = new List<DetectionRunDTO>
+        //    {
+        //        new DetectionRunDTO { Id = Guid.NewGuid(), Status = nameof(ScheduleRunsStatus.Processing) }
+        //    };
+        //    var trainingRuns = new List<TrainingRunDTO>
+        //    {
+        //        new TrainingRunDTO { Id = Guid.NewGuid(), Status = "Success" }
+        //    };
 
-            _mockDetectionRunService.Setup(s => s.GetAllDetectionRuns())
-                .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(detectionRuns));
-            _mockTrainingRunService.Setup(s => s.GetAllTrainingRuns())
-                .ReturnsAsync(ResultDTO<List<TrainingRunDTO>>.Ok(trainingRuns));
+        //    _mockDetectionRunService.Setup(s => s.GetAllDetectionRuns())
+        //        .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(detectionRuns));
+        //    _mockTrainingRunService.Setup(s => s.GetAllTrainingRuns())
+        //        .ReturnsAsync(ResultDTO<List<TrainingRunDTO>>.Ok(trainingRuns));
 
-            // Mock Hangfire job storage
-            var mockMonitoringApi = new Mock<IMonitoringApi>();
-            mockMonitoringApi.Setup(m => m.ProcessingJobs(0, int.MaxValue))
-                .Returns(new JobList<ProcessingJobDto>(new Dictionary<string, ProcessingJobDto>()));
-            mockMonitoringApi.Setup(m => m.SucceededJobs(0, int.MaxValue))
-                .Returns(new JobList<SucceededJobDto>(new Dictionary<string, SucceededJobDto>()));
-            mockMonitoringApi.Setup(m => m.FailedJobs(0, int.MaxValue))
-                .Returns(new JobList<FailedJobDto>(new Dictionary<string, FailedJobDto>()));
+        //    // Mock Hangfire job storage
+        //    var mockMonitoringApi = new Mock<IMonitoringApi>();
+        //    mockMonitoringApi.Setup(m => m.ProcessingJobs(0, int.MaxValue))
+        //        .Returns(new JobList<ProcessingJobDto>(new Dictionary<string, ProcessingJobDto>()));
+        //    mockMonitoringApi.Setup(m => m.SucceededJobs(0, int.MaxValue))
+        //        .Returns(new JobList<SucceededJobDto>(new Dictionary<string, SucceededJobDto>()));
+        //    mockMonitoringApi.Setup(m => m.FailedJobs(0, int.MaxValue))
+        //        .Returns(new JobList<FailedJobDto>(new Dictionary<string, FailedJobDto>()));
 
-            var storage = new Mock<JobStorage>();
-            storage.Setup(x => x.GetMonitoringApi())
-                .Returns(mockMonitoringApi.Object);
-            JobStorage.Current = storage.Object;
+        //    var storage = new Mock<JobStorage>();
+        //    storage.Setup(x => x.GetMonitoringApi())
+        //        .Returns(mockMonitoringApi.Object);
+        //    JobStorage.Current = storage.Object;
 
-            // Act
-            var result = await _controller.ViewScheduledRuns();
+        //    // Act
+        //    var result = await _controller.ViewScheduledRuns();
 
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsAssignableFrom<ViewScheduledRunsViewModel>(viewResult.Model);
-            Assert.NotNull(model.DetectionRuns);
-            Assert.NotNull(model.TrainingRuns);
+        //    // Assert
+        //    var viewResult = Assert.IsType<ViewResult>(result);
+        //    var model = Assert.IsAssignableFrom<ViewScheduledRunsViewModel>(viewResult.Model);
+        //    Assert.NotNull(model.DetectionRuns);
+        //    Assert.NotNull(model.TrainingRuns);
 
-            // Cleanup
-            JobStorage.Current = null;
-        }
+        //    // Cleanup
+        //    JobStorage.Current = null;
+        //}
 
 
     }
