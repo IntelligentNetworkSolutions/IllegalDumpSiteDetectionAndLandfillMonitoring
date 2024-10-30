@@ -1,4 +1,5 @@
-﻿using DAL.Interfaces.Helpers;
+﻿using DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup;
+using DAL.Interfaces.Helpers;
 using Entities;
 using Entities.MapConfigurationEntities;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Index.HPRtree;
 using Newtonsoft.Json.Linq;
+using SD;
 using SD.Enums;
 using System;
 using System.Collections.Generic;
@@ -32,7 +34,6 @@ namespace DAL.ApplicationStorage.SeedDatabase
         private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IConfiguration _configuration;
 
-
         public DbInitializer(ApplicationDbContext db, UserManager<ApplicationUser> userManager, ILogger<DbInitializer> logger, IAppSettingsAccessor appSettingsAccessor, IConfiguration configuration)
         {
             _db = db;
@@ -45,6 +46,8 @@ namespace DAL.ApplicationStorage.SeedDatabase
 
         public void Initialize(bool? runMigrations, bool? loadModules, List<string> modulesToLoad)
         {
+            Console.WriteLine("Initialize Started");
+            Console.WriteLine(_db.Database.GetConnectionString());
             try
             {
                 if (runMigrations.HasValue && runMigrations.Value == true)
@@ -55,18 +58,56 @@ namespace DAL.ApplicationStorage.SeedDatabase
                     }
                 }
 
-                //Seed application settings 
+                // Seed Application Settings 
+                Console.WriteLine("SeedApplicationSettings Started");
                 SeedApplicationSettings();
-                //Seed roles
+                Console.WriteLine("SeedApplicationSettings Ended");
+                
+                // Seed Roles
+                Console.WriteLine("SeedRoles Started");
                 SeedRoles();
-                //Seed users
+                Console.WriteLine("SeedRoles Ended");
+                
+                // Seed Users
+                Console.WriteLine("SeedUsers Started");
                 SeedUsers();
-                //TODO: load modules logic
+                Console.WriteLine("SeedUsers Ended");
 
+                //TODO: load modules logic
+                if (loadModules.HasValue && loadModules.Value)
+                {
+                    foreach (string module in modulesToLoad)
+                    {
+                        switch (module)
+                        {
+                            case "/module:MMDetectionSetup":
+                                {
+                                    Console.WriteLine("MMDetectionSetup Started");
+                                    var mm = new MMDetectionSetupService(_configuration, _db);
+                                    ResultDTO seedResult = mm.SeedMMDetection();
+                                    
+                                    if (seedResult.IsSuccess == false && seedResult.ExObj is null)
+                                        Console.WriteLine(seedResult.ErrMsg!);
+                                    else if (seedResult.IsSuccess == false && seedResult.ExObj is not null)
+                                        Console.WriteLine(((Exception)seedResult.ExObj).InnerException is null
+                                            ? ((Exception)seedResult.ExObj).Message
+                                            : ((Exception)seedResult.ExObj).InnerException!.Message);
+                                    else
+                                        Console.WriteLine("SUCCESSFULL Seed of MMDetection Setup Resources");
+
+                                    Console.WriteLine("MMDetectionSetup Ended");
+                                    break;
+                                }
+                            default:
+                                throw new InvalidOperationException("Module Name not recognized");
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
+                throw;
             }
         }
 
@@ -214,14 +255,14 @@ namespace DAL.ApplicationStorage.SeedDatabase
                                     foreach (var role in roleValues)
                                     {
                                         var roleDb = _db.Roles.Where(x => x.Name == role).FirstOrDefault();
-                                        if(roleDb != null) 
+                                        if (roleDb != null)
                                         {
                                             _db.UserRoles.Add(new IdentityUserRole<string>
                                             {
                                                 UserId = createdAdminUser.Id,
                                                 RoleId = roleDb.Id
                                             });
-                                        }                                       
+                                        }
                                     }
                                     _db.SaveChanges();
                                 }

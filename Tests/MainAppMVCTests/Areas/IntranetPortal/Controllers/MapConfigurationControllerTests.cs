@@ -1338,5 +1338,56 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Delete error", result.ErrMsg);
         }
 
+        [Fact]
+        public async Task EditMapConfiguration_ValidModel_SuccessfulRetrievalAndMapping_ReturnsView()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+            var dto = new MapConfigurationDTO(); // Assume this is a valid DTO
+            var viewModel = new MapConfigurationViewModel();
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId)).ReturnsAsync(ResultDTO<MapConfigurationDTO>.Ok(dto));
+            _mockMapper.Setup(m => m.Map<MapConfigurationViewModel>(dto)).Returns(viewModel);
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.IsType<MapConfigurationViewModel>(viewResult.Model);
+        }
+        [Fact]
+        public async Task EditMapConfiguration_FailedRetrieval_RedirectsToErrorPath()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+            var resultDto = ResultDTO<MapConfigurationDTO>.Fail("Error retrieving map configuration"); // Simulate failure
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId)).ReturnsAsync(resultDto);
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns("/error");
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_NullData_RedirectsToError404Path()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+            var resultDto = ResultDTO<MapConfigurationDTO>.Ok((MapConfigurationDTO)null); // Simulate null data
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId)).ReturnsAsync(resultDto);
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error404", redirectResult.Url);
+        }
+
     }
 }

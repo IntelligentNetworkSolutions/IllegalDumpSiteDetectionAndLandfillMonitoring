@@ -77,6 +77,27 @@ namespace Tests.MainAppMVCTests.ViewModels.LegalLandfillManagementTests
         }
 
         [Fact]
+        public void IsEnabledProperty_ShouldDefaultToFalse()
+        {
+            // Arrange
+            var viewModel = new LegalLandfillWasteImportViewModel();
+
+            // Act & Assert
+            Assert.False(viewModel.IsEnabled);
+        }
+
+        [Fact]
+        public void IsEnabledProperty_ShouldSetAndGetCorrectValue()
+        {
+            // Arrange
+            var viewModel = new LegalLandfillWasteImportViewModel { IsEnabled = true };
+
+            // Act & Assert
+            Assert.True(viewModel.IsEnabled);
+        }
+
+
+        [Fact]
         public void WeightProperty_ShouldSetAndGetCorrectValue()
         {
             // Arrange

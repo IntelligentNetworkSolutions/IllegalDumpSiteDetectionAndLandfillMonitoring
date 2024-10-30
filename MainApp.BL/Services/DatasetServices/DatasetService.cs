@@ -4,11 +4,9 @@ using DAL.Interfaces.Repositories.DatasetRepositories;
 using DTOs.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
-using DTOs.MainApp.BL.TrainingDTOs;
 using DTOs.ObjectDetection.API.CocoFormatDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
-using MainApp.BL.Services.TrainingServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -27,7 +25,7 @@ namespace MainApp.BL.Services.DatasetServices
         private readonly IDatasetImagesRepository _datasetImagesRepository;
         private readonly IImageAnnotationsRepository _imageAnnotationsRepository;
         private readonly ICocoUtilsService _cocoUtilsService;
-        
+
 
         private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IMapper _mapper;
@@ -92,7 +90,7 @@ namespace MainApp.BL.Services.DatasetServices
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, ex);
-                return ResultDTO<List<DatasetDTO>>.ExceptionFail(ex.Message, ex);                
+                return ResultDTO<List<DatasetDTO>>.ExceptionFail(ex.Message, ex);
             }
         }
 
@@ -357,6 +355,29 @@ namespace MainApp.BL.Services.DatasetServices
                 return new ResultDTO<int>(IsSuccess: false, 2, updatedDataset.ErrMsg, null);
             }
         }
+
+        public async Task<ResultDTO> EnableAllImagesInDataset(Guid datasetId)
+        {
+            var resultGetEntity = await _datasetsRepository.GetById(datasetId, includeProperties: "DatasetImages");
+
+            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                return ResultDTO.Fail("Error getting Dataset");
+
+
+            foreach (var image in resultGetEntity.Data.DatasetImages)
+            {
+                image.IsEnabled = true;
+            }
+
+            var updatedDataset = await _datasetsRepository.Update(resultGetEntity.Data);
+
+            if (updatedDataset.IsSuccess == false && updatedDataset.HandleError())
+                return ResultDTO.Fail("Error updating Dataset");
+
+            return ResultDTO.Ok();
+
+        }
+
         #endregion
 
         #region Delete
@@ -489,7 +510,7 @@ namespace MainApp.BL.Services.DatasetServices
 
         #region Export
         // TODO: Create DatsetExportOption Enum/Static Class to replace magic string param
-        private ResultDTO<DatasetFullIncludeDTO> GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
+        public ResultDTO<DatasetFullIncludeDTO> GetDatasetFullIncludeDTOWithIdIntsFromDatasetIncludedEntity
             (Dataset datasetIncluded, string exportOption, bool includeDisabledImages = true, bool includeDisabledAnnotations = true)
         {
             try
@@ -616,7 +637,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
-        private async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(Dataset dataset, string exportOption, string? downloadLocation)
+        public async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(Dataset dataset, string exportOption, string? downloadLocation)
         {
 
             // TODO: Implement for multiple classes
@@ -787,7 +808,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
-        private async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(Dataset dataset, string exportOption, string? downloadLocation)
+        public async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdInts(Dataset dataset, string exportOption, string? downloadLocation)
         {
             if (dataset == null)
                 return ResultDTO<string>.Fail("Dataset is null");

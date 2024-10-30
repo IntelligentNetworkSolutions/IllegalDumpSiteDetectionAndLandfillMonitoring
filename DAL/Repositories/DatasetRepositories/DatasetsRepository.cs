@@ -7,8 +7,6 @@ namespace DAL.Repositories.DatasetRepositories
 {
     public class DatasetsRepository : BaseResultRepository<Dataset, Guid>, IDatasetsRepository
     {
-        public DatasetsRepository(ApplicationDbContext db) : base(db)
-        {
-        }
+        public DatasetsRepository(ApplicationDbContext db) : base(db) {}
     }
 }

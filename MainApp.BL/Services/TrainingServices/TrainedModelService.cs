@@ -1,8 +1,5 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.TrainingRepositories;
-using DocumentFormat.OpenXml.Office2010.Excel;
-using DocumentFormat.OpenXml.Office2019.Presentation;
-using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
 using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
@@ -15,14 +12,14 @@ namespace MainApp.BL.Services.TrainingServices
     public class TrainedModelService : ITrainedModelService
     {
         private readonly ITrainedModelsRepository _trainedModelsRepository;
-        
+
         private readonly IMapper _mapper;
         private readonly ILogger<TrainingRunService> _logger;
 
         protected readonly IMMDetectionConfigurationService _MMDetectionConfiguration;
         private readonly ITrainingRunService _trainingRunService;
 
-        public TrainedModelService(ITrainedModelsRepository trainedModelsRepository, IMapper mapper, ILogger<TrainingRunService> logger, 
+        public TrainedModelService(ITrainedModelsRepository trainedModelsRepository, IMapper mapper, ILogger<TrainingRunService> logger,
             IMMDetectionConfigurationService mMDetectionConfiguration, ITrainingRunService trainingRunService)
         {
             _trainedModelsRepository = trainedModelsRepository;
@@ -59,12 +56,12 @@ namespace MainApp.BL.Services.TrainingServices
         {
             try
             {
-               ResultDTO<IEnumerable<TrainedModel>>? resultGetEntities = await _trainedModelsRepository.GetAll(includeProperties: "CreatedBy");
+                ResultDTO<IEnumerable<TrainedModel>>? resultGetEntities = await _trainedModelsRepository.GetAll(includeProperties: "CreatedBy");
 
                 if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
                     return ResultDTO<List<TrainedModelDTO>>.Fail(resultGetEntities.ErrMsg!);
 
-                if(resultGetEntities.Data == null)
+                if (resultGetEntities.Data == null)
                 {
                     return ResultDTO<List<TrainedModelDTO>>.Fail("Trained models not found");
                 }
@@ -109,14 +106,14 @@ namespace MainApp.BL.Services.TrainingServices
             try
             {
                 ResultDTO<TrainedModelDTO> getTrainedModelResult = await GetTrainedModelById(trainedModelId, false);
-                if(getTrainedModelResult.IsSuccess == false && getTrainedModelResult.HandleError())
+                if (getTrainedModelResult.IsSuccess == false && getTrainedModelResult.HandleError())
                     return ResultDTO<TrainingRunResultsDTO>.Fail(getTrainedModelResult.ErrMsg!);
 
                 TrainedModelDTO trainedModel = getTrainedModelResult.Data!;
 
-                ResultDTO<TrainingRunResultsDTO> getBestEpochResult = 
+                ResultDTO<TrainingRunResultsDTO> getBestEpochResult =
                     _trainingRunService.GetBestEpochForTrainingRun(trainedModel.TrainingRunId!.Value);
-                if(getBestEpochResult.IsSuccess == false && getBestEpochResult.HandleError())
+                if (getBestEpochResult.IsSuccess == false && getBestEpochResult.HandleError())
                     return ResultDTO<TrainingRunResultsDTO>.Fail(getBestEpochResult.ErrMsg!);
 
                 return ResultDTO<TrainingRunResultsDTO>.Ok(getBestEpochResult.Data!);
@@ -129,16 +126,71 @@ namespace MainApp.BL.Services.TrainingServices
         }
 
         // TODO: Implement 
-        public async Task<ResultDTO<TrainedModel>> EditTrainedModelById(Guid trainedModelId)
+        public async Task<ResultDTO> EditTrainedModelById(Guid trainedModelId, string? name = null, bool? isPublished = null)
         {
-            // Allowed Update only for Name and IsPublished
-            throw new NotImplementedException();
+            try
+            {
+                ResultDTO<TrainedModel?> resultGetEntity = await _trainedModelsRepository.GetById(trainedModelId);
+                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                    return ResultDTO.Fail(resultGetEntity.ErrMsg!);
+
+                if (resultGetEntity.Data is null)
+                    return ResultDTO.Fail($"No Trained Model found with ID: {trainedModelId}");
+
+                if (name != null)
+                {
+                    resultGetEntity.Data.Name = name;
+                }
+                if (isPublished != null)
+                {
+                    resultGetEntity.Data.IsPublished = (bool)isPublished;
+                }
+
+                ResultDTO updateRunResult = await _trainedModelsRepository.Update(resultGetEntity.Data);
+                if (updateRunResult.IsSuccess == false && updateRunResult.HandleError())
+                    return ResultDTO.Fail(updateRunResult.ErrMsg!);
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         // TODO: Implement , Delete files as well
         public async Task<ResultDTO> DeleteTrainedModelById(Guid trainedModelId)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var resultGetEntity = await _trainedModelsRepository.GetById(trainedModelId);
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                    return ResultDTO.Fail(resultGetEntity.ErrMsg!);
+
+                var trainedModel = resultGetEntity.Data;
+
+                if (trainedModel == null)
+                    return ResultDTO.Fail("Trained model not found.");
+
+                if (!string.IsNullOrEmpty(trainedModel.ModelConfigPath) && File.Exists(trainedModel.ModelConfigPath))
+                    File.Delete(trainedModel.ModelConfigPath);
+
+                if (!string.IsNullOrEmpty(trainedModel.ModelFilePath) && File.Exists(trainedModel.ModelFilePath))
+                    File.Delete(trainedModel.ModelFilePath);
+
+                var deleteResult = await _trainedModelsRepository.Delete(trainedModel);
+                if (!deleteResult.IsSuccess && deleteResult.HandleError())
+                    return ResultDTO.Fail(deleteResult.ErrMsg!);
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
+
     }
 }

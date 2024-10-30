@@ -4,7 +4,6 @@ using CliWrap.Buffered;
 using DAL.Interfaces.Repositories.DetectionRepositories;
 using DTOs.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
-using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
 using Entities.DatasetEntities;
 using Entities.DetectionEntities;
@@ -25,6 +24,7 @@ namespace MainApp.BL.Services.DetectionServices
         private readonly IDetectionRunsRepository _detectionRunRepository;
         private readonly IDetectedDumpSitesRepository _detectedDumpSitesRepository;
         private readonly IDetectionInputImageRepository _detectionInputImageRepository;
+        private readonly IDetectionIgnoreZonesRepository _detectionIgnoreZoneRepository;
         protected readonly IMMDetectionConfigurationService _MMDetectionConfiguration;
         private readonly IMapper _mapper;
         private readonly ILogger<DetectionRunService> _logger;
@@ -34,15 +34,16 @@ namespace MainApp.BL.Services.DetectionServices
         private string DetectionResultDummyDatasetClassId = string.Empty;
         private string HasGPU = string.Empty;
 
-        public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository, IMMDetectionConfigurationService mMDetectionConfiguration)
+        public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository, IMMDetectionConfigurationService mMDetectionConfiguration, IDetectionIgnoreZonesRepository detectionIgnoreZoneRepository)
         {
             _detectionRunRepository = detectionRunRepository;
             _detectionInputImageRepository = detectionInputImageRepository;
             _mapper = mapper;
             _logger = logger;
             _configuration = configuration;
+            _detectionIgnoreZoneRepository = detectionIgnoreZoneRepository;
 
-           
+
             string? hasGPU = _configuration["AppSettings:MMDetection:HasGPU"];
             if (string.IsNullOrEmpty(hasGPU))
                 throw new Exception($"{nameof(hasGPU)} is missing");
@@ -50,7 +51,7 @@ namespace MainApp.BL.Services.DetectionServices
             string? detectionResultDummyDatasetClassId = _configuration["AppSettings:MMDetection:DetectionResultDummyDatasetClassId"];
             if (string.IsNullOrEmpty(detectionResultDummyDatasetClassId))
                 throw new Exception($"{nameof(detectionResultDummyDatasetClassId)} is missing");
-         
+
             HasGPU = hasGPU;
             _detectedDumpSitesRepository = detectedDumpSitesRepository;
             DetectionResultDummyDatasetClassId = detectionResultDummyDatasetClassId;
@@ -116,7 +117,7 @@ namespace MainApp.BL.Services.DetectionServices
                 {
                     if (confidenceRateDict.TryGetValue(detectionRun.Id, out var confidenceThreshold))
                     {
-                        detectionRun.DetectedDumpSites = detectionRun.DetectedDumpSites?.Where(dds => dds.ConfidenceRate > confidenceThreshold/100).ToList();
+                        detectionRun.DetectedDumpSites = detectionRun.DetectedDumpSites?.Where(dds => dds.ConfidenceRate > confidenceThreshold / 100).ToList();
                     }
                 }
 
@@ -130,15 +131,25 @@ namespace MainApp.BL.Services.DetectionServices
                 return ResultDTO<List<DetectionRunDTO>>.ExceptionFail(ex.Message, ex);
             }
         }
-        
-        public async Task<List<AreaComparisonAvgConfidenceRateReportDTO>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds)
+
+        public async Task<ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds, int selectedConfidenceRate)
         {
-            List<DetectionRun> list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds) ?? throw new Exception("Object not found");
+            List<DetectionRun> list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds);
+            if (list == null || !list.Any())
+            {
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail("No detection runs found.");
+            }
+
+            ResultDTO<IEnumerable<DetectionIgnoreZone>> resultIgnoreZones = await _detectionIgnoreZoneRepository.GetAll();
+            if (resultIgnoreZones.IsSuccess == false && resultIgnoreZones.HandleError())
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail(resultIgnoreZones.ErrMsg!);
+            if (resultIgnoreZones.Data == null)
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail("Ignore zones not found");
 
             var groupedDumpSites = list.Select(detectionRun => new
             {
                 DetectionRun = detectionRun,
-                GroupedDumpSites = detectionRun.DetectedDumpSites
+                GroupedDumpSites = detectionRun.DetectedDumpSites.Where(x => x.ConfidenceRate * 100 >= selectedConfidenceRate)
             .GroupBy(dumpSite => dumpSite.DatasetClass.ClassName)
             .ToDictionary(group => group.Key, group => group.ToList())
             }).ToList();
@@ -155,19 +166,44 @@ namespace MainApp.BL.Services.DetectionServices
                 model.IsCompleted = group.DetectionRun?.IsCompleted;
                 model.GroupedDumpSitesList = new();
                 model.AllConfidenceRates = new();
+
+                GroupedDumpSitesListHistoricDataDTO dumpSiteModel = new();
                 foreach (var item in group.GroupedDumpSites)
                 {
-                    GroupedDumpSitesListHistoricDataDTO dumpSiteModel = new();
-
                     dumpSiteModel.ClassName = item.Key;
                     dumpSiteModel.Geoms = new();
                     dumpSiteModel.GeomAreas = new();
+                    dumpSiteModel.GeomsInIgnoreZone = new();
+                    dumpSiteModel.GeomsOutsideOfIgnoreZone = new();
+                    dumpSiteModel.GeomAreasInIgnoreZone = new();
+                    dumpSiteModel.GeomAreasOutsideOfIgnoreZone = new();
                     foreach (var i in item.Value)
                     {
+                        bool intersectsIgnoreZone = false;
+
+                        foreach (var ignoreZone in resultIgnoreZones.Data)
+                        {
+                            if (ignoreZone.Geom.Intersects(i.Geom))
+                            {
+                                intersectsIgnoreZone = true;
+                                dumpSiteModel.GeomsInIgnoreZone.Add(i.Geom);
+                                dumpSiteModel.GeomAreasInIgnoreZone.Add(i.Geom.Area);
+                                break;
+                            }
+                        }
+
+                        if (!intersectsIgnoreZone)
+                        {
+                            dumpSiteModel.GeomsOutsideOfIgnoreZone.Add(i.Geom);
+                            dumpSiteModel.GeomAreasOutsideOfIgnoreZone.Add(i.Geom.Area);
+                        }
+
+                        model.AllConfidenceRates.Add(i.ConfidenceRate);
                         dumpSiteModel.Geoms.Add(i.Geom);
                         dumpSiteModel.GeomAreas.Add(i.Geom.Area);
-                        model.AllConfidenceRates.Add(i.ConfidenceRate);
                     }
+                    dumpSiteModel.TotalGroupAreaInIgnoreZone = dumpSiteModel.GeomAreasInIgnoreZone.Sum();
+                    dumpSiteModel.TotalGroupAreaOutOfIgnoreZone = dumpSiteModel.GeomAreasOutsideOfIgnoreZone.Sum();
                     dumpSiteModel.TotalGroupArea = dumpSiteModel.GeomAreas.Sum();
                     model.GroupedDumpSitesList.Add(dumpSiteModel);
                     model.TotalAreaOfDetectionRun = model.GroupedDumpSitesList.Sum(x => x.TotalGroupArea);
@@ -175,7 +211,7 @@ namespace MainApp.BL.Services.DetectionServices
                 }
                 listDTO.Add(model);
             }
-            return listDTO;
+            return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(listDTO);
         }
 
         public async Task<ResultDTO<DetectionRunDTO>> GetDetectionRunById(Guid id, bool track = false)
@@ -207,7 +243,7 @@ namespace MainApp.BL.Services.DetectionServices
                 ResultDTO resultDeleteEntity = await _detectionRunRepository.Delete(detectionRun);
 
                 if (resultDeleteEntity.IsSuccess == false && resultDeleteEntity.HandleError())
-                    return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);               
+                    return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
 
                 return ResultDTO.Ok();
             }
@@ -338,10 +374,10 @@ namespace MainApp.BL.Services.DetectionServices
                 if (detectionRunDTO is null)
                     return ResultDTO.Fail("Detection Run is null");
 
-                if(detectionRunDTO.TrainedModelId is null)
+                if (detectionRunDTO.TrainedModelId is null)
                     return ResultDTO.Fail($"Trained Model Id is null for Detection Run with id {detectionRunDTO.Id}");
 
-                if(string.IsNullOrEmpty(detectionRunDTO.TrainedModel.ModelConfigPath) || string.IsNullOrEmpty(detectionRunDTO.TrainedModel.ModelFilePath))
+                if (string.IsNullOrEmpty(detectionRunDTO.TrainedModel.ModelConfigPath) || string.IsNullOrEmpty(detectionRunDTO.TrainedModel.ModelFilePath))
                     return ResultDTO.Fail($"Trained Model config or file is null or empty for Detection Run with id {detectionRunDTO.Id}");
 
                 bool hasGPU = false;
@@ -428,7 +464,7 @@ namespace MainApp.BL.Services.DetectionServices
                 double yres = geoTransform[5];
                 double lrx = ulx + (gdalDataset.RasterXSize * xres);
                 double lry = uly + (gdalDataset.RasterYSize * yres);
-                
+
                 // Georeference the data
                 foreach (var bbox in detectionRunFinishedResponse.bboxes)
                 {
@@ -468,17 +504,17 @@ namespace MainApp.BL.Services.DetectionServices
             Guid detectedZonesDatasetClassId = Guid.Parse(detectedZonesDatasetClassIdStr);
 
             ResultDTO<DetectionRun?> getDetectionRunIncluded =
-                await _detectionRunRepository.GetByIdIncludeThenAll(detectionRunId, track: false, 
+                await _detectionRunRepository.GetByIdIncludeThenAll(detectionRunId, track: false,
                 includeProperties:
-                    [ (dr => dr.TrainedModel!, 
-                        [tm => ((TrainedModel)tm).Dataset!, 
-                            d => ((Entities.DatasetEntities.Dataset)d).DatasetClasses, 
+                    [ (dr => dr.TrainedModel!,
+                        [tm => ((TrainedModel)tm).Dataset!,
+                            d => ((Entities.DatasetEntities.Dataset)d).DatasetClasses,
                                 ddc => ((Dataset_DatasetClass)ddc).DatasetClass]),
                     ]);
             if (getDetectionRunIncluded.IsSuccess == false && getDetectionRunIncluded.HandleError())
                 return ResultDTO<List<DetectedDumpSite>>.Fail(getDetectionRunIncluded.ErrMsg!);
 
-            if(getDetectionRunIncluded.Data is null)
+            if (getDetectionRunIncluded.Data is null)
                 return ResultDTO<List<DetectedDumpSite>>.Fail($"Detection Run with model, dataset, classes included not found for id: {detectionRunId}");
 
             DetectionRun detectionRun = getDetectionRunIncluded.Data;
@@ -501,9 +537,9 @@ namespace MainApp.BL.Services.DetectionServices
                 };
 
                 int labelValue = detectedDumpSitesProjectedResponse.labels[i];
-                Dataset_DatasetClass? datasetDatasetClassLabel = 
+                Dataset_DatasetClass? datasetDatasetClassLabel =
                     datasetDatasetClasses.FirstOrDefault(c => c.DatasetClassValue == labelValue + 1);
-                if(datasetDatasetClassLabel is null)
+                if (datasetDatasetClassLabel is null)
                     return ResultDTO<List<DetectedDumpSite>>.Fail($"Dataset Dataset Class not found with value: {labelValue}");
 
                 detectedDumpSites.Add(new DetectedDumpSiteDTO()
@@ -537,7 +573,7 @@ namespace MainApp.BL.Services.DetectionServices
                 {
                     return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
                 }
-                List<DetectionInputImageDTO> dtos = _mapper.Map<List<DetectionInputImageDTO>>(resultGetEntities.Data);               
+                List<DetectionInputImageDTO> dtos = _mapper.Map<List<DetectionInputImageDTO>>(resultGetEntities.Data);
                 return ResultDTO<List<DetectionInputImageDTO>>.Ok(dtos);
             }
             catch (Exception ex)
@@ -551,7 +587,7 @@ namespace MainApp.BL.Services.DetectionServices
         {
             try
             {
-                ResultDTO<IEnumerable<DetectionInputImage>> resultGetEntities = await _detectionInputImageRepository.GetAll(filter: x => selectedImagesIds.Contains(x.Id),includeProperties: "CreatedBy");
+                ResultDTO<IEnumerable<DetectionInputImage>> resultGetEntities = await _detectionInputImageRepository.GetAll(filter: x => selectedImagesIds.Contains(x.Id), includeProperties: "CreatedBy");
                 if (resultGetEntities.IsSuccess is false && resultGetEntities.HandleError())
                 {
                     return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);

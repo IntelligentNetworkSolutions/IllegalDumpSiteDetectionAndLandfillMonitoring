@@ -23,5 +23,16 @@ namespace DTOs.MainApp.BL.DetectionDTOs
         }
         public List<double> GeomAreas { get; set; }
         public double TotalGroupArea { get; set; }
+
+
+        public List<Polygon>? GeomsInIgnoreZone { get; set; }
+        public List<Polygon>? GeomsOutsideOfIgnoreZone { get; set; }
+
+        public List<double> GeomAreasInIgnoreZone { get; set; }
+        public List<double> GeomAreasOutsideOfIgnoreZone { get; set; }
+
+        public double TotalGroupAreaInIgnoreZone { get; set; }
+        public double TotalGroupAreaOutOfIgnoreZone { get; set; }
+
     }
 }

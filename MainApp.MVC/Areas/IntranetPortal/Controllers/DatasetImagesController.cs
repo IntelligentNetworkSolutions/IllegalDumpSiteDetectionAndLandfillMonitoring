@@ -71,11 +71,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new
                 {
                     responseAnnotated = true,
-                    responseError = DbResHtml.T("This image has active annotations. Do you want to continue anyway?", "Resources").ToString()
+                    responseError = DbResHtml.T("This image has active annotations. Do you want to continue anyway?", "Resources")
                 });
             }
 
-            var isImageDeleted = await _datasetImagesService.DeleteDatasetImage(datasetImageId, deleteAnnotations);
+            ResultDTO<int> isImageDeleted = await _datasetImagesService.DeleteDatasetImage(datasetImageId, deleteAnnotations);
             if (isImageDeleted.IsSuccess && isImageDeleted.Data == 1)
             {
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset image", "Resources") });

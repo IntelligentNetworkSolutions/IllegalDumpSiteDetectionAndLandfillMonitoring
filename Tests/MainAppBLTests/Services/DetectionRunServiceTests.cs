@@ -19,6 +19,7 @@ namespace Tests.MainAppBLTests.Services
         private readonly Mock<IDetectionRunsRepository> _mockDetectionRunsRepository;
         private readonly Mock<IDetectedDumpSitesRepository> _mockDetectedDumSiteRepositoryRepository;
         private readonly Mock<IDetectionInputImageRepository> _mockDetectionInputImageRepository;
+        private readonly Mock<IDetectionIgnoreZonesRepository> _mockDetectionIgnoreZoneRepository;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<ILogger<DetectionRunService>> _mockLogger;
@@ -35,6 +36,7 @@ namespace Tests.MainAppBLTests.Services
             _mockLogger = new Mock<ILogger<DetectionRunService>>();
             _mockFileSystem = new Mock<IFileSystem>();
             _mockMMDetectionConfigurationService = new Mock<IMMDetectionConfigurationService>();
+            _mockDetectionIgnoreZoneRepository = new Mock<IDetectionIgnoreZonesRepository>();
 
             _mockConfiguration = new Mock<IConfiguration>();
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:CondaExeFileAbsPath"]).Returns("conda_exe_file_path");
@@ -53,7 +55,8 @@ namespace Tests.MainAppBLTests.Services
                                                _mockConfiguration.Object,
                                                _mockDetectedDumSiteRepositoryRepository.Object,
                                                 _mockDetectionInputImageRepository.Object,
-                                                _mockMMDetectionConfigurationService.Object);
+                                                _mockMMDetectionConfigurationService.Object,
+                                                _mockDetectionIgnoreZoneRepository.Object);
         }
 
         [Fact]
@@ -104,23 +107,6 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task GenerateAreaComparisonAvgConfidenceRateData_ReturnsList()
-        {
-            // Arrange
-            var selectedDetectionRunsIds = new List<Guid>();
-            var detectionRuns = new List<DetectionRun>();
-            _mockDetectionRunsRepository.Setup(repo => repo.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds))
-                                        .ReturnsAsync(detectionRuns);
-
-            // Act
-            var result = await _service.GenerateAreaComparisonAvgConfidenceRateData(selectedDetectionRunsIds);
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.IsType<List<AreaComparisonAvgConfidenceRateReportDTO>>(result);
-        }
-
-        [Fact]
         public async Task GetDetectionRunById_ReturnsDetectionRunDTO()
         {
             // Arrange
@@ -157,6 +143,28 @@ namespace Tests.MainAppBLTests.Services
             Assert.Null(result.Data);
             Assert.Equal("Invalid detection run ID", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task GetDetectionRunById_ThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var exceptionMessage = "An unexpected error occurred.";
+
+            _mockDetectionRunsRepository.Setup(repo => repo.GetById(detectionRunId, false, "CreatedBy"))
+                                        .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _service.GetDetectionRunById(detectionRunId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.IsType<ResultDTO<DetectionRunDTO>>(result);
+            Assert.Null(result.Data);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task CreateDetectionRun_SuccessfullyCreated()
@@ -501,7 +509,7 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Null(result.ErrMsg); 
+            Assert.Null(result.ErrMsg);
         }
 
         [Fact]
@@ -763,6 +771,588 @@ namespace Tests.MainAppBLTests.Services
 
 
         #endregion
+
+
+        [Fact]
+        public async Task GenerateAreaComparisonAvgConfidenceRateData_ShouldReturnFail_WhenNoDetectionRunsFound()
+        {
+            // Arrange
+            var selectedIds = new List<Guid> { Guid.NewGuid() };
+            int selectedConfidenceRate = 70;
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetSelectedDetectionRunsWithClasses(selectedIds))
+                .ReturnsAsync(new List<DetectionRun>());
+
+            // Act
+            var result = await _service.GenerateAreaComparisonAvgConfidenceRateData(selectedIds, selectedConfidenceRate);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("No detection runs found.", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GenerateAreaComparisonAvgConfidenceRateData_ShouldReturnFail_WhenIgnoreZonesNotFound()
+        {
+            // Arrange
+            var selectedIds = new List<Guid> { Guid.NewGuid() };
+            int selectedConfidenceRate = 70;
+            var detectionRuns = new List<DetectionRun>
+            {
+                new DetectionRun { Id = Guid.NewGuid(), Name = "Run1", DetectedDumpSites = new List<DetectedDumpSite>() }
+            };
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetSelectedDetectionRunsWithClasses(selectedIds))
+                .ReturnsAsync(detectionRuns);
+
+            _mockDetectionIgnoreZoneRepository
+                .Setup(repo => repo.GetAll(null, null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionIgnoreZone>>.Fail("Ignore zones retrieval failed"));
+
+            // Act
+            var result = await _service.GenerateAreaComparisonAvgConfidenceRateData(selectedIds, selectedConfidenceRate);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Ignore zones retrieval failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetSelectedInputImagesById_ShouldReturnExceptionFail_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var selectedImagesIds = new List<Guid> { Guid.NewGuid() };
+            string exceptionMessage = "Repository exception";
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionInputImage, bool>>>(), null, false, It.IsAny<string>(), null))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _service.GetSelectedInputImagesById(selectedImagesIds);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetSelectedInputImagesById_ShouldReturnFail_WhenRepositoryReturnsError()
+        {
+            // Arrange
+            var selectedImagesIds = new List<Guid> { Guid.NewGuid() };
+            string errorMessage = "Repository error";
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionInputImage, bool>>>(), null, false, It.IsAny<string>(), null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionInputImage>>.Fail(errorMessage));
+
+            // Act
+            var result = await _service.GetSelectedInputImagesById(selectedImagesIds);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(errorMessage, result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetSelectedInputImagesById_ShouldReturnOk_WhenImagesAreRetrievedSuccessfully()
+        {
+            // Arrange
+            var selectedImagesIds = new List<Guid> { Guid.NewGuid() };
+            var detectionImages = new List<DetectionInputImage>
+            {
+                new DetectionInputImage
+                {
+                    Id = selectedImagesIds.First(),
+                    ImageFileName = "Image1.jpg",
+                    CreatedById = "test-user-id"
+                }
+            };
+
+            _mockDetectionInputImageRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionInputImage, bool>>>(), null, false, It.IsAny<string>(), null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionInputImage>>.Ok(detectionImages));
+
+            _mockMapper
+                .Setup(mapper => mapper.Map<List<DetectionInputImageDTO>>(detectionImages))
+                .Returns(new List<DetectionInputImageDTO>
+                {
+            new DetectionInputImageDTO { Id = selectedImagesIds.First(), ImageFileName = "Image1.jpg" }
+                });
+
+            // Act
+            var result = await _service.GetSelectedInputImagesById(selectedImagesIds);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Single(result.Data);
+            Assert.Equal("Image1.jpg", result.Data.First().ImageFileName);
+        }
+
+        [Fact]
+        public async Task UpdateStatus_ShouldReturnOk_WhenUpdateIsSuccessful()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var status = "Completed";
+            var detectionRun = new DetectionRun { Id = detectionRunId, Status = "Pending" };
+
+            // Setup repository to return the detection run for GetById
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetById(detectionRunId, true, null))
+                .ReturnsAsync(ResultDTO<DetectionRun?>.Ok(detectionRun));
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.Update(detectionRun, true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _service.UpdateStatus(detectionRunId, status);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
+        public async Task UpdateStatus_ShouldReturnFail_WhenDetectionRunNotFound()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var status = "Completed";
+
+            // Setup repository to return failure for GetById
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetById(detectionRunId, true, null))
+                .ReturnsAsync(ResultDTO<DetectionRun?>.Fail("Detection run not found"));
+
+            // Act
+            var result = await _service.UpdateStatus(detectionRunId, status);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Detection run not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdateStatus_ShouldReturnFail_WhenUpdateFails()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var status = "Completed";
+            var detectionRun = new DetectionRun { Id = detectionRunId, Status = "Pending" };
+
+            // Setup repository to return the detection run for GetById
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetById(detectionRunId, true, null))
+                .ReturnsAsync(ResultDTO<DetectionRun?>.Ok(detectionRun));
+
+            // Setup repository to return failure for Update
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.Update(detectionRun, true, default))
+                .ReturnsAsync(ResultDTO.Fail("Update failed"));
+
+            // Act
+            var result = await _service.UpdateStatus(detectionRunId, status);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Update failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdateStatus_ShouldReturnExceptionFail_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var status = "Completed";
+            string exceptionMessage = "Repository exception";
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetById(detectionRunId, true, null))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _service.UpdateStatus(detectionRunId, status);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+
+        }
+
+        [Fact]
+        public async Task GetDetectionRunsWithClasses_ShouldReturnListOfDTOs_WhenSuccessful()
+        {
+            // Arrange
+            var detectionRuns = new List<DetectionRun>
+            {
+                new DetectionRun { Id = Guid.NewGuid(), Name = "Run 1" },
+                new DetectionRun { Id = Guid.NewGuid(), Name = "Run 2" }
+            };
+
+            var expectedDTOs = new List<DetectionRunDTO>
+            {
+                new DetectionRunDTO { Id = detectionRuns[0].Id, Name = "Run 1" },
+                new DetectionRunDTO { Id = detectionRuns[1].Id, Name = "Run 2" }
+            };
+
+            // Setup repository to return detection runs
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetDetectionRunsWithClasses())
+                .ReturnsAsync(detectionRuns);
+
+            // Setup mapper to return mapped DTOs
+            _mockMapper
+                .Setup(mapper => mapper.Map<List<DetectionRunDTO>>(detectionRuns))
+                .Returns(expectedDTOs);
+
+            // Act
+            var result = await _service.GetDetectionRunsWithClasses();
+
+            // Assert
+            Assert.Equal(expectedDTOs.Count, result.Count);
+            Assert.Equal(expectedDTOs[0].Name, result[0].Name);
+            Assert.Equal(expectedDTOs[1].Name, result[1].Name);
+        }
+
+        [Fact]
+        public async Task GetDetectionRunsWithClasses_ShouldThrowException_WhenRepositoryReturnsNull()
+        {
+            // Arrange
+            string exceptionMessage = "Object not found";
+
+            // Setup repository to return null
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetDetectionRunsWithClasses())
+                .ReturnsAsync((List<DetectionRun>?)null);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await _service.GetDetectionRunsWithClasses());
+            Assert.Equal(exceptionMessage, exception.Message);
+
+        }
+
+        [Fact]
+        public async Task GetDetectionRunsWithClasses_ShouldThrowException_WhenMapperReturnsNull()
+        {
+            // Arrange
+            var detectionRuns = new List<DetectionRun>
+            {
+                new DetectionRun { Id = Guid.NewGuid(), Name = "Run 1" }
+            };
+            string exceptionMessage = "Object not found";
+
+            // Setup repository to return detection runs
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetDetectionRunsWithClasses())
+                .ReturnsAsync(detectionRuns);
+
+            // Setup mapper to return null
+            _mockMapper
+                .Setup(mapper => mapper.Map<List<DetectionRunDTO>>(detectionRuns))
+                .Returns((List<DetectionRunDTO>?)null);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(async () => await _service.GetDetectionRunsWithClasses());
+            Assert.Equal(exceptionMessage, exception.Message);
+
+        }
+
+        [Fact]
+        public async Task DeleteDetectionRun_ShouldReturnOk_WhenDeletionIsSuccessful()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+
+            var detectionRunDTO = new DetectionRunDTO { Id = detectionRunId, Name = "Test Run" };
+            var detectionRun = new DetectionRun { Id = detectionRunId, Name = detectionRunDTO.Name };
+
+            // Set up the mapper to map from DTO to entity
+            _mockMapper
+                .Setup(mapper => mapper.Map<DetectionRun>(detectionRunDTO))
+                .Returns(detectionRun);
+
+            // Set up the repository to return a successful result on deletion
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.Delete(detectionRun, true, default))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _service.DeleteDetectionRun(detectionRunDTO);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionRun_ShouldReturnFail_WhenDeletionFails()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+
+            var detectionRunDTO = new DetectionRunDTO { Id = detectionRunId, Name = "Test Run" };
+            var detectionRun = new DetectionRun { Id = detectionRunId, Name = detectionRunDTO.Name };
+            string errorMessage = "Deletion failed due to repository error.";
+
+            // Set up the mapper to map from DTO to entity
+            _mockMapper
+                .Setup(mapper => mapper.Map<DetectionRun>(detectionRunDTO))
+                .Returns(detectionRun);
+
+            // Set up the repository to return a failure result on deletion
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.Delete(detectionRun, true, default))
+                .ReturnsAsync(ResultDTO.Fail(errorMessage));
+
+            // Act
+            var result = await _service.DeleteDetectionRun(detectionRunDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(errorMessage, result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionRun_ShouldReturnExceptionFail_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var detectionRunDTO = new DetectionRunDTO { Id = detectionRunId, Name = "Test Run" };
+            var detectionRun = new DetectionRun { Id = detectionRunId, Name = detectionRunDTO.Name };
+            string exceptionMessage = "An error occurred during deletion.";
+
+            // Set up the mapper to map from DTO to entity
+            _mockMapper
+                .Setup(mapper => mapper.Map<DetectionRun>(detectionRunDTO))
+                .Returns(detectionRun);
+
+            // Set up the repository to throw an exception
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.Delete(detectionRun, true, default))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _service.DeleteDetectionRun(detectionRunDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+
+        }
+
+        [Fact]
+        public async Task GetAllDetectionRuns_ShouldReturnFail_WhenGetAllFails()
+        {
+            // Arrange
+            string errorMessage = "Failed to retrieve Detection Runs";
+
+            // Set up the repository to return a failure result
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, It.IsAny<string>(), null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Fail(errorMessage));
+
+            // Act
+            var result = await _service.GetAllDetectionRuns();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(errorMessage, result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllDetectionRuns_ShouldReturnOkWithMappedDTOs_WhenGetAllIsSuccessful()
+        {
+            // Arrange
+            var detectionRuns = new List<DetectionRun>
+            {
+                new DetectionRun { Id = Guid.NewGuid(), Name = "Run 1" },
+                new DetectionRun { Id = Guid.NewGuid(), Name = "Run 2" }
+            };
+            var detectionRunDTOs = new List<DetectionRunDTO>
+            {
+                new DetectionRunDTO { Id = detectionRuns[0].Id, Name = detectionRuns[0].Name },
+                new DetectionRunDTO { Id = detectionRuns[1].Id, Name = detectionRuns[1].Name }
+            };
+
+            // Set up the repository to return a successful result with detection runs
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, It.IsAny<string>(), null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Ok(detectionRuns));
+
+            // Set up the mapper to map detection runs to DTOs
+            _mockMapper
+                .Setup(mapper => mapper.Map<List<DetectionRunDTO>>(detectionRuns))
+                .Returns(detectionRunDTOs);
+
+            // Act
+            var result = await _service.GetAllDetectionRuns();
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+            Assert.Equal(detectionRunDTOs.Count, result.Data.Count);
+            Assert.Equal(detectionRunDTOs[0].Name, result.Data[0].Name);
+            Assert.Equal(detectionRunDTOs[1].Name, result.Data[1].Name);
+        }
+
+        [Fact]
+        public async Task GetAllDetectionRunsIncludingDetectedDumpSites_ShouldReturnFail_WhenGetAllFails()
+        {
+            // Arrange
+            string errorMessage = "Failed to retrieve Detection Runs with Detected Dump Sites";
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, "CreatedBy,DetectedDumpSites", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Fail(errorMessage));
+
+            // Act
+            var result = await _service.GetAllDetectionRunsIncludingDetectedDumpSites();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(errorMessage, result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllDetectionRunsIncludingDetectedDumpSites_ShouldReturnOkWithMappedDTOs_WhenGetAllIsSuccessful()
+        {
+            // Arrange
+            var detectionRuns = new List<DetectionRun>
+            {
+                new DetectionRun { Id = Guid.NewGuid(), Name = "Run 1", DetectedDumpSites = new List<DetectedDumpSite> { /* example detected sites */ }},
+                new DetectionRun { Id = Guid.NewGuid(), Name = "Run 2", DetectedDumpSites = new List<DetectedDumpSite> { /* example detected sites */ }}
+            };
+            var detectionRunDTOs = new List<DetectionRunDTO>
+            {
+                new DetectionRunDTO { Id = detectionRuns[0].Id, Name = detectionRuns[0].Name },
+                new DetectionRunDTO { Id = detectionRuns[1].Id, Name = detectionRuns[1].Name }
+            };
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, "CreatedBy,DetectedDumpSites", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Ok(detectionRuns));
+
+            _mockMapper
+                .Setup(mapper => mapper.Map<List<DetectionRunDTO>>(detectionRuns))
+                .Returns(detectionRunDTOs);
+
+            // Act
+            var result = await _service.GetAllDetectionRunsIncludingDetectedDumpSites();
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+            Assert.Equal(detectionRunDTOs.Count, result.Data.Count);
+            Assert.Equal(detectionRunDTOs[0].Name, result.Data[0].Name);
+            Assert.Equal(detectionRunDTOs[1].Name, result.Data[1].Name);
+        }
+
+        [Fact]
+        public async Task GetSelectedDetectionRunsIncludingDetectedDumpSites_ShouldReturnFail_WhenGetAllFails()
+        {
+            // Arrange
+            string errorMessage = "Failed to retrieve selected Detection Runs with Detected Dump Sites";
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, "CreatedBy,DetectedDumpSites,DetectionInputImage", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Fail(errorMessage));
+
+            // Act
+            var result = await _service.GetSelectedDetectionRunsIncludingDetectedDumpSites(new List<Guid> { Guid.NewGuid() }, new List<ConfidenceRateDTO>());
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(errorMessage, result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetSelectedDetectionRunsIncludingDetectedDumpSites_ShouldReturnFilteredDTOs_WhenConfidenceThresholdIsApplied()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var selectedDetectionRunIds = new List<Guid> { detectionRunId };
+            var selectedConfidenceRates = new List<ConfidenceRateDTO>
+    {
+        new ConfidenceRateDTO { detectionRunId = detectionRunId, confidenceRate = 80 }
+    };
+
+            var detectionRuns = new List<DetectionRun>
+    {
+        new DetectionRun
+        {
+            Id = detectionRunId,
+            DetectedDumpSites = new List<DetectedDumpSite>
+            {
+                new DetectedDumpSite { ConfidenceRate = 0.9 }, // Should be included
+                new DetectedDumpSite { ConfidenceRate = 0.7 }  // Should be filtered out
+            }
+        }
+    };
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, "CreatedBy,DetectedDumpSites,DetectionInputImage", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Ok(detectionRuns));
+
+            _mockMapper
+                .Setup(mapper => mapper.Map<List<DetectionRunDTO>>(It.Is<List<DetectionRun>>(dr => dr[0].DetectedDumpSites.Count == 1)))
+                .Returns(new List<DetectionRunDTO> { new DetectionRunDTO { Id = detectionRunId } });
+
+            // Act
+            var result = await _service.GetSelectedDetectionRunsIncludingDetectedDumpSites(selectedDetectionRunIds, selectedConfidenceRates);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+            Assert.Single(result.Data); // Only one DTO expected
+            Assert.Equal(detectionRunId, result.Data[0].Id);
+        }
+
+        [Fact]
+        public async Task GetSelectedDetectionRunsIncludingDetectedDumpSites_ShouldReturnOkWithMappedDTOs_WhenGetAllIsSuccessfulWithoutFiltering()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var selectedDetectionRunIds = new List<Guid> { detectionRunId };
+            var selectedConfidenceRates = new List<ConfidenceRateDTO>(); // No filtering applied
+
+            var detectionRuns = new List<DetectionRun>
+    {
+        new DetectionRun
+        {
+            Id = detectionRunId,
+            DetectedDumpSites = new List<DetectedDumpSite>
+            {
+                new DetectedDumpSite { ConfidenceRate = 0.9 },
+                new DetectedDumpSite { ConfidenceRate = 0.7 }
+            }
+        }
+    };
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DetectionRun, bool>>>(), null, false, "CreatedBy,DetectedDumpSites,DetectionInputImage", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DetectionRun>>.Ok(detectionRuns));
+
+            _mockMapper
+                .Setup(mapper => mapper.Map<List<DetectionRunDTO>>(detectionRuns))
+                .Returns(new List<DetectionRunDTO> { new DetectionRunDTO { Id = detectionRunId } });
+
+            // Act
+            var result = await _service.GetSelectedDetectionRunsIncludingDetectedDumpSites(selectedDetectionRunIds, selectedConfidenceRates);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+            Assert.Single(result.Data);
+            Assert.Equal(detectionRunId, result.Data[0].Id);
+        }
+
+
+
     }
 }
 

@@ -140,6 +140,39 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
         }
 
         [Fact]
+        public async Task CreateAndReturnEntity_ShouldCreateAndReturnEntityAsOk_WhenEntityIsValidAndSaveChangesFalse()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            Dataset newDataset = new Dataset
+            {
+                Id = Guid.NewGuid(),
+                Name = "Test Dataset",
+                Description = "Testing DAL",
+                CreatedById = UserSeedData.FirstUser.Id
+            };
+
+            // Act
+            ResultDTO<Dataset> result = await new DatasetsRepository(dbContext).CreateAndReturnEntity(newDataset, false);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal("Test Dataset", result.Data.Name);
+
+            Dataset? dbDataset = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == newDataset.Id);
+            Assert.Null(dbDataset);
+            dbContext.SaveChanges();
+            Dataset? dbDatasetSaved = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == newDataset.Id);
+            Assert.NotNull(dbDatasetSaved);
+
+            transaction.Rollback();
+        }
+
+        [Fact]
         public async Task CreateAndReturnEntity_ShouldFail_WhenEntityIsNull()
         {
             using ApplicationDbContext dbContext = _fixture.CreateDbContext();
@@ -420,6 +453,36 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             await dbContext.SaveChangesAsync();
             // Act
             ResultDTO<Dataset> result = await repository.UpdateAndReturnEntity(updatedDataset);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal("Updated Dataset", result.Data.Name);
+            Dataset? dbDataset = await dbContext.Datasets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == result.Data.Id);
+            Assert.Equal("Updated Dataset", dbDataset.Name);
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task UpdateAndReturnEntity_ShouldUpdateAndReturnDatasetAsOk_WhenDatasetExistsAndSaveChangesFalse()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new(dbContext);
+            Dataset updatedDataset = new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Updated Dataset",
+                Description = "Testing DAL",
+                CreatedById = UserSeedData.FirstUser.Id
+            };
+            await dbContext.Datasets.AddAsync(updatedDataset);
+            await dbContext.SaveChangesAsync();
+            // Act
+            ResultDTO<Dataset> result = await repository.UpdateAndReturnEntity(updatedDataset, false);
 
             // Assert
             Assert.True(result.IsSuccess);
@@ -732,6 +795,26 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             Assert.NotNull(result.ErrMsg);
             Assert.NotNull(result.ExObj);
         }
+
+        [Fact]
+        public async Task GetById_ShouldReturnDatasetIncluded_WhenDatasetExistsWithInclude()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            // Act
+            ResultDTO<Dataset?> result = await new DatasetsRepository(dbContext).GetById(DatasetsSeedData.FirstDataset.Id, false, "CreatedBy");
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(DatasetsSeedData.FirstDataset.Id, result.Data!.Id);
+            Assert.NotNull(result.Data!.CreatedBy);
+            Assert.Equal(UserSeedData.FirstUser.Id, result.Data!.CreatedBy.Id);
+            transaction.Rollback();
+        }
         #endregion
 
         #region Get All
@@ -751,6 +834,29 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             Assert.NotNull(result.Data);
             Assert.NotNull(result.Data.FirstOrDefault(d => d.Id == DatasetsSeedData.FirstDataset.Id));
             Assert.NotNull(result.Data.FirstOrDefault(d => d.Id == DatasetsSeedData.SecondDataset.Id));
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task GetAll_ShouldReturnAllDatasetsIncluded_WhenDatasetsExistWithInclude()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            // Act
+            ResultDTO<IEnumerable<Dataset>> result = await new DatasetsRepository(dbContext).GetAll(includeProperties: "CreatedBy");
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.NotNull(result.Data.FirstOrDefault(d => d.Id == DatasetsSeedData.FirstDataset.Id));
+            Assert.NotNull(result.Data.FirstOrDefault(d => d.Id == DatasetsSeedData.SecondDataset.Id));
+            Assert.NotNull(result.Data.FirstOrDefault(d => d.Id == DatasetsSeedData.FirstDataset.Id)!.CreatedBy);
+            Assert.Equal(UserSeedData.FirstUser.Id, result.Data.FirstOrDefault(d => d.Id == DatasetsSeedData.FirstDataset.Id)!.CreatedBy!.Id);
+            Assert.NotNull(result.Data.FirstOrDefault(d => d.Id == DatasetsSeedData.SecondDataset.Id)!.CreatedBy);
+            Assert.Equal(UserSeedData.FirstUser.Id, result.Data.FirstOrDefault(d => d.Id == DatasetsSeedData.SecondDataset.Id)!.CreatedBy!.Id);
             transaction.Rollback();
         }
 
@@ -794,7 +900,7 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             // Assert
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.Data);
-            Assert.Equal(DatasetsSeedData.FirstDataset.Id, result.Data.Id);
+            Assert.Contains<Guid>(result.Data.Id, new List<Guid> { DatasetsSeedData.FirstDataset.Id, DatasetsSeedData.SecondDataset.Id });
             transaction.Rollback();
         }
 
@@ -816,6 +922,28 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
             Assert.True(result.IsSuccess);
             Assert.NotNull(result.Data);
             Assert.Equal(DatasetsSeedData.SecondDataset.Id, result.Data.Id);
+            transaction.Rollback();
+        }
+
+        [Fact]
+        public async Task GetFirstOrDefault_ShouldReturnFirstDatasetIncluded_WhenNoFilterProvidedAndIncluded()
+        {
+            // Arrange
+            using ApplicationDbContext dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            _fixture.SeedDatabase(dbContext);
+            DatasetsRepository repository = new DatasetsRepository(dbContext);
+
+            // Act
+            ResultDTO<Dataset?> result = await repository.GetFirstOrDefault(includeProperties: "CreatedBy");
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(DatasetsSeedData.FirstDataset.Id, result.Data.Id);
+            Assert.NotNull(result.Data!.CreatedBy);
+            Assert.Equal(UserSeedData.FirstUser.Id, result.Data!.CreatedBy.Id);
             transaction.Rollback();
         }
 

@@ -60,65 +60,116 @@
     });
 
     function triggerAreaComparisonAvgConfidenceRate(){
-        $("#areaComparisonAvgConfidenceRatemodalBody").empty();
+        let selectedDetectionRunsIds = getSelectedDetectionRunIds();
+        if (selectedDetectionRunsIds.length === 0) {
+            Swal.fire({
+                text: '@DbResHtml.T("Select detection run/s first", "Resources")',
+                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                allowOutsideClick: false,
+                icon: "warning"
+            });
+            return;
+        }
+        $("#areaComparisonAvgConfidenceRateModal").empty();
         generateAreaComparisonAvgConfidenceRateModal();
+    }
 
-        let selectedDetectionRunsIds = getSelectedDetectionRunIds();  
+    function generateAreaComparisonAvgConfidenceRateReport() {
+        $("#areaComparisonReportTable").empty();
+        const selectedConfidenceRate = $("#conf_rate_aria_comparison_report").val();
+        let selectedDetectionRunsIds = getSelectedDetectionRunIds();
+        var generatingReportIcon = ` <div class="col-4 offset-4"><div class="small-box bg-info">                 
+                  <div class="overlay dark">
+                    <i class="fas fa-3x fa-sync-alt"></i>
+                  </div>
+                  <div class="inner">
+                    <cite>${selectedConfidenceRate} % - Confidence rate</cite>
+                    <p>Generating report...</p>
+                  </div>
+                  <div class="icon">
+                    <i class="ion ion-stats-bars"></i>
+                  </div>
+                </div></div>`;
+        $("#areaComparisonReportTable").append(generatingReportIcon);
         $.ajax({
             type: "POST",
             url: "@Url.Action("GenerateAreaComparisonAvgConfidenceRateReport", "Detection", new { Area = "IntranetPortal" })",
             data: {
-                selectedDetectionRunsIds: selectedDetectionRunsIds
+                selectedDetectionRunsIds: selectedDetectionRunsIds,
+                selectedConfidenceRate: selectedConfidenceRate
             },
             success: function (data) {
-                data.forEach(row => {
-                    var tableHtml = "";
-                    tableHtml += `
-                          <div class="card mb-5">
-                            <div class="card-header bg-gradient-dark text-white">
-                               <h5 class="card-title">${row.detectionRunName}</h5>
-                             </div>
-                             <div class="card-body p-0">
-                             <table class='table table-striped table-bordered table-hover'>
-                                <thead>
-                                    <tr>
-                                        <th>Confidence Rate</th>
-                        `;
-                    row.groupedDumpSitesList.forEach(info => {
-                        tableHtml += `<th>${info.className} Area  (m²)</th>`;
+                if (data != undefined || data != null) {
+                    if (data.isSuccess == false && data.errMsg != null) {
+                        Swal.fire({
+                            text: `${data.errMsg}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                    else {
+                        $("#areaComparisonReportTable").empty();
+                        data.data.forEach(row => {
+                            var tableHtml = "";
+                            tableHtml += `
+                              <div class="card mb-5">
+                                <div class="card-header bg-gradient-dark text-white">
+                                   <h5 class="card-title">${row.detectionRunName}</h5>
+                                 </div>
+                                 <div class="card-body p-0">
+                                 <table class='table table-sm table-striped table-bordered table-hover'>
+                                    <thead>
+                                        <tr>
+                            `;
+                            row.groupedDumpSitesList.forEach(info => {
+                                tableHtml += `<th>${info.className} area in ignore zone (m²)</th> <th>${info.className} area out of ignore zone (m²)</th>`;
+                            });
+                            tableHtml += `<th>Total Area (m²)</th>`;
+                            tableHtml += `
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                            `;
+                            row.groupedDumpSitesList.forEach(info => {
+                                let totalGroupAreaInIgnoreZone = info.totalGroupAreaInIgnoreZone != null ? info.totalGroupAreaInIgnoreZone.toFixed(2) : "No dump sites above the selected confidence rate";
+                                let totalGroupAreaOutOfIgnoreZone = info.totalGroupAreaOutOfIgnoreZone != null ? info.totalGroupAreaOutOfIgnoreZone.toFixed(2) : "No dump sites above the selected confidence rate";
+
+                                tableHtml += `<td>${totalGroupAreaInIgnoreZone}</td> <td>${totalGroupAreaOutOfIgnoreZone}</td>`;
+                            });
+
+                            tableHtml += `<td>${row.totalAreaOfDetectionRun != null ? row.totalAreaOfDetectionRun.toFixed(2) : 'No dump sites above the selected confidence rate'}</td>`;
+                            tableHtml += `
+                                        </tr>
+                                    </tbody>
+                                </table>
+                               </div>
+                              </div>
+                            `;
+
+                            $("#areaComparisonReportTable").append(tableHtml);
+                        });
+
+                    }
+                }
+                else {
+                    Swal.fire({
+                        text: `@DbResHtml.T("No data received", "Resources")`,
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
                     });
-                    tableHtml += `<th>Total Area (m²)</th>`;
-                    tableHtml += `
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                      <td>${row.avgConfidenceRate !== undefined ? (row.avgConfidenceRate * 100).toFixed(2) + '%' : '/'}</td>
-
-                        `;
-                    row.groupedDumpSitesList.forEach(info => {
-                        tableHtml += `<td>${info.totalGroupArea.toFixed(2)}</td>`;
-                    });
-
-                    tableHtml += ` <td>${isNaN(row.totalAreaOfDetectionRun) ? '/' : row.totalAreaOfDetectionRun.toFixed(2)}</td> `;
-                    tableHtml += `
-                                    </tr>
-                                </tbody>
-                            </table>
-                           </div>
-                          </div>
-                        `;
-
-                    $("#areaComparisonAvgConfidenceRatemodalBody").append(tableHtml);
-                });
-                $("#areaComparisonAvgConfidenceRateModal").modal("show");
+                }
             },
             error: function (req, status, error) {
                 Swal.fire({
                     text: '@DbResHtml.T("Error occured", "Resources")',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                    allowOutsideClick: false,
                     icon: "error"
                 });
-            }
+            }           
         });
     }
 
@@ -191,7 +242,7 @@
                                 const source = new ol.source.GeoTIFF({
                                     sources: [
                                         {
-                                            url: "/" + detectionRun.detectionInputImage.imagePath.replace(/\\/g, '/')
+                                            url: detectionRun.detectionInputImage.imagePath
                                         },
                                     ],
                                 });
@@ -413,13 +464,36 @@
                         </button>
                     </div>
                     <div class="modal-body" id='areaComparisonAvgConfidenceRatemodalBody'>
-
+                        <div id="confRateSlider" class="card p-3 bg-light">
+                            <div class="w-75">
+                                 <label>@DbResHtml.T("Generate report above the selected confidence rate (%)", "Resources")</label>
+                                 <input class="conf_rate_slider" id="conf_rate_aria_comparison_report" type="text" name="conf_rate_aria_comparison_report" value="">
+                            </div>
+                            <div class="mt-3">
+                                <button onclick="generateAreaComparisonAvgConfidenceRateReport()" class="btn btn-sm bg-gradient-danger">
+                                    <i class="fas fa-search"></i>
+                                    Generate report
+                                </button>
+                            </div>
+                        </div>
+                        <div id="areaComparisonReportTable" class="mt-5"></div>
                     </div>
                 </div>
               </div>
             </div>`
         $('body').append(modalHtml);
+        $('.conf_rate_slider').ionRangeSlider({
+            min: 0,
+            max: 100,
+            from: 50,
+            type: 'single',
+            step: 1,
+            postfix: '%',
+            prettify: false,
+            hasGrid: true
+        });
         $('#areaComparisonAvgConfidenceRateModal').css('z-index', '2000');
+        $("#areaComparisonAvgConfidenceRateModal").modal("show");
     }
 
     function getSelectedDetectionRunIds() {

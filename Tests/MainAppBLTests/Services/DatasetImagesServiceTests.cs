@@ -179,6 +179,118 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task AddDatasetImage_ValidDatasetImage_ReturnsSuccess()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var datasetImageDto = new DatasetImageDTO { DatasetId = datasetId, UpdatedById = Guid.NewGuid().ToString() };
+            var dataset = new Dataset { Id = datasetId };
+            var datasetImage = new DatasetImage { Id = Guid.NewGuid() };
+
+            _mockDatasetsRepository
+                .Setup(repo => repo.GetById(datasetId, true, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.CreateAndReturnEntity(It.IsAny<DatasetImage>(), true, default))
+                .ReturnsAsync(ResultDTO<DatasetImage>.Ok(datasetImage));
+
+            // Act
+            var result = await _service.AddDatasetImage(datasetImageDto);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(datasetImage.Id, result.Data);
+        }
+
+        [Fact]
+        public async Task AddDatasetImage_DatasetNotFound_ThrowsException()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var datasetImageDto = new DatasetImageDTO { DatasetId = datasetId };
+
+            _mockDatasetsRepository
+                .Setup(repo => repo.GetById(datasetId, true, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync((ResultDTO<Dataset?>)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _service.AddDatasetImage(datasetImageDto));
+        }
+
+        [Fact]
+        public async Task AddDatasetImage_FailedDatasetImageCreation_ThrowsException()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+
+            var datasetImageDto = new DatasetImageDTO { DatasetId = datasetId };
+            var dataset = new Dataset { Id = datasetId };
+
+            _mockDatasetsRepository
+                .Setup(repo => repo.GetById(datasetId, true, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.CreateAndReturnEntity(It.IsAny<DatasetImage>(), true, default))
+                .ReturnsAsync((ResultDTO<DatasetImage>)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _service.AddDatasetImage(datasetImageDto));
+        }
+
+        [Fact]
+        public async Task AddDatasetImage_UpdateFails_ThrowsException()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+
+            var datasetImageDto = new DatasetImageDTO { DatasetId = datasetId, UpdatedById = Guid.NewGuid().ToString() };
+            var dataset = new Dataset { Id = datasetId };
+
+            _mockDatasetsRepository
+                .Setup(repo => repo.GetById(datasetId, true, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.CreateAndReturnEntity(It.IsAny<DatasetImage>(), true, default))
+                .ReturnsAsync(ResultDTO<DatasetImage>.Ok(new DatasetImage()));
+
+            _mockDatasetsRepository
+                .Setup(repo => repo.Update(It.IsAny<Dataset>(), true, default))
+                .ThrowsAsync(new Exception("Update failed"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(async () => await _service.AddDatasetImage(datasetImageDto));
+        }
+
+        [Fact]
+        public async Task AddDatasetImage_EmptyImageId_ReturnsFailure()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+
+            var datasetImageDto = new DatasetImageDTO { DatasetId = datasetId, UpdatedById = Guid.NewGuid().ToString() };
+            var dataset = new Dataset { Id = datasetId };
+
+            _mockDatasetsRepository
+                .Setup(repo => repo.GetById(datasetId, true, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.CreateAndReturnEntity(It.IsAny<DatasetImage>(), true, default))
+                .ReturnsAsync(ResultDTO<DatasetImage>.Ok(new DatasetImage { Id = Guid.Empty }));
+
+            // Act
+            var result = await _service.AddDatasetImage(datasetImageDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset image was not added", result.ErrMsg);
+        }
+
+
+        [Fact]
         public async Task EditDatasetImage_ShouldReturnSuccess_WhenAllOperationsSucceed()
         {
             // Arrange
@@ -229,6 +341,18 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Dataset not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ShouldReturnFail_WhenDatasetImageIsNotFound()
+        {
+
+            // Act
+            ResultDTO<int> result = await _service.EditDatasetImage(null);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Null EditDatasetImageDTO", result.ErrMsg);
         }
 
         [Fact]
@@ -323,7 +447,7 @@ namespace Tests.MainAppBLTests.Services
             var datasetImageId = Guid.NewGuid();
 
             _mockDatasetImagesRepository
-                .Setup(repo => repo.GetById(It.IsAny<Guid>(), false, null))
+                .Setup(repo => repo.GetById(It.IsAny<Guid>(), false, "ImageAnnotations"))
                 .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(new DatasetImage()));
 
             _mockDatasetImagesRepository
@@ -380,7 +504,7 @@ namespace Tests.MainAppBLTests.Services
             };
             //var includeProperties = "ImageAnnotations";
             _mockDatasetImagesRepository
-                .Setup(repo => repo.GetById(datasetImageId, false, null))
+                .Setup(repo => repo.GetById(datasetImageId, false, "ImageAnnotations"))
                 .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
 
             _mockImageAnnotationsRepository
@@ -411,7 +535,7 @@ namespace Tests.MainAppBLTests.Services
             };
 
             _mockDatasetImagesRepository
-                .Setup(repo => repo.GetById(datasetImageId, false, null))
+                .Setup(repo => repo.GetById(datasetImageId, false, "ImageAnnotations"))
                 .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(datasetImage));
 
             _mockImageAnnotationsRepository

@@ -1,10 +1,19 @@
 ﻿using AutoMapper;
+using CliWrap;
+using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
+using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DetectionDTOs;
+using DTOs.MainApp.BL.TrainingDTOs;
+using DTOs.ObjectDetection.API.Responses.DetectionRun;
+using Entities.DetectionEntities;
 using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
+using Hangfire.Storage;
+using Hangfire.Storage.Monitoring;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
-using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using Microsoft.AspNetCore.Hosting;
@@ -12,8 +21,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using NetTopologySuite.Geometries;
 using SD;
+using SD.Enums;
 using Services.Interfaces.Services;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Security.Claims;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
@@ -61,8 +75,546 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 _mockBackgroundJobClient.Object,
                 _mockDetectionIgnoreZoneService.Object,
                 _mockTrainedModelService.Object);
+
+            var claims = new List<Claim>
+            {
+                new Claim("UserId", "test-user-id")
+            };
+            var identity = new ClaimsIdentity(claims);
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
         }
 
+
+
+        [Fact]
+        public async Task GetPublishedTrainedModels_ReturnsFail_WhenDataIsUninitialized()
+        {
+            // Arrange
+            var result = ResultDTO<List<TrainedModelDTO>>.Ok(null);
+
+            _mockTrainedModelService.Setup(service => service.GetPublishedTrainedModelsIncludingTrainRuns())
+                .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetPublishedTrainedModels();
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.True(response.IsSuccess);
+            Assert.Null(response.Data);
+        }
+
+        [Fact]
+        public async Task GetPublishedTrainedModels_ReturnsFail_WhenDataIsEmptyButIsSuccessTrue()
+        {
+            // Arrange
+            var result = ResultDTO<List<TrainedModelDTO>>.Ok(new List<TrainedModelDTO>());
+
+            _mockTrainedModelService.Setup(service => service.GetPublishedTrainedModelsIncludingTrainRuns())
+                .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetPublishedTrainedModels();
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.True(response.IsSuccess);
+            Assert.Empty(response.Data); 
+        }
+
+        [Fact]
+        public async Task GetPublishedTrainedModels_ReturnsOkResult_WhenServiceReturnsSuccess()
+        {
+            // Arrange
+            var trainedModels = new List<TrainedModelDTO>
+            {
+                new TrainedModelDTO { Id = Guid.NewGuid(), Name = "Model 1" },
+                new TrainedModelDTO { Id = Guid.NewGuid(), Name = "Model 2" }
+            };
+
+            var result = ResultDTO<List<TrainedModelDTO>>.Ok(trainedModels);
+            _mockTrainedModelService.Setup(service => service.GetPublishedTrainedModelsIncludingTrainRuns())
+                .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetPublishedTrainedModels();
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.True(response.IsSuccess);
+            Assert.Equal(trainedModels, response.Data);
+        }
+               
+        [Fact]
+        public async Task GetPublishedTrainedModels_ReturnsExceptionFailResult_WhenServiceThrowsException()
+        {
+            // Arrange
+            var exceptionMessage = "An unexpected error occurred";
+            _mockTrainedModelService.Setup(service => service.GetPublishedTrainedModelsIncludingTrainRuns())
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var response = await _controller.GetPublishedTrainedModels();
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal(exceptionMessage, response.ErrMsg);
+            Assert.IsType<Exception>(response.ExObj);
+        }
+
+        [Fact]
+        public async Task GetPublishedTrainedModels_ReturnsFailResult_WhenServiceReturnsNullData()
+        {
+            // Arrange
+            var result = ResultDTO<List<TrainedModelDTO>>.Ok(null);
+
+            _mockTrainedModelService.Setup(service => service.GetPublishedTrainedModelsIncludingTrainRuns())
+                .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetPublishedTrainedModels();
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.True(response.IsSuccess);
+            Assert.Null(response.Data);
+        }
+
+        [Fact]
+        public async Task GetPublishedTrainedModels_ReturnsFailResult_WhenServiceReturnsSuccessWithEmptyData()
+        {
+            // Arrange
+            var result = ResultDTO<List<TrainedModelDTO>>.Ok(new List<TrainedModelDTO>());
+
+            _mockTrainedModelService.Setup(service => service.GetPublishedTrainedModelsIncludingTrainRuns())
+                .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetPublishedTrainedModels();
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.True(response.IsSuccess);
+            Assert.Empty(response.Data);
+        }
+
+        [Fact]
+        public async Task GetDetectionRunById_ReturnsOkResult_WhenDetectionRunExists()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var detectionRunDTO = new DetectionRunDTO();
+            var result = ResultDTO<DetectionRunDTO>.Ok(detectionRunDTO);
+
+            _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId,false))
+                        .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetDetectionRunById(detectionRunId);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.True(response.IsSuccess);
+            Assert.Equal(detectionRunDTO, response.Data);
+        }
+
+        [Fact]
+        public async Task GetDetectionRunById_ReturnsFailResult_WhenDetectionRunNotFound()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var result = ResultDTO<DetectionRunDTO>.Fail("Detection run not found");
+
+            _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId, false))
+                      .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetDetectionRunById(detectionRunId);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal("Detection run not found", response.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionRunById_ReturnsFailResult_WhenServiceFails()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var result = ResultDTO<DetectionRunDTO>.Fail("Service error");
+
+            _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId, false))
+                        .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetDetectionRunById(detectionRunId);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal("Service error", response.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionRunById_ReturnsFailResult_WhenDataIsNull()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var result = ResultDTO<DetectionRunDTO>.Ok(null);
+
+            _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId, false))
+                        .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetDetectionRunById(detectionRunId);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal("Detection run not found", response.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionRunById_ReturnsFailResult_WhenServiceReturnsErrorWithoutMessage()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var result = ResultDTO<DetectionRunDTO>.Fail(null); 
+
+            _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId, false))
+                        .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetDetectionRunById(detectionRunId);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Null(response.ErrMsg); 
+        }
+
+        [Fact]
+        public async Task GetDetectionRunById_ReturnsFailResult_WhenDetectionRunIdIsDefaultGuid()
+        {
+            // Arrange
+            var detectionRunId = Guid.Empty;
+            var result = ResultDTO<DetectionRunDTO>.Fail("Detection run not found");
+
+            _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId, false))
+                        .ReturnsAsync(result);
+
+            // Act
+            var response = await _controller.GetDetectionRunById(detectionRunId);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal("Detection run not found", response.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionRun_ReturnsFail_WhenDetectionRunIdIsEmpty()
+        {
+            // Act
+            var result = await _controller.DeleteDetectionRun(Guid.Empty);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Invalid detection run id", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionRunErrorLogMessage_ShouldReturnFail_WhenAppSettingsFail()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            _mockAppSettingsAccessor
+                .Setup(x => x.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Fail("Failed to retrieve settings"));
+
+            // Act
+            var result = await _controller.GetDetectionRunErrorLogMessage(detectionRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Can not get the application settings", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetDetectionRunErrorLogMessage_ShouldReturnFail_WhenDirectoryPathIsEmpty()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            _mockAppSettingsAccessor
+                .Setup(x => x.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok(string.Empty));
+
+            // Act
+            var result = await _controller.GetDetectionRunErrorLogMessage(detectionRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Directory path not found", result.ErrMsg);
+        }
+
+        //[Fact]
+        //public async Task GetDetectionRunErrorLogMessage_ReturnsFileContent_WhenFileExists()
+        //{
+        //    // Arrange
+        //    var detectionRunId = Guid.NewGuid();
+        //    var filePath = Path.Combine("Uploads", "DetectionUploads", "DetectionRunsErrorLogs");
+        //    var fileName = $"{detectionRunId}_errMsg.txt";
+
+        //    _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", It.IsAny<string>()))
+        //        .ReturnsAsync(ResultDTO<string>.Ok(filePath));
+
+        //    _mockWebHostEnvironment.Setup(x => x.WebRootPath).Returns("wwwroot");
+
+        //    var fullFilePath = Path.Combine("wwwroot", filePath, fileName);
+
+        //    File.WriteAllText(fullFilePath, "Sample error message");
+
+        //    // Act
+        //    var result = await _controller.GetDetectionRunErrorLogMessage(detectionRunId);
+
+        //    // Assert
+        //    Assert.True(result.IsSuccess);
+        //    Assert.Equal("Sample error message", result.Data);
+
+        //    // Clean up
+        //    File.Delete(fullFilePath);
+        //}
+       
+        [Fact]
+        public async Task StartDetectionRun_ShouldReturnOk_WhenAllStepsSucceed()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var detectionRunDTO = new DetectionRunDTO
+            {
+                Id = detectionRunId,
+                TrainedModelId = Guid.NewGuid(),
+                InputImgPath = "some/path"
+            };
+
+            _mockDetectionRunService
+                .Setup(x => x.UpdateStatus(detectionRunDTO.Id.Value, It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockTrainedModelService
+                .Setup(x => x.GetTrainedModelById(detectionRunDTO.TrainedModelId.Value, false))
+                .ReturnsAsync(ResultDTO<TrainedModelDTO>.Ok(new TrainedModelDTO()));
+
+            _mockDetectionRunService
+                .Setup(x => x.StartDetectionRun(It.IsAny<DetectionRunDTO>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockDetectionRunService
+                .Setup(x => x.IsCompleteUpdateDetectionRun(It.IsAny<DetectionRunDTO>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            _mockDetectionRunService
+                .Setup(x => x.GetRawDetectionRunResultPathsByRunId(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<string>.Ok("some/path"));
+
+            _mockDetectionRunService
+                .Setup(x => x.GetBBoxResultsDeserialized(It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<DetectionRunFinishedResponse>.Ok(new DetectionRunFinishedResponse()));
+
+            _mockDetectionRunService
+                .Setup(x => x.ConvertBBoxResultToImageProjection(It.IsAny<string>(), It.IsAny<DetectionRunFinishedResponse>()))
+                .ReturnsAsync(ResultDTO<DetectionRunFinishedResponse>.Ok(new DetectionRunFinishedResponse()));
+
+            _mockDetectionRunService
+                .Setup(x => x.CreateDetectedDumpsSitesFromDetectionRun(It.IsAny<Guid>(), It.IsAny<DetectionRunFinishedResponse>()))
+                .ReturnsAsync(ResultDTO<List<DetectedDumpSite>>.Ok(new List<DetectedDumpSite>()));
+
+            // Act
+            var result = await _controller.StartDetectionRun(detectionRunDTO);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(detectionRunId.ToString(), result.Data);
+        }
+
+        [Fact]
+        public async Task StartDetectionRun_ShouldReturnExceptionFail_WhenExceptionOccurs()
+        {
+            // Arrange
+            var detectionRunDTO = new DetectionRunDTO
+            {
+                Id = Guid.NewGuid(),
+                TrainedModelId = Guid.NewGuid(),
+                InputImgPath = "some/path"
+            };
+
+            _mockDetectionRunService
+                .Setup(x => x.UpdateStatus(It.IsAny<Guid>(), It.IsAny<string>()))
+                .ThrowsAsync(new Exception("Some exception"));
+
+            // Act
+            var result = await _controller.StartDetectionRun(detectionRunDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Some exception", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateErrMsgFile_ShouldReturnFail_WhenAppSettingFails()
+        {
+            // Arrange
+            Guid detectionRunId = Guid.NewGuid();
+            string errMsg = "Error message";
+            _mockAppSettingsAccessor
+                .Setup(x => x.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Fail("Error fetching setting"));
+
+            // Use reflection to call private method
+            var privateMethod = typeof(DetectionController)
+                .GetMethod("CreateErrMsgFile", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            // Act
+            var resultTask = (Task<ResultDTO>)privateMethod.Invoke(_controller, new object[] { detectionRunId, errMsg });
+            var result = await resultTask;
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Can not get the application settings", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateErrMsgFile_ShouldReturnFail_WhenDirectoryPathIsEmpty()
+        {
+            // Arrange
+            Guid detectionRunId = Guid.NewGuid();
+            string errMsg = "Error message";
+            _mockAppSettingsAccessor
+                .Setup(x => x.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok(string.Empty));
+                      
+            // Use reflection to call private method
+            var privateMethod = typeof(DetectionController)
+                .GetMethod("CreateErrMsgFile", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            // Act
+            var resultTask = (Task<ResultDTO>)privateMethod.Invoke(_controller, new object[] { detectionRunId, errMsg });
+            var result = await resultTask;
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Directory path not found", result.ErrMsg);
+        }
+              
+        [Fact]
+        public async Task ScheduleDetectionRun_InvalidModelState_ReturnsFailResult()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Name", "Name is required.");
+            var viewModel = new DetectionRunViewModel();
+
+            // Act
+            var result = await _controller.ScheduleDetectionRun(viewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Name is required.", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task ScheduleDetectionRun_InputImageNotFound_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionRunViewModel
+            {
+                SelectedInputImageId = Guid.NewGuid(),
+                Name = "Test Run",
+                Description = "Test Description"
+            };
+
+            _mockDetectionRunService
+                .Setup(s => s.GetDetectionInputImageById(viewModel.SelectedInputImageId))
+                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Fail("Image not found"));
+
+            // Act
+            var result = await _controller.ScheduleDetectionRun(viewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Image not found", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task ScheduleDetectionRun_TrainedModelNotFound_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionRunViewModel
+            {
+                SelectedInputImageId = Guid.NewGuid(),
+                SelectedTrainedModelId = Guid.NewGuid(),
+                Name = "Test Detection Run"
+            };
+
+            var user = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+            {
+                new Claim("UserId", "test-user-id")
+            }));
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            _mockDetectionRunService
+                .Setup(x => x.GetDetectionInputImageById(viewModel.SelectedInputImageId))
+                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(new DetectionInputImageDTO
+                {
+                    ImagePath = "test-image-path",
+                    ImageFileName = "test-image.jpg"
+                }));
+
+            _mockTrainedModelService
+                .Setup(x => x.GetTrainedModelById(viewModel.SelectedTrainedModelId, false))
+                .ReturnsAsync(ResultDTO<TrainedModelDTO>.Fail("User not found"));
+
+            // Act
+            var result = await _controller.ScheduleDetectionRun(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("User not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task CreateDetectionRun_Returns_ViewResult()
+        {
+            // Act
+            var result = await _controller.CreateDetectionRun();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.Null(viewResult.ViewName);
+        }
+
+        [Fact]
+        public async Task CreateDetectionRun_ModelStateIsValid()
+        {
+            // Act
+            var result = await _controller.CreateDetectionRun();
+
+            // Assert
+            Assert.IsType<ViewResult>(result);
+        }
+       
         [Fact]
         public async Task DetectedZones_ReturnsViewResult_WithExpectedModel()
         {
@@ -197,53 +749,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task ShowDumpSitesOnMap_ReturnsSuccess_WhenDataIsAvailable()
-        {
-            // Arrange
-            var detectionRunId1 = Guid.NewGuid();
-            var detectionRunId2 = Guid.NewGuid();
-
-            var detectionRunDTOs = new List<DetectionRunDTO>
-            {
-                new DetectionRunDTO { Id = detectionRunId1, Name = "Run 1" },
-                new DetectionRunDTO { Id = detectionRunId2, Name = "Run 2" }
-            };
-
-            var confidenceRates = new List<ConfidenceRateDTO>
-            {
-                new ConfidenceRateDTO { detectionRunId = detectionRunId1, confidenceRate = 0.9 },
-                new ConfidenceRateDTO { detectionRunId = detectionRunId2, confidenceRate = 0.85 }
-            };
-
-            var model = new DetectionRunShowOnMapViewModel
-            {
-                selectedDetectionRunsIds = new List<Guid> { detectionRunId1, detectionRunId2 },
-                selectedConfidenceRates = confidenceRates
-            };
-
-            var resultDTO = ResultDTO<List<DetectionRunDTO>>.Ok(detectionRunDTOs);
-
-            _mockDetectionRunService
-                .Setup(service => service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
-                    It.IsAny<List<Guid>>(), It.IsAny<List<ConfidenceRateDTO>>()))
-                .ReturnsAsync(resultDTO);
-
-            _mockDetectionIgnoreZoneService.Setup(service => service.GetAllIgnoreZonesDTOs())
-                .ReturnsAsync(ResultDTO<List<DetectionIgnoreZoneDTO>>.Ok(new List<DetectionIgnoreZoneDTO>()));
-
-            // Act
-            var result = await _controller.ShowDumpSitesOnMap(model);
-
-            // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal(detectionRunDTOs, result.Data);
-            _mockDetectionRunService.Verify(service =>
-                service.GetSelectedDetectionRunsIncludingDetectedDumpSites(
-                    model.selectedDetectionRunsIds, model.selectedConfidenceRates), Times.Once);
-        }
-
-
-        [Fact]
         public async Task ShowDumpSitesOnMap_ReturnsFail_WhenServiceFails()
         {
             // Arrange
@@ -274,8 +779,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                     model.selectedDetectionRunsIds, model.selectedConfidenceRates), Times.Once);
         }
 
-
-
         [Fact]
         public async Task ShowDumpSitesOnMap_ReturnsFail_WhenDataIsNull()
         {
@@ -303,8 +806,82 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                     model.selectedDetectionRunsIds, It.IsAny<List<ConfidenceRateDTO>>()), Times.Never);
         }
 
+        [Fact]
+        public async Task ShowDumpSitesOnMap_ReturnsFailResult_WhenModelStateIsInvalid()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("Error", "Invalid model state");
+            var model = new DetectionRunShowOnMapViewModel();
 
+            // Act
+            var response = await _controller.ShowDumpSitesOnMap(model);
 
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Contains("Invalid model state", response.ErrMsg);
+        }
+
+        [Fact]
+        public async Task ShowDumpSitesOnMap_ReturnsFailResult_WhenSelectedDetectionRunsIdsIsNull()
+        {
+            // Arrange
+            var model = new DetectionRunShowOnMapViewModel { selectedDetectionRunsIds = null, selectedConfidenceRates = new List<ConfidenceRateDTO> () };
+
+            // Act
+            var response = await _controller.ShowDumpSitesOnMap(model);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal("No detection run selected", response.ErrMsg);
+        }
+
+        [Fact]
+        public async Task ShowDumpSitesOnMap_ReturnsFailResult_WhenSelectedDetectionRunsIdsIsEmpty()
+        {
+            // Arrange
+            var model = new DetectionRunShowOnMapViewModel { selectedDetectionRunsIds = new List<Guid>(), selectedConfidenceRates = new List<ConfidenceRateDTO>() };
+
+            // Act
+            var response = await _controller.ShowDumpSitesOnMap(model);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal("No detection run selected", response.ErrMsg);
+        }
+
+        [Fact]
+        public async Task ShowDumpSitesOnMap_ReturnsFailResult_WhenSelectedConfidenceRatesIsNull()
+        {
+            // Arrange
+            var model = new DetectionRunShowOnMapViewModel { selectedDetectionRunsIds = new List<Guid> { Guid.NewGuid() }, selectedConfidenceRates = null };
+
+            // Act
+            var response = await _controller.ShowDumpSitesOnMap(model);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal("No confidence rates selected", response.ErrMsg);
+        }
+
+        [Fact]
+        public async Task ShowDumpSitesOnMap_ReturnsFailResult_WhenSelectedConfidenceRatesIsEmpty()
+        {
+            // Arrange
+            var model = new DetectionRunShowOnMapViewModel { selectedDetectionRunsIds = new List<Guid> { Guid.NewGuid() }, selectedConfidenceRates = new List<ConfidenceRateDTO>() };
+
+            // Act
+            var response = await _controller.ShowDumpSitesOnMap(model);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.False(response.IsSuccess);
+            Assert.Equal("No confidence rates selected", response.ErrMsg);
+        }
+               
         [Fact]
         public async Task GenerateAreaComparisonAvgConfidenceRateReport_ReturnsData_WhenDataIsAvailable()
         {
@@ -328,16 +905,17 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 }
             };
 
-            _mockDetectionRunService.Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>()))
-                .ReturnsAsync(detectionRunDTOs);
+            _mockDetectionRunService
+                .Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>(), It.IsAny<int>()))
+                .ReturnsAsync(ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(detectionRunDTOs)); 
 
             // Act
-            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds);
+            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds, 1);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Single(result);
-            Assert.Equal(detectionRunId, result.First().DetectionRunId);
+            Assert.Single(result.Data);
+            Assert.Equal(detectionRunId, result.Data.First().DetectionRunId);
         }
 
         [Fact]
@@ -346,14 +924,17 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var detectionRunsIds = new List<Guid>();
 
-            _mockDetectionRunService.Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>()))
-                .ReturnsAsync(new List<AreaComparisonAvgConfidenceRateReportDTO>());
+            // Corrected mock setup for GenerateAreaComparisonAvgConfidenceRateData
+            _mockDetectionRunService
+                .Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>(), It.IsAny<int>()))
+                .ReturnsAsync(ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(new List<AreaComparisonAvgConfidenceRateReportDTO>()));
+
 
             // Act
-            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds);
+            var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds, 1);
 
             // Assert
-            Assert.Empty(result);
+            Assert.Empty(result.Data);
         }
 
         #region InputImages
@@ -452,32 +1033,49 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Image Input is null", result.ErrMsg);
         }
 
-        // TODO: Fails on Context null. should be refactored, then returned
-        //[Fact]
-        //public async Task GetDetectionInputImageById_ReturnsOkResult_WhenServiceReturnsSuccess()
-        //{
-        //    // Arrange
-        //    var detectionInputImageId = Guid.NewGuid();
-        //    var detectionInputImageDTO = new DetectionInputImageDTO { Id = detectionInputImageId, ImageFileName = "image.jpg" };
+        [Fact]
+        public async Task GetDetectionInputImageById_ReturnsOkResult_WhenServiceReturnsSuccess()
+        {
+            // Arrange
+            var detectionInputImageId = Guid.NewGuid();
+            var detectionInputImageDTO = new DetectionInputImageDTO
+            {
+                Id = detectionInputImageId,
+                ImageFileName = "image.jpg"
+            };
 
-        //    _mockDetectionRunService
-        //        .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
-        //        .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(detectionInputImageDTO));
+            _mockDetectionRunService
+                .Setup(service => service.GetDetectionInputImageById(detectionInputImageId))
+                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(detectionInputImageDTO));
 
-        //    var thumbnailsFolderPath = "Uploads\\DetectionUploads\\InputImageThumbnails";
-        //    _mockAppSettingsAccessor
-        //        .Setup(accessor => accessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", It.IsAny<string>()))
-        //        .ReturnsAsync(ResultDTO<string>.Ok(thumbnailsFolderPath));
+            var thumbnailsFolderPath = "Uploads\\DetectionUploads\\InputImageThumbnails";
+            _mockAppSettingsAccessor
+                .Setup(accessor => accessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Ok(thumbnailsFolderPath));
 
-        //    // Act
-        //    var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
+            var mockHttpContext = new Mock<HttpContext>();
+            var mockRequest = new Mock<HttpRequest>();
+            var mockUriHelper = new Mock<IUrlHelper>();
 
-        //    // Assert
-        //    Assert.True(result.IsSuccess);
-        //    Assert.Equal(detectionInputImageDTO.Id, result.Data.Id);
-        //    Assert.NotNull(result.Data.ThumbnailFilePath);
-        //    Assert.Contains("_thumbnail.jpg", result.Data.ThumbnailFilePath);
-        //}
+            mockRequest.Setup(x => x.Scheme).Returns("https");
+            mockRequest.Setup(x => x.Host).Returns(new HostString("localhost"));
+            mockRequest.Setup(x => x.PathBase).Returns(new PathString("/"));
+
+            mockHttpContext.Setup(x => x.Request).Returns(mockRequest.Object);
+            _controller.ControllerContext.HttpContext = mockHttpContext.Object;
+
+            // Act
+            var result = await _controller.GetDetectionInputImageById(detectionInputImageId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(detectionInputImageDTO.Id, result.Data.Id);
+            Assert.NotNull(result.Data.ThumbnailFilePath);
+            Assert.Contains("_thumbnail.jpg", result.Data.ThumbnailFilePath);
+        }
+
 
         //[Fact]
         //public async Task EditDetectionImageInput_WithValidModel_ReturnsOkResult()
@@ -682,31 +1280,42 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Service failure", result.ErrMsg);
         }
 
-        // TODO: Fails on Context null. should be refactored, then returned
-        //[Fact]
-        //public async Task GetSelectedDetectionInputImages_ReturnsOkResult_WhenImagesExist()
-        //{
-        //    // Arrange
-        //    var selectedImageIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        //    var images = new List<DetectionInputImageDTO>
-        //    {
-        //        new DetectionInputImageDTO { Id = selectedImageIds[0], ImagePath = "path1" },
-        //        new DetectionInputImageDTO { Id = selectedImageIds[1], ImagePath = "path2" }
-        //    };
-        //    var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Ok(images);
+        [Fact]
+        public async Task GetSelectedDetectionInputImages_ReturnsOkResult_WhenImagesExist()
+        {
+            // Arrange
+            var selectedImageIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+            var images = new List<DetectionInputImageDTO>
+            {
+                new DetectionInputImageDTO { Id = selectedImageIds[0], ImagePath = "path1" },
+                new DetectionInputImageDTO { Id = selectedImageIds[1], ImagePath = "path2" }
+            };
+            var resultDto = ResultDTO<List<DetectionInputImageDTO>>.Ok(images);
 
-        //    _mockDetectionRunService.Setup(service => service.GetSelectedInputImagesById(selectedImageIds))
-        //        .ReturnsAsync(resultDto);
+            _mockDetectionRunService.Setup(service => service.GetSelectedInputImagesById(selectedImageIds))
+                .ReturnsAsync(resultDto);
 
-        //    // Act
-        //    var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
+            var mockHttpContext = new Mock<HttpContext>();
+            var mockRequest = new Mock<HttpRequest>();
 
-        //    // Assert
-        //    Assert.True(result.IsSuccess);
-        //    Assert.NotNull(result.Data);
-        //    Assert.Equal(images, result.Data);
-        //    Assert.All(result.Data, item => Assert.Contains("/", item.ImagePath)); 
-        //}
+            mockRequest.Setup(x => x.Scheme).Returns("https");
+            mockRequest.Setup(x => x.Host).Returns(new HostString("localhost"));
+            mockRequest.Setup(x => x.PathBase).Returns(new PathString("/"));
+
+            mockHttpContext.Setup(x => x.Request).Returns(mockRequest.Object);
+            _controller.ControllerContext.HttpContext = mockHttpContext.Object;
+
+            // Act
+            var result = await _controller.GetSelectedDetectionInputImages(selectedImageIds);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(images, result.Data);
+            Assert.All(result.Data, item => Assert.Contains("/", item.ImagePath));
+        }
+
 
         [Fact]
         public async Task GetSelectedDetectionInputImages_ReturnsFailResult_WhenImagesNotFound()
@@ -743,6 +1352,371 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.False(result.IsSuccess);
             Assert.Equal("Service failure", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task AddImage_InvalidModelState_ReturnsFailResult()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("test", "Test error");
+            var viewModel = new DetectionInputImageViewModel();
+
+            // Act
+            var result = await _controller.AddImage(viewModel, null);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Test error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task AddImage_FailedToGetAppSettings_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            _mockAppSettingsAccessor
+                .Setup(x => x.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Fail("Settings error"));
+
+            // Act
+            var result = await _controller.AddImage(viewModel, null);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Can not get the application settings", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task AddImage_EmptyFolderPath_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            _mockAppSettingsAccessor
+                .Setup(x => x.GetApplicationSettingValueByKey<string>(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Ok(null));
+
+            // Act
+            var result = await _controller.AddImage(viewModel, null);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Image folder path not found", result.ErrMsg);
+        }
+
+
+        [Fact]
+        public async Task EditDetectionImageInput_InvalidModelState_ReturnsFailResult()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("test", "Test error");
+            var viewModel = new DetectionInputImageViewModel();
+
+            // Act
+            var result = await _controller.EditDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Test error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDetectionImageInput_NoUserClaims_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal() }
+            };
+
+            // Act
+            var result = await _controller.EditDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("User id not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDetectionImageInput_UserNotFound_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            _mockUserManagementService
+                .Setup(x => x.GetUserById(It.IsAny<string>()))
+                .ReturnsAsync((UserDTO?)null);
+
+            // Act
+            var result = await _controller.EditDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("User not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDetectionImageInput_MappingFailed_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            var userDto = new UserDTO { Id = "test-user-id" };
+
+            _mockUserManagementService
+                .Setup(x => x.GetUserById(It.IsAny<string>()))
+                .ReturnsAsync(userDto);
+            _mockMapper
+                .Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
+                .Returns((DetectionInputImageDTO?)null);
+
+            // Act
+            var result = await _controller.EditDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Mapping failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDetectionImageInput_EditServiceFails_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            var userDto = new UserDTO { Id = "test-user-id" };
+            var dto = new DetectionInputImageDTO();
+
+            _mockUserManagementService
+                .Setup(x => x.GetUserById(It.IsAny<string>()))
+                .ReturnsAsync(userDto);
+            _mockMapper
+                .Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
+                .Returns(dto);
+            _mockDetectionRunService
+                .Setup(x => x.EditDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
+                .ReturnsAsync(ResultDTO.Fail("Edit failed"));
+
+            // Act
+            var result = await _controller.EditDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Edit failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDetectionImageInput_SuccessfulEdit_ReturnsSuccessResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            var userDto = new UserDTO { Id = "test-user-id" };
+            var dto = new DetectionInputImageDTO();
+
+            _mockUserManagementService
+                .Setup(x => x.GetUserById(It.IsAny<string>()))
+                .ReturnsAsync(userDto);
+            _mockMapper
+                .Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
+                .Returns(dto);
+            _mockDetectionRunService
+                .Setup(x => x.EditDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _controller.EditDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
+        public async Task EditDetectionImageInput_VerifyUpdateFields_SetsCorrectValues()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel();
+            var userDto = new UserDTO { Id = "test-user-id" };
+            var dto = new DetectionInputImageDTO();
+            var startTime = DateTime.UtcNow;
+
+            _mockUserManagementService
+                .Setup(x => x.GetUserById(It.IsAny<string>()))
+                .ReturnsAsync(userDto);
+            _mockMapper
+                .Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
+                .Returns(dto);
+            _mockDetectionRunService
+                .Setup(x => x.EditDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
+                .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _controller.EditDetectionImageInput(viewModel);
+            var endTime = DateTime.UtcNow;
+
+            // Assert
+            Assert.Equal("test-user-id", viewModel.UpdatedById);
+            Assert.True(viewModel.UpdatedOn >= startTime);
+            Assert.True(viewModel.UpdatedOn <= endTime);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_InvalidModelState_ReturnsFailResult()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("test", "Test error");
+            var viewModel = new DetectionInputImageViewModel();
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Test error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_GetDetectionRunsFails_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            _mockDetectionRunService
+                .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Fail("Failed to get detection runs"));
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to get detection runs", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_DetectionRunDataNull_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            _mockDetectionRunService
+                .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(null!));
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Data is null", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_ImageStillInUse_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            var detectionRuns = new List<DetectionRunDTO> { new DetectionRunDTO() };
+            _mockDetectionRunService
+                .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(detectionRuns));
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("This image is still used in the detection run", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_MappingFails_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            _mockDetectionRunService
+                .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(new List<DetectionRunDTO>()));
+            _mockMapper
+                .Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
+                .Returns((DetectionInputImageDTO?)null);
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Mapping failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_DeleteServiceFails_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            var dto = new DetectionInputImageDTO();
+
+            _mockDetectionRunService
+                .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(new List<DetectionRunDTO>()));
+            _mockMapper
+                .Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
+                .Returns(dto);
+            _mockDetectionRunService
+                .Setup(x => x.DeleteDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
+                .ReturnsAsync(ResultDTO.Fail("Delete failed"));
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Delete failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GenerateThumbnail_InvalidPath_ReturnsErrorMessage()
+        {
+            // Arrange
+            string absGeoTiffPath = null;
+
+            // Act
+            var result = await _controller.GenerateThumbnail(absGeoTiffPath) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False((bool)result.Value.GetType().GetProperty("isSuccess").GetValue(result.Value));
+            Assert.Equal("Invalid image path.", result.Value.GetType().GetProperty("errMsg").GetValue(result.Value));
+        }
+
+        [Fact]
+        public async Task GenerateThumbnail_AppSettingError_ReturnsErrorMessage()
+        {
+            // Arrange
+            string absGeoTiffPath = "valid/path/to/image.tif";
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Fail("Failed"));
+
+            // Act
+            var result = await _controller.GenerateThumbnail(absGeoTiffPath) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False((bool)result.Value.GetType().GetProperty("isSuccess").GetValue(result.Value));
+            Assert.Equal("Cannot get the application setting for thumbnails folder", result.Value.GetType().GetProperty("errMsg").GetValue(result.Value));
+        }
+
+        [Fact]
+        public async Task GenerateThumbnail_NullThumbnailsFolder_ReturnsErrorMessage()
+        {
+            // Arrange
+            string absGeoTiffPath = "valid/path/to/image.tif";
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Ok(null));
+
+            // Act
+            var result = await _controller.GenerateThumbnail(absGeoTiffPath) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False((bool)result.Value.GetType().GetProperty("isSuccess").GetValue(result.Value));
+            Assert.Equal("Detection input image thumbnails folder value is null", result.Value.GetType().GetProperty("errMsg").GetValue(result.Value));
+        }
+
+      
         #endregion
 
     }

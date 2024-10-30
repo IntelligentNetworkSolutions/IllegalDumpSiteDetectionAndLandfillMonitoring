@@ -6,11 +6,6 @@ using MainApp.BL.Services.LegalLandfillManagementServices;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppBLTests.Services
 {
@@ -67,6 +62,7 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Repository error", result.ErrMsg);
         }
 
+
         [Fact]
         public async Task GetLegalLandfillById_ShouldReturnLandfill()
         {
@@ -86,7 +82,25 @@ namespace Tests.MainAppBLTests.Services
             Assert.True(result.IsSuccess);
             Assert.Equal(dto, result.Data);
         }
-                
+
+        [Fact]
+        public async Task GetLegalLandfillById_ReturnsFailure_WhenEntityIsNotFound()
+        {
+            // Arrange
+            var legalLandfillId = Guid.NewGuid();
+            var resultFromRepo = ResultDTO<LegalLandfill?>.Fail("Entity not found");
+
+            _mockRepository.Setup(repo => repo.GetById(legalLandfillId, false, null)).ReturnsAsync(resultFromRepo);
+
+            // Act
+            var result = await _service.GetLegalLandfillById(legalLandfillId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Entity not found", result.ErrMsg);
+        }
+
+
         [Fact]
         public async Task CreateLegalLandfill_ShouldCreateLandfill()
         {
@@ -121,6 +135,24 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(result.IsSuccess);
             Assert.Equal("Creation failed", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task CreateLegalLandfill_ShouldReturnExceptionFail_WhenExceptionThrown()
+        {
+            // Arrange
+            var landfillDto = new LegalLandfillDTO { /* set necessary properties */ };
+            _mockRepository
+                .Setup(r => r.Create(It.IsAny<LegalLandfill>(), true, default))
+                .ThrowsAsync(new Exception("Create landfill failed"));
+
+            // Act
+            var result = await _service.CreateLegalLandfill(landfillDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Create landfill failed", result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task EditLegalLandfill_ShouldUpdateLandfill()
@@ -191,6 +223,109 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(result.IsSuccess);
             Assert.Equal("Delete failed", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task GetAllLegalLandfills_WhenRepositoryThrowsException_ShouldReturnExceptionFail()
+        {
+            // Arrange
+            _mockRepository.Setup(r => r.GetAll(null, null, false, null, null))
+                .ThrowsAsync(new Exception("Database connection failed"));
+
+            // Act
+            var result = await _service.GetAllLegalLandfills();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Database connection failed", result.ErrMsg);
+            _mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => true),
+                    It.IsAny<Exception>(),
+                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task GetLegalLandfillById_WhenRepositoryThrowsException_ShouldReturnExceptionFail()
+        {
+            // Arrange
+            var landfillId = Guid.NewGuid();
+            _mockRepository.Setup(r => r.GetById(landfillId, false, null))
+                .ThrowsAsync(new Exception("Database connection failed"));
+
+            // Act
+            var result = await _service.GetLegalLandfillById(landfillId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Database connection failed", result.ErrMsg);
+            _mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => true),
+                    It.IsAny<Exception>(),
+                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfill_WhenRepositoryThrowsException_ShouldReturnExceptionFail()
+        {
+            // Arrange
+            var dto = new LegalLandfillDTO();
+            var entity = new LegalLandfill();
+            _mockMapper.Setup(m => m.Map<LegalLandfill>(dto)).Returns(entity);
+            _mockRepository.Setup(r => r.Update(entity, true, default))
+                .ThrowsAsync(new Exception("Database connection failed"));
+
+            // Act
+            var result = await _service.EditLegalLandfill(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Database connection failed", result.ErrMsg);
+            _mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => true),
+                    It.IsAny<Exception>(),
+                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfill_WhenRepositoryThrowsException_ShouldReturnExceptionFail()
+        {
+            // Arrange
+            var dto = new LegalLandfillDTO();
+            var entity = new LegalLandfill();
+            _mockMapper.Setup(m => m.Map<LegalLandfill>(dto)).Returns(entity);
+            _mockRepository.Setup(r => r.Delete(entity, true, default))
+                .ThrowsAsync(new Exception("Database connection failed"));
+
+            // Act
+            var result = await _service.DeleteLegalLandfill(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Database connection failed", result.ErrMsg);
+            _mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => true),
+                    It.IsAny<Exception>(),
+                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+                Times.Once);
+        }
+
+
+
+
 
     }
 }

@@ -130,7 +130,7 @@ namespace MainApp.BL.Services.DatasetServices
         #region Delete
         public async Task<ResultDTO<int>> DeleteDatasetImage(Guid datasetImageId, bool deleteAnnotations)
         {
-            var datasetImageDb = await _datasetImagesRepository.GetById(datasetImageId) ?? throw new Exception("Object not found");
+            var datasetImageDb = await _datasetImagesRepository.GetById(datasetImageId, includeProperties: "ImageAnnotations") ?? throw new Exception("Object not found");
             DatasetImage data = datasetImageDb.Data ?? throw new Exception("Object not found");
             if (deleteAnnotations)
             {

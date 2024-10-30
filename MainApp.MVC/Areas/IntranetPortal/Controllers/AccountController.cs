@@ -1,18 +1,18 @@
-﻿using MainApp.MVC.Helpers;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using DAL.Interfaces.Helpers;
+using DAL.Interfaces.Repositories;
+using Entities;
+using MainApp.MVC.Helpers;
+using MainApp.MVC.ViewModels.IntranetPortal.Account;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Entities;
-using System.Security.Claims;
-using Services.Interfaces;
 using Microsoft.AspNetCore.Localization;
-using MainApp.MVC.ViewModels.IntranetPortal.Account;
-using DAL.Repositories;
-using Services.Interfaces.Services;
-using DAL.Interfaces.Helpers;
+using Microsoft.AspNetCore.Mvc;
 using SD;
+using Services.Interfaces;
+using Services.Interfaces.Services;
+using System.Security.Claims;
 using Westwind.Globalization;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
@@ -21,7 +21,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     public class AccountController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IntranetPortalUsersTokenDa _intranetPortalUsersTokenDa;
+        private readonly IIntranetPortalUsersTokenDa _intranetPortalUsersTokenDa;
         private readonly IForgotResetPasswordService _forgotResetPasswordService;
         private readonly IAppSettingsAccessor _appSettingsAccessor;
         private readonly IConfiguration _configuration;
@@ -29,7 +29,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private readonly IUserManagementService _userManagementService;
 
         public AccountController(UserManager<ApplicationUser> userManager,
-            IntranetPortalUsersTokenDa intranetPortalUsersTokenDa,
+            IIntranetPortalUsersTokenDa intranetPortalUsersTokenDa,
             IForgotResetPasswordService forgotResetPasswordService,
             IConfiguration configuration,
             IWebHostEnvironment hostingEnvironment,
@@ -56,7 +56,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public IActionResult Login()
         {
             if (User.Identity.IsAuthenticated)
-                return Redirect(Url.Action("Index", "Home", new {area="Common"}));
+                return Redirect(Url.Action("Index", "Home", new { area = "Common" }));
 
             return View();
         }
@@ -67,7 +67,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password, bool remember, string returnUrl)
         {
-            if(string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
                 ViewData["MessageError"] = DbResHtml.T("All fields are required", "Resources");
                 ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());

@@ -98,5 +98,12 @@ namespace SD.Helpers
 
             return linuxPath;
         }
+
+        public static string GetFileNameFromUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                return url;
+            return Path.GetFileName(new Uri(url).AbsolutePath);
+        }
     }
 }
