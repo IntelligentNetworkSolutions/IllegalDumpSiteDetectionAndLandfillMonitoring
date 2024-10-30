@@ -264,5 +264,107 @@ namespace Tests.SDTests.Helpers
 
             Assert.Equal(linuxRootPath, result);
         }
+
+        [Theory]
+        [InlineData("https://example.com/file.txt", "file.txt")]
+        [InlineData("https://example.com/path/to/document.pdf", "document.pdf")]
+        [InlineData("https://example.com/files/image.jpg", "image.jpg")]
+        [InlineData("http://example.com/download/archive.zip", "archive.zip")]
+        public void GetFileNameFromUrl_ValidUrls_ReturnsFileName(string url, string expected)
+        {
+            // Act
+            string result = CommonHelper.GetFileNameFromUrl(url);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("https://example.com/file.txt?param=value", "file.txt")]
+        [InlineData("https://example.com/document.pdf#page=1", "document.pdf")]
+        [InlineData("https://example.com/image.jpg?size=large&format=jpeg", "image.jpg")]
+        [InlineData("http://example.com/file.zip?download=true&token=abc123", "file.zip")]
+        public void GetFileNameFromUrl_UrlsWithQueryParameters_ReturnsFileName(string url, string expected)
+        {
+            // Act
+            string result = CommonHelper.GetFileNameFromUrl(url);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("https://example.com/path/to/file.with.multiple.dots.txt", "file.with.multiple.dots.txt")]
+        [InlineData("https://example.com/path/_special-chars_%20file.pdf", "_special-chars_%20file.pdf")]
+        [InlineData("https://example.com/path/file-name_with-special@chars.doc", "file-name_with-special@chars.doc")]
+        public void GetFileNameFromUrl_ComplexFileNames_ReturnsFileName(string url, string expected)
+        {
+            // Act
+            string result = CommonHelper.GetFileNameFromUrl(url);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("https://example.com/")]
+        [InlineData("https://example.com")]
+        [InlineData("https://example.com/path/")]
+        [InlineData("https://example.com/path/to/folder/")]
+        public void GetFileNameFromUrl_UrlsWithoutFileName_ReturnsEmptyString(string url)
+        {
+            // Act
+            string result = CommonHelper.GetFileNameFromUrl(url);
+
+            // Assert
+            Assert.Equal(string.Empty, result);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        public void GetFileNameFromUrl_NullOrEmptyUrls_ReturnsInput(string url)
+        {
+            // Act
+            string result = CommonHelper.GetFileNameFromUrl(url);
+
+            // Assert
+            Assert.Equal(url, result);
+        }
+
+        [Theory]
+        [InlineData("not_a_url")]
+        [InlineData("file.txt")]
+        public void GetFileNameFromUrl_InvalidUrls_ThrowsUriFormatException(string url)
+        {
+            // Act & Assert
+            Assert.Throws<UriFormatException>(() => CommonHelper.GetFileNameFromUrl(url));
+        }
+
+        [Theory]
+        [InlineData("https://example.com/path%20with%20spaces/file.txt", "file.txt")]
+        [InlineData("https://example.com/path%2Fwith%2Fencoded%2Fslashes/file.pdf", "file.pdf")]
+        public void GetFileNameFromUrl_UrlEncodedPaths_ReturnsDecodedFileName(string url, string expected)
+        {
+            // Act
+            string result = CommonHelper.GetFileNameFromUrl(url);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void GetFileNameFromUrl_VeryLongUrl_HandlesCorrectly()
+        {
+            // Arrange
+            string longFileName = new string('a', 100) + ".txt";
+            string url = $"https://example.com/path/to/{longFileName}";
+
+            // Act
+            string result = CommonHelper.GetFileNameFromUrl(url);
+
+            // Assert
+            Assert.Equal(longFileName, result);
+        }
     }
 }
