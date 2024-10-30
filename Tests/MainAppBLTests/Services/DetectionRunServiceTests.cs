@@ -145,6 +145,28 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task GetDetectionRunById_ThrowsException_ReturnsExceptionFailResult()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var exceptionMessage = "An unexpected error occurred.";
+
+            _mockDetectionRunsRepository.Setup(repo => repo.GetById(detectionRunId, false, "CreatedBy"))
+                                        .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _service.GetDetectionRunById(detectionRunId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.IsType<ResultDTO<DetectionRunDTO>>(result);
+            Assert.Null(result.Data);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+        }
+
+
+        [Fact]
         public async Task CreateDetectionRun_SuccessfullyCreated()
         {
             // Arrange
