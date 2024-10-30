@@ -1325,7 +1325,7 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.True(result.IsSuccess);
             Assert.Null(result.ErrMsg);
-            Assert.Single(result.Data); // Expecting one DTO mapped without filtering
+            Assert.Single(result.Data);
             Assert.Equal(detectionRunId, result.Data[0].Id);
         }
 
