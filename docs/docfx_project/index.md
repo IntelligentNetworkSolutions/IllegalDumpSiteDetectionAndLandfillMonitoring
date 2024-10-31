@@ -15,7 +15,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
 ## Key Features  
 
 <div style="display: block; float: left">
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
         Dataset Management
@@ -35,7 +35,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
     src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/dataset-manage.jpeg" alt=""/>
 </div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
         Image Annotation
@@ -50,21 +50,21 @@ Our platform utilizes high-resolution images combined with sophisticated image a
     src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/annotate.jpeg" alt=""/>
 </div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
         Object-Detection AI Model Training
     </h4>
     <h6 style="display: flex; flex-grow: 1;">Train proven AI model architectures with your custom datasets</h6>
     <h6><a href="/guides/training-process/training-guide.html" style="display: flex; flex-grow: 1;">
-      How To Annotate</a></h6>
+      What and Why to Train ?</a></h6>
     <h6><a href="/documentation/training-process/overview.html" style="display: flex; flex-grow: 1;">
       Documentation</a></h6>
   </div>
   <img class="col-md-4" style="display: flex; max-width: 250px; width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/robot-train.jpeg" alt=""/>
 </div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 class="col-md-8">
         Detection and Monitoring of Waste Dumpsites
@@ -80,7 +80,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
     src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/object-detection.jpeg" alt=""/>
 </div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
         Landfill Management

@@ -1,9 +1,11 @@
 - name: Home
   homepage: index.md
 - name: Guides
-  href: /guides/user-guides.md
-- name: Dev Docs
-  href: /documentation/dev-docs-overview.md
+  href: guides/user-guides.md
+- name: Documentation
+  href: documentation/dev-docs-overview.md
+- name: Development
+  href: development/intro.md
 - name: About
   href: about/intro.md
 
