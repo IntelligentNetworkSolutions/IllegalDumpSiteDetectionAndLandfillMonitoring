@@ -156,6 +156,13 @@ This license allows for a great deal of freedom in both academic and commercial 
 
 For more details, see the [full license text](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring?tab=Apache-2.0-1-ov-file#readme).  
 
+## 📂 Open-Sourced
+
+- Collected Dataset  
+  - [Hugging Face Dataset](https://huggingface.co/datasets/INS-IntelligentNetworkSolutions/Waste-Dumpsites-DroneImagery)  
+- Trained Model  
+  - [Hugging Face Model](https://huggingface.co/INS-IntelligentNetworkSolutions/waste-detection-faster_rcnn-mmdetection)
+  - 
 ## 👏 Acknowledgments  
 
 - Sponsor  

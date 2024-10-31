@@ -12,18 +12,32 @@
         "files": [
           "images/**",
           "**/images/**",
-          "**/*.{svg,png,jpg,jpeg}"
+          "**/*.{svg,png,jpg,jpeg}",
+          "styles/**"
         ]
       }
     ],
     "dest": "_site",
-    "globalMetadataFiles": [],
-    "fileMetadataFiles": [],
-    "template": [
-      "default"
-    ],
+    "globalMetadata": {
+      "_appTitle": "Illegal Dump Site Detection",
+      "_appLogoPath": "./ins-template/public/images/logo-robot-formal.png",
+      "_appFaviconPath": "./ins-template/public/images/logo-robot-formal-48x48.png",
+      "_enableSearch": true,
+      "_enableNewTab": true,
+      "_lang": "en",
+      "_gitContribute": {
+        "repo": "https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring",
+        "branch": "master"
+      }
+    },
+    "template": [ "default", "_exported_templates/default"],
     "postProcessors": [],
     "markdownEngineName": "markdig",
+    "markdownEngineProperties": {
+      "alerts": {
+        "TODO": "alert alert-secondary"
+      }
+    },
     "noLangKeyword": false,
     "keepFileLink": false,
     "cleanupCacheHistory": false,

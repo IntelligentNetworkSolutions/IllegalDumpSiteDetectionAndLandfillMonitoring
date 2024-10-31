@@ -1,0 +1,29 @@
+{{!Copyright (c) 2022. INS. All Rights Reserved. Licensed under the Apache 2.0 license.}}
+
+<nav id="autocollapse" class="navbar navbar-inverse ng-scope">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="{{_rel}}">
+        <img id="logo" class="ins-logo" height=54 width=225 
+          src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
+      </a>
+    </div>
+    <div class="collapse navbar-collapse" id="navbar">
+      <a class="navbar-brand pull-right navbar-right" href="{{_rel}}">
+        <img id="logo" class="waste-logo" height=54 width=54 
+          src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/logo-robot-formal.png" alt="{{_appName}}">
+      </a>
+      <form class="navbar-form navbar-right" role="search" id="search">
+        <div class="form-group">
+          <input type="text" class="form-control" id="search-query" placeholder="Search" autocomplete="off">
+        </div>
+      </form>
+    </div>
+  </div>
+</nav>

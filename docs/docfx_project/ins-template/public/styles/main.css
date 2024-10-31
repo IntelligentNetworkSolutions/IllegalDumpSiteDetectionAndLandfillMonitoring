@@ -1,0 +1,33 @@
+/* Base styles and variables */
+:root {
+    /* Core colors */
+    --red-danger: #dc3545;
+    --green-success: #28a745;
+    --green-active: #06D001;
+    --dark-green: #059212;
+    --dark-olive-green: rgba(0, 60, 136, 0.6);
+    --dark-glowy: #3a3f51;
+    --dark-mat: #1e1e1e;
+    --yellow-casual: #ffc71d;
+    --white: #f2f2f2;
+
+    /* Layout measurements */
+    --header-height: 60px;
+    --sidebar-width: 260px;
+}
+
+body {
+    font-family: 'Ubuntu', sans-serif;
+    line-height: 1.6;
+    color: var(--dark-mat);
+    background-color: var(--white);
+}
+
+.navbar {
+    background-color: var(--dark-green);
+    border: none;
+}
+
+.navbar-brand {
+    padding: 10px 15px;
+}
