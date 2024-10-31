@@ -2213,6 +2213,156 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.False(failResult.IsSuccess);
             Assert.Equal("Delete failed", failResult.ErrMsg);
         }
+        [Fact]
+        public async Task ViewLegalLandfillTrucks_WhenResultDtoDataIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            _mockLegalLandfillTruckService.Setup(s => s.GetAllLegalLandfillTrucks())
+                .ReturnsAsync(ResultDTO<List<LegalLandfillTruckDTO>>.Ok(null)); // Simulate null data return
+
+            // Act
+            var result = await _controller.ViewLegalLandfillTrucks();
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result); // Ensure a NotFound result is returned
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillTrucks_WhenViewModelListIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var dtoList = new List<LegalLandfillTruckDTO> { new LegalLandfillTruckDTO() }; // Mock valid DTO list
+
+            _mockLegalLandfillTruckService.Setup(s => s.GetAllLegalLandfillTrucks())
+                .ReturnsAsync(ResultDTO<List<LegalLandfillTruckDTO>>.Ok(dtoList)); // Simulate successful service call
+
+            _mockMapper.Setup(m => m.Map<List<LegalLandfillTruckViewModel>>(dtoList))
+                .Returns((List<LegalLandfillTruckViewModel>)null); // Simulate mapping failure
+
+            // Act
+            var result = await _controller.ViewLegalLandfillTrucks();
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result); // Ensure a NotFound result is returned
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillTruckConfirmed_WhenCapacityUnladenWeightOrPayloadWeightIsNull_ReturnsFailResult()
+        {
+            // Arrange
+            var legalLandfillTruckViewModel = new LegalLandfillTruckViewModel
+            {
+                Id = Guid.NewGuid(),
+                Capacity = null,
+                UnladenWeight = null,
+                PayloadWeight = null,
+            };
+
+            // Mock the mapping to return a valid DTO but with null properties
+            var dto = new LegalLandfillTruckDTO
+            {
+                Id = legalLandfillTruckViewModel.Id,
+                Capacity = null,
+                UnladenWeight = null,
+                PayloadWeight = null,
+            };
+
+            // Setup mapper to return the DTO
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruckDTO>(legalLandfillTruckViewModel))
+                       .Returns(dto);
+
+            // Act
+            var result = await _controller.EditLegalLandfillTruckConfirmed(legalLandfillTruckViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Capacity, Unladen Weight and Payload Weight must be provided.", failResult.ErrMsg);
+        }
+
+
+        [Fact]
+        public async Task ViewLegalLandfillWasteImports_WhenDataIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var resultDtoList = new ResultDTO<List<LegalLandfillWasteImportDTO>>(true, null, "Error fetching data", null); // Set IsSuccess to true
+
+            _mockLegalLandfillWasteImportService
+                .Setup(s => s.GetAllLegalLandfillWasteImports())
+                .ReturnsAsync(resultDtoList);
+
+            // Act
+            var result = await _controller.ViewLegalLandfillWasteImports();
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillWasteImports_WhenVmListIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var resultDtoList = new ResultDTO<List<LegalLandfillWasteImportDTO>>(true, new List<LegalLandfillWasteImportDTO>(), null, null); // Simulating valid data
+
+            _mockLegalLandfillWasteImportService
+                .Setup(s => s.GetAllLegalLandfillWasteImports())
+                .ReturnsAsync(resultDtoList);
+
+            _mockMapper
+                .Setup(m => m.Map<List<LegalLandfillWasteImportViewModel>>(It.IsAny<List<LegalLandfillWasteImportDTO>>()))
+                .Returns((List<LegalLandfillWasteImportViewModel>)null); // Simulating mapping to null
+
+            // Act
+            var result = await _controller.ViewLegalLandfillWasteImports();
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillWasteTypes_WhenDataIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var resultDtoList = new ResultDTO<List<LegalLandfillWasteTypeDTO>>(true, null, "Error message if needed", null); // Set IsSuccess to true
+
+            _mockLegalLandfillWasteTypeService
+                .Setup(s => s.GetAllLegalLandfillWasteTypes())
+                .ReturnsAsync(resultDtoList);
+
+            // Act
+            var result = await _controller.ViewLegalLandfillWasteTypes();
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillWasteTypes_WhenVmListIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var resultDtoList = new ResultDTO<List<LegalLandfillWasteTypeDTO>>(
+                true,  // IsSuccess
+                new List<LegalLandfillWasteTypeDTO> { new LegalLandfillWasteTypeDTO() }, // Simulating valid data
+                null,  // ErrMsg
+                null   // AdditionalData
+            );
+
+            _mockLegalLandfillWasteTypeService
+                .Setup(s => s.GetAllLegalLandfillWasteTypes())
+                .ReturnsAsync(resultDtoList);
+
+            _mockMapper
+                .Setup(m => m.Map<List<LegalLandfillWasteTypeViewModel>>(It.IsAny<List<LegalLandfillWasteTypeDTO>>()))
+                .Returns((List<LegalLandfillWasteTypeViewModel>)null); // Simulating mapping to null
+
+            // Act
+            var result = await _controller.ViewLegalLandfillWasteTypes();
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+        }
+
+
 
 
     }

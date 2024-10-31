@@ -1389,5 +1389,175 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("/error404", redirectResult.Url);
         }
 
+        [Fact]
+        public async Task Index_WhenErrorPathIsNull_ReturnsBadRequest()
+        {
+            // Arrange
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns((string)null);
+
+            _mockMapConfigurationService.Setup(s => s.GetAllMapConfigurations())
+                .ReturnsAsync(ResultDTO<List<MapConfigurationDTO>>.Fail("Service error"));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task Index_WhenError404PathIsNullAndDataIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
+
+            _mockMapConfigurationService.Setup(s => s.GetAllMapConfigurations())
+                .ReturnsAsync(ResultDTO<List<MapConfigurationDTO>>.Ok(null));
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task Index_WhenError404PathIsNullAndVmListIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var dtoList = new List<MapConfigurationDTO> { new MapConfigurationDTO() };
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
+
+            _mockMapConfigurationService.Setup(s => s.GetAllMapConfigurations())
+                .ReturnsAsync(ResultDTO<List<MapConfigurationDTO>>.Ok(dtoList));
+
+            _mockMapper.Setup(m => m.Map<List<MapConfigurationViewModel>>(dtoList))
+                .Returns((List<MapConfigurationViewModel>)null);
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task Index_WhenVmListIsNullAndError404PathIsConfigured_RedirectsToError404()
+        {
+            // Arrange
+            var dtoList = new List<MapConfigurationDTO> { new MapConfigurationDTO() };
+            var error404Path = "/Error404";
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns(error404Path);
+
+            _mockMapConfigurationService.Setup(s => s.GetAllMapConfigurations())
+                .ReturnsAsync(ResultDTO<List<MapConfigurationDTO>>.Ok(dtoList));
+
+            // Simulate `null` vmList by having the mapper return `null`
+            _mockMapper.Setup(m => m.Map<List<MapConfigurationViewModel>>(dtoList))
+                .Returns((List<MapConfigurationViewModel>)null);
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal(error404Path, redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_WhenResultDataIsNullAndError404PathIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+
+            // Simulate a null `Data` in the `ResultDTO`
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId))
+                .ReturnsAsync(ResultDTO<MapConfigurationDTO>.Ok(null));
+
+            // Configure `_configuration` to return null for the Error404 path
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_WhenResultNotSuccessAndErrorPathIsNull_ReturnsBadRequest()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+
+            // Simulate an unsuccessful result in the `ResultDTO`
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId))
+                .ReturnsAsync(ResultDTO<MapConfigurationDTO>.Fail("Error fetching map configuration"));
+
+            // Configure `_configuration` to return null for the Error path
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns((string)null);
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_WhenMappingFails_ReturnsFailResult()
+        {
+            // Arrange
+            var mapConfigurationViewModel = new MapConfigurationViewModel(); // Populate as needed
+            _mockMapper.Setup(m => m.Map<MapConfigurationDTO>(mapConfigurationViewModel)).Returns((MapConfigurationDTO)null); // Simulate mapping failure
+
+            var userId = "test-user-id";
+
+            // Mock User identity
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+            _controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = claimsPrincipal } };
+
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapConfigurationViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess); // Ensure the result indicates failure
+            Assert.Equal("Mapping failed", failResult.ErrMsg); // Check the error message
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_WhenEditIsSuccessful_ReturnsOkResult()
+        {
+            // Arrange
+            var mapConfigurationViewModel = new MapConfigurationViewModel(); // Populate as needed
+            var userId = "test-user-id";
+
+            // Mock User identity
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+            _controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = claimsPrincipal } };
+
+            var dto = new MapConfigurationDTO(); // Your DTO that will be mapped to
+            _mockMapper.Setup(m => m.Map<MapConfigurationDTO>(mapConfigurationViewModel)).Returns(dto);
+
+            var resultEdit = ResultDTO.Ok();
+            _mockMapConfigurationService.Setup(s => s.EditMapConfiguration(dto)).ReturnsAsync(resultEdit);
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapConfigurationViewModel);
+
+            // Assert
+            var okResult = Assert.IsType<ResultDTO>(result);
+            Assert.True(okResult.IsSuccess); // Ensure the result indicates success
+        }
+
+
     }
 }
