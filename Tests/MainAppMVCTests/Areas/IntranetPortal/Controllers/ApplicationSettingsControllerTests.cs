@@ -8,11 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using SD;
 using SD.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -48,7 +43,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .ReturnsAsync(new ResultDTO<string>(true, genSet, null, null));
             _mockAppSettingsAccessor.Setup(accessor => accessor.GetApplicationSettingValueByKey<bool?>("GenericBool", false))
                 .ReturnsAsync(new ResultDTO<bool?>(true, genSetBool, null, null));
-            _mockAppSettingsAccessor.Setup(accessor => accessor.GetApplicationSettingValueByKey<bool?>("GenericBool4e","2"))
+            _mockAppSettingsAccessor.Setup(accessor => accessor.GetApplicationSettingValueByKey<bool?>("GenericBool4e", "2"))
                 .ReturnsAsync(new ResultDTO<bool?>(true, genSetBoolche, null, null));
             _mockAppSettingsAccessor.Setup(accessor => accessor.GetApplicationSettingValueByKey<DateTime?>("GenericDateTime", "2"))
                 .ReturnsAsync(new ResultDTO<DateTime?>(true, genSetDateTime, null, null));
@@ -95,7 +90,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .ReturnsAsync(new ResultDTO<bool?>(true, true, null, null));
             _mockAppSettingsAccessor.Setup(accessor => accessor.GetApplicationSettingValueByKey<bool?>("GenericBool4e", "2"))
                 .ReturnsAsync(new ResultDTO<bool?>(true, (bool?)null, null, null));
-            _mockAppSettingsAccessor.Setup(accessor => accessor.GetApplicationSettingValueByKey<DateTime?>("GenericDateTime",null))
+            _mockAppSettingsAccessor.Setup(accessor => accessor.GetApplicationSettingValueByKey<DateTime?>("GenericDateTime", null))
                 .ReturnsAsync(new ResultDTO<DateTime?>(true, (DateTime?)null, null, null));
 
             _mockApplicationSettingsService.Setup(service => service.GetAllApplicationSettingsAsList())
@@ -184,7 +179,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 Value = "Value1",
                 DataType = ApplicationSettingsDataType.String,
                 Description = "Description1",
-                Modules = new List<Module> { SD.Modules.Admin }, 
+                Modules = new List<Module> { SD.Modules.Admin },
                 AllApplicationSettingsKeys = new List<string> { "Key1", "Key2" }
             };
 
@@ -227,7 +222,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var viewModel = Assert.IsType<ApplicationSettingsCreateViewModel>(viewResult.Model);           
+            var viewModel = Assert.IsType<ApplicationSettingsCreateViewModel>(viewResult.Model);
             Assert.NotEmpty(viewModel.Modules);
         }
 
@@ -301,7 +296,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal(model.Key, viewModel.Key);
             Assert.Equal(model.Value, viewModel.Value);
             Assert.Equal(model.Description, viewModel.Description);
-            Assert.NotEmpty(viewModel.Modules); 
+            Assert.NotEmpty(viewModel.Modules);
         }
 
         [Fact]
@@ -351,24 +346,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal(model.Key, viewModel.Key);
             Assert.Equal(model.Value, viewModel.Value);
             Assert.Equal(model.Description, viewModel.Description);
-            Assert.NotEmpty(viewModel.Modules); 
-           
+            Assert.NotEmpty(viewModel.Modules);
+
         }
 
-        [Fact]
-        public async Task Delete_NullKey_ReturnsRedirectToErrorPage()
-        {
-            // Arrange
-            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/Error/NotFound");
-
-            // Act
-            var result = await _controller.Delete(null);
-
-            // Assert
-            var redirectToActionResult = Assert.IsType<RedirectResult>(result);
-            Assert.Equal("/Error/NotFound", redirectToActionResult.Url);
-        }
-               
         [Fact]
         public async Task Delete_ExistingKey_ReturnsDeleteViewModel()
         {
@@ -399,6 +380,82 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
+        public async Task Delete_NullKey_ReturnsRedirectToErrorPage()
+        {
+            // Arrange
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/Error/NotFound");
+
+            // Act
+            var result = await _controller.Delete(null);
+
+            // Assert
+            var redirectToActionResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/Error/NotFound", redirectToActionResult.Url);
+        }
+
+        [Fact]
+        public async Task Delete_KeyDoesNotExist_ReturnsRedirectToErrorPage()
+        {
+            // Arrange
+            string key = "NonExistentKey";
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/Error/NotFound");
+            _mockApplicationSettingsService.Setup(s => s.GetApplicationSettingByKey(key)).ReturnsAsync((AppSettingDTO)null);
+
+            // Act
+            var result = await _controller.Delete(key);
+
+            // Assert
+            var redirectToActionResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/Error/NotFound", redirectToActionResult.Url);
+        }
+        [Fact]
+        public async Task Delete_KeyDoesNotExist_ReturnsNotFound_WhenErrorPathNotConfigured()
+        {
+            // Arrange
+            string key = "NonExistentKey";
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
+            _mockApplicationSettingsService.Setup(s => s.GetApplicationSettingByKey(key)).ReturnsAsync((AppSettingDTO)null);
+
+            // Act
+            var result = await _controller.Delete(key);
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task Delete_AppSettingIsNull_ReturnsRedirectToErrorPage()
+        {
+            // Arrange
+            string key = "NonExistentKey"; // Key that does not exist
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/Error/NotFound");
+            _mockApplicationSettingsService.Setup(s => s.GetApplicationSettingByKey(key)).ReturnsAsync((AppSettingDTO)null);
+
+            // Act
+            var result = await _controller.Delete(key);
+
+            // Assert
+            var redirectToActionResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/Error/NotFound", redirectToActionResult.Url);
+        }
+
+        [Fact]
+        public async Task Delete_AppSettingIsNull_ReturnsNotFound_WhenErrorPathNotConfigured()
+        {
+            // Arrange
+            string key = "NonExistentKey"; // Key that does not exist
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
+            _mockApplicationSettingsService.Setup(s => s.GetApplicationSettingByKey(key)).ReturnsAsync((AppSettingDTO)null);
+
+            // Act
+            var result = await _controller.Delete(key);
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+        }
+
+
+        [Fact]
         public async Task DeleteConfirmed_SuccessfulDeletion_RedirectsToIndex()
         {
             // Arrange
@@ -426,5 +483,5 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
         }
-    }   
+    }
 }
