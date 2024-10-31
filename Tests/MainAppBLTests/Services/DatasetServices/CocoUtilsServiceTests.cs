@@ -71,41 +71,41 @@ namespace Tests.MainAppBLTests.Services.DatasetServices
         }
 
         // TODO: Uncoment when fix_coco_utils is merged
-        //[Fact]
-        //public void IsValidCocoFormatedUploadDirectory_WithValidSplitDirectories_ReturnsTrue()
-        //{
-        //    // Arrange
-        //    string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        //    Directory.CreateDirectory(tempPath);
-        //    string trainDir = Path.Combine(tempPath, "train");
-        //    string validDir = Path.Combine(tempPath, "valid");
-        //    string testDir = Path.Combine(tempPath, "test");
+        [Fact]
+        public void IsValidCocoFormatedUploadDirectory_WithValidSplitDirectories_ReturnsTrue()
+        {
+            // Arrange
+            string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tempPath);
+            string trainDir = Path.Combine(tempPath, "train");
+            string validDir = Path.Combine(tempPath, "valid");
+            string testDir = Path.Combine(tempPath, "test");
 
-        //    try
-        //    {
-        //        // Create directories and sample files
-        //        Directory.CreateDirectory(trainDir);
-        //        Directory.CreateDirectory(validDir);
-        //        Directory.CreateDirectory(testDir);
+            try
+            {
+                // Create directories and sample files
+                Directory.CreateDirectory(trainDir);
+                Directory.CreateDirectory(validDir);
+                Directory.CreateDirectory(testDir);
 
-        //        File.WriteAllBytes(Path.Combine(trainDir, "image1.jpg"), new byte[] { 0 });
-        //        File.WriteAllBytes(Path.Combine(validDir, "image2.jpg"), new byte[] { 0 });
-        //        File.WriteAllBytes(Path.Combine(testDir, "image3.jpg"), new byte[] { 0 });
-        //        File.WriteAllText(Path.Combine(trainDir, "annotations_coco.json"), "{}");
-        //        File.WriteAllText(Path.Combine(validDir, "annotations_coco.json"), "{}");
-        //        File.WriteAllText(Path.Combine(testDir, "annotations_coco.json"), "{}");
+                File.WriteAllBytes(Path.Combine(trainDir, "image1.jpg"), new byte[] { 0 });
+                File.WriteAllBytes(Path.Combine(validDir, "image2.jpg"), new byte[] { 0 });
+                File.WriteAllBytes(Path.Combine(testDir, "image3.jpg"), new byte[] { 0 });
+                File.WriteAllText(Path.Combine(trainDir, "annotations_coco.json"), "{}");
+                File.WriteAllText(Path.Combine(validDir, "annotations_coco.json"), "{}");
+                File.WriteAllText(Path.Combine(testDir, "annotations_coco.json"), "{}");
 
-        //        // Act
-        //        ResultDTO result = _service.IsValidCocoFormatedUploadDirectory(tempPath, false, true, true);
+                // Act
+                ResultDTO result = _service.IsValidCocoFormatedUploadDirectory(tempPath, false, true, true);
 
-        //        // Assert
-        //        Assert.True(result.IsSuccess);
-        //    }
-        //    finally
-        //    {
-        //        Directory.Delete(tempPath, true);
-        //    }
-        //}
+                // Assert
+                Assert.True(result.IsSuccess);
+            }
+            finally
+            {
+                Directory.Delete(tempPath, true);
+            }
+        }
 
         [Fact]
         public void IsValidCocoFormatedUploadDirectory_WithInvalidDirectoryCount_ReturnsFalse()

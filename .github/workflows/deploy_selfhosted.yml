@@ -64,16 +64,16 @@ jobs:
 
     - name: Clear destination folder
       run: |
-        if (Test-Path -Path "C:\continous_delivery\waste_sniffer") {
-          Remove-Item -Path "C:\continous_delivery\waste_sniffer\*" -Recurse -Force
+        if (Test-Path -Path "C:\continous_delivery\waste_detection_platform") {
+          Remove-Item -Path "C:\continous_delivery\waste_detection_platform\*" -Recurse -Force
         }
         
     - name: Deploy to folder
       run: |
-        if (-Not (Test-Path -Path "C:\continous_delivery\waste_sniffer")) {
-          New-Item -ItemType Directory -Force -Path "C:\continous_delivery\waste_sniffer"
+        if (-Not (Test-Path -Path "C:\continous_delivery\waste_detection_platform")) {
+          New-Item -ItemType Directory -Force -Path "C:\continous_delivery\waste_detection_platform"
         }
-        Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_sniffer" -Recurse -Force
+        Copy-Item -Path "publish_output\*" -Destination "C:\continous_delivery\waste_detection_platform" -Recurse -Force
 
     - name: Run Migrations and Seed Database
       run: |
@@ -87,7 +87,7 @@ jobs:
         # Start the process with output redirection
         $process = Start-Process -FilePath "dotnet" `
           -ArgumentList "./MainApp.MVC.dll", "/seed", "/runMigrations", "/module:MMDetectionSetup" `
-          -WorkingDirectory "C:/continous_delivery/waste_sniffer" `
+          -WorkingDirectory "C:/continous_delivery/waste_detection_platform" `
           -RedirectStandardOutput $outputFile `
           -RedirectStandardError $errorFile `
           -NoNewWindow -PassThru

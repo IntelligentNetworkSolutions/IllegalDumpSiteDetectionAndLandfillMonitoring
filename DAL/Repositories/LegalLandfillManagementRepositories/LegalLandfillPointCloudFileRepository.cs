@@ -11,8 +11,6 @@ namespace DAL.Repositories.LegalLandfillManagementRepositories
 {
     public class LegalLandfillPointCloudFileRepository : BaseResultRepository<LegalLandfillPointCloudFile, Guid>, ILegalLandfillPointCloudFileRepository
     {
-        public LegalLandfillPointCloudFileRepository(ApplicationDbContext db) : base(db)
-        {
-        }
+        public LegalLandfillPointCloudFileRepository(ApplicationDbContext db) : base(db) {}
     }
 }

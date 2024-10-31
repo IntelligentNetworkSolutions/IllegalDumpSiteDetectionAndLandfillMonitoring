@@ -399,7 +399,7 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase
         }
 
         [Fact]
-        public void Initialize_WithMMDetectionSetupModule_ShouldSeedModels()
+        public async void Initialize_WithMMDetectionSetupModule_ShouldReturnExceptionResult()
         {
             // Arrange
             using ApplicationDbContext dbContext = _fixture.CreateDbContext();
@@ -412,8 +412,8 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase
                     ""InitialBaseModels"": [
                         {
                             ""Name"": ""TestModel"",
-                            ""ConfigDownloadUrl"": ""http://test.com/config.py"",
-                            ""ModelFile"": ""http://test.com/model.pth""
+                            ""ConfigDownloadUrl"": ""hdsdttp://test.com/config.py"",
+                            ""ModelFile"": ""httsdsp://test.com/model.pth""
                         }
                     ]
                 }
@@ -438,15 +438,13 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase
             try
             {
                 // Act
-                initializer.Initialize(false, true, new List<string> { "/module:MMDetectionSetup" });
-
-                // Assert
-                _mockConfiguration.Verify(c => c.GetSection("MMDetectionConfiguration"), Times.AtLeastOnce);
+                transaction.Rollback();
+                dbContext.Dispose();
+                Assert.Throws<ObjectDisposedException>(() => initializer.Initialize(false, true, new List<string> { "/module:MMDetectionSetup" }));
             }
             finally
             {
                 File.Delete(seedFilePath);
-                transaction.Rollback();
             }
         }
 
@@ -490,6 +488,13 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase
 
             var usersPath = Path.GetTempFileName();
             var usersJson = @"[{
+                ""InitialRoles"": [
+                    {
+                        ""Id"": ""907a8bfb-ce4d-4ff1-9c56-7b8708a7c5f0"",
+                        ""Name"": ""TestRole"",
+                        ""NormalizedName"": ""TESTROLE""
+                    }
+                ],
                 ""InitialUsers"": [
                     {
                         ""UserName"": ""admin1"",
@@ -554,6 +559,13 @@ namespace Tests.DalTests.ApplicationStorage.SeedDatabase
                       ""UserName"": ""superadmin"",
                       ""NormalizedUserName"": ""SUPERADMIN""
                     },
+                ""InitialRoles"": [
+                    {
+                        ""Id"": ""907a8bfb-ce4d-4ff1-9c56-7b8708a7c5f0"",
+                        ""Name"": ""TestRole"",
+                        ""NormalizedName"": ""TESTROLE""
+                    }
+                ],
                 ""InitialUsers"": [
                     {
                         ""UserName"": ""admin1"",

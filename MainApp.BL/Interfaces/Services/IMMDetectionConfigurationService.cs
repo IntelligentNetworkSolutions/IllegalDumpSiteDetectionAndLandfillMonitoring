@@ -30,5 +30,6 @@ namespace MainApp.BL.Interfaces.Services
         string GetDetectionRunCliOutDirAbsPath();
         string GetDetectionRunOutputDirAbsPathByRunId(Guid detectionRunId);
         string GetDetectionRunOutputAnnotationsFileAbsPathByRunId(Guid detectionRunId);
+        string GetTrainingRunOutDirAbsPathByRunId(Guid trainingRunId);
     }
 }

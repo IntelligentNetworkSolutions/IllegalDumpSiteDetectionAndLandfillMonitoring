@@ -7,8 +7,6 @@ namespace DAL.Repositories.LegalLandfillManagementRepositories
 {
     public class LegalLandfillWasteImportRepository : BaseResultRepository<LegalLandfillWasteImport, Guid>, ILegalLandfillWasteImportRepository
     {
-        public LegalLandfillWasteImportRepository(ApplicationDbContext db) : base(db)
-        {
-        }
+        public LegalLandfillWasteImportRepository(ApplicationDbContext db) : base(db) {}
     }
 }

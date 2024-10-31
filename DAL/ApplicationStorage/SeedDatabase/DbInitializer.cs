@@ -85,13 +85,16 @@ namespace DAL.ApplicationStorage.SeedDatabase
                                     Console.WriteLine("MMDetectionSetup Started");
                                     var mm = new MMDetectionSetupService(_configuration, _db);
                                     ResultDTO seedResult = mm.SeedMMDetection();
-                                    
+
                                     if (seedResult.IsSuccess == false && seedResult.ExObj is null)
                                         Console.WriteLine(seedResult.ErrMsg!);
                                     else if (seedResult.IsSuccess == false && seedResult.ExObj is not null)
+                                    {
                                         Console.WriteLine(((Exception)seedResult.ExObj).InnerException is null
                                             ? ((Exception)seedResult.ExObj).Message
                                             : ((Exception)seedResult.ExObj).InnerException!.Message);
+                                        throw (Exception)seedResult.ExObj;
+                                    }
                                     else
                                         Console.WriteLine("SUCCESSFULL Seed of MMDetection Setup Resources");
 
@@ -106,6 +109,7 @@ namespace DAL.ApplicationStorage.SeedDatabase
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.InnerException is null ? ex.Message : ex.InnerException!.Message);
                 _logger.LogError(ex.Message, ex);
                 throw;
             }

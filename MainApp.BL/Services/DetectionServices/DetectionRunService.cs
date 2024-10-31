@@ -269,7 +269,7 @@ namespace MainApp.BL.Services.DetectionServices
             }
         }
 
-        private string GeneratePythonDetectionCommandByType(string imageToRunDetectionOnPath,
+        public string GeneratePythonDetectionCommandByType(string imageToRunDetectionOnPath,
             string trainedModelConfigPath, string trainedModelModelPath, Guid detectionRunId, bool isSmallImage = false, bool hasGPU = false)
         {
             string detectionCommandStr = string.Empty;

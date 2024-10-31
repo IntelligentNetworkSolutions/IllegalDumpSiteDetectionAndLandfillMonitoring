@@ -215,17 +215,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task TestJsonToPolygon_ReturnsViewResult()
-        {
-            // Act
-            var result = await _controller.TestJsonToPolygon();
-
-            // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Null(viewResult.ViewName);
-        }
-
-        [Fact]
         public async Task Annotate_WithNextAndPreviousImages_ReturnsViewResult()
         {
             // Arrange

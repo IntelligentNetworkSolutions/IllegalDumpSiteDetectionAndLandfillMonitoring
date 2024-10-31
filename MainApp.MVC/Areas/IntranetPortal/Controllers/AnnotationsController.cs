@@ -128,13 +128,5 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             return Ok(res);
         }
-
-        [HttpGet]
-        public async Task<IActionResult> TestJsonToPolygon()
-        {
-            var result = await Helpers.JsonFileReader.ReceiveDeserializedDetectionRunResponseJson();
-
-            return View();
-        }
     }
 }

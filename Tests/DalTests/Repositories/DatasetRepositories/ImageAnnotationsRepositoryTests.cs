@@ -140,5 +140,47 @@ namespace Tests.DalTests.Repositories.DatasetRepositories
 
             transaction.Rollback();
         }
+
+        [Fact]
+        public async Task BulkUpdateImageAnnotations_ThrowsError()
+        {
+            // Arrange
+            using var dbContext = _fixture.CreateDbContext();
+            dbContext.AuditDisabled = true;
+            using var transaction = await dbContext.Database.BeginTransactionAsync();
+            _fixture.SeedDatabase(dbContext);
+            ImageAnnotationsRepository repository = new ImageAnnotationsRepository(dbContext);
+
+            var datasetImageId = DatasetImagesSeedData.FirstDatasetFirstImage.Id;
+            var datasetClassId = DatasetClassesSeedData.FirstDatasetClass.Id;
+            var userId = UserSeedData.FirstUser.Id;
+
+            // Create large lists of annotations
+            var insertList = new List<ImageAnnotation>();
+            var updateList = new List<ImageAnnotation>();
+            var deleteList = new List<ImageAnnotation>();
+
+            // Add 100 annotations to each list
+            for (int i = 0; i < 100; i++)
+            {
+                if (i < 33)
+                    insertList.Add(CreateTestAnnotation(Guid.NewGuid(), datasetImageId, datasetClassId, userId));
+                else if (i < 66)
+                    updateList.Add(CreateTestAnnotation(Guid.NewGuid(), datasetImageId, datasetClassId, userId));
+                else
+                    deleteList.Add(CreateTestAnnotation(Guid.NewGuid(), datasetImageId, datasetClassId, userId));
+            }
+
+            // Add update and delete items to database first
+            await dbContext.ImageAnnotations.AddRangeAsync(updateList.Concat(deleteList));
+            await dbContext.SaveChangesAsync();
+
+            transaction.Rollback();
+            dbContext.Dispose();
+
+            // Act
+            await Assert.ThrowsAsync<ObjectDisposedException>(async () 
+                => await repository.BulkUpdateImageAnnotations(insertList, updateList, deleteList, transaction));
+        }
     }
 }
