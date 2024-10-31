@@ -11,8 +11,6 @@ namespace DAL.Repositories.LegalLandfillManagementRepositories
 {
 	public class LegalLandfillTruckRepository : BaseResultRepository<LegalLandfillTruck, Guid>, ILegalLandfillTruckRepository
 	{
-		public LegalLandfillTruckRepository(ApplicationDbContext db) : base(db)
-		{
-		}
+		public LegalLandfillTruckRepository(ApplicationDbContext db) : base(db) {}
 	}
 }

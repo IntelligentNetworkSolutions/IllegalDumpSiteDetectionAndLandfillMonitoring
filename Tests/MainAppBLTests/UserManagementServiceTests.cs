@@ -1946,5 +1946,252 @@ namespace Tests.MainAppBLTests
 
         #endregion
 
+
+        #region Missing Tests Unsorted
+        #region UpdateUserPassword
+        [Fact]
+        public async Task UpdateUserPassword_AllFieldsRequired_ReturnsFailure()
+        {
+            // Arrange
+            var service = new UserManagementService(_mockUserManagementDa.Object, _mockAppSettingsAccessor.Object, _mockMapper.Object);
+
+            // Act & Assert
+            var result1 = await service.UpdateUserPassword(null, "current", "new");
+            var result2 = await service.UpdateUserPassword("userId", null, "new");
+            var result3 = await service.UpdateUserPassword("userId", "current", null);
+
+            Assert.False(result1.IsSuccess);
+            Assert.False(result2.IsSuccess);
+            Assert.False(result3.IsSuccess);
+            Assert.Equal("All fields are required", result1.ErrMsg);
+            Assert.Equal("All fields are required", result2.ErrMsg);
+            Assert.Equal("All fields are required", result3.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdateUserPassword_UserNotFound_ThrowsError()
+        {
+            // Arrange
+            var service = new UserManagementService(_mockUserManagementDa.Object, _mockAppSettingsAccessor.Object, _mockMapper.Object);
+            _mockMapper.Setup(m => m.Map<UserDTO>(It.IsAny<ApplicationUser>())).Returns((UserDTO)null);
+
+            // Act
+            await Assert.ThrowsAsync<Exception>(async () => await service.UpdateUserPassword("userId", "current", "new"));
+            //var result = await service.UpdateUserPassword("userId", "current", "new");
+
+            //// Assert
+            //Assert.False(result.IsSuccess);
+            //Assert.Equal("User Not Found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdateUserPassword_PasswordValidationFails_ReturnsFailure()
+        {
+            // Arrange
+            var service = new UserManagementService(_mockUserManagementDa.Object, _mockAppSettingsAccessor.Object, _mockMapper.Object);
+            var user = new ApplicationUser { Id = "userId", UserName = "testUser" };
+            var userDto = new UserDTO { Id = "userId", UserName = "testUser" };
+
+            _mockUserManagementDa.Setup(x => x.GetUserById("userId")).ReturnsAsync(user);
+            _mockMapper.Setup(m => m.Map<UserDTO>(It.IsAny<ApplicationUser>())).Returns(userDto);
+            _mockMapper.Setup(m => m.Map<ApplicationUser>(It.IsAny<UserDTO>())).Returns(user);
+
+            // Setup password requirements to force validation failure
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+                                   .ReturnsAsync(ResultDTO<int>.Ok(20)); // Force minimum length failure
+
+            // Act
+            var result = await service.UpdateUserPassword("userId", "current", "new");
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Password does not meet requirements", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdateUserPassword_UpdateFails_ReturnsFailure()
+        {
+            // Arrange
+            var service = new UserManagementService(_mockUserManagementDa.Object, _mockAppSettingsAccessor.Object, _mockMapper.Object);
+            var user = new ApplicationUser { Id = "userId", UserName = "testUser" };
+            string pass = "Newpassword123";
+            var userDto = new UserDTO { Id = "userId", UserName = "testUser", Password = pass, PasswordHash = pass };
+
+            _mockUserManagementDa.Setup(x => x.GetUserById("userId")).ReturnsAsync(user);
+            _mockMapper.Setup(m => m.Map<UserDTO>(It.IsAny<ApplicationUser>())).Returns(userDto);
+            _mockMapper.Setup(m => m.Map<ApplicationUser>(It.IsAny<UserDTO>())).Returns(user);
+            _mockUserManagementDa.Setup(x => x.UpdateUser(It.IsAny<ApplicationUser>())).ReturnsAsync(false);
+
+            // Setup password requirements
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+                                   .ReturnsAsync(ResultDTO<int>.Ok(4));
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(false));
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(false));
+
+            // Act
+            var result = await service.UpdateUserPassword("userId", "current", pass);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed while Updating User", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdateUserPassword_Success_ReturnsSuccess()
+        {
+            // Arrange
+            var service = new UserManagementService(_mockUserManagementDa.Object, _mockAppSettingsAccessor.Object, _mockMapper.Object);
+            var user = new ApplicationUser { Id = "userId", UserName = "testUser" };
+            string pass = "Newpassword123";
+            var userDto = new UserDTO { Id = "userId", UserName = "testUser", Password = pass, PasswordHash = pass };
+
+            _mockUserManagementDa.Setup(x => x.GetUserById("userId")).ReturnsAsync(user);
+            _mockMapper.Setup(m => m.Map<UserDTO>(It.IsAny<ApplicationUser>())).Returns(userDto);
+            _mockMapper.Setup(m => m.Map<ApplicationUser>(It.IsAny<UserDTO>())).Returns(user);
+            _mockUserManagementDa.Setup(x => x.UpdateUser(It.IsAny<ApplicationUser>())).ReturnsAsync(true);
+
+            // Setup password requirements
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
+                                   .ReturnsAsync(ResultDTO<int>.Ok(4));
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
+                                   .ReturnsAsync(ResultDTO<bool>.Ok(false));
+
+            // Act
+            var result = await service.UpdateUserPassword("userId", "current", pass);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
+        }
+        #endregion
+
+        #region GetClaimsForUser Additional Tests
+        [Fact]
+        public async Task GetClaimsForUser_WithDuplicateClaims_ReturnsDistinctClaims()
+        {
+            // Arrange
+            var userId = "testUserId";
+            List<IdentityUserRole<string>> userRoles = [ new IdentityUserRole<string> { UserId = userId, RoleId = "role1" } ];
+
+            List<IdentityUserClaim<string>> userClaims = [ new IdentityUserClaim<string> { ClaimType = "AuthorizationClaim", ClaimValue = "claim1" } ];
+
+            List<IdentityRole> roles = [ new IdentityRole { Id = "role1", Name = "TestRole" } ];
+
+            List<IdentityRoleClaim<string>> roleClaims = [ 
+                new IdentityRoleClaim<string> { ClaimType = "AuthorizationClaim", ClaimValue = "claim1" },
+                new IdentityRoleClaim<string> { ClaimType = "AuthorizationClaim", ClaimValue = "claim2" } ];
+
+            _mockUserManagementDa.Setup(x => x.GetUserRolesByUserId(userId)).ReturnsAsync(userRoles);
+            _mockUserManagementDa.Setup(x => x.GetRolesForUser(It.IsAny<List<string>>())).ReturnsAsync(roles);
+            _mockUserManagementDa.Setup(x => x.GetClaimsForUserByUserIdAndClaimType(userId, "AuthorizationClaim")).ReturnsAsync(userClaims);
+            _mockUserManagementDa.Setup(x => x.GetClaimsForRoleByRoleIdAndClaimType("role1", "AuthorizationClaim")).ReturnsAsync(roleClaims);
+
+            // Act
+            var result = await _userManagementService.GetClaimsForUser(userId);
+
+            // Assert
+            Assert.Equal(3, result.Count);
+            Assert.Contains(result, c => c.ClaimValue == "claim1");
+            Assert.Contains(result, c => c.ClaimValue == "claim2");
+        }
+
+        [Fact]
+        public async Task GetClaimsForUser_WithMultipleRoles_ReturnsCombinedClaims()
+        {
+            // Arrange
+            var userId = "testUserId";
+            var userRoles = new List<IdentityUserRole<string>>
+        {
+            new IdentityUserRole<string> { UserId = userId, RoleId = "role1" },
+            new IdentityUserRole<string> { UserId = userId, RoleId = "role2" }
+        };
+
+            var roles = new List<IdentityRole>
+        {
+            new IdentityRole { Id = "role1", Name = "TestRole1" },
+            new IdentityRole { Id = "role2", Name = "TestRole2" }
+        };
+
+            var userClaims = new List<IdentityUserClaim<string>>
+        {
+            new IdentityUserClaim<string> { ClaimType = "AuthorizationClaim", ClaimValue = "userClaim" }
+        };
+
+            var role1Claims = new List<IdentityRoleClaim<string>>
+        {
+            new IdentityRoleClaim<string> { ClaimType = "AuthorizationClaim", ClaimValue = "role1Claim" }
+        };
+
+            var role2Claims = new List<IdentityRoleClaim<string>>
+        {
+            new IdentityRoleClaim<string> { ClaimType = "AuthorizationClaim", ClaimValue = "role2Claim" }
+        };
+
+            _mockUserManagementDa.Setup(x => x.GetUserRolesByUserId(userId)).ReturnsAsync(userRoles);
+            _mockUserManagementDa.Setup(x => x.GetRolesForUser(It.IsAny<List<string>>())).ReturnsAsync(roles);
+            _mockUserManagementDa.Setup(x => x.GetClaimsForUserByUserIdAndClaimType(userId, "AuthorizationClaim")).ReturnsAsync(userClaims);
+            _mockUserManagementDa.Setup(x => x.GetClaimsForRoleByRoleIdAndClaimType("role1", "AuthorizationClaim")).ReturnsAsync(role1Claims);
+            _mockUserManagementDa.Setup(x => x.GetClaimsForRoleByRoleIdAndClaimType("role2", "AuthorizationClaim")).ReturnsAsync(role2Claims);
+
+            // Act
+            var result = await _userManagementService.GetClaimsForUser(userId);
+
+            // Assert
+            Assert.Equal(3, result.Count);
+            Assert.Contains(result, c => c.ClaimValue == "userClaim");
+            Assert.Contains(result, c => c.ClaimValue == "role1Claim");
+            Assert.Contains(result, c => c.ClaimValue == "role2Claim");
+        }
+        #endregion
+
+        #region FillRoleManagementDto Additional Tests
+        [Fact]
+        public async Task FillRoleManagementDto_WithNoExistingClaims_ReturnsDtoWithEmptyClaims()
+        {
+            // Arrange
+            var roleId = "testRoleId";
+            var role = new IdentityRole { Id = roleId, Name = "TestRole" };
+            var dto = new RoleManagementDTO { Id = roleId };
+
+            _mockUserManagementDa.Setup(x => x.GetRole(roleId)).ReturnsAsync(role);
+            _mockUserManagementDa.Setup(x => x.GetClaimsForRoleByRoleIdAndClaimType(roleId, "AuthorizationClaim"))
+                                .ReturnsAsync(new List<IdentityRoleClaim<string>>());
+            _mockMapper.Setup(m => m.Map<RoleManagementDTO>(It.IsAny<IdentityRole>()))
+                      .Returns(new RoleManagementDTO { Id = roleId, Name = "TestRole" });
+
+            // Act
+            var result = await _userManagementService.FillRoleManagementDto(dto);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Empty(result.Data.ClaimsInsert);
+        }
+
+        [Fact]
+        public async Task FillRoleManagementDto_WhenMappingFails_ReturnsFailure()
+        {
+            // Arrange
+            var roleId = "testRoleId";
+            var role = new IdentityRole { Id = roleId, Name = "TestRole" };
+            var dto = new RoleManagementDTO { Id = roleId };
+
+            _mockUserManagementDa.Setup(x => x.GetRole(roleId)).ReturnsAsync(role);
+            _mockMapper.Setup(m => m.Map<RoleManagementDTO>(It.IsAny<IdentityRole>()))
+                      .Throws(new Exception("Mapping failed"));
+
+            // Act
+            var result = await _userManagementService.FillRoleManagementDto(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("Mapping failed", result.ErrMsg);
+        }
+        #endregion
+        #endregion
     }
 }

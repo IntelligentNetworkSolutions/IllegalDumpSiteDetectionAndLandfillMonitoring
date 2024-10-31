@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SD;
+using SD.Helpers;
 using System.Linq.Expressions;
 
 namespace Tests.MainAppBLTests.Services
@@ -1351,7 +1352,159 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal(detectionRunId, result.Data[0].Id);
         }
 
+        [Fact]
+        public void GeneratePythonDetectionCommandByType_SmallImage_WithGPU_GeneratesCorrectCommand()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var imagePath = @"C:\images\test.jpg";
+            var configPath = @"C:\models\config.py";
+            var modelPath = @"C:\models\model.pth";
 
+            var expectedImagePath = CommonHelper.PathToLinuxRegexSlashReplace(imagePath);
+            var expectedConfigPath = CommonHelper.PathToLinuxRegexSlashReplace(configPath);
+            var expectedModelPath = CommonHelper.PathToLinuxRegexSlashReplace(modelPath);
+            var expectedOutDir = CommonHelper.PathToLinuxRegexSlashReplace("/path/to/output");
+            var expectedScript = CommonHelper.PathToLinuxRegexSlashReplace("demo\\image_demo.py");
+
+            var expectedCommand = $"run -p /path/to/openmmlab python {expectedScript} " +
+                $"\"{expectedImagePath}\" {expectedConfigPath} --weights {expectedModelPath} " +
+                $"--out-dir {expectedOutDir}  ";
+
+            _mockMMDetectionConfigurationService.Setup(x => x.GetOpenMMLabAbsPath())
+                .Returns("/path/to/openmmlab");
+            _mockMMDetectionConfigurationService.Setup(x => x.GetDetectionRunOutputDirAbsPathByRunId(detectionRunId))
+                .Returns(expectedOutDir);
+
+            // Act
+            var result = _service.GeneratePythonDetectionCommandByType(
+                imagePath,
+                configPath,
+                modelPath,
+                detectionRunId,
+                isSmallImage: true,
+                hasGPU: true
+            );
+
+            // Assert
+            Assert.Equal(expectedCommand, result);
+        }
+
+        [Fact]
+        public void GeneratePythonDetectionCommandByType_LargeImage_WithoutGPU_GeneratesCorrectCommand()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var imagePath = @"C:\images\large.jpg";
+            var configPath = @"C:\models\config.py";
+            var modelPath = @"C:\models\model.pth";
+
+            var expectedScript = CommonHelper.PathToLinuxRegexSlashReplace("ins_development\\scripts\\large_image_annotated_inference.py");
+            var expectedImagePath = CommonHelper.PathToLinuxRegexSlashReplace(imagePath);
+            var expectedConfigPath = CommonHelper.PathToLinuxRegexSlashReplace(configPath);
+            var expectedModelPath = CommonHelper.PathToLinuxRegexSlashReplace(modelPath);
+            var expectedOutDir = CommonHelper.PathToLinuxRegexSlashReplace("/path/to/output");
+
+            var expectedCommand = $"run -p /path/to/openmmlab python {expectedScript} " +
+                $"\"{expectedImagePath}\" {expectedConfigPath}  {expectedModelPath} " +
+                $"--out-dir {expectedOutDir} --device cpu --patch-size 1280";
+
+            _mockMMDetectionConfigurationService.Setup(x => x.GetOpenMMLabAbsPath())
+                .Returns("/path/to/openmmlab");
+            _mockMMDetectionConfigurationService.Setup(x => x.GetDetectionRunOutputDirAbsPathByRunId(detectionRunId))
+                .Returns(expectedOutDir);
+
+            // Act
+            var result = _service.GeneratePythonDetectionCommandByType(
+                imagePath,
+                configPath,
+                modelPath,
+                detectionRunId,
+                isSmallImage: false,
+                hasGPU: false
+            );
+
+            // Assert
+            Assert.Equal(expectedCommand, result);
+        }
+
+        [Fact]
+        public void GeneratePythonDetectionCommandByType_VerifiesPathsAreConvertedToLinuxFormat()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var imagePath = @"C:\path\with\windows\slashes\image.jpg";
+            var configPath = @"D:\another\path\config.py";
+            var modelPath = @"E:\model\path\model.pth";
+
+            // Act
+            var result = _service.GeneratePythonDetectionCommandByType(
+                imagePath,
+                configPath,
+                modelPath,
+                detectionRunId,
+                isSmallImage: false,
+                hasGPU: true
+            );
+
+            // Assert
+            Assert.Contains(CommonHelper.PathToLinuxRegexSlashReplace(imagePath), result);
+            Assert.Contains(CommonHelper.PathToLinuxRegexSlashReplace(configPath), result);
+            Assert.Contains(CommonHelper.PathToLinuxRegexSlashReplace(modelPath), result);
+        }
+
+        [Theory]
+        [InlineData(true, true)]   // Small image with GPU
+        [InlineData(true, false)]  // Small image without GPU
+        [InlineData(false, true)]  // Large image with GPU
+        [InlineData(false, false)] // Large image without GPU
+        public void GeneratePythonDetectionCommandByType_VariousConfigurations_GeneratesValidCommands(
+            bool isSmallImage, bool hasGPU)
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var imagePath = @"C:\test\image.jpg";
+            var configPath = @"C:\test\config.py";
+            var modelPath = @"C:\test\model.pth";
+
+            // Act
+            var result = _service.GeneratePythonDetectionCommandByType(
+                imagePath,
+                configPath,
+                modelPath,
+                detectionRunId,
+                isSmallImage,
+                hasGPU
+            );
+
+            // Assert
+            if (isSmallImage)
+            {
+                Assert.Contains("demo/image_demo.py", result);
+                Assert.Contains("--weights", result);
+                Assert.DoesNotContain("--patch-size", result);
+            }
+            else
+            {
+                Assert.Contains("large_image_annotated_inference.py", result);
+                Assert.DoesNotContain("--weights", result);
+                Assert.Contains("--patch-size 1280", result);
+            }
+
+            if (!hasGPU)
+            {
+                Assert.Contains("--device cpu", result);
+            }
+            else
+            {
+                Assert.DoesNotContain("--device cpu", result);
+            }
+
+            // Verify essential command parts
+            Assert.Contains("run -p", result);
+            Assert.Contains("python", result);
+            Assert.Contains("--out-dir", result);
+        }
 
     }
 }
