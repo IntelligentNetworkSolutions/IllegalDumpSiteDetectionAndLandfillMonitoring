@@ -54,27 +54,29 @@ namespace MainApp.BL.Services.DatasetServices
                                         $"allowed number of directories: {(mustHaveTestDir ? "3" : "2")}");
 
             // No Training Dir
-            if (directoriesPaths.Any(path => TrainDirAllowedNames.Contains(path)) == false)
+            if (TrainDirAllowedNames.Any(allowName => directoriesPaths.Any(dp => dp.EndsWith(allowName))) == false)
                 return ResultDTO.Fail($"No valid training directory found in directory: {uploadDirPath}, " +
                                         $"allowed training directory names: {CocoTerminology.trainCocoFormatDirName}, " +
                                         $"{CocoTerminology.trainingCocoFormatDirName}");
 
             // No Validation Dir
-            if (directoriesPaths.Any(path => ValidDirAllowedNames.Contains(path)) == false)
-                return ResultDTO.Fail($"No valid Validation directory found in directory: {uploadDirPath}, " +
+            //if (directoriesPaths.Any(path => ValidDirAllowedNames.Contains(path)) == false)
+            if (ValidDirAllowedNames.Any(allowName => directoriesPaths.Any(dp => dp.EndsWith(allowName))) == false)
+                    return ResultDTO.Fail($"No valid Validation directory found in directory: {uploadDirPath}, " +
                                         $"Allowed Validation directory names: {CocoTerminology.valCocoFormatDirName}, " +
                                         $"{CocoTerminology.validCocoFormatDirName}, " +
                                         $"{CocoTerminology.validationCocoFormatDirName}.");
 
             // No Test Dir
-            if (mustHaveTestDir && directoriesPaths.Any(path => TrainDirAllowedNames.Contains(path)) == false)
+            //if (mustHaveTestDir && directoriesPaths.Any(path => TrainDirAllowedNames.Contains(path)) == false)
+            if (mustHaveTestDir && TestDirAllowedNames.Any(allowName => directoriesPaths.Any(dp => dp.EndsWith(allowName))) == false)
                 return ResultDTO.Fail($"No valid Test directory found in directory: {uploadDirPath}, " +
                                         $"Allowed Test directory names: {CocoTerminology.testCocoFormatDirName}, " +
                                         $"{CocoTerminology.testingCocoFormatDirName}");
 
-            string trainDirPath = directoriesPaths.Where(path => TrainDirAllowedNames.Contains(path)).First();
-            string validDirPath = directoriesPaths.Where(path => ValidDirAllowedNames.Contains(path)).First();
-            string? testDirPath = directoriesPaths.Where(path => mustHaveTestDir && TestDirAllowedNames.Contains(path)).FirstOrDefault();
+            string trainDirPath = directoriesPaths.Where(path => TrainDirAllowedNames.Any(x => path.EndsWith(x))).First();
+            string validDirPath = directoriesPaths.Where(path => ValidDirAllowedNames.Any(x => path.EndsWith(x))).First();
+            string? testDirPath = directoriesPaths.Where(path => mustHaveTestDir && TestDirAllowedNames.Any(x => path.EndsWith(x))).FirstOrDefault();
 
             ResultDTO isValidTrainDirResult = IsValidCocoFormatedSplitDirectory(trainDirPath, mustHaveAnnotations);
             if (isValidTrainDirResult.IsSuccess == false)

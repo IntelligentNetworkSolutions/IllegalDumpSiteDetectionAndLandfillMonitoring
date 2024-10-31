@@ -274,10 +274,10 @@ namespace Tests.MainAppBLTests
                 .Returns(rootPath);
 
             string runDirPath = mockService.Object.GetTrainingRunOutDirAbsPathByRunId(guid);
-            string configFilePath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(runDirPath, $"epoch_1.pth"));
+            string modelFilePath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(runDirPath, $"epoch_1.pth"));
 
             Func<Guid, int?, ResultDTO<string>> func = (Guid idPar, int? epochPar = null) =>
-                idPar == guid ? ResultDTO<string>.Ok(configFilePath) : ResultDTO<string>.Fail("Err");
+                idPar == guid ? ResultDTO<string>.Ok(modelFilePath) : ResultDTO<string>.Fail("Err");
 
             mockService.Setup(x => x.GetTrainedModelBestEpochFileAbsPath(guid, null))
                 .Returns(() => func(guid, 1));
@@ -288,15 +288,15 @@ namespace Tests.MainAppBLTests
                     Directory.CreateDirectory(runDirPath);
 
                 string configPy = @"#### PTH Test File ####";
-                File.WriteAllText(configFilePath, configPy);
+                File.WriteAllText(modelFilePath, configPy);
 
                 var result = mockService.Object.GetTrainedModelBestEpochFileAbsPath(guid, null);
                 Assert.True(result.IsSuccess);
             }
             finally
             {
-                if (File.Exists(configFilePath))
-                    File.Delete(configFilePath);
+                if (File.Exists(modelFilePath))
+                    File.Delete(modelFilePath);
             }
         }
 
