@@ -11,8 +11,6 @@ namespace DAL.Repositories.LegalLandfillManagementRepositories
 {
 	public class LegalLandfillWasteTypeRepository : BaseResultRepository<LegalLandfillWasteType, Guid>, ILegalLandfillWasteTypeRepository
 	{
-		public LegalLandfillWasteTypeRepository(ApplicationDbContext db) : base(db)
-		{
-		}
+		public LegalLandfillWasteTypeRepository(ApplicationDbContext db) : base(db) {}
 	}
 }

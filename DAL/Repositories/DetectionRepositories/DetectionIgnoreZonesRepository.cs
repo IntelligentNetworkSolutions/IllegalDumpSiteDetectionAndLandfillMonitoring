@@ -7,8 +7,6 @@ namespace DAL.Repositories.DetectionRepositories
 {
     public class DetectionIgnoreZonesRepository : BaseResultRepository<DetectionIgnoreZone, Guid>, IDetectionIgnoreZonesRepository
     {
-        public DetectionIgnoreZonesRepository(ApplicationDbContext dbContext) : base(dbContext)
-        {
-        }
+        public DetectionIgnoreZonesRepository(ApplicationDbContext dbContext) : base(dbContext) {}
     }
 }
