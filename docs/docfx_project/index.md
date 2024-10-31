@@ -2,7 +2,7 @@
   <h1 class="col-md-8">
       Illegal Dump Site Detection and Landfill Monitoring
   </h1>
-  <img class="col-md-4" style="width: 250px;" src="/ins-template/public/images/logo-robot-formal.png" alt=""/>
+  <img class="col-md-4" style="width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/logo-robot-formal.png" alt=""/>
 </div>
 
 ## Overview  
@@ -32,7 +32,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
       Documentation</a></h6>
   </div>
   <img class="col-md-4" style="display: flex; width: 250px; max-width: 250px;" 
-    src="/ins-template/public/images/dataset-manage.jpeg" alt=""/>
+    src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/dataset-manage.jpeg" alt=""/>
 </div>
 
 <div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
@@ -47,7 +47,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
       Documentation</a></h6>
   </div>
   <img class="col-md-4" style="display: flex; width: 250px; max-width: 250px;" 
-    src="/ins-template/public/images/annotate.jpeg" alt=""/>
+    src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/annotate.jpeg" alt=""/>
 </div>
 
 <div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
@@ -61,7 +61,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
     <h6><a href="/documentation/training-process/overview.html" style="display: flex; flex-grow: 1;">
       Documentation</a></h6>
   </div>
-  <img class="col-md-4" style="display: flex; max-width: 250px; width: 250px;" src="/ins-template/public/images/robot-train.jpeg" alt=""/>
+  <img class="col-md-4" style="display: flex; max-width: 250px; width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/robot-train.jpeg" alt=""/>
 </div>
 
 <div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
@@ -77,7 +77,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
       Documentation</a></h6>
   </div>
   <img class="col-md-4" style="display: flex; width: 250px; min-width: 250px;" 
-    src="/ins-template/public/images/object-detection.jpeg" alt=""/>
+    src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/object-detection.jpeg" alt=""/>
 </div>
 
 <div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
@@ -90,7 +90,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
     <h6 style="display: flex; flex-grow: 1;">3D point cloud scan integration</h6>
     <h6><a href="/documentation/landfill-management/overview.html" style="display: flex; flex-grow: 1;">Documentation</a></h6>
   </div>
-  <img class="col-md-4" style="display: flex; width: 250px; min-width: 250px;" src="/ins-template/public/images/truck-waste-fly.jpeg" alt=""/>
+  <img class="col-md-4" style="display: flex; width: 250px; min-width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/truck-waste-fly.jpeg" alt=""/>
 </div>
 </div>
 

@@ -2,7 +2,8 @@
     <div class="container">
         <div class="navbar-collapse">
             <a class="navbar-brand" href="{{_rel}}">
-                <img id="logo" class="ins-logo" height=55 width=155 src="/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
+                <img id="logo" class="ins-logo" height=55 width=155 
+                    src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
             </a>
             <ul class="nav level1 navbar-nav">
                 <li>
@@ -26,7 +27,8 @@
                     Back to top
                 </a>
                 <a class="navbar-brand pull-right navbar-right" href="{{_rel}}">
-                    <img id="logo" class="waste-logo" height=55 width=55 src="/ins-template/public/images/logo-robot-formal.png" alt="{{_appName}}">
+                    <img id="logo" class="waste-logo" height=55 width=55 
+                        src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/logo-robot-formal.png" alt="{{_appName}}">
                 </a>
             </div>
         </div>
