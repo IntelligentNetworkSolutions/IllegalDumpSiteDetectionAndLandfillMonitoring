@@ -2,11 +2,11 @@
 
 ## Project Charter  
 
-- [Full Project Charter](project-charter.md)  
+- [Full Project Charter](/about/project-charter.md)  
 
 ## Contact  
 
-- [Contact](contact.md)
+- [Contact](/about/contact.md)
 
 ## Licensing
 

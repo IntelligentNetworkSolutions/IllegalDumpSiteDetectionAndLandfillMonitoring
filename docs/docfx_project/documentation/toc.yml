@@ -1,37 +1,37 @@
 - name: Documentation
-  href: documentation/
+  href: /documentation/
   items:
   - name: Dataset Management
-    href: documentation/dataset-management/
+    href: /documentation/dataset-management/
     items:
       - name: Overview
-        href: documentation/dataset-management/overview.md
+        href: /documentation/dataset-management/overview.md
       - name: Image Annotation
-        href: documentation/dataset-management/image-annotation.md
+        href: /documentation/dataset-management/image-annotation.md
   - name: Training Process
-    href: documentation/training-process/
+    href: /documentation/training-process/
     items:
       - name: Overview
-        href: documentation/training-process/overview.md
+        href: /documentation/training-process/overview.md
       - name: Entities
-        href: documentation/training-process/entities.md
+        href: /documentation/training-process/entities.md
       - name: Services
-        href: documentation/training-process/services.md
+        href: /documentation/training-process/services.md
       - name: Controllers
-        href: documentation/training-process/controllers.md
+        href: /documentation/training-process/controllers.md
   - name: Detection Process
-    href: documentation/detection-process/
+    href: /documentation/detection-process/
     items:
       - name: Overview
-        href: documentation/detection-process/overview.md
+        href: /documentation/detection-process/overview.md
       - name: Input Images
-        href: documentation/detection-process/detection-input-images.md
+        href: /documentation/detection-process/detection-input-images.md
       - name: Detection Runs
-        href: documentation/detection-process/detection-runs.md
+        href: /documentation/detection-process/detection-runs.md
       - name: Ignore Zones
-        href: documentation/detection-process/detection-ignore-zones.md
+        href: /documentation/detection-process/detection-ignore-zones.md
   - name: Landfill Management
-    href: documentation/landfill-management/
+    href: /documentation/landfill-management/
     items:
       - name: Overview
-        href: documentation/landfill-management/overview.md
+        href: /documentation/landfill-management/overview.md

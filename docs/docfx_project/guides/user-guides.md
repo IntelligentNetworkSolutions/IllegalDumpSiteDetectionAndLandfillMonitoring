@@ -1,7 +1,7 @@
 # User Guides  
 
 <div style="display: block; float: left">
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
         Dataset Management
@@ -21,7 +21,7 @@
     src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/dataset-manage.jpeg" alt=""/>
 </div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
         Image Annotation
@@ -36,7 +36,7 @@
     src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/annotate.jpeg" alt=""/>
 </div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
         Object-Detection AI Model Training
@@ -50,7 +50,7 @@
   <img class="col-md-4" style="display: flex; max-width: 250px; width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/robot-train.jpeg" alt=""/>
 </div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 class="col-md-8">
         Detection and Monitoring of Waste Dumpsites
@@ -66,7 +66,7 @@
     src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/object-detection.jpeg" alt=""/>
 </div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
   <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
     <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
         Landfill Management
