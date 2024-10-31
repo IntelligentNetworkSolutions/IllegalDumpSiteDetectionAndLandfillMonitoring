@@ -1,19 +1,12 @@
 ﻿using AutoMapper;
 using DTOs.MainApp.BL.TrainingDTOs;
-using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
-using MainApp.MVC.Filters;
 using MainApp.MVC.ViewModels.IntranetPortal.Training;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -162,7 +155,34 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsAssignableFrom<List<TrainedModelViewModel>>(viewResult.Model);
-            Assert.Empty(model); 
+            Assert.Empty(model);
+        }
+        [Fact]
+        public async Task Index_ReturnsRedirectTo404View_WhenVmListIsNull()
+        {
+            // Arrange
+            var trainedModelDtos = new List<TrainedModelDTO>
+    {
+        new TrainedModelDTO { Id = Guid.NewGuid(), Name = "Model1" },
+        new TrainedModelDTO { Id = Guid.NewGuid(), Name = "Model2" }
+    };
+
+            var resultDto = ResultDTO<List<TrainedModelDTO>>.Ok(trainedModelDtos);
+            _trainedModelServiceMock.Setup(service => service.GetAllTrainedModels())
+                .ReturnsAsync(resultDto);
+
+            _mapperMock.Setup(mapper => mapper.Map<List<TrainedModelViewModel>>(trainedModelDtos))
+                .Returns((List<TrainedModelViewModel>)null);
+
+            _configurationMock.Setup(config => config["ErrorViewsPath:Error404"])
+                .Returns("/Error404");
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/Error404", redirectResult.Url);
         }
 
 
@@ -253,7 +273,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Null(result.ErrMsg);
         }
 
-       
+
 
         [Fact]
         public async Task EditTrainedModelById_ReturnsFailResult_WhenModelStateIsInvalid()
@@ -285,7 +305,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Null(result.ErrMsg); 
+            Assert.Null(result.ErrMsg);
         }
 
         [Fact]
@@ -343,7 +363,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task EditTrainedModelById_ReturnsFailResult_WhenNameIsTooLong()
         {
             // Arrange
-            var longName = new string('a', 256); 
+            var longName = new string('a', 256);
 
             var trainedModelViewModel = new TrainedModelViewModel { Id = Guid.NewGuid(), Name = longName, IsPublished = true };
 
@@ -456,6 +476,98 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Invalid training run id", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllTrainedModels_Returns_Success_With_Data()
+        {
+            // Arrange
+            var trainedModels = new List<TrainedModelDTO>
+                {
+                    new TrainedModelDTO { Id = Guid.NewGuid(), Name = "Model1" },
+                    new TrainedModelDTO { Id = Guid.NewGuid(), Name = "Model2" }
+                };
+
+            _trainedModelServiceMock.Setup(service => service.GetAllTrainedModels())
+                .ReturnsAsync(ResultDTO<List<TrainedModelDTO>>.Ok(trainedModels));
+
+            // Act
+            var result = await _controller.GetAllTrainedModels();
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count);
+        }
+
+        [Fact]
+        public async Task GetAllTrainedModels_Returns_Failure_When_Service_Fails()
+        {
+            // Arrange
+            _trainedModelServiceMock.Setup(service => service.GetAllTrainedModels())
+                .ReturnsAsync(ResultDTO<List<TrainedModelDTO>>.Fail("Service error"));
+
+            // Act
+            var result = await _controller.GetAllTrainedModels();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Service error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllTrainedModels_Returns_Failure_When_Data_Is_Null()
+        {
+            // Arrange
+            _trainedModelServiceMock.Setup(service => service.GetAllTrainedModels())
+                .ReturnsAsync(ResultDTO<List<TrainedModelDTO>>.Ok(null));
+
+            // Act
+            var result = await _controller.GetAllTrainedModels();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Trained models are not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetAllTrainedModels_Returns_ExceptionFail_When_Exception_Is_Thrown()
+        {
+            // Arrange
+            var exceptionMessage = "An unexpected error occurred.";
+            _trainedModelServiceMock.Setup(service => service.GetAllTrainedModels())
+                .ThrowsAsync(new Exception("Exception"));
+
+            // Act & Assert
+            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllTrainedModels());
+
+        }
+
+        [Fact]
+        public async Task Index_ReturnsNotFound_WhenError404PathIsNullAndVmListIsNull()
+        {
+            // Arrange
+            var trainedModelDtos = new List<TrainedModelDTO>
+    {
+        new TrainedModelDTO { Id = Guid.NewGuid(), Name = "Model1" },
+        new TrainedModelDTO { Id = Guid.NewGuid(), Name = "Model2" }
+    };
+
+            var resultDto = ResultDTO<List<TrainedModelDTO>>.Ok(trainedModelDtos);
+            _trainedModelServiceMock.Setup(service => service.GetAllTrainedModels())
+                .ReturnsAsync(resultDto);
+
+            _mapperMock.Setup(mapper => mapper.Map<List<TrainedModelViewModel>>(trainedModelDtos))
+                .Returns((List<TrainedModelViewModel>)null);
+
+            _configurationMock.Setup(config => config["ErrorViewsPath:Error404"])
+                .Returns((string)null);
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
         }
 
     }
