@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using CliWrap;
-using CliWrap.Buffered;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DetectionDTOs;
@@ -8,10 +6,6 @@ using DTOs.MainApp.BL.TrainingDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
 using Entities.DetectionEntities;
 using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
-using Hangfire.Storage;
-using Hangfire.Storage.Monitoring;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
@@ -21,12 +15,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using NetTopologySuite.Geometries;
 using SD;
-using SD.Enums;
 using Services.Interfaces.Services;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.Claims;
 
@@ -124,7 +114,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.NotNull(response);
             Assert.True(response.IsSuccess);
-            Assert.Empty(response.Data); 
+            Assert.Empty(response.Data);
         }
 
         [Fact]
@@ -149,7 +139,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.True(response.IsSuccess);
             Assert.Equal(trainedModels, response.Data);
         }
-               
+
         [Fact]
         public async Task GetPublishedTrainedModels_ReturnsExceptionFailResult_WhenServiceThrowsException()
         {
@@ -212,7 +202,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var detectionRunDTO = new DetectionRunDTO();
             var result = ResultDTO<DetectionRunDTO>.Ok(detectionRunDTO);
 
-            _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId,false))
+            _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId, false))
                         .ReturnsAsync(result);
 
             // Act
@@ -286,7 +276,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var detectionRunId = Guid.NewGuid();
-            var result = ResultDTO<DetectionRunDTO>.Fail(null); 
+            var result = ResultDTO<DetectionRunDTO>.Fail(null);
 
             _mockDetectionRunService.Setup(service => service.GetDetectionRunById(detectionRunId, false))
                         .ReturnsAsync(result);
@@ -297,7 +287,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.NotNull(response);
             Assert.False(response.IsSuccess);
-            Assert.Null(response.ErrMsg); 
+            Assert.Null(response.ErrMsg);
         }
 
         [Fact]
@@ -391,7 +381,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         //    // Clean up
         //    File.Delete(fullFilePath);
         //}
-       
+
         [Fact]
         public async Task StartDetectionRun_ShouldReturnOk_WhenAllStepsSucceed()
         {
@@ -499,7 +489,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockAppSettingsAccessor
                 .Setup(x => x.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", It.IsAny<string>()))
                 .ReturnsAsync(ResultDTO<string>.Ok(string.Empty));
-                      
+
             // Use reflection to call private method
             var privateMethod = typeof(DetectionController)
                 .GetMethod("CreateErrMsgFile", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -512,7 +502,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.False(result.IsSuccess);
             Assert.Equal("Directory path not found", result.ErrMsg);
         }
-              
+
         [Fact]
         public async Task ScheduleDetectionRun_InvalidModelState_ReturnsFailResult()
         {
@@ -614,7 +604,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.IsType<ViewResult>(result);
         }
-       
+
         [Fact]
         public async Task DetectedZones_ReturnsViewResult_WithExpectedModel()
         {
@@ -826,7 +816,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task ShowDumpSitesOnMap_ReturnsFailResult_WhenSelectedDetectionRunsIdsIsNull()
         {
             // Arrange
-            var model = new DetectionRunShowOnMapViewModel { selectedDetectionRunsIds = null, selectedConfidenceRates = new List<ConfidenceRateDTO> () };
+            var model = new DetectionRunShowOnMapViewModel { selectedDetectionRunsIds = null, selectedConfidenceRates = new List<ConfidenceRateDTO>() };
 
             // Act
             var response = await _controller.ShowDumpSitesOnMap(model);
@@ -881,7 +871,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.False(response.IsSuccess);
             Assert.Equal("No confidence rates selected", response.ErrMsg);
         }
-               
+
         [Fact]
         public async Task GenerateAreaComparisonAvgConfidenceRateReport_ReturnsData_WhenDataIsAvailable()
         {
@@ -907,7 +897,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             _mockDetectionRunService
                 .Setup(service => service.GenerateAreaComparisonAvgConfidenceRateData(It.IsAny<List<Guid>>(), It.IsAny<int>()))
-                .ReturnsAsync(ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(detectionRunDTOs)); 
+                .ReturnsAsync(ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(detectionRunDTOs));
 
             // Act
             var result = await _controller.GenerateAreaComparisonAvgConfidenceRateReport(detectionRunsIds, 1);
@@ -1716,7 +1706,151 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Detection input image thumbnails folder value is null", result.Value.GetType().GetProperty("errMsg").GetValue(result.Value));
         }
 
-      
+        [Fact]
+        public async Task AddImage_InvalidModelState_ReturnsFail()
+        {
+            // Arrange
+            _controller.ModelState.AddModelError("error", "test error");
+            var viewModel = new DetectionInputImageViewModel();
+
+            // Act
+            var result = await _controller.AddImage(viewModel, null);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Contains("test error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task AddImage_ApplicationSettingsFailure_ReturnsFail()
+        {
+            // Arrange
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>(
+                "DetectionInputImagesFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Fail("Settings error"));
+
+            // Act
+            var result = await _controller.AddImage(new DetectionInputImageViewModel(), null);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Can not get the application settings", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task AddImage_EmptyFolderPath_ReturnsFail()
+        {
+            // Arrange
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>(
+                "DetectionInputImagesFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Ok(string.Empty));
+
+            // Act
+            var result = await _controller.AddImage(new DetectionInputImageViewModel(), null);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Image folder path not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task AddImage_UserIdNotFound_ReturnsFail()
+        {
+            // Arrange
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>(
+                "DetectionInputImagesFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Ok("valid/path"));
+
+            Mock<ClaimsPrincipal> _mockUser = new Mock<ClaimsPrincipal>();
+            _mockUser.Setup(x => x.FindFirst("UserId")).Returns((Claim)null);
+
+            // Act
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await _controller.AddImage(new DetectionInputImageViewModel(), null));
+        }
+
+        [Fact]
+        public async Task AddImage_UserNotFound_ReturnsFail()
+        {
+            // Arrange
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>(
+                "DetectionInputImagesFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Ok("valid/path"));
+
+            Mock<ClaimsPrincipal> _mockUser = new Mock<ClaimsPrincipal>();
+            _mockUser.Setup(x => x.FindFirst("UserId"))
+                .Returns(new Claim("UserId", "testId"));
+
+            _mockUserManagementService.Setup(x => x.GetUserById(It.IsAny<string>()))
+                .ReturnsAsync((UserDTO)null);
+
+            // Act
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await _controller.AddImage(new DetectionInputImageViewModel(), null));
+        }
+
+        [Fact]
+        public async Task AddImage_SuccessfulFileUpload_ReturnsSuccess()
+        {
+            // Arrange
+            const string webRootPath = "/webroot";
+            const string uploadFolder = "Uploads/DetectionUploads/InputImages";
+            const string fileName = "test.jpg";
+
+            SetupSuccessfulUserAndSettings();
+            
+            Mock<IWebHostEnvironment> mockWebEnv = new Mock<IWebHostEnvironment>();
+            mockWebEnv.Setup(x => x.WebRootPath).Returns(Path.Combine(Path.GetTempPath(), "mockwebhostenv"));
+
+            var fileMock = new Mock<IFormFile>();
+            fileMock.Setup(f => f.FileName).Returns(fileName);
+            fileMock.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), default))
+                .Returns(Task.CompletedTask);
+
+            var dto = new DetectionInputImageDTO { ImagePath = Path.Combine(uploadFolder, fileName) };
+            _mockMapper.Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
+                .Returns(dto);
+
+            _mockDetectionRunService.Setup(x => x.CreateDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
+                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(dto));
+
+            DetectionController controla = new DetectionController(
+                _mockUserManagementService.Object,
+                _mockConfiguration.Object,
+                _mockMapper.Object,
+                mockWebEnv.Object,
+                _mockAppSettingsAccessor.Object,
+                _mockDetectionRunService.Object,
+                _mockBackgroundJobClient.Object,
+                _mockDetectionIgnoreZoneService.Object,
+                _mockTrainedModelService.Object);
+
+            List<Claim> claims = [ new Claim("UserId", "test-user-id") ];
+            ClaimsIdentity identity = new ClaimsIdentity(claims);
+            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
+            controla.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = claimsPrincipal } };
+
+            // Act
+            ResultDTO<string> result = await controla.AddImage(new DetectionInputImageViewModel(), fileMock.Object);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+        }
+
+        private void SetupSuccessfulUserAndSettings()
+        {
+            _mockAppSettingsAccessor.Setup(x => x.GetApplicationSettingValueByKey<string>(
+                "DetectionInputImagesFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string?>.Ok("Uploads/DetectionUploads/InputImages"));
+
+            Mock<ClaimsPrincipal> _mockUser = new Mock<ClaimsPrincipal>();
+            _mockUser.Setup(x => x.FindFirst("UserId"))
+                .Returns(new Claim("UserId", "testId"));
+
+            _mockUserManagementService.Setup(x => x.GetUserById(It.IsAny<string>()))
+                .ReturnsAsync(new UserDTO { Id = "testId" });
+
+            _mockWebHostEnvironment.Setup(x => x.WebRootPath)
+                .Returns("/webroot");
+        }
         #endregion
 
     }
