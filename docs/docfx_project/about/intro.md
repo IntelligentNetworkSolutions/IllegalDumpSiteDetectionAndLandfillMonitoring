@@ -4,6 +4,10 @@
 
 - [Full Project Charter](project-charter.md)  
 
+## Contact  
+
+- [Contact](contact.md)
+
 ## Licensing
 
 - [License File](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/LICENSE)  
