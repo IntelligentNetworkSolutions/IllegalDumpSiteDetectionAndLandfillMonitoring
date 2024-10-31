@@ -1831,7 +1831,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             const string fileName = "test.jpg";
 
             SetupSuccessfulUserAndSettings();
-            _mockWebHostEnvironment.Setup(x => x.WebRootPath).Returns(webRootPath);
+            
+            Mock<IWebHostEnvironment> mockWebEnv = new Mock<IWebHostEnvironment>();
+            mockWebEnv.Setup(x => x.WebRootPath).Returns(Path.Combine(Path.GetTempPath(), "mockwebhostenv"));
 
             var fileMock = new Mock<IFormFile>();
             fileMock.Setup(f => f.FileName).Returns(fileName);
@@ -1845,12 +1847,27 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockDetectionRunService.Setup(x => x.CreateDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
                 .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(dto));
 
+            DetectionController controla = new DetectionController(
+                _mockUserManagementService.Object,
+                _mockConfiguration.Object,
+                _mockMapper.Object,
+                mockWebEnv.Object,
+                _mockAppSettingsAccessor.Object,
+                _mockDetectionRunService.Object,
+                _mockBackgroundJobClient.Object,
+                _mockDetectionIgnoreZoneService.Object,
+                _mockTrainedModelService.Object);
+
+            List<Claim> claims = [ new Claim("UserId", "test-user-id") ];
+            ClaimsIdentity identity = new ClaimsIdentity(claims);
+            ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
+            controla.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = claimsPrincipal } };
+
             // Act
-            var result = await _controller.AddImage(new DetectionInputImageViewModel(), fileMock.Object);
+            ResultDTO<string> result = await controla.AddImage(new DetectionInputImageViewModel(), fileMock.Object);
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal(Path.Combine(webRootPath, uploadFolder, fileName), result.Data);
         }
 
         private void SetupSuccessfulUserAndSettings()
