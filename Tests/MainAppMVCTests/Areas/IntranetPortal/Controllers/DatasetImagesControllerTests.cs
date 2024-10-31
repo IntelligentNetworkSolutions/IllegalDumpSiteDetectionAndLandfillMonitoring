@@ -594,6 +594,73 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Successfully deleted dataset image", data["responseSuccess"]["Value"].ToString());
         }
 
+        [Fact]
+        public async Task DeleteDatasetImage_ReturnsError_WhenDeletionFails()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var datasetDto = new DatasetDTO { IsPublished = false };
+            var datasetImageDto = new DatasetImageDTO { Id = datasetImageId };
+            var activeAnnotations = new List<ImageAnnotationDTO>(); // Mock active annotations
+
+            // Mock the dataset service to return a valid dataset
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(datasetImageId)).ReturnsAsync(datasetImageDto);
+            _mockImageAnnotationsService.Setup(s => s.GetImageAnnotationsByImageId(datasetImageId)).ReturnsAsync(activeAnnotations);
+
+            // Mock the deletion to return a failure result
+            _mockDatasetImagesService.Setup(s => s.DeleteDatasetImage(datasetImageId, false))
+                .ReturnsAsync(ResultDTO<int>.Fail("Error occurred while deleting the image"));
+
+            // Act
+            var result = await _controller.DeleteDatasetImage(datasetImageId, datasetId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Error occurred while deleting the image", data["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ReturnsError_WhenUpdateFails()
+        {
+            // Arrange
+            var model = new EditDatasetImageDTO
+            {
+                DatasetId = Guid.NewGuid(),
+                Name = "SampleImage"
+            };
+
+            var userId = "test-user-id";
+
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            }; var datasetDto = new DatasetDTO { IsPublished = false };
+
+            // Mock the dataset service to return a valid dataset
+            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(datasetDto);
+
+            // Mock the user ID
+
+            // Mock the image update to fail
+            _mockDatasetImagesService.Setup(s => s.EditDatasetImage(model))
+                .ReturnsAsync(ResultDTO<int>.Fail("Failed to update image"));
+
+            // Act
+            var result = await _controller.EditDatasetImage(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Failed to update image", data["responseError"]["Value"].ToString());
+        }
+
 
     }
 }
