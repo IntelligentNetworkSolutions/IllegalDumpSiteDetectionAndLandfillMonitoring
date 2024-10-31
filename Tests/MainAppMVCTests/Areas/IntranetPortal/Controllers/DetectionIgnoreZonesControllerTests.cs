@@ -1,16 +1,11 @@
 ﻿using DTOs.MainApp.BL.DetectionDTOs;
 using MainApp.BL.Interfaces.Services.DetectionServices;
-using MainApp.MVC.Areas.Common.Controllers;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -127,7 +122,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Service failure", result.ErrMsg);
-        }              
+        }
 
         [Fact]
         public async Task AddIgnoreZone_ReturnsFail_WhenModelStateIsInvalid()
@@ -143,6 +138,46 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Model validation error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task AddIgnoreZone_ReturnsFail_WhenEnteredZonePolygonIsNullOrEmpty()
+        {
+            // Arrange
+            var dto = new DetectionIgnoreZoneDTO
+            {
+                EnteredZonePolygon = null // or use string.Empty
+            };
+
+            // Act
+            var result = await _controller.AddIgnoreZone(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Invalid entered polygon", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task AddIgnoreZone_ReturnsFail_WhenUserIdIsNotFound()
+        {
+            // Arrange
+            var dto = new DetectionIgnoreZoneDTO
+            {
+                EnteredZonePolygon = "some-valid-polygon" // Assume this is valid for the test
+            };
+
+            var user = new ClaimsPrincipal(new ClaimsIdentity());
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+
+            // Act
+            var result = await _controller.AddIgnoreZone(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("User not found", result.ErrMsg);
         }
 
         [Fact]
