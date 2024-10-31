@@ -267,5 +267,41 @@ namespace Tests.MainAppBLTests.Services
             Assert.Contains("Error", result.ErrMsg);
         }
 
+        [Fact]
+        public async Task GetAllMapLayerConfigurations_RepositoryThrowsException_LogsErrorAndReturnsExceptionFail()
+        {
+            // Arrange
+
+            _mockMapLayerConfigRepository
+                .Setup(r => r.GetAll(null, null, false, null, null))
+            .ThrowsAsync(new Exception("Database error"));
+
+
+            // Act
+            var result = await _service.GetAllMapLayerConfigurations();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Database error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetMapLayerConfigurationById_RepositoryThrowsException_LogsErrorAndReturnsExceptionFail()
+        {
+            // Arrange
+            var mapLayerConfigurationId = Guid.NewGuid();
+            _mockMapLayerConfigRepository
+                .Setup(r => r.GetById(mapLayerConfigurationId, false, null))
+            .ThrowsAsync(new Exception("Database error"));
+
+            // Act
+            var result = await _service.GetMapLayerConfigurationById(mapLayerConfigurationId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Database error", result.ErrMsg);
+        }
+
+
     }
 }

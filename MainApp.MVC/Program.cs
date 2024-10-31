@@ -276,8 +276,8 @@ app.UseAuthorization();
 
 app.Use(async (context, next) =>
 {
-    if (!app.Environment.IsDevelopment())
-        context.Response.Redirect("/" + builder.Configuration.GetValue("DomainSettings:MainAppPath", ""));
+    //if (!app.Environment.IsDevelopment())
+    //    context.Response.Redirect("/" + builder.Configuration.GetValue("DomainSettings:MainAppPath", ""));
 
     // Application Current Mode/Area and Start Mode/Area are NOT Equal
     var area = context.Request.RouteValues["area"] == null

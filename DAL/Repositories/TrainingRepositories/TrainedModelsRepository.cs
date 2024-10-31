@@ -7,8 +7,6 @@ namespace DAL.Repositories.TrainingRepositories
 {
     public class TrainedModelsRepository : BaseResultRepository<TrainedModel, Guid>, ITrainedModelsRepository
     {
-        public TrainedModelsRepository(ApplicationDbContext dbContext) : base(dbContext)
-        {
-        }
+        public TrainedModelsRepository(ApplicationDbContext dbContext) : base(dbContext) {}
     }
 }

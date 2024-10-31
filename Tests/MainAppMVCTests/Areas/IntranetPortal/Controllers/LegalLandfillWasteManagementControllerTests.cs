@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using DTOs.MainApp.BL.LegalLandfillManagementDTOs;
-using Entities.LegalLandfillsManagementEntites;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement;
@@ -100,7 +99,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task ViewLegalLandfillTrucks_RedirectsToNotFound_WhenNoDataReturned()
         {
             // Arrange
-            var resultDtoList =  ResultDTO<List<LegalLandfillTruckDTO>>.Ok(null);
+            var resultDtoList = ResultDTO<List<LegalLandfillTruckDTO>>.Ok(null);
 
             _mockLegalLandfillTruckService.Setup(s => s.GetAllLegalLandfillTrucks()).ReturnsAsync(resultDtoList);
             _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/NotFound");
@@ -352,7 +351,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.False(resultData.IsSuccess);
             Assert.Equal("Error handling", resultData.ErrMsg);
         }
-               
+
         [Fact]
         public async Task CreateLegalLandfillTruckConfirmed_WithInvalidModel_ReturnsFailResult()
         {
@@ -743,7 +742,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Not found", result.ErrMsg);
-        }        
+        }
 
         [Fact]
         public async Task DeleteLegalLandfillWasteTypeConfirmed_ReturnsFail_WhenServiceCheckFails()
@@ -868,7 +867,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.False(resultData.IsSuccess);
             Assert.Equal("Landfill is null", resultData.ErrMsg);
         }
-              
+
         [Fact]
         public async Task EditLegalLandfillWasteTypeConfirmed_WithValidModel_ReturnsOkResult()
         {
@@ -1814,6 +1813,407 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Error handling", resultData.ErrMsg);
         }
 
-      
+        [Fact]
+        public async Task ViewLegalLandfillTrucks_NullData_RedirectsToError404Path()
+        {
+            // Arrange
+            var resultDtoList = ResultDTO<List<LegalLandfillTruckDTO>>.Ok(null);
+
+            _mockLegalLandfillTruckService
+                .Setup(s => s.GetAllLegalLandfillTrucks())
+                .ReturnsAsync(resultDtoList);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
+
+            // Act
+            var result = await _controller.ViewLegalLandfillTrucks();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error404", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillTrucks_EmptyViewModelList_RedirectsToError404Path()
+        {
+            // Arrange
+            var resultDtoList = ResultDTO<List<LegalLandfillTruckDTO>>.Ok(new List<LegalLandfillTruckDTO>());
+
+            _mockLegalLandfillTruckService
+                .Setup(s => s.GetAllLegalLandfillTrucks())
+                .ReturnsAsync(resultDtoList);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
+            _mockMapper.Setup(m => m.Map<List<LegalLandfillTruckViewModel>>(It.IsAny<List<LegalLandfillTruckDTO>>()))
+                       .Returns((List<LegalLandfillTruckViewModel>)null);
+
+            // Act
+            var result = await _controller.ViewLegalLandfillTrucks();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error404", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillWasteTypes_NullData_RedirectsToError404Path()
+        {
+            // Arrange
+            var resultDtoList = ResultDTO<List<LegalLandfillWasteTypeDTO>>.Ok(null);
+
+            _mockLegalLandfillWasteTypeService
+                .Setup(s => s.GetAllLegalLandfillWasteTypes())
+                .ReturnsAsync(resultDtoList);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
+
+            // Act
+            var result = await _controller.ViewLegalLandfillWasteTypes();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error404", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillWasteTypes_EmptyViewModelList_RedirectsToError404Path()
+        {
+            // Arrange
+            var resultDtoList = ResultDTO<List<LegalLandfillWasteTypeDTO>>.Ok(new List<LegalLandfillWasteTypeDTO>());
+
+            _mockLegalLandfillWasteTypeService
+                .Setup(s => s.GetAllLegalLandfillWasteTypes())
+                .ReturnsAsync(resultDtoList);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
+            _mockMapper.Setup(m => m.Map<List<LegalLandfillWasteTypeViewModel>>(It.IsAny<List<LegalLandfillWasteTypeDTO>>()))
+                       .Returns((List<LegalLandfillWasteTypeViewModel>)null);
+
+            // Act
+            var result = await _controller.ViewLegalLandfillWasteTypes();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error404", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillWasteImports_NullData_RedirectsToError404Path()
+        {
+            // Arrange
+            var resultDtoList = ResultDTO<List<LegalLandfillWasteImportDTO>>.Ok(null);
+
+            _mockLegalLandfillWasteImportService
+                .Setup(s => s.GetAllLegalLandfillWasteImports())
+                .ReturnsAsync(resultDtoList);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
+
+            // Act
+            var result = await _controller.ViewLegalLandfillWasteImports();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error404", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task ViewLegalLandfillWasteImports_EmptyViewModelList_RedirectsToError404Path()
+        {
+            // Arrange
+            var resultDtoList = ResultDTO<List<LegalLandfillWasteImportDTO>>.Ok(new List<LegalLandfillWasteImportDTO>());
+
+            _mockLegalLandfillWasteImportService
+                .Setup(s => s.GetAllLegalLandfillWasteImports())
+                .ReturnsAsync(resultDtoList);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
+            _mockMapper.Setup(m => m.Map<List<LegalLandfillWasteImportViewModel>>(It.IsAny<List<LegalLandfillWasteImportDTO>>()))
+                       .Returns((List<LegalLandfillWasteImportViewModel>)null);
+
+            // Act
+            var result = await _controller.ViewLegalLandfillWasteImports();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error404", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillWasteImport_EntityDataNull_RedirectsToError404Path()
+        {
+            // Arrange
+            var legalLandfillWasteImportId = Guid.NewGuid();
+            var resultDto = ResultDTO<LegalLandfillWasteImportDTO>.Ok(null);
+
+            var userId = "test-user-id";
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
+
+            _mockLegalLandfillWasteImportService
+                .Setup(s => s.GetLegalLandfillWasteImportById(legalLandfillWasteImportId))
+                .ReturnsAsync(resultDto);
+
+            _mockLegalLandfillTruckService
+                .Setup(s => s.GetAllLegalLandfillTrucks())
+                .ReturnsAsync(ResultDTO<List<LegalLandfillTruckDTO>>.Ok(new List<LegalLandfillTruckDTO>()));
+
+            _mockLegalLandfillService
+                .Setup(s => s.GetAllLegalLandfills())
+                .ReturnsAsync(ResultDTO<List<LegalLandfillDTO>>.Ok(new List<LegalLandfillDTO>()));
+
+            _mockLegalLandfillWasteTypeService
+                .Setup(s => s.GetAllLegalLandfillWasteTypes())
+                .ReturnsAsync(ResultDTO<List<LegalLandfillWasteTypeDTO>>.Ok(new List<LegalLandfillWasteTypeDTO>()));
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
+
+            // Act
+            var result = await _controller.EditLegalLandfillWasteImport(legalLandfillWasteImportId);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/error404", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillWasteImport_EntityDataNull_NoErrorPath_ReturnsNotFound()
+        {
+            // Arrange
+            var legalLandfillWasteImportId = Guid.NewGuid();
+            var resultDto = ResultDTO<LegalLandfillWasteImportDTO>.Ok(null);
+
+            var userId = "test-user-id";
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
+
+            _mockLegalLandfillWasteImportService
+                .Setup(s => s.GetLegalLandfillWasteImportById(legalLandfillWasteImportId))
+                .ReturnsAsync(resultDto);
+
+            _mockLegalLandfillTruckService
+                .Setup(s => s.GetAllLegalLandfillTrucks())
+                .ReturnsAsync(ResultDTO<List<LegalLandfillTruckDTO>>.Ok(new List<LegalLandfillTruckDTO>()));
+
+            _mockLegalLandfillService
+                .Setup(s => s.GetAllLegalLandfills())
+                .ReturnsAsync(ResultDTO<List<LegalLandfillDTO>>.Ok(new List<LegalLandfillDTO>()));
+
+            _mockLegalLandfillWasteTypeService
+                .Setup(s => s.GetAllLegalLandfillWasteTypes())
+                .ReturnsAsync(ResultDTO<List<LegalLandfillWasteTypeDTO>>.Ok(new List<LegalLandfillWasteTypeDTO>()));
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
+
+            // Act
+            var result = await _controller.EditLegalLandfillWasteImport(legalLandfillWasteImportId);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillWasteImportConfirmed_ResultDeleteFails_ReturnsFailResult()
+        {
+            // Arrange
+            var legalLandfillWasteImportViewModel = new LegalLandfillWasteImportViewModel
+            {
+                Id = Guid.NewGuid(),
+                ImportExportStatus = 1,
+                LegalLandfillId = Guid.NewGuid(),
+                LegalLandfillTruckId = Guid.NewGuid(),
+                LegalLandfillWasteTypeId = Guid.NewGuid(),
+                Capacity = 100,
+                Weight = 50,
+                CreatedById = "user-id"
+            };
+
+            var dto = new LegalLandfillWasteImportDTO();
+            _mockMapper.Setup(m => m.Map<LegalLandfillWasteImportDTO>(legalLandfillWasteImportViewModel)).Returns(dto);
+
+            var resultCheckForFiles = ResultDTO<LegalLandfillWasteImportDTO>.Ok(new LegalLandfillWasteImportDTO());
+            _mockLegalLandfillWasteImportService.Setup(s => s.GetLegalLandfillWasteImportById(legalLandfillWasteImportViewModel.Id))
+                                                .ReturnsAsync(resultCheckForFiles);
+
+            var resultDelete = ResultDTO.Fail("Delete failed");
+            _mockLegalLandfillWasteImportService.Setup(s => s.DeleteLegalLandfillWasteImport(dto)).ReturnsAsync(resultDelete);
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillWasteImportConfirmed(legalLandfillWasteImportViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Delete failed", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillWasteTypeConfirmed_ModelStateInvalid_ReturnsFailResult()
+        {
+            // Arrange
+            var legalLandfillWasteTypeViewModel = new LegalLandfillWasteTypeViewModel
+            {
+                Id = Guid.NewGuid(),
+                // Other properties...
+            };
+
+            _controller.ModelState.AddModelError("SomeKey", "Some error message");
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillWasteTypeConfirmed(legalLandfillWasteTypeViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Contains("Some error message", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillWasteTypeConfirmed_ResultDeleteFails_ReturnsFailResult()
+        {
+            // Arrange
+            var legalLandfillWasteTypeViewModel = new LegalLandfillWasteTypeViewModel
+            {
+                Id = Guid.NewGuid(),
+            };
+
+            var dto = new LegalLandfillWasteTypeDTO();
+            _mockMapper.Setup(m => m.Map<LegalLandfillWasteTypeDTO>(legalLandfillWasteTypeViewModel)).Returns(dto);
+
+            var resultCheckForFiles = ResultDTO<LegalLandfillWasteTypeDTO>.Ok(new LegalLandfillWasteTypeDTO());
+            _mockLegalLandfillWasteTypeService.Setup(s => s.GetLegalLandfillWasteTypeById(legalLandfillWasteTypeViewModel.Id))
+                                              .ReturnsAsync(resultCheckForFiles);
+
+            var resultDelete = ResultDTO.Fail("Delete failed");
+            _mockLegalLandfillWasteTypeService.Setup(s => s.DeleteLegalLandfillWasteType(dto)).ReturnsAsync(resultDelete);
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillWasteTypeConfirmed(legalLandfillWasteTypeViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Delete failed", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillTruckConfirmed_InvalidWeights_ReturnsFailResult()
+        {
+            // Arrange
+            var legalLandfillTruckViewModel = new LegalLandfillTruckViewModel
+            {
+                // Set properties except Capacity, UnladenWeight, PayloadWeight...
+            };
+
+            // Simulate an invalid model state
+            _controller.ModelState.AddModelError("Capacity", "Capacity is required.");
+
+            // Act
+            var result = await _controller.EditLegalLandfillTruckConfirmed(legalLandfillTruckViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Contains("Capacity is required.", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillTruckConfirmed_ResultEditFails_ReturnsFailResult()
+        {
+            // Arrange
+            var legalLandfillTruckViewModel = new LegalLandfillTruckViewModel
+            {
+                Id = Guid.NewGuid(),
+                Capacity = 10,
+                UnladenWeight = 5,
+                PayloadWeight = 3,
+                // Other properties...
+            };
+
+            var dto = new LegalLandfillTruckDTO(); // Simulate the mapped DTO
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruckDTO>(legalLandfillTruckViewModel)).Returns(dto);
+
+            // Simulate valid DTO properties
+            dto.Capacity = 10;
+            dto.UnladenWeight = 5;
+            dto.PayloadWeight = 3;
+
+            var resultEdit = ResultDTO.Fail("Edit failed"); // Simulate a failure during edit
+            _mockLegalLandfillTruckService.Setup(s => s.EditLegalLandfillTruck(dto)).ReturnsAsync(resultEdit);
+
+            // Act
+            var result = await _controller.EditLegalLandfillTruckConfirmed(legalLandfillTruckViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Edit failed", failResult.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteLegalLandfillTruckConfirmed_InvalidModelState_ReturnsFailResult()
+        {
+            // Arrange
+            var legalLandfillTruckViewModel = new LegalLandfillTruckViewModel
+            {
+                // Set properties as needed...
+            };
+
+            // Simulate an invalid model state
+            _controller.ModelState.AddModelError("Id", "Id is required.");
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillTruckConfirmed(legalLandfillTruckViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Contains("Id is required.", failResult.ErrMsg);
+        }
+
+
+        [Fact]
+        public async Task DeleteLegalLandfillTruckConfirmed_DeleteFails_ReturnsFailResult()
+        {
+            // Arrange
+            var legalLandfillTruckViewModel = new LegalLandfillTruckViewModel
+            {
+                Id = Guid.NewGuid(),
+                // Other properties...
+            };
+
+            var resultCheckForFiles = ResultDTO<LegalLandfillTruckDTO>.Ok(new LegalLandfillTruckDTO()); // Simulate valid response
+            _mockLegalLandfillTruckService.Setup(s => s.GetLegalLandfillTruckById(legalLandfillTruckViewModel.Id)).ReturnsAsync(resultCheckForFiles);
+
+            var dto = new LegalLandfillTruckDTO(); // Simulate mapped DTO
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruckDTO>(legalLandfillTruckViewModel)).Returns(dto);
+
+            var resultDelete = ResultDTO.Fail("Delete failed"); // Simulate a failure during delete
+            _mockLegalLandfillTruckService.Setup(s => s.DeleteLegalLandfillTruck(dto)).ReturnsAsync(resultDelete);
+
+            // Act
+            var result = await _controller.DeleteLegalLandfillTruckConfirmed(legalLandfillTruckViewModel);
+
+            // Assert
+            var failResult = Assert.IsType<ResultDTO>(result);
+            Assert.False(failResult.IsSuccess);
+            Assert.Equal("Delete failed", failResult.ErrMsg);
+        }
+
+
     }
 }

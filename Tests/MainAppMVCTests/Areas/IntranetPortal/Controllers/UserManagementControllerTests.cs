@@ -323,70 +323,78 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.IsType<UserManagementEditRoleViewModel>(viewResult.Model);
         }
 
-        //[Fact]
-        //public async Task EditRole_ReturnsViewResult_WhenModelStateIsInvalid()
-        //{
-        //    // Arrange
-        //    var viewModel = new UserManagementEditRoleViewModel { Id = "testRoleId" };
-        //    _controller.ModelState.AddModelError("SomeError", "Invalid Model");
+        [Fact]
+        public async Task EditRole_ReturnsView_WhenModelStateIsInvalid()
+        {
+            // Arrange
+            var viewModel = new UserManagementEditRoleViewModel { Id = "448cbeb7-964e-4527-9a6c-cea969c05ae4", Name = "test name" };
 
-        //    var dto = new RoleManagementDTO { Id = viewModel.Id };
-        //    var resultFillModel = ResultDTO<UserManagementEditRoleViewModel>.Ok(viewModel);
-        //    _mockUserManagementService.Setup(x => x.FillRoleManagementDto(dto))
-        //        .ReturnsAsync(ResultDTO<RoleManagementDTO>.Ok(dto));
+            _controller.ModelState.AddModelError("Name", "The Name field is required.");
 
-        //    // Act
-        //    var result = await _controller.EditRole(viewModel);
+            var roleManagementDTO = new RoleManagementDTO { Id = viewModel.Id, Name = "filled name" };
+            _mockUserManagementService.Setup(x => x.FillRoleManagementDto(It.IsAny<RoleManagementDTO>()))
+                .ReturnsAsync(ResultDTO<RoleManagementDTO>.Ok(roleManagementDTO));
 
-        //    // Assert
-        //    var viewResult = Assert.IsType<ViewResult>(result);
-        //    var model = Assert.IsType<UserManagementEditRoleViewModel>(viewResult.Model);
-        //    Assert.Equal(viewModel.Id, model.Id);
-        //}
+            var claims = new List<AuthClaim> { new AuthClaim { } };
 
-        //[Fact]
-        //public async Task EditRole_ReturnsViewResult_WhenUpdateRoleFails()
-        //{
-        //    // Arrange
-        //    var viewModel = new UserManagementEditRoleViewModel { Id = "testRoleId" };
-        //    var roleManagementDTO = new RoleManagementDTO { Id = viewModel.Id };
-        //    var resultUpdate = ResultDTO.Fail("Error updating role");
-        //    _mapper.Setup(x => x.Map<RoleManagementDTO>(viewModel)).Returns(roleManagementDTO);
-        //    _mockUserManagementService.Setup(x => x.UpdateRole(roleManagementDTO)).ReturnsAsync(resultUpdate);
+            // Act
+            var result = await _controller.EditRole(viewModel);
 
-        //    var dto = new RoleManagementDTO { Id = viewModel.Id };
-        //    var resultFillModel = ResultDTO<UserManagementEditRoleViewModel>.Ok(viewModel);
-        //    _mockUserManagementService.Setup(x => x.FillRoleManagementDto(dto))
-        //        .ReturnsAsync(ResultDTO<RoleManagementDTO>.Ok(dto));
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<UserManagementEditRoleViewModel>(viewResult.Model);
+            Assert.Equal(roleManagementDTO.Id, model.Id);
+            Assert.Equal(roleManagementDTO.Name, model.Name);
+        }
 
-        //    // Act
-        //    var result = await _controller.EditRole(viewModel);
+        [Fact]
+        public async Task EditRole_ReturnsView_WhenUpdateRoleFails()
+        {
+            // Arrange
+            var viewModel = new UserManagementEditRoleViewModel { Id = "448cbeb7-964e-4527-9a6c-cea969c05ae4", Name = "test name" };
+            var roleManagementDTO = new RoleManagementDTO { Id = viewModel.Id, Name = "test name" };
 
-        //    // Assert
-        //    var viewResult = Assert.IsType<ViewResult>(result);
-        //    Assert.NotNull(viewResult.Model);
-        //    Assert.IsType<UserManagementEditRoleViewModel>(viewResult.Model);
-        //    Assert.Equal(viewModel.Id, ((UserManagementEditRoleViewModel)viewResult.Model).Id);
-        //}
+            // Mocking UpdateRole to return a failure
+            _mockUserManagementService.Setup(x => x.UpdateRole(It.IsAny<RoleManagementDTO>()))
+                .ReturnsAsync(ResultDTO.Fail("Update failed"));
 
-        //[Fact]
-        //public async Task EditRole_RedirectsToIndex_WhenUpdateRoleSucceeds()
-        //{
-        //    // Arrange
-        //    var viewModel = new UserManagementEditRoleViewModel { Id = "testRoleId" };
-        //    var roleManagementDTO = new RoleManagementDTO { Id = viewModel.Id };
-        //    var resultUpdate = ResultDTO.Ok();
+            var filledRoleManagementDTO = new RoleManagementDTO { Id = viewModel.Id, Name = "filled name" };
+            _mockUserManagementService.Setup(x => x.FillRoleManagementDto(It.IsAny<RoleManagementDTO>()))
+                .ReturnsAsync(ResultDTO<RoleManagementDTO>.Ok(filledRoleManagementDTO));
 
-        //    //_mapper.Setup(x => x.Map<RoleManagementDTO>(viewModel)).Returns(roleManagementDTO);
-        //    _mockUserManagementService.Setup(x => x.UpdateRole(roleManagementDTO)).ReturnsAsync(resultUpdate);
+            // Mocking claims
+            var claims = new List<AuthClaim> { new AuthClaim { } };
 
-        //    // Act
-        //    var result = await _controller.EditRole(viewModel);
+            // Act
+            var result = await _controller.EditRole(viewModel);
 
-        //    // Assert
-        //    var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-        //    Assert.Equal("Index", redirectResult.ActionName);
-        //}
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<UserManagementEditRoleViewModel>(viewResult.Model);
+            Assert.Equal(filledRoleManagementDTO.Id, model.Id);
+            Assert.Equal(filledRoleManagementDTO.Name, model.Name);
+            Assert.True(_controller.ModelState.ContainsKey("ModelOnly"));
+            Assert.Equal("Update failed", _controller.ModelState["ModelOnly"].Errors[0].ErrorMessage);
+        }
+
+
+        [Fact]
+        public async Task EditRole_RedirectsToIndex_WhenUpdateRoleSucceeds()
+        {
+            // Arrange
+            var viewModel = new UserManagementEditRoleViewModel { Id = "448cbeb7-964e-4527-9a6c-cea969c05ae4", Name = "test name" };
+            var roleManagementDTO = new RoleManagementDTO { Id = viewModel.Id, Name = "test name" };
+
+            _mockUserManagementService
+                .Setup(x => x.UpdateRole(It.Is<RoleManagementDTO>(dto => dto.Id == viewModel.Id && dto.Name == viewModel.Name)))
+                .ReturnsAsync(ResultDTO.Ok());
+            // Act
+            var result = await _controller.EditRole(viewModel);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectResult.ActionName);
+        }
 
         [Fact]
         public async Task DeleteRole_ReturnsRoleDTO_WhenIdIsValid()
@@ -691,6 +699,25 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Act & Assert
             var exception = await Assert.ThrowsAsync<Exception>(() => _controller.GetUserRoles(userId));
             Assert.Equal("Role ids not found", exception.Message);
+        }
+
+        [Fact]
+        public async Task FillUserManagementEditUserViewModelFromDto_ThrowsException_ReturnsFailureResult()
+        {
+            // Arrange
+            var dto = new UserManagementDTO { };
+            var expectedErrorMessage = "Test exception message";
+
+            // Mock the service to throw an exception
+            _mockUserManagementService.Setup(x => x.FillUserManagementDto(It.IsAny<UserManagementDTO>()))
+                .ThrowsAsync(new Exception(expectedErrorMessage));
+
+            // Act
+            var result = await _controller.FillUserManagementEditUserViewModelFromDto(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(expectedErrorMessage, result.ErrMsg);
         }
 
     }

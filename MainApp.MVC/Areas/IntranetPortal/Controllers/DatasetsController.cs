@@ -690,7 +690,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     }
                 }
 
-                return ResultDTO<string>.Ok(DbResHtml.T("Thumbnails generated successfully", "Resources").Value! + " \n with Errors: " + stringBuilder.ToString());
+                return ResultDTO<string>.Ok(
+                    DbResHtml.T("Thumbnails generated successfully", "Resources").Value! 
+                    + (stringBuilder.Length == 0 
+                        ? "" 
+                        : " \n with Errors: " + stringBuilder.ToString()));
             }
             catch (Exception ex)
             {

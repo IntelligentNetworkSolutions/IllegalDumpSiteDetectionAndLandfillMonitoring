@@ -11,8 +11,6 @@ namespace DAL.Repositories.DetectionRepositories
 {
     public class DetectedDumpSitesRepository : BaseResultRepository<DetectedDumpSite, Guid>, IDetectedDumpSitesRepository
     {
-        public DetectedDumpSitesRepository(ApplicationDbContext dbContext) : base(dbContext)
-        {
-        }
+        public DetectedDumpSitesRepository(ApplicationDbContext dbContext) : base(dbContext) { }
     }
 }
