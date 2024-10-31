@@ -1,9 +1,0 @@
-{
-    "default": true,
-    "name": "waste-template",
-    "description": "Waste Detection Documentation Template",
-    "author": "Your Organization",
-    "generationOptions": {
-        "markupEngine": "markdig"
-    }
-}

@@ -1,0 +1,15 @@
+{{!Copyright (c) 2022. INS. All Rights Reserved. Licensed under the Apache 2.0 license.}}
+{{!master template}}
+<html {{#_lang}}lang="{{_lang}}"{{/_lang}}>
+  <head>
+    {{>partials/head}}
+  </head>
+  <body data-spy="scroll" data-target="#affix" data-offset="120">
+    <div id="wrapper">
+      {{>partials/navbar}}
+      {{{conceptual}}}
+      {{>partials/footer}}
+    </div>
+    {{>partials/scripts}}
+  </body>
+</html>

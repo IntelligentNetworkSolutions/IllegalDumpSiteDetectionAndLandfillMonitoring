@@ -1,4 +1,4 @@
-# Landfill Management Module Guide  
+# Landfill Management Module  
 
 ## 3D Point Cloud Files  
 
