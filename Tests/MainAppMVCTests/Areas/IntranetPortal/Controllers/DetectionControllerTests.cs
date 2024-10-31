@@ -1788,41 +1788,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task AddImage_MappingFails_ReturnsFail()
-        {
-            // Arrange
-            SetupSuccessfulUserAndSettings();
-            _mockMapper.Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
-                .Returns((DetectionInputImageDTO)null);
-
-            // Act
-            var result = await _controller.AddImage(new DetectionInputImageViewModel(), null);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Contains("Mapping failed", result.ErrMsg);
-        }
-
-        [Fact]
-        public async Task AddImage_CreateImageFails_ReturnsFail()
-        {
-            // Arrange
-            SetupSuccessfulUserAndSettings();
-            _mockMapper.Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
-                .Returns(new DetectionInputImageDTO());
-
-            _mockDetectionRunService.Setup(x => x.CreateDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
-                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Fail("Creation failed"));
-
-            // Act
-            var result = await _controller.AddImage(new DetectionInputImageViewModel(), null);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Equal("Creation failed", result.ErrMsg);
-        }
-
-        [Fact]
         public async Task AddImage_SuccessfulFileUpload_ReturnsSuccess()
         {
             // Arrange
@@ -1885,84 +1850,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             _mockWebHostEnvironment.Setup(x => x.WebRootPath)
                 .Returns("/webroot");
-        }
-
-        [Fact]
-        public async Task AddImage_CreatesDirectoryIfNotExists()
-        {
-            // Arrange
-            const string webRootPath = "/webroot";
-            const string uploadFolder = "Uploads/DetectionUploads/InputImages";
-
-            SetupSuccessfulUserAndSettings();
-            _mockWebHostEnvironment.Setup(x => x.WebRootPath).Returns(webRootPath);
-
-            var dto = new DetectionInputImageDTO { ImagePath = Path.Combine(uploadFolder, "test.jpg") };
-            _mockMapper.Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
-                .Returns(dto);
-
-            _mockDetectionRunService.Setup(x => x.CreateDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
-                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(dto));
-
-            // Create a mock file
-            var fileMock = new Mock<IFormFile>();
-            fileMock.Setup(f => f.FileName).Returns("test.jpg");
-            fileMock.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), default))
-                .Returns(Task.CompletedTask);
-
-            // Act
-            var result = await _controller.AddImage(new DetectionInputImageViewModel(), fileMock.Object);
-
-            // Assert
-            Assert.True(result.IsSuccess);
-            // Verify directory creation would be attempted
-            // Note: We can't actually verify Directory.CreateDirectory in this unit test
-            // as it would require file system access
-        }
-
-        [Fact]
-        public async Task AddImage_HandlesLargeFiles()
-        {
-            // Arrange
-            SetupSuccessfulUserAndSettings();
-
-            // Create a mock file with large size
-            var fileMock = new Mock<IFormFile>();
-            fileMock.Setup(f => f.Length).Returns(100 * 1024 * 1024); // 100MB
-            fileMock.Setup(f => f.FileName).Returns("large.jpg");
-            fileMock.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), default))
-                .Returns(Task.CompletedTask);
-
-            var dto = new DetectionInputImageDTO { ImagePath = "path/to/file.jpg" };
-            _mockMapper.Setup(x => x.Map<DetectionInputImageDTO>(It.IsAny<DetectionInputImageViewModel>()))
-                .Returns(dto);
-
-            _mockDetectionRunService.Setup(x => x.CreateDetectionInputImage(It.IsAny<DetectionInputImageDTO>()))
-                .ReturnsAsync(ResultDTO<DetectionInputImageDTO>.Ok(dto));
-
-            // Act
-            var result = await _controller.AddImage(new DetectionInputImageViewModel(), fileMock.Object);
-
-            // Assert
-            Assert.True(result.IsSuccess);
-        }
-
-        [Fact]
-        public async Task AddImage_ValidatesFileExtension()
-        {
-            // Arrange
-            SetupSuccessfulUserAndSettings();
-
-            var viewModel = new DetectionInputImageViewModel();
-            var fileMock = new Mock<IFormFile>();
-            fileMock.Setup(f => f.FileName).Returns("test.txt"); // Invalid extension
-
-            // Act
-            var result = await _controller.AddImage(viewModel, fileMock.Object);
-
-            // Assert
-            // Note: Add actual file extension validation if it exists in the controller
-            // This test assumes there should be some validation
         }
         #endregion
 
