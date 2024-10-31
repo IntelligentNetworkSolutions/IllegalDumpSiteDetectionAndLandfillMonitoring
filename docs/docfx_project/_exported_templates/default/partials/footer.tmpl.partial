@@ -2,7 +2,7 @@
     <div class="container">
         <div class="navbar-collapse">
             <a title="Home Page" class="navbar-brand" href="{{_rel}}">
-                <img id="logo" class="ins-logo" height=55 width=155 
+                <img id="logo" class="ins-logo" height=54 width=225 
                     src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
             </a>
             <ul class="nav level1 navbar-nav">

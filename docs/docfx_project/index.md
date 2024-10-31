@@ -57,7 +57,7 @@ Our platform utilizes high-resolution images combined with sophisticated image a
     </h4>
     <h6 style="display: flex; flex-grow: 1;">Train proven AI model architectures with your custom datasets</h6>
     <h6><a href="/guides/training-process/training-guide.html" style="display: flex; flex-grow: 1;">
-      How To Annotate</a></h6>
+      What and Why to Train ?</a></h6>
     <h6><a href="/documentation/training-process/overview.html" style="display: flex; flex-grow: 1;">
       Documentation</a></h6>
   </div>
