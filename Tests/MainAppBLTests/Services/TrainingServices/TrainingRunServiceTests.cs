@@ -494,42 +494,90 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
         }
 
         // TODO: Make as Integration
-        //[Fact]
-        //public async Task CreateTrainedModelByTrainingRunId_Success()
-        //{
-        //    // Arrange
-        //    var trainingRunId = Guid.NewGuid();
-        //    var trainingRun = new TrainingRun
-        //    {
-        //        Id = trainingRunId,
-        //        Name = "Test Run",
-        //        DatasetId = Guid.NewGuid(),
-        //        CreatedById = "testuser"
-        //    };
+        [Trait("Category", "Integration")]
+        [Fact]
+        public async Task CreateTrainedModelByTrainingRunId_Success()
+        {
+            // Arrange
+            Guid guid = Guid.NewGuid();
+            string rootPath = Path.Combine(Path.GetTempPath(), $"test_mmdetectionservice_{guid}");
+            Mock<IMMDetectionConfigurationService> mockMMDetectionConfigService = new Mock<IMMDetectionConfigurationService>();
+            mockMMDetectionConfigService.Setup(x => x.GetTrainingRunOutDirAbsPathByRunId(guid))
+                .Returns(rootPath);
+            string runDirPath = mockMMDetectionConfigService.Object.GetTrainingRunOutDirAbsPathByRunId(guid);
+            
+            // Config
+            string configFilePath = 
+                CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(runDirPath, $"{guid}.py"));
+            
+            Func<Guid, ResultDTO<string>> configFunc = id => id == guid ? ResultDTO<string>.Ok(configFilePath) : ResultDTO<string>.Fail("Err");
+            mockMMDetectionConfigService.Setup(x => x.GetTrainedModelConfigFileAbsPath(guid))
+                        .Returns(configFunc);
+            
+            // Results Log
+            string timeRunDirPath = 
+                CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(runDirPath, DateTime.UtcNow.ToString("ffffff")));
+            string visDataPath = 
+                CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(timeRunDirPath, "vis_data"));
+            string resultsFilePath = 
+                CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(visDataPath, "scalars.json"));
 
-        //    _mockTrainingRunsRepository.Setup(x => x.GetById(trainingRunId, false, null))
-        //        .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(trainingRun));
+            if (!Directory.Exists(runDirPath))
+                Directory.CreateDirectory(runDirPath);
+            if (!Directory.Exists(timeRunDirPath))
+                Directory.CreateDirectory(timeRunDirPath);
+            if (!Directory.Exists(visDataPath))
+                Directory.CreateDirectory(visDataPath);
+            string scalarsJson = @"
+                    {""lr"": 0.0017417234468937875, ""data_time"": 0.14113207838752054, ""loss"": 0.7561668855222788, ""loss_rpn_cls"": 0.13446652542122386, ""loss_rpn_bbox"": 0.03935239085165614, ""loss_cls"": 0.34188201278448105, ""acc"": 88.330078125, ""loss_bbox"": 0.2404659575867382, ""time"": 1.017478260126981, ""epoch"": 1, ""iter"": 44, ""memory"": 9487, ""step"": 44}
+                    {""lr"": 0.0035034869739478955, ""data_time"": 0.004693560600280762, ""loss"": 0.7341208803653717, ""loss_rpn_cls"": 0.05067111330106854, ""loss_rpn_bbox"": 0.03656546442769468, ""loss_cls"": 0.2723593489825726, ""acc"": 88.96484375, ""loss_bbox"": 0.3745249545574188, ""time"": 0.8574319076538086, ""epoch"": 2, ""iter"": 88, ""memory"": 9487, ""step"": 88}
+                    {""coco/bbox_mAP"": 0.181, ""coco/bbox_mAP_50"": 0.431, ""coco/bbox_mAP_75"": 0.127, ""coco/bbox_mAP_s"": 0.022, ""coco/bbox_mAP_m"": 0.135, ""coco/bbox_mAP_l"": 0.247, ""data_time"": 1.1203160762786866, ""time"": 1.5174825668334961, ""step"": 2}
+                ";
+            File.WriteAllText(resultsFilePath, scalarsJson);
 
-        //    _mockMMDetectionConfiguration.Setup(x => x.GetTrainedModelConfigFileAbsPath(trainingRunId))
-        //        .Returns(ResultDTO<string>.Ok("config/path"));
+            Func<Guid, ResultDTO<string>> resLogFunc = id 
+                => id == guid ? ResultDTO<string>.Ok(resultsFilePath) : ResultDTO<string>.Fail("Err");
+            
+            mockMMDetectionConfigService.Setup(x => x.GetTrainingRunResultLogFileAbsPath(guid))
+                        .Returns(resLogFunc);
 
-        //    _mockMMDetectionConfiguration.Setup(x => x.GetTrainedModelBestEpochFileAbsPath(trainingRunId, It.IsAny<int>()))
-        //        .Returns(ResultDTO<string>.Ok("model/path"));
+            // Model 
+            string modelFilePath = 
+                CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(runDirPath, $"epoch_1.pth"));
 
-        //    _mockMMDetectionConfiguration.Setup(x => x.GetTrainingRunResultLogFileAbsPath(trainingRunId))
-        //        .Returns(ResultDTO<string>.Ok("results/path"));
+            Func<Guid, int?, ResultDTO<string>> modelFunc = (Guid idPar, int? epochPar = null) =>
+                idPar == guid ? ResultDTO<string>.Ok(modelFilePath) : ResultDTO<string>.Fail("Err");
 
-        //    var trainedModel = new TrainedModel { Id = Guid.NewGuid() };
-        //    _mockTrainedModelsRepository.Setup(x => x.CreateAndReturnEntity(It.IsAny<TrainedModel>(), true, default))
-        //        .ReturnsAsync(ResultDTO<TrainedModel>.Ok(trainedModel));
+            mockMMDetectionConfigService.Setup(x => x.GetTrainedModelBestEpochFileAbsPath(guid, 2))
+                .Returns(() => modelFunc(guid, 2));
 
-        //    // Act
-        //    var result = await _service.CreateTrainedModelByTrainingRunId(trainingRunId);
 
-        //    // Assert
-        //    Assert.True(result.IsSuccess);
-        //    Assert.Equal(trainedModel.Id, result.Data);
-        //}
+            var trainingRunId = guid;
+            var trainingRun = new TrainingRun
+            {
+                Id = trainingRunId,
+                Name = "Test Run",
+                DatasetId = Guid.NewGuid(),
+                CreatedById = "testuser"
+            };
+
+            _mockTrainingRunsRepository.Setup(x => x.GetById(trainingRunId, false, null))
+                .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(trainingRun));
+
+            var trainedModel = new TrainedModel { Id = Guid.NewGuid() };
+            _mockTrainedModelsRepository.Setup(x => x.CreateAndReturnEntity(It.IsAny<TrainedModel>(), true, default))
+                .ReturnsAsync(ResultDTO<TrainedModel>.Ok(trainedModel));
+
+            TrainingRunService trainingRunService = new TrainingRunService(mockMMDetectionConfigService.Object, _mockTrainingRunsRepository.Object,
+                _mockTrainedModelsRepository.Object, _mockMapper.Object, _mockLogger.Object, _mockDetectionRunService.Object, _mockAppSettingsAccessor.Object);
+
+            // Act
+            var result = await trainingRunService.CreateTrainedModelByTrainingRunId(trainingRunId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(trainedModel.Id, result.Data);
+        }
 
         [Fact]
         public async Task GenerateTrainingRunConfigFile_Success()

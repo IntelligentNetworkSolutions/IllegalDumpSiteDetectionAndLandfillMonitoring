@@ -71,41 +71,41 @@ namespace Tests.MainAppBLTests.Services.DatasetServices
         }
 
         // TODO: Uncoment when fix_coco_utils is merged
-        //[Fact]
-        //public void IsValidCocoFormatedUploadDirectory_WithValidSplitDirectories_ReturnsTrue()
-        //{
-        //    // Arrange
-        //    string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        //    Directory.CreateDirectory(tempPath);
-        //    string trainDir = Path.Combine(tempPath, "train");
-        //    string validDir = Path.Combine(tempPath, "valid");
-        //    string testDir = Path.Combine(tempPath, "test");
+        [Fact]
+        public void IsValidCocoFormatedUploadDirectory_WithValidSplitDirectories_ReturnsTrue()
+        {
+            // Arrange
+            string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tempPath);
+            string trainDir = Path.Combine(tempPath, "train");
+            string validDir = Path.Combine(tempPath, "valid");
+            string testDir = Path.Combine(tempPath, "test");
 
-        //    try
-        //    {
-        //        // Create directories and sample files
-        //        Directory.CreateDirectory(trainDir);
-        //        Directory.CreateDirectory(validDir);
-        //        Directory.CreateDirectory(testDir);
+            try
+            {
+                // Create directories and sample files
+                Directory.CreateDirectory(trainDir);
+                Directory.CreateDirectory(validDir);
+                Directory.CreateDirectory(testDir);
 
-        //        File.WriteAllBytes(Path.Combine(trainDir, "image1.jpg"), new byte[] { 0 });
-        //        File.WriteAllBytes(Path.Combine(validDir, "image2.jpg"), new byte[] { 0 });
-        //        File.WriteAllBytes(Path.Combine(testDir, "image3.jpg"), new byte[] { 0 });
-        //        File.WriteAllText(Path.Combine(trainDir, "annotations_coco.json"), "{}");
-        //        File.WriteAllText(Path.Combine(validDir, "annotations_coco.json"), "{}");
-        //        File.WriteAllText(Path.Combine(testDir, "annotations_coco.json"), "{}");
+                File.WriteAllBytes(Path.Combine(trainDir, "image1.jpg"), new byte[] { 0 });
+                File.WriteAllBytes(Path.Combine(validDir, "image2.jpg"), new byte[] { 0 });
+                File.WriteAllBytes(Path.Combine(testDir, "image3.jpg"), new byte[] { 0 });
+                File.WriteAllText(Path.Combine(trainDir, "annotations_coco.json"), "{}");
+                File.WriteAllText(Path.Combine(validDir, "annotations_coco.json"), "{}");
+                File.WriteAllText(Path.Combine(testDir, "annotations_coco.json"), "{}");
 
-        //        // Act
-        //        ResultDTO result = _service.IsValidCocoFormatedUploadDirectory(tempPath, false, true, true);
+                // Act
+                ResultDTO result = _service.IsValidCocoFormatedUploadDirectory(tempPath, false, true, true);
 
-        //        // Assert
-        //        Assert.True(result.IsSuccess);
-        //    }
-        //    finally
-        //    {
-        //        Directory.Delete(tempPath, true);
-        //    }
-        //}
+                // Assert
+                Assert.True(result.IsSuccess);
+            }
+            finally
+            {
+                Directory.Delete(tempPath, true);
+            }
+        }
 
         [Fact]
         public void IsValidCocoFormatedUploadDirectory_WithInvalidDirectoryCount_ReturnsFalse()
@@ -493,38 +493,38 @@ namespace Tests.MainAppBLTests.Services.DatasetServices
 
         #region GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync Tests
         // TODO: Fix for GitHub Actions Runner
-        //[Fact]
-        //public async Task GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPath_WithValidData_ReturnsCocoDataset()
-        //{
-        //    // Arrange
-        //    string tempPath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
-        //    Directory.CreateDirectory(tempPath);
+        [Fact]
+        public async Task GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPath_WithValidData_ReturnsCocoDataset()
+        {
+            // Arrange
+            string tempPath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+            Directory.CreateDirectory(tempPath);
 
-        //    try
-        //    {
-        //        File.WriteAllBytes(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "image1.jpg")), new byte[] { 0 });
-        //        string validJson = @"{
-        //        ""images"": [{""id"": 1, ""file_name"": ""image1.jpg""}],
-        //        ""annotations"": [{""image_id"": 1, ""id"": 1}],
-        //        ""categories"": [{""id"": 1, ""name"": ""test""}]
-        //    }";
-        //        File.WriteAllText(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "annotations_coco.json")), validJson);
+            try
+            {
+                File.WriteAllBytes(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "image1.jpg")), new byte[] { 0 });
+                string validJson = @"{
+                ""images"": [{""id"": 1, ""file_name"": ""image1.jpg""}],
+                ""annotations"": [{""image_id"": 1, ""id"": 1}],
+                ""categories"": [{""id"": 1, ""name"": ""test""}]
+            }";
+                File.WriteAllText(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "annotations_coco.json")), validJson);
 
-        //        // Act
-        //        ResultDTO<CocoDatasetDTO> result = await _service.GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(tempPath);
+                // Act
+                ResultDTO<CocoDatasetDTO> result = await _service.GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPathAsync(tempPath);
 
-        //        // Assert
-        //        Assert.True(result.IsSuccess);
-        //        Assert.NotNull(result.Data);
-        //        Assert.Single(result.Data.Images);
-        //        Assert.Single(result.Data.Annotations);
-        //        Assert.Single(result.Data.Categories);
-        //    }
-        //    finally
-        //    {
-        //        Directory.Delete(tempPath, true);
-        //    }
-        //}
+                // Assert
+                Assert.True(result.IsSuccess);
+                Assert.NotNull(result.Data);
+                Assert.Single(result.Data.Images);
+                Assert.Single(result.Data.Annotations);
+                Assert.Single(result.Data.Categories);
+            }
+            finally
+            {
+                Directory.Delete(tempPath, true);
+            }
+        }
 
         [Fact]
         public async Task GetBulkAnnotatedValidParsedCocoDatasetFromDirectoryPath_WithInvalidJson_ReturnsFalse()
@@ -657,29 +657,29 @@ namespace Tests.MainAppBLTests.Services.DatasetServices
         }
 
         // TODO: Fix for GitHub Actions Runner
-        //[Fact]
-        //public void IsOnlyFilesCocoDatasetDirectory_WithValidFiles_ReturnsTrue()
-        //{
-        //    // Arrange
-        //    string tempPath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
-        //    Directory.CreateDirectory(tempPath);
+        [Fact]
+        public void IsOnlyFilesCocoDatasetDirectory_WithValidFiles_ReturnsTrue()
+        {
+            // Arrange
+            string tempPath = CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+            Directory.CreateDirectory(tempPath);
 
-        //    try
-        //    {
-        //        File.WriteAllBytes(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "image1.jpg")), new byte[] { 0 });
-        //        File.WriteAllText(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "annotations_coco.json")), "{}");
+            try
+            {
+                File.WriteAllBytes(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "image1.jpg")), new byte[] { 0 });
+                File.WriteAllText(CommonHelper.PathToLinuxRegexSlashReplace(Path.Combine(tempPath, "annotations_coco.json")), "{}");
 
-        //        // Act
-        //        bool result = _service.IsOnlyFilesCocoDatasetDirectory(tempPath, true);
+                // Act
+                bool result = _service.IsOnlyFilesCocoDatasetDirectory(tempPath, true);
 
-        //        // Assert
-        //        Assert.True(result);
-        //    }
-        //    finally
-        //    {
-        //        Directory.Delete(tempPath, true);
-        //    }
-        //}
+                // Assert
+                Assert.True(result);
+            }
+            finally
+            {
+                Directory.Delete(tempPath, true);
+            }
+        }
         #endregion
     }
 }
