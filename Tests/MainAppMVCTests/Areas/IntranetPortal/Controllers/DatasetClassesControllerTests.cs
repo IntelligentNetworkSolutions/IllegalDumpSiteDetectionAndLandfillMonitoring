@@ -271,6 +271,132 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
+        public async Task EditClass_UpdateFailsWithData2_ReturnsErrorJsonWithChildrenClasses()
+        {
+            // Arrange
+            var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
+            var errorMessage = "Error specific to Data = 2";
+
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                .ReturnsAsync(new ResultDTO<int>(false, 2, errorMessage, null));
+
+            var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                .ReturnsAsync(allClasses);
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
+                               .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                               .ReturnsAsync(new List<DatasetDTO>());
+
+            // Act
+            var result = await _controller.EditClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+            Assert.NotNull(jsonData["childrenClassesList"]);
+        }
+
+        [Fact]
+        public async Task EditClass_UpdateFailsWithData4_ReturnsErrorJson()
+        {
+            // Arrange
+            var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
+            var errorMessage = "Error specific to Data = 4";
+
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                .ReturnsAsync(new ResultDTO<int>(false, 4, errorMessage, null));
+            var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                .ReturnsAsync(allClasses);
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
+                   .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                               .ReturnsAsync(new List<DatasetDTO>());
+
+            // Act
+            var result = await _controller.EditClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task EditClass_UpdateFailsWithData5_ReturnsErrorJson()
+        {
+            // Arrange
+            var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
+            var errorMessage = "Error specific to Data = 5";
+
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                .ReturnsAsync(new ResultDTO<int>(false, 5, errorMessage, null));
+            var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                .ReturnsAsync(allClasses);
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
+                   .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                               .ReturnsAsync(new List<DatasetDTO>());
+
+            // Act
+            var result = await _controller.EditClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task EditClass_UpdateFailsWithNoSpecificData_ReturnsGeneralErrorJson()
+        {
+            // Arrange
+            var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
+
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                .ReturnsAsync(new ResultDTO<int>(false, 0, "General update failure", null));
+            var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                .ReturnsAsync(allClasses);
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
+                   .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                               .ReturnsAsync(new List<DatasetDTO>());
+
+            // Act
+            var result = await _controller.EditClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Dataset class was not updated", jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task EditClass_ChildrenClassesListIsNull_ThrowsException()
+        {
+            // Arrange
+            var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
+
+            // Set up GetAllDatasetClasses to return an empty list to simulate no matching ParentClassId
+            var allClasses = new List<DatasetClassDTO>();
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                .ReturnsAsync(allClasses);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<Exception>(() => _controller.EditClass(model));
+            Assert.Equal("Object not found", exception.Message);
+        }
+
+
+        [Fact]
         public async Task DeleteClass_Success_ReturnsSuccessJson()
         {
             // Arrange
@@ -418,6 +544,72 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
             Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task DeleteClass_ClassInUse_ReturnsErrorJsonWithDatasetsWhereClassIsUsed()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var errorMessage = "This dataset class is in use and cannot be deleted.";
+            var datasetList = new List<DatasetDTO>
+    {
+        new DatasetDTO { Id = Guid.NewGuid(), Name = "Dataset1" },
+        new DatasetDTO { Id = Guid.NewGuid(), Name = "Dataset2" }
+    };
+            var datasetClassesForClass = new List<Dataset_DatasetClassDTO>
+    {
+        new Dataset_DatasetClassDTO { DatasetId = datasetList[0].Id },
+        new Dataset_DatasetClassDTO { DatasetId = datasetList[1].Id }
+    };
+
+            _mockDatasetClassesService.Setup(service => service.DeleteDatasetClass(classId))
+                                      .ReturnsAsync(new ResultDTO<int>(false, 3, errorMessage, null));
+
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                                      .ReturnsAsync(new List<DatasetClassDTO>());
+
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
+                                           .ReturnsAsync(datasetClassesForClass);
+
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                               .ReturnsAsync(datasetList);
+
+            // Act
+            var result = await _controller.DeleteClass(classId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+            Assert.NotNull(jsonData["datasetsWhereClassIsUsed"]);
+        }
+
+        [Fact]
+        public async Task DeleteClass_UnsuccessfulDeletion_DefaultErrorResponse()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+
+            _mockDatasetClassesService.Setup(service => service.DeleteDatasetClass(classId))
+                                      .ReturnsAsync(new ResultDTO<int>(false, 0, null, null));
+
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                                      .ReturnsAsync(new List<DatasetClassDTO>());
+
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
+                                           .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                               .ReturnsAsync(new List<DatasetDTO>());
+
+            // Act
+            var result = await _controller.DeleteClass(classId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Dataset class was not deleted", jsonData["responseError"]["Value"].ToString());
         }
 
 
