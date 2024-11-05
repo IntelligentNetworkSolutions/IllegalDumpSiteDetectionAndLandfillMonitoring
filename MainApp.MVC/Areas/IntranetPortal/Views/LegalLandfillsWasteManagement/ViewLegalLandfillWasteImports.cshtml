@@ -31,13 +31,13 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="row justify-content-between">
-                        @if (User.HasAuthClaim(SD.AuthClaims.AddLegalLandfillWasteImports))
-                        {
-                            <a asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="CreateLegalLandfillWasteImport" class="mb-1 btn bg-gradient-primary float-left">
-                                <i class="fas fa-plus"></i>
-                                @DbResHtml.T("Add Legal Landfill Waste Import", "Resources")
-                            </a>
-                        }
+                            @if (User.HasAuthClaim(SD.AuthClaims.AddLegalLandfillWasteImports))
+                            {
+                                <a asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="CreateLegalLandfillWasteImport" class="mb-1 btn bg-gradient-primary float-left">
+                                    <i class="fas fa-plus"></i>
+                                    @DbResHtml.T("Add Legal Landfill Waste Import", "Resources")
+                                </a>
+                            }
                         <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
                             <i class="fas fa-file-alt"></i>
                             </button>
@@ -61,7 +61,7 @@
                                         <select id="wasteTypeFilter" class="form-control select2" multiple>
                                             @foreach (var wasteType in Model.Select(x => x.LegalLandfillWasteType).DistinctBy(x => x.Name))
                                             {
-                                                <option value="@wasteType.Name">@wasteType.Name</option>
+                                                    <option value="@wasteType.Name">@wasteType.Name</option>
                                             }
                                         </select>
                                     </div>
@@ -71,10 +71,10 @@
                                             @if (Model != null)
                                             {
                                                 @foreach (var truck in Model.Where(x => x.LegalLandfillTruck != null)
-                                               .Select(x => x.LegalLandfillTruck)
-                                               .DistinctBy(t => t.Name))
+                                              .Select(x => x.LegalLandfillTruck)
+                                              .DistinctBy(t => t.Name))
                                                 {
-                                                    <option value="@truck?.Name">@truck?.Name</option>
+                                                            <option value="@truck?.Name">@truck?.Name</option>
                                                 }
                                             }
                                         </select>
@@ -92,7 +92,7 @@
                                         <select id="landfillFilter" class="form-control select2" multiple>
                                             @foreach (var landfill in Model.Select(l => l.LegalLandfill).DistinctBy(l => l.Name))
                                             {
-                                                <option value="@landfill.Name">@landfill.Name</option>
+                                                    <option value="@landfill.Name">@landfill.Name</option>
                                             }
                                         </select>
                                     </div>
@@ -104,10 +104,9 @@
                             </div>
                         </div>
 
-                        </div>
 
                         <div class="mt-5">
-                            <table id="legalLandfillsTable" class="table table-sm table-bordered table-striped">
+                            <table id="legalLandfillsWasteTable" class="table table-sm table-bordered table-striped">
                                 <thead>
                                     <tr>
                                         <th>@DbResHtml.T("Import/Export", "Resources")</th>
@@ -123,369 +122,368 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var item in Model)
-                                    {
-                                        <tr>
-                                            <td>
-                                                @if (item.ImportExportStatus == 1)
-                                                {
-                                                    @:Import
-                                                }
-                                                else if (item.ImportExportStatus == -1)
-                                                {
-                                                    @:Export
-                                                }
-                                            </td>
-                                            <td>@item.LegalLandfillWasteType.Name</td>
-                                            <td>@item.LegalLandfill.Name</td>
-                                            <td>@item.LegalLandfillTruck?.Name</td>
-                                            <td>@item.LegalLandfillTruck?.Registration</td>
-                                            <td>
-                                                @if (item.Weight.HasValue)
-                                                {
-                                                    @FormatNumber(item.ImportExportStatus == 1
-                                                             ? item.Weight.Value
-                                                             : item.Weight.Value * -1)
-                                                }
-                                                else
-                                                {
-                                                    @:/
-                                                }
-                                            </td>
-                                            <td>
-                                                @if (item.Capacity.HasValue)
-                                                {
-                                                    @FormatNumber(item.ImportExportStatus == 1
-                                                             ? item.Capacity.Value
-                                                             : item.Capacity.Value * -1)
-                                                }
-                                                else
-                                                {
-                                                    @:/
-                                                }
-                                            </td>
-                                            <td>@item.CreatedBy.NormalizedUserName</td>
-                                            <td>@item.CreatedOn.ToString("dd.MM.yyyy")</td>
-                                            <td>
-                                                @if (User.HasAuthClaim(SD.AuthClaims.EditLegalLandfillWasteImports))
-                                                {
-                                                    <form action="@Url.Action("EditLegalLandfillWasteImport", "LegalLandfillsWasteManagement")" method="get" style="display:inline;">
-                                                        <input type="hidden" name="legalLandfillWasteImportId" value="@item.Id" />
-                                                        <button type="submit" class="mb-1 btn bg-gradient-warning text-white btn-xs" title="@DbResHtml.T("Edit", "Resources")">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                    </form>
-                                                }
-                                                @if (User.HasAuthClaim(SD.AuthClaims.DeleteLegalLandfillWasteImports))
-                                                {
-                                                    <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteLegalLandfillWasteImportModalFunction('@item.Id')" title="@DbResHtml.T("Delete Legal Landfill Waste Import", "Resources")">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
+                                @foreach (var item in Model)
+                                {
+                                            <tr>
+                                                <td>
+                                            @if (item.ImportExportStatus == 1)
+                                            {
+                                                @:Import
+                                            }
+                                            else if (item.ImportExportStatus == -1)
+                                            {
+                                                @:Export
+                                            }
+                                                </td>
+                                                <td>@item.LegalLandfillWasteType.Name</td>
+                                                <td>@item.LegalLandfill.Name</td>
+                                                <td>@item.LegalLandfillTruck?.Name</td>
+                                                <td>@item.LegalLandfillTruck?.Registration</td>
+                                                <td>
+                                            @if (item.Weight.HasValue)
+                                            {
+                                                @FormatNumber(item.ImportExportStatus == 1
+                                                                  ? item.Weight.Value
+                                                                  : item.Weight.Value * -1)
+                                            }
+                                            else
+                                            {
+                                                @:/
+                                            }
+                                                </td>
+                                                <td>
+                                            @if (item.Capacity.HasValue)
+                                            {
+                                                @FormatNumber(item.ImportExportStatus == 1
+                                                                  ? item.Capacity.Value
+                                                                  : item.Capacity.Value * -1)
+                                            }
+                                            else
+                                            {
+                                                @:/
+                                            }
+                                                </td>
+                                                <td>@item.CreatedBy.NormalizedUserName</td>
+                                                <td>@item.CreatedOn.ToString("dd.MM.yyyy")</td>
+                                                <td>
+                                            @if (User.HasAuthClaim(SD.AuthClaims.EditLegalLandfillWasteImports))
+                                            {
+                                                            <form action="@Url.Action("EditLegalLandfillWasteImport", "LegalLandfillsWasteManagement")" method="get" style="display:inline;">
+                                                                <input type="hidden" name="legalLandfillWasteImportId" value="@item.Id" />
+                                                                <button type="submit" class="mb-1 btn bg-gradient-warning text-white btn-xs" title="@DbResHtml.T("Edit", "Resources")">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                            </form>
+                                            }
+                                            @if (User.HasAuthClaim(SD.AuthClaims.DeleteLegalLandfillWasteImports))
+                                            {
+                                                            <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteLegalLandfillWasteImportModalFunction('@item.Id')" title="@DbResHtml.T("Delete Legal Landfill Waste Import", "Resources")">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                            }
+                                                </td>
+                                            </tr>
+                                }
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
+                        </div> 
+                    </div> 
                 </div>
             </div>
         </div>
     </div>
-</div>
 
 @section Scripts {
-    <script>
+        <script>
         @{
             var httpContext = ViewContext.HttpContext;
             var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
             var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
         }
 
-$(document).ready(function () {
-    $('.select2').select2();
-    $('[data-toggle="tooltip"]').tooltip();
+    $(document).ready(function () {
+        $('.select2').select2();
+        $('[data-toggle="tooltip"]').tooltip();
 
-    var table = $('#legalLandfillsTable').DataTable({
-        paging: true,
-        pageLength: 100,
-        columnDefs: [{ width: "20%", targets: 2 }],
-        language: { url: "@langPath" },
-        dom: 'Bfrtip',
-        buttons: [
-            {
-                extend: 'excelHtml5',
-                className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
-                text: '<i class="fas fa-file-alt"></i>',
-                titleAttr: "Export to excel",
-                filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
-                exportOptions: { columns: ':not(.notexport)' }
+        var table = $('#legalLandfillsWasteTable').DataTable({
+            paging: true,
+            pageLength: 100,
+            columnDefs: [{ width: "20%", targets: 2 }],
+            language: { url: "@langPath" },
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
+                    text: '<i class="fas fa-file-alt"></i>',
+                    titleAttr: "Export to excel",
+                    filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
+                    exportOptions: { columns: ':not(.notexport)' }
+                }
+            ]
+        });
+
+        $("#exportToExcelButton").click(function () {
+            table.button('.export-to-excel-button').trigger();
+        });
+
+            $('.datepicker').datepicker({
+            dateFormat: 'dd.mm.yy',
+            onSelect: function() {
+                $(this).datepicker("hide"); 
             }
-        ]
-    });
+        });
 
-    $("#exportToExcelButton").click(function () {
-        table.button('.export-to-excel-button').trigger();
-    });
+    $('#applyFilters').on('click', function () {
+        var dateFrom = $('#dateFrom').val();
+        var dateTo = $('#dateTo').val();
+        var wasteTypeValues = $('#wasteTypeFilter').val();
+        var truckValues = $('#truckFilter').val();
+        var importExportValue = $('#importExportFilter').val();
+        var landfillValues = $('#landfillFilter').val();
 
-        $('.datepicker').datepicker({
-        dateFormat: 'dd.mm.yy',
-        onSelect: function() {
-            $(this).datepicker("hide"); 
-        }
-    });
-
-$('#applyFilters').on('click', function () {
-    var dateFrom = $('#dateFrom').val();
-    var dateTo = $('#dateTo').val();
-    var wasteTypeValues = $('#wasteTypeFilter').val();
-    var truckValues = $('#truckFilter').val();
-    var importExportValue = $('#importExportFilter').val();
-    var landfillValues = $('#landfillFilter').val();
-
-    $.fn.dataTable.ext.search.pop();
-
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-        var rowDateParts = data[8].split('.'); 
-        var rowDate = new Date(rowDateParts[2], rowDateParts[1] - 1, rowDateParts[0]);
-
-        var fromDate = dateFrom ? new Date(dateFrom.split('.').reverse().join('-')) : null; 
-        var toDate = dateTo ? new Date(dateTo.split('.').reverse().join('-')) : null;
-
-        if (fromDate && !toDate) { 
-            if (rowDate < fromDate) return false; 
-        }
-        if (!fromDate && toDate) {
-            if (rowDate > toDate) return false; 
-        }
-        if (fromDate && toDate) { 
-            if (rowDate < fromDate || rowDate > toDate) return false; 
-        }
-
-        if (wasteTypeValues && wasteTypeValues.length > 0 && !wasteTypeValues.includes(data[1])) return false;
-        if (truckValues && truckValues.length > 0 && !truckValues.includes(data[3])) return false;
-        if (importExportValue && importExportValue !== "" && (data[0] === "Import" ? 1 : (data[0] === "Export" ? -1 : null)) !== parseInt(importExportValue)) return false;
-        if (landfillValues && landfillValues.length > 0 && !landfillValues.includes(data[2])) return false;
-
-        return true;
-    });
-
-    table.draw();
-});
-
-
-
-
-    // Reset Filters Button Click Event
-    $('#resetFilters').on('click', function () {
-        $('#dateFrom').val('');
-        $('#dateTo').val('');
-        $('#wasteTypeFilter').val(null).trigger('change');
-        $('#truckFilter').val(null).trigger('change');
-        $('#importExportFilter').val('');
-        $('#landfillFilter').val(null).trigger('change');
-
-        // Clear DataTable search filters
         $.fn.dataTable.ext.search.pop();
 
-        // Redraw the table with all data
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            var rowDateParts = data[8].split('.'); 
+            var rowDate = new Date(rowDateParts[2], rowDateParts[1] - 1, rowDateParts[0]);
+
+            var fromDate = dateFrom ? new Date(dateFrom.split('.').reverse().join('-')) : null; 
+            var toDate = dateTo ? new Date(dateTo.split('.').reverse().join('-')) : null;
+
+            if (fromDate && !toDate) { 
+                if (rowDate < fromDate) return false; 
+            }
+            if (!fromDate && toDate) {
+                if (rowDate > toDate) return false; 
+            }
+            if (fromDate && toDate) { 
+                if (rowDate < fromDate || rowDate > toDate) return false; 
+            }
+
+            if (wasteTypeValues && wasteTypeValues.length > 0 && !wasteTypeValues.includes(data[1])) return false;
+            if (truckValues && truckValues.length > 0 && !truckValues.includes(data[3])) return false;
+            if (importExportValue && importExportValue !== "" && (data[0] === "Import" ? 1 : (data[0] === "Export" ? -1 : null)) !== parseInt(importExportValue)) return false;
+            if (landfillValues && landfillValues.length > 0 && !landfillValues.includes(data[2])) return false;
+
+            return true;
+        });
+
         table.draw();
     });
-});
 
 
 
 
-        function deleteLandfillWasteImportConfirmed() {
+        // Reset Filters Button Click Event
+        $('#resetFilters').on('click', function () {
+            $('#dateFrom').val('');
+            $('#dateTo').val('');
+            $('#wasteTypeFilter').val(null).trigger('change');
+            $('#truckFilter').val(null).trigger('change');
+            $('#importExportFilter').val('');
+            $('#landfillFilter').val(null).trigger('change');
 
-            const id = $("#txtDeleteId").val();
-            const importExportStatus = $("#txtDeleteImportExport").val();
-            const legalLandfillName = $("#txtDeleteLandfillName").val();
-            const truckName = $("#txtDeleteTruckName").val();
-            const truckRegistration = $("#txtDeleteTruckRegistration").val();
-            const weight = $("#txtDeleteWeight").val();
-            const capacity = $("#txtDeleteCapacity").val();
-            const createdBy = $("#txtDeleteCreatedBy").val();
-            const createdOn = $("#txtDeleteCreatedOn").val();
-            const createdById = $("#txtDeleteCreatedById").val();
+            // Clear DataTable search filters
+            $.fn.dataTable.ext.search.pop();
 
-            var legalLandfillWasteImportViewModel = {
-                Id: id,
-                ImportExportStatus: importExportStatus,
-                LegalLandfillName: legalLandfillName,
-                TruckName: truckName,
-                TruckRegistration: truckRegistration,
-                Weight: weight,
-                Capacity: capacity,
-                CreatedBy: createdBy,
-                CreatedOn: createdOn,
-                CreatedById: createdById,
+            // Redraw the table with all data
+            table.draw();
+        });
+    });
 
-            }
-            console.log(legalLandfillWasteImportViewModel)
 
-            $.ajax({
-                type: "POST",
-                url: "@Url.Action("DeleteLegalLandfillWasteImportConfirmed", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
-                data: {
-                    legalLandfillWasteImportViewModel: legalLandfillWasteImportViewModel
-                },
-                success: function (data) {
-                    console.log(data)
-                    if (data != undefined || data != null) {
-                        if (data.isSuccess == false && data.errMsg != null) {
+
+
+            function deleteLandfillWasteImportConfirmed() {
+
+                const id = $("#txtDeleteId").val();
+                const importExportStatus = $("#txtDeleteImportExport").val();
+                const legalLandfillName = $("#txtDeleteLandfillName").val();
+                const truckName = $("#txtDeleteTruckName").val();
+                const truckRegistration = $("#txtDeleteTruckRegistration").val();
+                const weight = $("#txtDeleteWeight").val();
+                const capacity = $("#txtDeleteCapacity").val();
+                const createdBy = $("#txtDeleteCreatedBy").val();
+                const createdOn = $("#txtDeleteCreatedOn").val();
+                const createdById = $("#txtDeleteCreatedById").val();
+
+                var legalLandfillWasteImportViewModel = {
+                    Id: id,
+                    ImportExportStatus: importExportStatus,
+                    LegalLandfillName: legalLandfillName,
+                    TruckName: truckName,
+                    TruckRegistration: truckRegistration,
+                    Weight: weight,
+                    Capacity: capacity,
+                    CreatedBy: createdBy,
+                    CreatedOn: createdOn,
+                    CreatedById: createdById,
+
+                }
+                console.log(legalLandfillWasteImportViewModel)
+
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("DeleteLegalLandfillWasteImportConfirmed", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
+                    data: {
+                        legalLandfillWasteImportViewModel: legalLandfillWasteImportViewModel
+                    },
+                    success: function (data) {
+                        console.log(data)
+                        if (data != undefined || data != null) {
+                            if (data.isSuccess == false && data.errMsg != null) {
+                                Swal.fire({
+                                    text: `${data.errMsg}`,
+                                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                    allowOutsideClick: false,
+                                    icon: "error"
+                                });
+                            }
+                            else {
+                                Swal.fire({
+                                    text: '@DbResHtml.T("Successfully deleted legal landfill Waste Import", "Resources")',
+                                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                    allowOutsideClick: false,
+                                    icon: "success"
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        location.reload();
+                                    }
+                                });
+                            }
+                        }
+                        else {
                             Swal.fire({
-                                text: `${data.errMsg}`,
+                                text: `@DbResHtml.T("No data received", "Resources")`,
                                 confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                                 allowOutsideClick: false,
                                 icon: "error"
                             });
                         }
-                        else {
-                            Swal.fire({
-                                text: '@DbResHtml.T("Successfully deleted legal landfill Waste Import", "Resources")',
-                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-                                allowOutsideClick: false,
-                                icon: "success"
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    location.reload();
-                                }
-                            });
-                        }
-                    }
-                    else {
+                    },
+                    error: function (req, status, error) {
                         Swal.fire({
-                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            text: '@DbResHtml.T("Error occured", "Resources")',
+                            icon: "error"
+                        });
+                    }
+                });
+            }
+           function deleteLegalLandfillWasteImportModalFunction(legalLandfillWasteImportId) {
+        $.ajax({
+            type: "POST",
+                    url: "@Url.Action("GetLegalLandfillWasteImportById", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
+            data: {
+                legalLandfillWasteImportId: legalLandfillWasteImportId
+            },
+            success: function (data) {
+                ;
+                if (data != undefined || data != null) {
+                    if (data.isSuccess == false && data.errMsg != null) {
+                        Swal.fire({
+                            text: `${data.errMsg}`,
                             confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                             allowOutsideClick: false,
                             icon: "error"
                         });
+                    } else {
+                        $("#deleteLegalLandfillWasteImportModalBody").html("");
+
+                        $("#deleteLegalLandfillWasteImportModalBody").append(
+                            '<div>'
+                            + '<input type="text" id="txtDeleteId" hidden/>'
+                            + '<input type="text" id="txtDeleteImportExport" hidden/>'
+                            + '<input type="text" id="txtDeleteLandfillName" hidden/>'
+                            + '<input type="text" id="txtDeleteTruckName" hidden/>'
+                            + '<input type="text" id="txtDeleteTruckRegistration" hidden/>'
+                            + '<input type="text" id="txtDeleteWeight" hidden/>'
+                            + '<input type="text" id="txtDeleteCapacity" hidden/>'
+                            + '<input type="text" id="txtDeleteCreatedBy" hidden/>'
+                            + '<input type="text" id="txtDeleteCreatedById" hidden/>'
+                            + '<input type="text" id="txtDeleteCreatedOn" hidden/>'
+
+                            + '<table class="table table-striped my-4 w-100">'
+                            + '<thead>'
+                            + '<tr>'
+                            + '<th>@DbResHtml.T("Import/Export", "Resources")</th>'
+                            + '<th>@DbResHtml.T("Legal Landfill", "Resources")</th>'
+                            + '<th>@DbResHtml.T("Truck Name", "Resources")</th>'
+                            + '<th>@DbResHtml.T("Truck Registration", "Resources")</th>'
+                            + '<th>@DbResHtml.T("Weight", "Resources")</th>'
+                            + '<th>@DbResHtml.T("Capacity", "Resources")</th>'
+                            + '<th>@DbResHtml.T("Created By", "Resources")</th>'
+                            + '<th>@DbResHtml.T("Created By Id", "Resources")</th>'
+                            + '<th>@DbResHtml.T("Created On", "Resources")</th>'
+                            + '</tr>'
+                            + '</thead>'
+                            + '<tbody>'
+                            + `<tr>`
+                            + `<td>${data.data.importExportStatus}</td>`
+                            + `<td>${data.data.legalLandfill.name}</td>`
+                            + `<td>${data.data.legalLandfillTruck.name}</td>`
+                            + `<td>${data.data.legalLandfillTruck.registration}</td>`
+                            + `<td>${data.data.weight}</td>`
+                            + `<td>${data.data.capacity}</td>`
+                            + `<td>${data.data.createdBy.userName}</td>`
+                            + `<td>${data.data.createdById}</td>`
+                            + `<td>${data.data.createdOn}</td>`
+                            + `</tr>`
+                            + '</tbody>'
+                            + '</table>'
+                            + '</div>'
+                        );
+
+                        $(`#txtDeleteId`).val(data.data.id);
+                        $(`#txtDeleteImportExport`).val(data.data.importExportStatus);
+                        $(`#txtDeleteLandfillName`).val(data.data.legalLandfill.name);
+                        $(`#txtDeleteTruckName`).val(data.data.legalLandfillTruck.name);
+                        $(`#txtDeleteTruckRegistration`).val(data.data.legalLandfillTruck.registration);
+                        $(`#txtDeleteWeight`).val(data.data.weight);
+                        $(`#txtDeleteCapacity`).val(data.data.capacity);
+                        $(`#txtDeleteCreatedBy`).val(data.data.createdBy.userName);
+                        $(`#txtDeleteCreatedOn`).val(new Date(data.data.createdOn).toISOString()); 
+                        $(`#txtDeleteCreatedById`).val(data.data.createdById);
+
+                        $('#deleteLegalLandfillWasteImportModal').modal('show');
                     }
-                },
-                error: function (req, status, error) {
+                } else {
                     Swal.fire({
-                        text: '@DbResHtml.T("Error occured", "Resources")',
-                        icon: "error"
-                    });
-                }
-            });
-        }
-       function deleteLegalLandfillWasteImportModalFunction(legalLandfillWasteImportId) {
-    $.ajax({
-        type: "POST",
-                url: "@Url.Action("GetLegalLandfillWasteImportById", "LegalLandfillsWasteManagement", new { Area = "IntranetPortal" })",
-        data: {
-            legalLandfillWasteImportId: legalLandfillWasteImportId
-        },
-        success: function (data) {
-            ;
-            if (data != undefined || data != null) {
-                if (data.isSuccess == false && data.errMsg != null) {
-                    Swal.fire({
-                        text: `${data.errMsg}`,
+                        text: `@DbResHtml.T("No data received", "Resources")`,
                         confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                         allowOutsideClick: false,
                         icon: "error"
                     });
-                } else {
-                    $("#deleteLegalLandfillWasteImportModalBody").html("");
-
-                    $("#deleteLegalLandfillWasteImportModalBody").append(
-                        '<div>'
-                        + '<input type="text" id="txtDeleteId" hidden/>'
-                        + '<input type="text" id="txtDeleteImportExport" hidden/>'
-                        + '<input type="text" id="txtDeleteLandfillName" hidden/>'
-                        + '<input type="text" id="txtDeleteTruckName" hidden/>'
-                        + '<input type="text" id="txtDeleteTruckRegistration" hidden/>'
-                        + '<input type="text" id="txtDeleteWeight" hidden/>'
-                        + '<input type="text" id="txtDeleteCapacity" hidden/>'
-                        + '<input type="text" id="txtDeleteCreatedBy" hidden/>'
-                        + '<input type="text" id="txtDeleteCreatedById" hidden/>'
-                        + '<input type="text" id="txtDeleteCreatedOn" hidden/>'
-
-                        + '<table class="table table-striped my-4 w-100">'
-                        + '<thead>'
-                        + '<tr>'
-                        + '<th>@DbResHtml.T("Import/Export", "Resources")</th>'
-                        + '<th>@DbResHtml.T("Legal Landfill", "Resources")</th>'
-                        + '<th>@DbResHtml.T("Truck Name", "Resources")</th>'
-                        + '<th>@DbResHtml.T("Truck Registration", "Resources")</th>'
-                        + '<th>@DbResHtml.T("Weight", "Resources")</th>'
-                        + '<th>@DbResHtml.T("Capacity", "Resources")</th>'
-                        + '<th>@DbResHtml.T("Created By", "Resources")</th>'
-                        + '<th>@DbResHtml.T("Created By Id", "Resources")</th>'
-                        + '<th>@DbResHtml.T("Created On", "Resources")</th>'
-                        + '</tr>'
-                        + '</thead>'
-                        + '<tbody>'
-                        + `<tr>`
-                        + `<td>${data.data.importExportStatus}</td>`
-                        + `<td>${data.data.legalLandfill.name}</td>`
-                        + `<td>${data.data.legalLandfillTruck.name}</td>`
-                        + `<td>${data.data.legalLandfillTruck.registration}</td>`
-                        + `<td>${data.data.weight}</td>`
-                        + `<td>${data.data.capacity}</td>`
-                        + `<td>${data.data.createdBy.userName}</td>`
-                        + `<td>${data.data.createdById}</td>`
-                        + `<td>${data.data.createdOn}</td>`
-                        + `</tr>`
-                        + '</tbody>'
-                        + '</table>'
-                        + '</div>'
-                    );
-
-                    $(`#txtDeleteId`).val(data.data.id);
-                    $(`#txtDeleteImportExport`).val(data.data.importExportStatus);
-                    $(`#txtDeleteLandfillName`).val(data.data.legalLandfill.name);
-                    $(`#txtDeleteTruckName`).val(data.data.legalLandfillTruck.name);
-                    $(`#txtDeleteTruckRegistration`).val(data.data.legalLandfillTruck.registration);
-                    $(`#txtDeleteWeight`).val(data.data.weight);
-                    $(`#txtDeleteCapacity`).val(data.data.capacity);
-                    $(`#txtDeleteCreatedBy`).val(data.data.createdBy.userName);
-                    $(`#txtDeleteCreatedOn`).val(new Date(data.data.createdOn).toISOString()); 
-                    $(`#txtDeleteCreatedById`).val(data.data.createdById);
-
-                    $('#deleteLegalLandfillWasteImportModal').modal('show');
                 }
-            } else {
-                Swal.fire({
-                    text: `@DbResHtml.T("No data received", "Resources")`,
-                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-                    allowOutsideClick: false,
-                    icon: "error"
-                });
+            },
+            error: function (req, status, error) {
+                ajaxErrorHandlingAlert("error", req.status);
             }
-        },
-        error: function (req, status, error) {
-            ajaxErrorHandlingAlert("error", req.status);
-        }
-    });
-}
+        });
+    }
 
-</script>
+    </script>
 }
 @section BodyArea {
-    <div class="modal" id="deleteLegalLandfillWasteImportModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-gradient-danger">
-                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this legal landfill Waste Import?", "Resources")</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div id="deleteLegalLandfillWasteImportModalBody" class="modal-body">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteLandfillWasteImportConfirmed()" data-dismiss="modal" aria-label="Delete">
-                        <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
-                    </button>
+        <div class="modal" id="deleteLegalLandfillWasteImportModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-gradient-danger">
+                        <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this legal landfill Waste Import?", "Resources")</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div id="deleteLegalLandfillWasteImportModalBody" class="modal-body">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteLandfillWasteImportConfirmed()" data-dismiss="modal" aria-label="Delete">
+                            <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
     @functions {
     public string FormatNumber(decimal number)
