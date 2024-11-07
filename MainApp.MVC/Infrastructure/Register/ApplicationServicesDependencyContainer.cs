@@ -51,6 +51,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IDetectionIgnoreZoneService, DetectionIgnoreZoneService>();
             services.TryAddScoped<ITrainingRunService, TrainingRunService>();
             services.TryAddScoped<ITrainedModelService, TrainedModelService>();
+            services.TryAddScoped<ITrainingRunTrainParamsService, TrainingRunTrainParamsService>();
 
             return services;
         }

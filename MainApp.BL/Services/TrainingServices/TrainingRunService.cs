@@ -24,6 +24,7 @@ namespace MainApp.BL.Services.TrainingServices
         protected readonly IMMDetectionConfigurationService _MMDetectionConfiguration;
         private readonly ITrainingRunsRepository _trainingRunsRepository;
         private readonly ITrainedModelsRepository _trainedModelsRepository;
+        private readonly ITrainingRunTrainParamsRepository _trainingRunTrainParamsRepository;
         private readonly IDetectionRunService _detectionRunService;
         private readonly IMapper _mapper;
         private readonly ILogger<TrainingRunService> _logger;
@@ -31,13 +32,14 @@ namespace MainApp.BL.Services.TrainingServices
 
 
         public TrainingRunService(IMMDetectionConfigurationService mMDetectionConfiguration,
-            ITrainingRunsRepository trainingRunsRepository, ITrainedModelsRepository trainedModelsRepository,
+            ITrainingRunsRepository trainingRunsRepository, ITrainedModelsRepository trainedModelsRepository, ITrainingRunTrainParamsRepository trainingRunTrainParamsRepository,
             IMapper mapper, ILogger<TrainingRunService> logger, IDetectionRunService detectionRunService,
             IAppSettingsAccessor appSettingsAccessor)
         {
             _MMDetectionConfiguration = mMDetectionConfiguration;
             _trainingRunsRepository = trainingRunsRepository;
             _trainedModelsRepository = trainedModelsRepository;
+            _trainingRunTrainParamsRepository = trainingRunTrainParamsRepository;
             _mapper = mapper;
             _logger = logger;
             _detectionRunService = detectionRunService;
@@ -562,7 +564,10 @@ namespace MainApp.BL.Services.TrainingServices
                     {
                         string fileName = $"{trainingRunId}_errMsg.txt";
                         string fullFilePath = System.IO.Path.Combine(filePath, fileName);
-                        File.Delete(fullFilePath);
+                        if (File.Exists(fullFilePath))
+                        {
+                            File.Delete(fullFilePath);
+                        }                        
                     }
                 }
 
@@ -606,8 +611,8 @@ namespace MainApp.BL.Services.TrainingServices
                 if (resultGetAllTrainingRuns.Data == null)
                     return ResultDTO.Fail("Training runs not found");
 
-                //all trained model ids from training runs
-                var trainingModelIdsList = resultGetAllTrainingRuns.Data.Select(x => x.TrainedModelId).ToList();
+                //all trained model ids from other training runs
+                var trainingModelIdsList = resultGetAllTrainingRuns.Data.Where(x => x.Id != trainingRunId).Select(x => x.TrainedModelId).ToList();
                 if (!trainingModelIdsList.Contains(resultGetTrainedModel.Data.Id))
                 {
                     //detele trained model from db if it is not contained in other training runs

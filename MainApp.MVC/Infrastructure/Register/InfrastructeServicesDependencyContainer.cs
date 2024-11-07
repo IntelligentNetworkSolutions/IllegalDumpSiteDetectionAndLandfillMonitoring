@@ -48,6 +48,7 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<IDetectionInputImageRepository, DetectionInputImageRepository>();
             services.TryAddScoped<ITrainingRunsRepository, TrainingRunsRepository>();
             services.TryAddScoped<ITrainedModelsRepository, TrainedModelsRepository>();
+            services.TryAddScoped<ITrainingRunTrainParamsRepository, TrainingRunTrainParamsRepository>();
 
             return services;
         }

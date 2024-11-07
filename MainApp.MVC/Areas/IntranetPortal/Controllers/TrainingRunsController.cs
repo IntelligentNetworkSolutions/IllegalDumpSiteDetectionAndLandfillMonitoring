@@ -25,6 +25,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     public class TrainingRunsController : Controller
     {
         private readonly ITrainingRunService _trainingRunService;
+        private readonly ITrainingRunTrainParamsService _trainingRunTrainParamsService;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IUserManagementService _userManagementService;
         private readonly IBackgroundJobClient _backgroundJobClient;
@@ -36,6 +37,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
 
         public TrainingRunsController(ITrainingRunService trainingRunService,
+                                      ITrainingRunTrainParamsService trainingRunTrainParamsService,
                                       IWebHostEnvironment webHostEnvironment,
                                       IUserManagementService userManagementService,
                                       IBackgroundJobClient backgroundJobClient,
@@ -46,6 +48,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                                       IMapper mapper)
         {
             _trainingRunService = trainingRunService;
+            _trainingRunTrainParamsService = trainingRunTrainParamsService;
             _webHostEnvironment = webHostEnvironment;
             _userManagementService = userManagementService;
             _backgroundJobClient = backgroundJobClient;
@@ -147,16 +150,23 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 CreatedById = currUserDTO.Id,
                 DatasetId = viewModel.DatasetId,
                 TrainedModelId = viewModel.TrainedModelId,
-                Status = nameof(ScheduleRunsStatus.Waiting)
+                Status = nameof(ScheduleRunsStatus.Waiting),
+                TrainParamsId = Guid.NewGuid()
             };
-
+                 
             ResultDTO<TrainingRunDTO> resultScheduleTrainingRun = await _trainingRunService.CreateTrainingRunWithBaseModel(trainingRunDTO);
             if (resultScheduleTrainingRun.IsSuccess == false && resultScheduleTrainingRun.HandleError())
                 return ResultDTO.Fail(resultScheduleTrainingRun.ErrMsg!);
             if (resultScheduleTrainingRun.Data == null)
                 return ResultDTO.Fail("Failed to crete the training run");
 
-            string jobId = _backgroundJobClient.Enqueue(() => ExecuteTrainingRunProcess(resultScheduleTrainingRun.Data));
+            ResultDTO<TrainingRunTrainParamsDTO> resultCreateParams = await _trainingRunTrainParamsService.CreateTrainingRunTrainParams(viewModel.NumEpochs, viewModel.BatchSize, viewModel.NumFrozenStages, trainingRunDTO.Id.Value, trainingRunDTO.TrainParamsId.Value);
+            if (resultCreateParams.IsSuccess == false && resultCreateParams.HandleError())
+                return ResultDTO.Fail(resultCreateParams.ErrMsg!);
+            if (resultCreateParams.Data == null)
+                return ResultDTO.Fail("Failed to crete the training run train params");
+
+            string jobId = _backgroundJobClient.Enqueue(() => ExecuteTrainingRunProcess(resultScheduleTrainingRun.Data, resultCreateParams.Data));
             using (IStorageConnection? connection = JobStorage.Current.GetConnection())
             {
                 connection.SetJobParameter(jobId, "trainingRunId", trainingRunDTO.Id.Value.ToString());
@@ -167,13 +177,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ScheduleTrainingRun))]
-        public async Task<ResultDTO> ExecuteTrainingRunProcess(TrainingRunDTO trainingRunDTO)
+        public async Task<ResultDTO> ExecuteTrainingRunProcess(TrainingRunDTO trainingRunDTO, TrainingRunTrainParamsDTO trainingRunTrainParamsDTO)
         {
             try
             {
-                int numEpochs = 1;
-                int numBatchSize = 1;
-                int numFrozenStages = 4;
+                //int numEpochs = 1;
+                //int numBatchSize = 1;
+                //int numFrozenStages = 4;
 
                 // Update Training Run only status PROCESSING
                 ResultDTO updateTrainRunResult = await _trainingRunService.UpdateTrainingRunEntity(trainingRunDTO.Id!.Value, null, nameof(ScheduleRunsStatus.Processing), isCompleted: false);
@@ -201,7 +211,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
 
                 // Generate Training Config
-                ResultDTO<string> generateTrainRunConfigResult = await _trainingRunService.GenerateTrainingRunConfigFile(trainingRunDTO.Id.Value, resultDatasetIncludeThenAll.Data!, trainingRunDTO.BaseModel!, numEpochs, numFrozenStages, numBatchSize);
+                ResultDTO<string> generateTrainRunConfigResult = await _trainingRunService.GenerateTrainingRunConfigFile(trainingRunDTO.Id.Value, resultDatasetIncludeThenAll.Data!, trainingRunDTO.BaseModel!, trainingRunTrainParamsDTO.NumEpochs, trainingRunTrainParamsDTO.NumFrozenStages, trainingRunTrainParamsDTO.BatchSize);
                 if (generateTrainRunConfigResult.IsSuccess == false && generateTrainRunConfigResult.HandleError())
                 {
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(trainingRunDTO.Id.Value, generateTrainRunConfigResult.ErrMsg!);
