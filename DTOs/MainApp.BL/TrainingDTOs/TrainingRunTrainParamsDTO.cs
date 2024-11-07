@@ -1,10 +1,13 @@
-﻿namespace DTOs.MainApp.BL.TrainingDTOs
+﻿using Newtonsoft.Json;
+
+namespace DTOs.MainApp.BL.TrainingDTOs
 {
     public class TrainingRunTrainParamsDTO
     {
         public Guid? Id { get; set; }
 
         public Guid? TrainingRunId { get; set; }
+        [JsonIgnore]
         public virtual TrainingRunDTO? TrainingRun { get; set; }
 
         public int? NumEpochs { get; set; }

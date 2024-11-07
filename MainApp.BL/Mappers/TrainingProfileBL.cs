@@ -16,6 +16,7 @@ namespace MainApp.BL.Mappers
             CreateMap<TrainingRunDTO, TrainingRun>().ReverseMap();
             CreateMap<TrainedModelDTO, TrainedModel>().ReverseMap();
             CreateMap<TrainedModelStatisticsDTO, TrainedModelStatistics>().ReverseMap();
+            CreateMap<TrainingRunTrainParamsDTO, TrainingRunTrainParams>().ReverseMap();
         }
     }
 }

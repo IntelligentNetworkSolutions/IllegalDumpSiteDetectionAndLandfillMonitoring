@@ -1006,7 +1006,7 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task DeleteFilesFromUploads_ReturnsFail_WhenMainFileDoesNotExist()
+        public async Task DeleteFilesFromUploads_DeletesOnlyExistingFiles_AndReturnsSuccess()
         {
             // Arrange
             var dto = new LegalLandfillPointCloudFileDTO
@@ -1017,49 +1017,73 @@ namespace Tests.MainAppBLTests.Services
             };
 
             string webRootPath = "path/to/webroot";
+            string dirPath = Path.Combine(webRootPath, dto.FilePath);
+            string mainFilePath = Path.Combine(dirPath, dto.Id + Path.GetExtension(dto.FileName));
+            string tiffFilePath = Path.Combine(dirPath, dto.Id + "_dsm.tif");
 
-            // Create the directory without the file to simulate the scenario
-            Directory.CreateDirectory(Path.Combine(webRootPath, dto.FilePath));
-
-            // Act
-            var result = await _service.DeleteFilesFromUploads(dto, webRootPath);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Contains($"File '{Path.Combine(webRootPath, dto.FilePath, dto.Id + Path.GetExtension(dto.FileName))}' does not exist.", result.ErrMsg);
-
-            // Cleanup
-            Directory.Delete(Path.Combine(webRootPath, dto.FilePath));
-        }
-
-        [Fact]
-        public async Task DeleteFilesFromUploads_ReturnsFail_WhenTiffFileDoesNotExist()
-        {
-            // Arrange
-            var dto = new LegalLandfillPointCloudFileDTO
-            {
-                Id = Guid.NewGuid(),
-                FilePath = "uploads",
-                FileName = "file.txt"
-            };
-
-            string webRootPath = "path/to/webroot";
-            Directory.CreateDirectory(Path.Combine(webRootPath, dto.FilePath));
-
-            string mainFilePath = Path.Combine(webRootPath, dto.FilePath, dto.Id + Path.GetExtension(dto.FileName));
-
+            Directory.CreateDirectory(dirPath);
             using (var fs = File.Create(mainFilePath)) { }
 
             // Act
             var result = await _service.DeleteFilesFromUploads(dto, webRootPath);
 
             // Assert
+            Assert.True(result.IsSuccess);
+            Assert.False(File.Exists(mainFilePath));
+            Assert.False(Directory.Exists(dirPath));
+
+            // Cleanup - just in case assertions fail
+            if (File.Exists(mainFilePath)) File.Delete(mainFilePath);
+            if (Directory.Exists(dirPath)) Directory.Delete(dirPath, true);
+        }
+
+        [Fact]
+        public async Task DeleteFilesFromUploads_ReturnsFail_WhenDirectoryDoesNotExist()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO
+            {
+                Id = Guid.NewGuid(),
+                FilePath = "uploads",
+                FileName = "file.txt"
+            };
+
+            string webRootPath = "path/to/webroot";
+            string dirPath = Path.Combine(webRootPath, dto.FilePath);
+
+            // Act
+            var result = await _service.DeleteFilesFromUploads(dto, webRootPath);
+
+            // Assert
             Assert.False(result.IsSuccess);
+            Assert.Contains($"{Path.Combine(dirPath, dto.Id + Path.GetExtension(dto.FileName))} directory does not exist", result.ErrMsg);
+        }
 
-            Assert.Contains($"File '{Path.Combine(webRootPath, dto.FilePath, dto.Id + "_dsm.tif")}' does not exist.", result.ErrMsg);
+        [Fact]
+        public async Task DeleteFilesFromUploads_SkipsNonExistentFiles_AndReturnsSuccess()
+        {
+            // Arrange
+            var dto = new LegalLandfillPointCloudFileDTO
+            {
+                Id = Guid.NewGuid(),
+                FilePath = "uploads",
+                FileName = "file.txt"
+            };
 
-            File.Delete(mainFilePath);
-            Directory.Delete(Path.Combine(webRootPath, dto.FilePath));
+            string webRootPath = "path/to/webroot";
+            string dirPath = Path.Combine(webRootPath, dto.FilePath);
+
+            Directory.CreateDirectory(dirPath);
+
+            // Act
+            var result = await _service.DeleteFilesFromUploads(dto, webRootPath);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.False(Directory.Exists(dirPath));
+
+            // Cleanup - just in case assertion fails
+            if (Directory.Exists(dirPath)) Directory.Delete(dirPath, true);
         }
 
         [Fact]
@@ -1093,6 +1117,7 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(File.Exists(tiffFilePath), "TIF file should be deleted.");
             Assert.False(Directory.Exists(Path.Combine(webRootPath, dto.FilePath)), "Directory should be deleted.");
         }
+       
         //TODO FOR LINUX
 
         //[Fact]

@@ -13,6 +13,7 @@ using Entities.DatasetEntities;
 using Entities.TrainingEntities;
 using MainApp.BL.Interfaces.Services;
 using MainApp.BL.Interfaces.Services.DetectionServices;
+using MainApp.BL.Interfaces.Services.TrainingServices;
 using MainApp.BL.Services.TrainingServices;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -32,6 +33,7 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<ILogger<TrainingRunService>> _mockLogger;
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
+        private readonly Mock<ITrainingRunTrainParamsRepository> _mockTrainingRunTrainParamsRepository;
         private readonly TrainingRunService _service;
 
         // Common test values
@@ -50,6 +52,7 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
             _mockMapper = new Mock<IMapper>();
             _mockLogger = new Mock<ILogger<TrainingRunService>>();
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
+            _mockTrainingRunTrainParamsRepository = new Mock<ITrainingRunTrainParamsRepository>();
 
             SetupBasicMMDetectionConfiguration();
 
@@ -57,6 +60,7 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
                 _mockMMDetectionConfiguration.Object,
                 _mockTrainingRunsRepository.Object,
                 _mockTrainedModelsRepository.Object,
+                _mockTrainingRunTrainParamsRepository.Object,
                 _mockMapper.Object,
                 _mockLogger.Object,
                 _mockDetectionRunService.Object,
@@ -569,7 +573,7 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
                 .ReturnsAsync(ResultDTO<TrainedModel>.Ok(trainedModel));
 
             TrainingRunService trainingRunService = new TrainingRunService(mockMMDetectionConfigService.Object, _mockTrainingRunsRepository.Object,
-                _mockTrainedModelsRepository.Object, _mockMapper.Object, _mockLogger.Object, _mockDetectionRunService.Object, _mockAppSettingsAccessor.Object);
+                _mockTrainedModelsRepository.Object, _mockTrainingRunTrainParamsRepository.Object, _mockMapper.Object, _mockLogger.Object, _mockDetectionRunService.Object, _mockAppSettingsAccessor.Object);
 
             // Act
             var result = await trainingRunService.CreateTrainedModelByTrainingRunId(trainingRunId);

@@ -143,5 +143,55 @@ namespace Tests.MainAppBLTests.Mappers
             Assert.NotNull(statisticsEntity);
             Assert.Equal(statisticsDto.TrainedModelId, statisticsEntity.TrainedModelId);
         }
+
+        [Fact]
+        public void Should_Map_TrainingRunTrainParamsDTO_To_TrainingRunTrainParams()
+        {
+            // Arrange
+            var trainParamsDto = new TrainingRunTrainParamsDTO
+            {
+                Id = Guid.NewGuid(),
+                TrainingRunId = Guid.NewGuid(),
+                NumEpochs = 20,
+                BatchSize = 32,
+                NumFrozenStages = 2
+            };
+
+            // Act
+            var trainParams = _mapper.Map<TrainingRunTrainParams>(trainParamsDto);
+
+            // Assert
+            Assert.NotNull(trainParams);
+            Assert.Equal(trainParamsDto.Id, trainParams.Id);
+            Assert.Equal(trainParamsDto.TrainingRunId, trainParams.TrainingRunId);
+            Assert.Equal(trainParamsDto.NumEpochs, trainParams.NumEpochs);
+            Assert.Equal(trainParamsDto.BatchSize, trainParams.BatchSize);
+            Assert.Equal(trainParamsDto.NumFrozenStages, trainParams.NumFrozenStages);
+        }
+
+        [Fact]
+        public void Should_Map_TrainingRunTrainParams_To_TrainingRunTrainParamsDTO()
+        {
+            // Arrange
+            var trainParams = new TrainingRunTrainParams
+            {
+                Id = Guid.NewGuid(),
+                TrainingRunId = Guid.NewGuid(),
+                NumEpochs = 20,
+                BatchSize = 32,
+                NumFrozenStages = 2
+            };
+
+            // Act
+            var trainParamsDto = _mapper.Map<TrainingRunTrainParamsDTO>(trainParams);
+
+            // Assert
+            Assert.NotNull(trainParamsDto);
+            Assert.Equal(trainParams.Id, trainParamsDto.Id);
+            Assert.Equal(trainParams.TrainingRunId, trainParamsDto.TrainingRunId);
+            Assert.Equal(trainParams.NumEpochs, trainParamsDto.NumEpochs);
+            Assert.Equal(trainParams.BatchSize, trainParamsDto.BatchSize);
+            Assert.Equal(trainParams.NumFrozenStages, trainParamsDto.NumFrozenStages);
+        }
     }
 }

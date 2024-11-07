@@ -237,9 +237,11 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
 
                 var outputDiffFilePath = Path.Combine(webRootPath, outputDiffFolderPath.Data, $"A_{firstElement.Id}-B_{secondElement.Id}_diff.tif");
 
-                if (!Directory.Exists(outputDiffFolderPath.Data))
+                string outputFolderPath = Path.Combine(webRootPath, outputDiffFolderPath.Data);
+
+                if (!Directory.Exists(outputFolderPath))
                 {
-                    Directory.CreateDirectory(outputDiffFolderPath.Data);
+                    Directory.CreateDirectory(outputFolderPath);
                 }
 
                 var gdalRes = await Cli.Wrap(pythonExeAbsPath.Data)
@@ -498,29 +500,35 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
                 return ResultDTO.Fail($"{currentFilePathUpload} directory does not exist and files were not deleted");
             }
 
-            if (!System.IO.File.Exists(currentFilePathUpload))
-            {
-                return ResultDTO.Fail($"File '{currentFilePathUpload}' does not exist.");
-            }
-
-            if (!System.IO.File.Exists(currentTiffFilePath))
-            {
-                return ResultDTO.Fail($"File '{currentTiffFilePath}' does not exist.");
-            }
-
             try
             {
                 string[] files = Directory.GetFiles(currentLandfillFilesDir);
-                if (files.Length == 2)
+                if (files.Length <= 2)
                 {
-                    System.IO.File.Delete(currentFilePathUpload);
-                    System.IO.File.Delete(currentTiffFilePath);
+
+                  
+                    if (System.IO.File.Exists(currentFilePathUpload))
+                    {
+                        System.IO.File.Delete(currentFilePathUpload);
+                    }
+
+                    if (System.IO.File.Exists(currentTiffFilePath))
+                    {
+                        System.IO.File.Delete(currentTiffFilePath);
+                    }
                     Directory.Delete(currentLandfillFilesDir, true);
                 }
                 else
                 {
-                    System.IO.File.Delete(currentFilePathUpload);
-                    System.IO.File.Delete(currentTiffFilePath);
+                    if (System.IO.File.Exists(currentFilePathUpload))
+                    {
+                        System.IO.File.Delete(currentFilePathUpload);
+                    }
+
+                    if (System.IO.File.Exists(currentTiffFilePath))
+                    {
+                        System.IO.File.Delete(currentTiffFilePath);
+                    }
                 }
                 return ResultDTO.Ok();
             }

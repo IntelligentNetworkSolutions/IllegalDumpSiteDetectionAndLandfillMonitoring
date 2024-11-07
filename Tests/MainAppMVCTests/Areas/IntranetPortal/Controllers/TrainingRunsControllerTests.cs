@@ -32,6 +32,7 @@ using Hangfire.Storage.Monitoring;
 using DTOs.MainApp.BL.DatasetDTOs;
 using DTOs.ObjectDetection.API;
 using MainApp.BL.Services.TrainingServices;
+using DAL.Interfaces.Repositories.TrainingRepositories;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 {
@@ -47,6 +48,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<IStorageConnection> _mockStorageConnection;
+        private readonly Mock<ITrainingRunTrainParamsService> _mockTrainingRunTrainParamsService;
         private readonly TrainingRunsController _controller;
         private readonly string _userId = "test-user-id";
 
@@ -62,6 +64,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockConfiguration = new Mock<IConfiguration>();
             _mockMapper = new Mock<IMapper>();
             _mockStorageConnection = new Mock<IStorageConnection>();
+            _mockTrainingRunTrainParamsService = new Mock<ITrainingRunTrainParamsService>();
 
             var mockJobStorage = new Mock<JobStorage>();
             mockJobStorage
@@ -71,6 +74,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             _controller = new TrainingRunsController(
                 _mockTrainingRunService.Object,
+                _mockTrainingRunTrainParamsService.Object,
                 _mockWebHostEnvironment.Object,
                 _mockUserManagementService.Object,
                 _mockBackgroundJobClient.Object,
@@ -674,6 +678,11 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .Callback<TrainingRunDTO>(dto => capturedDto = dto)
                 .ReturnsAsync((TrainingRunDTO dto) => ResultDTO<TrainingRunDTO>.Ok(dto));
 
+            var trainParamsDto = new TrainingRunTrainParamsDTO();
+            _mockTrainingRunTrainParamsService
+                .Setup(s => s.CreateTrainingRunTrainParams(viewModel.NumEpochs, viewModel.BatchSize, viewModel.NumFrozenStages, It.IsAny<Guid>(), It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<TrainingRunTrainParamsDTO>.Ok(trainParamsDto));
+
             // Act
             await _controller.ScheduleTrainingRun(viewModel);
 
@@ -875,13 +884,14 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var trainingRunDTO = new TrainingRunDTO { Id = Guid.NewGuid() };
+            var paramsDTO = new TrainingRunTrainParamsDTO { Id = Guid.NewGuid() };
 
             _mockTrainingRunService
                 .Setup(service => service.UpdateTrainingRunEntity(trainingRunDTO.Id.Value, null, nameof(ScheduleRunsStatus.Processing), false,null))
                 .Throws(new Exception("Unexpected error"));
 
             // Act
-            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO);
+            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -892,12 +902,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task ExecuteTrainingRunProcess_ShouldReturnFail_WhenUpdateTrainRunFails()
         {
             // Arrange
+            var paramsDTO = new TrainingRunTrainParamsDTO { Id = Guid.NewGuid() };
             var trainingRunDTO = new TrainingRunDTO { Id = Guid.NewGuid(), DatasetId = Guid.NewGuid() };
             _mockTrainingRunService.Setup(s => s.UpdateTrainingRunEntity(It.IsAny<Guid>(), null, nameof(ScheduleRunsStatus.Processing), null, null))
                 .ReturnsAsync(ResultDTO.Fail("Object reference not set to an instance of an object."));
 
             // Act
-            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO);
+            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -908,6 +919,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task ExecuteTrainingRunProcess_ShouldReturnFail_WhenGetDatasetFails()
         {
             // Arrange
+            var paramsDTO = new TrainingRunTrainParamsDTO { Id = Guid.NewGuid() };
             var trainingRunDTO = new TrainingRunDTO { Id = Guid.NewGuid(), DatasetId = Guid.NewGuid() };
             _mockTrainingRunService.Setup(s => s.UpdateTrainingRunEntity(It.IsAny<Guid>(), null, nameof(ScheduleRunsStatus.Processing), null, null))
                 .ReturnsAsync(ResultDTO.Ok());
@@ -915,7 +927,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .ReturnsAsync(ResultDTO<DatasetDTO>.Fail("Object reference not set to an instance of an object."));
 
             // Act
-            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO);
+            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -926,6 +938,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task ExecuteTrainingRunProcess_ShouldReturnExceptionFail_WhenExceptionOccurs()
         {
             // Arrange
+            var paramsDTO = new TrainingRunTrainParamsDTO { Id = Guid.NewGuid() };
             var trainingRunDTO = new TrainingRunDTO { Id = Guid.NewGuid(), DatasetId = Guid.NewGuid() };
 
             // Simulate an exception being thrown in the process.
@@ -933,7 +946,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .ThrowsAsync(new NullReferenceException("Object reference not set to an instance of an object"));
 
             // Act
-            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO);
+            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -959,6 +972,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             {
                 Id = datasetId,
                 Name = "TestDataset"
+            };
+            var paramsDTO = new TrainingRunTrainParamsDTO
+            {
+                Id = Guid.NewGuid(),
+                NumEpochs = 5,
+                NumFrozenStages = 2,
+                BatchSize = 32
             };
 
             _mockTrainingRunService
@@ -1010,7 +1030,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .ReturnsAsync(ResultDTO.Ok());
 
             // Act
-            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO);
+            var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
             // Assert
             Assert.True(result.IsSuccess);

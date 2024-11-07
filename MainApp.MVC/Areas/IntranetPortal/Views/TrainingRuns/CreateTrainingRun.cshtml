@@ -3,7 +3,7 @@
 @using SD.Helpers
 
 @{
-    ViewData["Title"] = "Create Detection Run";
+    ViewData["Title"] = "Create Training Run";
 }
 <div class="content-header bg-gradient-white border-bottom mb-4">
     <div class="container-fluid">
@@ -48,6 +48,36 @@
                                         <option></option>
                                     </select>
                                 </div>
+                                <div class="form-group">
+                                    <label for="numOfEpochs" class="form-label">@DbResHtml.T("Number of epochs", "Resources")</label>
+                                    <select id="numOfEpochs" class="form-control" name="numOfEpochs">
+                                       <option></option>
+                                       @for (int i = 1; i <= 50; i++)
+                                       {
+                                         <option value="@i">@i</option>
+                                       }
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="batchSize" class="form-label">@DbResHtml.T("Batch size", "Resources")</label>
+                                    <select id="batchSize" class="form-control" name="batchSize">
+                                        <option></option>
+                                        @for (int i = 0; i <= 4; i++)
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="frozenStages" class="form-label">@DbResHtml.T("Number of frozen stages", "Resources")</label>
+                                    <select id="frozenStages" class="form-control" name="frozenStages">
+                                        <option></option>
+                                        @for (int i = 1; i <= 4; i++)
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div class="col-12 text-center">
@@ -74,6 +104,24 @@
                 width: '100%',
                 theme: 'bootstrap4',
                 placeholder: "@DbResHtml.T("Select Trained Model", "Resources")",
+                allowClear: true
+            });
+            $("#numOfEpochs").select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Select Number Of Epochs", "Resources")",
+                allowClear: true
+            });
+            $("#frozenStages").select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Select Number Of Frozen Stages", "Resources")",
+                allowClear: true
+            });
+            $("#batchSize").select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Select Batch Size", "Resources")",
                 allowClear: true
             });
             $("#datasetSelect").select2({
@@ -304,9 +352,19 @@
             let datasetId = $("#datasetSelect").val();
             let trainedModelId = $("#trainedModelSelect").val();
             let name = $("#inpName").val();
+            let batchSize = $("#batchSize").val();
+            let numOfEpochs = $("#numOfEpochs").val();
+            let frozenStages = $("#frozenStages").val();
 
 
-            if ((name === '' || name === undefined) || (trainedModelId === '' || trainedModelId === undefined) || (datasetId === '' || datasetId === undefined)) {
+            if ((name === '' || name === undefined) || 
+                (trainedModelId === '' || trainedModelId === undefined) || 
+                (datasetId === '' || datasetId === undefined) || 
+                (batchSize === '' || batchSize === undefined) || 
+                (numOfEpochs === '' || numOfEpochs === undefined) ||
+                (frozenStages === '' || frozenStages === undefined)
+            )
+            {
                 Swal.fire({
                     text: '@DbResHtml.T("All fields are required", "Resources")',
                     icon: 'error'
@@ -317,7 +375,10 @@
             var viewModel = {
                 Name: name,
                 TrainedModelId: trainedModelId,
-                DatasetId: datasetId
+                DatasetId: datasetId,
+                BatchSize: batchSize,
+                NumEpochs: numOfEpochs,
+                NumFrozenStages: frozenStages
             }
 
             $.ajax({
