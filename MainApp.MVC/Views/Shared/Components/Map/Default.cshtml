@@ -1,4 +1,4 @@
-﻿@* @model MainApp.MVC.ViewComponents.Map.MapModel *@
+﻿@model MainApp.MVC.ViewComponents.Map.MapModel 
 @using MainApp.MVC.Helpers;
 @using Westwind.Globalization
 @using Westwind.Globalization.AspNetCore.Extensions
@@ -147,165 +147,9 @@
             }
         });
 
-        mapVars.projection = 'EPSG:6316'; // ol.proj.get('@@ Model.MapConfiguration.Projection');
-
-        //mapVars.mapLayersFromConfig = @@ Html.Raw(Model.LayersJavaScript);
-
-        mapVars.mapLayersFromConfig = [
-            new ol.layer.Group({
-                title: 'Detection run images',
-                name: 'DetectionRunImages',
-                order: -1,
-                opacity: 1,
-                visible: true,
-                openInLayerSwitcher: true,
-                displayInLayerSwitcher: false,
-                fold: 'open',
-                layers: new ol.Collection([])
-            }),
-            new ol.layer.Group({
-            title: 'Drone Imagery',
-            order: 1,
-            opacity: 1,
-            visible: true,
-            openInLayerSwitcher: true,
-            fold: 'open',
-            layers: new ol.Collection([
-                new ol.layer.Tile({
-                    name: 'layerVolkovoDrone',
-                    projection: 'EPSG:6316',
-                    title: 'Volkovo Drone',
-                    order: 9,
-                    visible: true,
-                    source: new ol.source.TileWMS({
-                        url: 'https://wastedetection.ins.com.mk/gserver/wms',
-                        params: {
-                            'FORMAT': 'image/png',
-                            'VERSION': '1.1.1',
-                            tiled: true,
-                            "STYLES": '',
-                            "LAYERS": 'Volkovo_Drone',
-                            "exceptions": 'application/vnd.ogc.se_inimage',
-                        }
-                    })
-                }),
-                new ol.layer.Tile({
-                    name: 'layerZlokukjaniDrone',
-                    projection: 'EPSG:6316',
-                    title: 'Zlokukjani Drone',
-                    order: 8,
-                    visible: true,
-                    source: new ol.source.TileWMS({
-                        url: 'https://wastedetection.ins.com.mk/gserver/wms',
-                        params: {
-                            'FORMAT': 'image/png',
-                            'VERSION': '1.1.1',
-                            tiled: true,
-                            "STYLES": '',
-                            "LAYERS": 'Zlokukjani_Drone',
-                            "exceptions": 'application/vnd.ogc.se_inimage',
-                        }
-                    })
-                }),
-                new ol.layer.Tile({
-                    name: 'layerSarajDrone',
-                    projection: 'EPSG:6316',
-                    title: 'Saraj Drone',
-                    order: 7,
-                    visible: true,
-                    source: new ol.source.TileWMS({
-                        url: 'https://wastedetection.ins.com.mk/gserver/wms',
-                        params: {
-                            'FORMAT': 'image/png',
-                            'VERSION': '1.1.1',
-                            tiled: true,
-                            "STYLES": '',
-                            "LAYERS": 'Saraj_Drone',
-                            "exceptions": 'application/vnd.ogc.se_inimage',
-                        }
-                    })
-                })
-            ])
-            }),
-            new ol.layer.Group({
-                title: 'Base Maps',
-                order: 2,
-                opacity: 1,
-                visible: true,
-                openInLayerSwitcher: true,
-                fold: 'open',
-                layers: new ol.Collection([
-                    new ol.layer.Tile({
-                        name: 'layerEsriTopo',
-                        title: 'ESRI Topo',
-                        order: 11,
-                        visible: false,
-                        baseLayer: true,
-                        source: new ol.source.XYZ({
-                            attributions:
-                                'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
-                                'rest/services/World_Topo_Map/MapServer">ArcGIS</a>',
-                            url:
-                                'https://server.arcgisonline.com/ArcGIS/rest/services/' +
-                                'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-                        })
-                    }),
-                    new ol.layer.Tile({
-                        name: 'layerEsriSatellite',
-                        title: 'ESRI Satellite',
-                        order: 12,
-                        visible: false,
-                        baseLayer: true,
-                        source: new ol.source.XYZ({
-                            attributions:
-                                'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
-                                'rest/services/World_Imagery/MapServer">ArcGIS</a>',
-                            url:
-                                'https://server.arcgisonline.com/ArcGIS/rest/services/' +
-                                'World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                        }),
-                    }),
-                    new ol.layer.Tile({
-                        name: 'layerMacedoniaSentinel',
-                        projection: 'EPSG:6316',
-                        title: 'Sentinel Macedonia',
-                        order: 13,
-                        visible: false,
-                        baseLayer: true,
-                        source: new ol.source.TileWMS({
-                            url: 'https://wastedetection.ins.com.mk/gserver/wms',
-                            params: {
-                                'FORMAT': 'image/png',
-                                'VERSION': '1.1.1',
-                                tiled: true,
-                                "STYLES": '',
-                                "LAYERS": 'MacedoniaSatellite',
-                                "exceptions": 'application/vnd.ogc.se_inimage',
-                            }
-                        })
-                    }),
-                    new ol.layer.Tile({
-                        name: 'layerOSMMacedonia',
-                        projection: 'EPSG:6316',
-                        title: 'OSM Macedonia',
-                        order: 16,
-                        visible: true,
-                        baseLayer: true,
-                        source: new ol.source.TileWMS({
-                            url: 'https://wastedetection.ins.com.mk/gserver/wms',
-                            params: {
-                                'FORMAT': 'image/png',
-                                'VERSION': '1.1.1',
-                                tiled: true,
-                                "STYLES": '',
-                                "LAYERS": 'OSMMacedonia',
-                                "exceptions": 'application/vnd.ogc.se_inimage',
-                            }
-                        })
-                    })
-                ])
-            })
-          ]; 
+        mapVars.projection = ol.proj.get('@Model.MapConfiguration.Projection').getCode();
+        console.log(mapVars.projection);
+        mapVars.mapLayersFromConfig = @Html.Raw(Model.LayersJavaScript);
 
         var mapLayers = [];
 
@@ -337,17 +181,16 @@
             controls: [new ol.control.Zoom()],
             view: new ol.View({
                 projection: mapVars.projection,
-                constrainResolution: true,
-                center: [7535741.262, 4650202.906],
-                resolution: 13.999999999999998,
-                resolutions: [140, 70, 35, 13.999999999999998, 6.999999999999999, 2.8, 1.4, 0.7, 0.28, 0.14, 0.07, 0.035]
-                //center: [@@ Model.MapConfiguration.CenterX, @@ Model.MapConfiguration.CenterY],
-                //resolution: @@ Model.MapConfiguration.DefaultResolution,
-                //resolutions: [@@ Html.Raw(Model.MapConfiguration.Resolutions)]
+                constrainResolution: true,               
+                center: [@Model.MapConfiguration.CenterX, @Model.MapConfiguration.CenterY],
+                resolution: @Model.MapConfiguration.DefaultResolution,
+                resolutions: [@Html.Raw(Model.MapConfiguration.Resolutions)]
             }),
         });
+        console.log('mapVars.map:', mapVars.map);
 
         mapVars.map.once('postrender', function (event) {
+            console.log('Map post-render event fired');
             setMapHeight();
             var mySidebar = new createTurboSidebar({ element: 'map-sidebar', position: 'right' });
             mySidebar.setMap(mapVars.map);

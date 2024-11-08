@@ -17,7 +17,7 @@
     <div class="row m-0">
         <div class="col-xl-12 p-0">
             <div id="map" class="map turbosidebar-map" style="height:700px; width:100%; position:relative;">
-                @await Component.InvokeAsync("Map", new { mapDivId = "map", mapToLoad = "general" })                
+                @await Component.InvokeAsync("Map", new { mapDivId = "map", mapToLoad = "mainmap" })
                 @await Component.InvokeAsync("LastExtentTool")
                 @await Component.InvokeAsync("ZoomToExtentTool")
                 @await Component.InvokeAsync("MeasureLengthTool")
