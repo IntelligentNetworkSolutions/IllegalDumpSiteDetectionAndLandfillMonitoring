@@ -39,7 +39,7 @@
                             <i class="fas fa-file-alt"></i>
                         </button>
                         <div class="mt-5">
-                            <table id="trainedModelsTable" class="table table-sm table-bordered table-striped">
+                            <table id="trainedModelsTable" class="table table-sm table-bordered table-striped custom-responsive-table">
                                 <thead>
                                     <tr>
                                         <th>
@@ -106,6 +106,7 @@
                         "url": "@langPath"
                     },
                     dom: 'Bfrtip',
+                    responsive: true,
                     buttons: [
                         {
                             extend: 'excelHtml5',

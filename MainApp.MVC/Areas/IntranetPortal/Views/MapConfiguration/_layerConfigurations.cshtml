@@ -50,7 +50,7 @@
                             </div>
 
                             <div class="mt-5">
-                                <table id="mapLayerConfigurationTable" class="table table-sm table-striped">
+                                <table id="mapLayerConfigurationTable" class="table table-sm table-striped custom-responsive-table">
                                     <thead>
                                         <tr>
                                             <th>@DbResHtml.T("Layer Name", "Resources")</th>
@@ -107,6 +107,7 @@ $(document).ready(function () {
     $('#mapLayerConfigurationTable').DataTable({
         paging: true,
         ordering: true,
+        responsive: true,
         pageLength: 10,
         lengthMenu: [2, 5, 7, 10, 15, 20, 50, 100],
         columnDefs: [{ width: "20%", targets: 2 }],

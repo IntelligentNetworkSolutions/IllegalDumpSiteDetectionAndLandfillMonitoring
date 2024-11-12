@@ -168,3 +168,8 @@ html {
     background: var(--green-active);
     color: var(--white) !important;
 }
+
+
+.custom-responsive-table{
+    width: 100% !important;
+}

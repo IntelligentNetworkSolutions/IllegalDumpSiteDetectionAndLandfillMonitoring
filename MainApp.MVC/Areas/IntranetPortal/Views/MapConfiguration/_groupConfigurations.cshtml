@@ -24,7 +24,7 @@
                     </div>
                     <div id="mapLayerGroupConfigurationsCollapse" class="collapse show">
                         <div class="card-body">
-                            <table id="mapLayerGroupConfigurationTable" class="table table-sm table-striped">
+                            <table id="mapLayerGroupConfigurationTable" class="table table-sm table-striped custom-responsive-table">
                                 <thead>
                                     <tr>
                                         <th>Expand</th>
@@ -74,6 +74,7 @@
         }
 $(document).ready(function () {
     var table = $('#mapLayerGroupConfigurationTable').DataTable({
+        responsive: true,
         paging: true,
         ordering: true,
         pageLength: 10,
