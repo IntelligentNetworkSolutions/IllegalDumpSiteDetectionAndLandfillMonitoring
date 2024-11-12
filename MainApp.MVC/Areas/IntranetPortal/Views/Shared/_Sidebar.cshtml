@@ -41,18 +41,6 @@
                                 </a>
                             </li>
                         </ul>
-                    </li>
-                }
-                @if(User.HasAuthClaim(SD.AuthClaims.ViewDatasets) && User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
-                {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkClasses">
-                            <i class="fas fa-boxes"></i> &nbsp;&nbsp;
-                            <p>
-                                @DbResHtml.T("Classes", "Resources")
-                                <i class="fas fa-angle-left right"></i>
-                            </p>
-                        </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
                                 <a asp-action="Index" asp-controller="DatasetClasses" asp-area="IntranetPortal" class="nav-link" id="NavlinkDatasetClasses"
@@ -78,17 +66,6 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="CreateTrainingRun" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
-                                   title="@DbResHtml.T("Create Training Run", "Resources")">
-                                    <i class="fas fa-paper-plane"></i> &nbsp;&nbsp;
-                                    <p>
-                                        @DbResHtml.T("Create Training Run", "Resources")
-                                    </p>
-                                </a>
-                            </li>                           
-                        </ul>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
                                 <a asp-action="Index" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
                                    title="@DbResHtml.T("View Training Runs", "Resources")">
                                     <i class="fas fa-tasks"></i> &nbsp;&nbsp;
@@ -97,6 +74,17 @@
                                     </p>
                                 </a>
                             </li>
+                        </ul>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-action="CreateTrainingRun" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
+                                   title="@DbResHtml.T("Create Training Run", "Resources")">
+                                    <i class="fas fa-paper-plane"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Create Training Run", "Resources")
+                                    </p>
+                                </a>
+                            </li>                           
                         </ul>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
@@ -122,6 +110,18 @@
                             </p>
                         </a>
                         <ul class="nav nav-treeview">
+                            @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionInputImages))
+                            {
+                                <li class="nav-item">
+                                    <a asp-action="ViewAllImages" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionInputImages"
+                                       title="@DbResHtml.T("Detection Input Images", "Resources")">
+                                        <i class="far fa-file-image"></i> &nbsp;&nbsp;
+                                        <p>
+                                            @DbResHtml.T("Detection Input Images", "Resources")
+                                        </p>
+                                    </a>
+                                </li>
+                            }
                             @if (User.HasAuthClaim(SD.AuthClaims.CreateDetectionRun))
                             {
                                 <li class="nav-item">
@@ -145,19 +145,7 @@
                                         </p>
                                     </a>
                                 </li>
-                            }
-                            @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionInputImages))
-                            {
-                                <li class="nav-item">
-                                    <a asp-action="ViewAllImages" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionInputImages"
-                                       title="@DbResHtml.T("Detection Input Images", "Resources")">
-                                        <i class="far fa-file-image"></i> &nbsp;&nbsp;
-                                        <p>
-                                            @DbResHtml.T("Detection Input Images", "Resources")
-                                        </p>
-                                    </a>
-                                </li>
-                            }                           
+                            }                         
                         </ul>
                     </li>
                 }
@@ -207,11 +195,11 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a asp-action="ViewPointCloudFiles" asp-controller="LegalLandfillsManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
-                                   title="@DbResHtml.T("Legal Landfill Point Cloud Files", "Resources")">
-                                    <i class="fas fa-file-contract"></i> &nbsp;&nbsp;
+                                <a asp-action="ViewLegalLandfillWasteTypes" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                   title="@DbResHtml.T("Legal Landfill Landfill Waste Types", "Resources")">
+                                    <i class="fas fa-trash"></i> &nbsp;&nbsp;
                                     <p>
-                                        @DbResHtml.T("Point Cloud Files", "Resources")
+                                        @DbResHtml.T("Legal Landfill Waste Types", "Resources")
                                     </p>
                                 </a>
                             </li>
@@ -225,15 +213,6 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a asp-action="ViewLegalLandfillWasteTypes" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
-                                   title="@DbResHtml.T("Legal Landfill Landfill Waste Types", "Resources")">
-                                    <i class="fas fa-trash"></i> &nbsp;&nbsp;
-                                    <p>
-                                        @DbResHtml.T("Legal Landfill Waste Types", "Resources")
-                                    </p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
                                 <a asp-action="ViewLegalLandfillWasteImports" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
                                    title="@DbResHtml.T("Legal Landfill Landfill Waste Imports", "Resources")">
                                     <i class="fas fa-dolly"></i> &nbsp;&nbsp;
@@ -242,47 +221,18 @@
                                     </p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a asp-action="ViewPointCloudFiles" asp-controller="LegalLandfillsManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                   title="@DbResHtml.T("Legal Landfill Point Cloud Files", "Resources")">
+                                    <i class="fas fa-file-contract"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Point Cloud Files", "Resources")
+                                    </p>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 }
-                @if (User.HasCustomClaim("SpecialAuthClaim", "superadmin"))
-               {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkSuperAdmin" title="@DbResHtml.T("Super admin", "Resources")">
-                            <i class="fas fa-user-tie"></i> &nbsp;&nbsp;
-                            <p>
-                                @DbResHtml.T("Super admin", "Resources")
-                                <i class="right fas fa-angle-left"></i>
-                            </p>
-                        </a>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Index" title="@DbResHtml.T("Application settings", "Resources")" class="nav-link" id="NavlinkApplicationSettings">
-                                    <i class="fas fa-sm fa-cogs"></i>
-                                    <p><small> @DbResHtml.T("Application settings", "Resources")</small></p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="/mainapp/LocalizationAdmin" title="@DbResHtml.T("Localization", "Resources")" class="nav-link">
-                                    <i class="fas fa-sm fa-globe"></i>
-                                    <p><small> @DbResHtml.T("Localization", "Resources")</small></p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="/mainapp/hangfire" title="@DbResHtml.T("Hangfire", "Resources")" class="nav-link">
-                                    <i class="fas fa-h-square"></i>
-                                    <p><small> @DbResHtml.T("Hangfire", "Resources")</small></p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a asp-area="IntranetPortal" asp-controller="MapConfiguration" asp-action="Index" title="@DbResHtml.T("Map Configurations", "Resources")" class="nav-link">
-                                    <i class="fas fa-sm fa-map"></i>
-                                    <p><small> @DbResHtml.T("Map Configurations", "Resources")</small></p>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-               }
                 @if (User.HasAuthClaim(SD.AuthClaims.Admin))
                 {
                     <li class="nav-item">
@@ -321,6 +271,44 @@
                                     </a>
                                 </li>
                             }
+                        </ul>
+                    </li>
+                }
+                @if (User.HasCustomClaim("SpecialAuthClaim", "superadmin"))
+                {
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" id="NavlinkSuperAdmin" title="@DbResHtml.T("Super admin", "Resources")">
+                            <i class="fas fa-user-tie"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Super admin", "Resources")
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Index" title="@DbResHtml.T("Application settings", "Resources")" class="nav-link" id="NavlinkApplicationSettings">
+                                    <i class="fas fa-sm fa-cogs"></i>
+                                    <p><small> @DbResHtml.T("Application settings", "Resources")</small></p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/mainapp/LocalizationAdmin" title="@DbResHtml.T("Localization", "Resources")" class="nav-link">
+                                    <i class="fas fa-sm fa-globe"></i>
+                                    <p><small> @DbResHtml.T("Localization", "Resources")</small></p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/mainapp/hangfire" title="@DbResHtml.T("Hangfire", "Resources")" class="nav-link">
+                                    <i class="fas fa-h-square"></i>
+                                    <p><small> @DbResHtml.T("Hangfire", "Resources")</small></p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-area="IntranetPortal" asp-controller="MapConfiguration" asp-action="Index" title="@DbResHtml.T("Map Configurations", "Resources")" class="nav-link">
+                                    <i class="fas fa-sm fa-map"></i>
+                                    <p><small> @DbResHtml.T("Map Configurations", "Resources")</small></p>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 }

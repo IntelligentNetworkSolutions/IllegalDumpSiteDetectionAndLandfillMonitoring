@@ -47,8 +47,9 @@
     "ol": "^8.2.0",
     "paginationjs": "^2.6.0",
     "potree-npm": "^1.8.0",
-    "proj4": "2.11.0"
-  },
+    "proj4": "2.11.0",
+    "typeface-source-sans-pro": "^0.0.75"
+        },
   "devDependencies": {
     "eslint": "8.56.0"
   }

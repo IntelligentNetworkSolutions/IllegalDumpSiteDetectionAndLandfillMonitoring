@@ -106,7 +106,7 @@
 
 
                         <div class="mt-5">
-                            <table id="legalLandfillsWasteTable" class="table table-sm table-bordered table-striped">
+                            <table id="legalLandfillsWasteTable" class="table table-sm table-bordered table-striped custom-responsive-table">
                                 <thead>
                                     <tr>
                                         <th>@DbResHtml.T("Import/Export", "Resources")</th>
@@ -207,6 +207,7 @@
 
         var table = $('#legalLandfillsWasteTable').DataTable({
             paging: true,
+            responsive: true,
             pageLength: 100,
             columnDefs: [{ width: "20%", targets: 2 }],
             language: { url: "@langPath" },
