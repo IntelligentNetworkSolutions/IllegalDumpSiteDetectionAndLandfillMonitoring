@@ -1,5 +1,11 @@
 ﻿@using MainApp.MVC.ViewModels.IntranetPortal.LegalLandfillManagement
+@using MainApp.MVC.Helpers
 @model IEnumerable<PreviewViewModel>
+
+
+@{
+    ViewData["Title"] = @DbResHtml.T("Point cloud", "Resources");
+}
 
 @section Styles {
     <link rel="stylesheet" type="text/css" href="~/vendor/potree-npm/build/potree/potree.css">
@@ -7,6 +13,8 @@
     <link rel="stylesheet" type="text/css" href="~/vendor/potree-npm/libs/openlayers3/ol.css">
     <link rel="stylesheet" type="text/css" href="~/vendor/potree-npm/libs/spectrum/spectrum.css">
     <link rel="stylesheet" type="text/css" href="~/vendor/potree-npm/libs/jstree/themes/mixed/style.css">
+
+
     <style>
         .potree_container {
             position: absolute;
@@ -58,6 +66,10 @@
     <script src="~/vendor/potree-npm/libs/jstree/jstree.js"></script>
     <script src="~/vendor/potree-npm/build/potree/potree.js"></script>
     <script src="~/vendor/potree-npm/libs/plasio/js/laslaz.js"></script>
+    <script src="~/vendor/admin-lte/dist/js/adminlte.min.js"></script>
+
+
+
 
     <script type="module">
 
@@ -88,8 +100,9 @@
             $("#menu_about").hide();
             $("#potree_languages").hide();
             $("#sidebar_header").hide();
-            $("#menu_tools").next().show();            
+            $("#menu_tools").next().show();           
             viewer.toggleSidebar();
+
         });
 
         const metadatas = [];
@@ -122,6 +135,7 @@
                 // );
             });
         }
+
     </script>
 
 }

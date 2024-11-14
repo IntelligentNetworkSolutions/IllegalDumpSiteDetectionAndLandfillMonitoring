@@ -11,13 +11,15 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
     public class LegalLandfillWasteTypeService : ILegalLandfillWasteTypeService
     {
         private readonly ILegalLandfillWasteTypeRepository _legalLandfillWasteTypeRepository;
+        private readonly ILegalLandfillWasteImportRepository _legalLandfillWasteImportRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<LegalLandfillWasteTypeService> _logger;
-        public LegalLandfillWasteTypeService(ILegalLandfillWasteTypeRepository legalLandfillWasteTypeRepository, IMapper mapper, ILogger<LegalLandfillWasteTypeService> logger)
+        public LegalLandfillWasteTypeService(ILegalLandfillWasteTypeRepository legalLandfillWasteTypeRepository, IMapper mapper, ILogger<LegalLandfillWasteTypeService> logger, ILegalLandfillWasteImportRepository legalLandfillWasteImportRepository)
         {
             _legalLandfillWasteTypeRepository = legalLandfillWasteTypeRepository;
             _mapper = mapper;
             _logger = logger;
+            _legalLandfillWasteImportRepository = legalLandfillWasteImportRepository;
         }
 
         #region Create
@@ -72,6 +74,13 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
             try
             {
                 LegalLandfillWasteType legalLandfillWasteTypeEntity = _mapper.Map<LegalLandfillWasteType>(legalLandfillWasteTypeDTO);
+                var resultGetWasteImports = await _legalLandfillWasteImportRepository.GetAll() ?? throw new Exception("Object not found");
+                var isWasteTypeUsed = resultGetWasteImports.Data.Any(x => x.LegalLandfillWasteTypeId == legalLandfillWasteTypeEntity.Id);
+
+                if (isWasteTypeUsed)
+                {
+                    return ResultDTO.Fail("Waste type is used in waste imports, please delete the waste import.");
+                }
 
                 ResultDTO resultCreate = await _legalLandfillWasteTypeRepository.Delete(legalLandfillWasteTypeEntity);
                 if (resultCreate.IsSuccess == false && resultCreate.HandleError())
