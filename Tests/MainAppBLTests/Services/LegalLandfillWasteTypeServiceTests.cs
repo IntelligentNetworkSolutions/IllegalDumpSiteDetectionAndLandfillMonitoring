@@ -12,6 +12,7 @@ namespace Tests.MainAppBLTests.Services
     public class LegalLandfillWasteTypeServiceTests
     {
         private readonly Mock<ILegalLandfillWasteTypeRepository> _mockRepository;
+        private readonly Mock<ILegalLandfillWasteImportRepository> _mockImportRepository;
         private readonly Mock<IMapper> _mockMapper;
         private readonly Mock<ILogger<LegalLandfillWasteTypeService>> _mockLogger;
         private readonly LegalLandfillWasteTypeService _service;
@@ -21,10 +22,12 @@ namespace Tests.MainAppBLTests.Services
             _mockRepository = new Mock<ILegalLandfillWasteTypeRepository>();
             _mockMapper = new Mock<IMapper>();
             _mockLogger = new Mock<ILogger<LegalLandfillWasteTypeService>>();
+            _mockImportRepository = new Mock<ILegalLandfillWasteImportRepository>();
             _service = new LegalLandfillWasteTypeService(
                 _mockRepository.Object,
                 _mockMapper.Object,
-                _mockLogger.Object
+                _mockLogger.Object,
+                _mockImportRepository.Object
             );
         }
 
@@ -147,9 +150,12 @@ namespace Tests.MainAppBLTests.Services
             // Arrange
             var dto = new LegalLandfillWasteTypeDTO();
             var entity = new LegalLandfillWasteType();
+            var wasteImports = new List<LegalLandfillWasteImport>();
             _mockMapper.Setup(m => m.Map<LegalLandfillWasteType>(dto)).Returns(entity);
             _mockRepository.Setup(r => r.Delete(entity, true, default))
                 .ReturnsAsync(ResultDTO.Ok());
+            _mockImportRepository.Setup(i => i.GetAll(null, null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<LegalLandfillWasteImport>>.Ok(wasteImports));
 
             // Act
             var result = await _service.DeleteLegalLandfillWasteType(dto);
@@ -164,10 +170,12 @@ namespace Tests.MainAppBLTests.Services
             // Arrange
             var dto = new LegalLandfillWasteTypeDTO();
             var entity = new LegalLandfillWasteType();
+            var wasteImports = new List<LegalLandfillWasteImport>();
             _mockMapper.Setup(m => m.Map<LegalLandfillWasteType>(dto)).Returns(entity);
             _mockRepository.Setup(r => r.Delete(entity, true, default))
                 .ReturnsAsync(ResultDTO.Fail("Delete failed"));
-
+            _mockImportRepository.Setup(i => i.GetAll(null, null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<LegalLandfillWasteImport>>.Ok(wasteImports));
             // Act
             var result = await _service.DeleteLegalLandfillWasteType(dto);
 
@@ -182,8 +190,11 @@ namespace Tests.MainAppBLTests.Services
             // Arrange
             var dto = new LegalLandfillWasteTypeDTO();
             var entity = new LegalLandfillWasteType();
+            var wasteImports = new List<LegalLandfillWasteImport>();
             _mockMapper.Setup(m => m.Map<LegalLandfillWasteType>(dto)).Returns(entity);
             _mockRepository.Setup(r => r.Delete(entity, true, default)).ThrowsAsync(new Exception("Delete failed"));
+            _mockImportRepository.Setup(i => i.GetAll(null, null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<LegalLandfillWasteImport>>.Ok(wasteImports));
 
             // Act
             var result = await _service.DeleteLegalLandfillWasteType(dto);
