@@ -1,60 +1,60 @@
 - name: Documentation
-  href: /documentation/dev-docs-overview.html
+  href: ../documentation/dev-docs-overview.html
   items:
   - name: Map
-    href: /documentation/map/overview.html
+    href: ../documentation/map/overview.html
     items:
       - name: Overview
-        href: /documentation/map/overview.html
+        href: ../documentation/map/overview.html
       - name: Map Configurator
-        href: /documentation/map/map-configurator.html
+        href: ../documentation/map/map-configurator.html
   - name: Dataset Management
-    href: /documentation/dataset-management/overview.html
+    href: ../documentation/dataset-management/overview.html
     items:
       - name: Overview
-        href: /documentation/dataset-management/overview.html
+        href: ../documentation/dataset-management/overview.html
       - name: Image Annotation
-        href: /documentation/dataset-management/image-annotation.html
+        href: ../documentation/dataset-management/image-annotation.html
   - name: Training Process
-    href: /documentation/training-process/overview.html
+    href: ../documentation/training-process/overview.html
     items:
       - name: Overview
-        href: /documentation/training-process/overview.html
+        href: ../documentation/training-process/overview.html
       - name: Entities
-        href: /documentation/training-process/entities.html
+        href: ../documentation/training-process/entities.html
       - name: Services
-        href: /documentation/training-process/services.html
+        href: ../documentation/training-process/services.html
       - name: Controllers
-        href: /documentation/training-process/controllers.html
+        href: ../documentation/training-process/controllers.html
   - name: Detection Process
-    href: /documentation/detection-process/overview.html
+    href: ../documentation/detection-process/overview.html
     items:
       - name: Overview
-        href: /documentation/detection-process/overview.html
+        href: ../documentation/detection-process/overview.html
       - name: Input Images
-        href: /documentation/detection-process/detection-input-images.html
+        href: ../documentation/detection-process/detection-input-images.html
       - name: Detection Runs
-        href: /documentation/detection-process/detection-runs.html
+        href: ../documentation/detection-process/detection-runs.html
       - name: Ignore Zones
-        href: /documentation/detection-process/detection-ignore-zones.html
+        href: ../documentation/detection-process/detection-ignore-zones.html
   - name: Landfill Management
-    href: /documentation/landfill-management/overview.html
+    href: ../documentation/landfill-management/overview.html
     items:
       - name: Overview
-        href: /documentation/landfill-management/overview.html
+        href: ../documentation/landfill-management/overview.html
       - name: 3D Point Cloud
-        href: /documentation/landfill-management/3d-point-cloud.html
+        href: ../documentation/landfill-management/3d-point-cloud.html
   - name: Admin
-    href: /documentation/user-management/overview.html
+    href: ../documentation/user-management/overview.html
     items: 
       - name: Overview
-        href: /documentation/user-management/overview.html
+        href: ../documentation/user-management/overview.html
       - name: Audit Logs
-        href: /documentation/audit-logs/overview.html
+        href: ../documentation/audit-logs/overview.html
   - name: Super Admin
-    href: /documentation/application-settings/overview.html
+    href: ../documentation/application-settings/overview.html
     items: 
       - name: Application Settings
-        href: /documentation/application-settings/overview.html
+        href: ../documentation/application-settings/overview.html
       - name: Localization
-        href: /documentation/localization/overview.html
+        href: ../documentation/localization/overview.html

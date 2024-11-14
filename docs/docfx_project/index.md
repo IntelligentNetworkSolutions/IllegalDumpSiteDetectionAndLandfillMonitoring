@@ -22,13 +22,13 @@
       <h5 class="d-flex flex-grow">
         Direct GeoTiff Injection ...</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/map/map-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/map/map-guide.html">
       <h5 class="d-flex flex-grow">
           Guide</h5>
     </a>
     <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-      src="/ins-template/public/images/clipart-map-500.png" alt=""/>
-    <a class="d-flex flex-column flex-grow" href="/documentation/map/overview.html">
+      src="./ins-template/public/images/clipart-map-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/map/overview.html">
       <h5 class="d-flex flex-grow">
           Documentation</h5>
     </a>
@@ -47,13 +47,13 @@
       <h5 class="d-flex flex-grow">
         <i>Further Development: GeoServer Integration ...</i></h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/map/map-configurator-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/map/map-configurator-guide.html">
       <h5 class="d-flex flex-grow">
           Guide</h5>
     </a>
     <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-      src="/ins-template/public/images/map-configurator-500.png" alt=""/>
-    <a class="d-flex flex-column flex-grow" href="/documentation/map/map-configurator.html">
+      src="./ins-template/public/images/map-configurator-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/map/map-configurator.html">
       <h5 class="d-flex flex-grow">
           Documentation</h5>
     </a>
@@ -72,13 +72,13 @@
       <h5 class="d-flex flex-grow">
         Features include tagging, filtering, and robust data integrity checks</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/dataset-management/dataset-management-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/dataset-management/dataset-management-guide.html">
       <h5 class="d-flex flex-grow">
           Guide</h5>
     </a>
     <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-      src="/ins-template/public/images/dataset-manage-500.png" alt=""/>
-    <a class="d-flex flex-column flex-grow" href="/documentation/dataset-management/overview.html">
+      src="./ins-template/public/images/dataset-manage-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/dataset-management/overview.html">
       <h5 class="d-flex flex-grow">
           Documentation</h5>
     </a>
@@ -97,13 +97,13 @@
       <h5 class="d-flex flex-grow">
         <i>Further Development: Segmentation polygon annotation</i></h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/dataset-management/image-annotation-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/dataset-management/image-annotation-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
     <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-      src="/ins-template/public/images/annotate-500.png" alt=""/>
-    <a class="d-flex flex-column flex-grow" href="/documentation/dataset-management/image-annotation.html">
+      src="./ins-template/public/images/annotate-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/dataset-management/image-annotation.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -120,12 +120,12 @@
       <h5 class="d-flex flex-grow">
         Reinforce your custom-trained models as more data comes in</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/training-process/training-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/training-process/training-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/training-process/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" src="/ins-template/public/images/robot-train-full-color.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" src="./ins-template/public/images/robot-train-full-color.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/training-process/overview.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -140,13 +140,13 @@
       <h5 class="d-flex flex-grow">Input images on which detection will be run</h5>
       <h5 class="d-flex flex-grow">Load input images as Map Layers</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/detection-process/detection-input-images-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/detection-process/detection-input-images-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/detection-process/detection-input-images.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/detection-input-images-500.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/detection-input-images-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/detection-process/detection-input-images.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -161,13 +161,13 @@
       <h5 class="d-flex flex-grow">Detect using custom-trained models</h5>
       <h5 class="d-flex flex-grow">Visualize results on georeferenced maps</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/detection-process/detection-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/detection-process/detection-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/detection-process/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/object-detection-reduced-logical.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/object-detection-reduced-logical.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/detection-process/overview.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -184,13 +184,13 @@
       <h5 class="d-flex flex-grow">
         Cancel on demand</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/scheduled-runs/scheduled-runs-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/scheduled-runs/scheduled-runs-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/scheduled-runs/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/scheduled-runs-500.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/scheduled-runs-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/scheduled-runs/overview.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -205,12 +205,12 @@
       <h5 class="d-flex flex-grow">Advanced tools for legal landfill management</h5>
       <h5 class="d-flex flex-grow">Waste form submission integration</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/landfill-management/landfill-management-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/landfill-management/landfill-management-guide.html">
       <h5 class="d-flex flex-grow">Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/landfill-management/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/truck-waste-fly-500.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/truck-waste-fly-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/landfill-management/overview.html">
       <h5 class="d-flex flex-grow">Documentation</h5>
     </a>
   </div>
@@ -224,13 +224,13 @@
       <h5 class="d-flex flex-grow">3D Point-Cloud scan integration</h5>
       <h5 class="d-flex flex-grow">View and Compare 3D scans</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/landfill-management/3d-point-cloud-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/landfill-management/3d-point-cloud-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/landfill-management/3d-point-cloud.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/3D-point-cloud-upload-500.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/3D-point-cloud-upload-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/landfill-management/3d-point-cloud.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -245,13 +245,13 @@
       <h5 class="d-flex flex-grow">3D Point-Cloud scan integration</h5>
       <h5 class="d-flex flex-grow">View and Compare 3D scans</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/user-management/user-management-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/user-management/user-management-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/user-management/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/user-management-500.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/user-management-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/user-management/overview.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -266,13 +266,13 @@
       <h5 class="d-flex flex-grow">3D Point-Cloud scan integration</h5>
       <h5 class="d-flex flex-grow">View and Compare 3D scans</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/audit-logs/audit-logs-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/audit-logs/audit-logs-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/audit-logs/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/audit-logs-500.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/audit-logs-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/audit-logs/overview.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -287,13 +287,13 @@
       <h5 class="d-flex flex-grow">Save and Configure your own application settings</h5>
       <h5 class="d-flex flex-grow">Run the App Your Way</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/application-settings/application-settings-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/application-settings/application-settings-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/application-settings/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/application-settings-500.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/application-settings-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/application-settings/overview.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -308,13 +308,13 @@
       <h5 class="d-flex flex-grow">Add Localization for your App</h5>
       <h5 class="d-flex flex-grow">Support as many languages as you want</h5>
     </div>
-    <a class="d-flex flex-column flex-grow" href="/guides/localization/localization-guide.html">
+    <a class="d-flex flex-column flex-grow" href="./guides/localization/localization-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
     </a>
-    <a class="d-flex flex-column flex-grow" href="/documentation/localization/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="/ins-template/public/images/localization-500.png" alt=""/>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="./ins-template/public/images/localization-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="./documentation/localization/overview.html">
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
