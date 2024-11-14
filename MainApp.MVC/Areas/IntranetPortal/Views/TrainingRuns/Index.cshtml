@@ -64,7 +64,13 @@
                                             <td>@item.CreatedBy?.UserName</td>
                                             <td>@item.CreatedOn?.ToString("dd/MM/yyyy")</td>
                                             <td>
-                                                <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editTrainingRunModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
+                                                @if (User.HasAuthClaim(SD.AuthClaims.ViewTrainingRunsStatistics))
+                                                {
+                                                    <button class="mb-1 btn bg-gradient-info btn-xs" id="@item.Id" onclick="getTrainingRunStatistics('@item.Id')" title="@DbResHtml.T("View Training Run Statistics", "Resources")">
+                                                        <i class="fas fa-chart-bar"></i>
+                                                    </button>
+                                                }                                               
+                                                <button class="mb-1 ml-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editTrainingRunModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
                                                     <i class="fas fa-edit"></i>
                                                 </button>
                                                 <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteTrainingRunModalFunction('@item.Id')" title="@DbResHtml.T("Delete Training Run", "Resources")">
@@ -121,8 +127,171 @@
                 });
             });
 
+        //training run statistics
+        function getTrainingRunStatistics(trainingRunId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetTrainingRunStatistics", "TrainingRuns", new { Area = "IntranetPortal" })",
+                data: {
+                    trainingRunId: trainingRunId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#getTrainingRunStatisticsModalBody").html("");
 
-            //EDIT
+                            $("#getTrainingRunStatisticsModalBody").append(
+                                '<canvas id="epochMetricsChart" width="800" height="400"></canvas>'
+                            );
+                             const metrics = parseMetrics(data.data);
+                            createChart(metrics);
+                            $('#getTrainingRunStatisticsModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+        function parseMetrics(data) {
+            const epochs = [];
+            const mAP = [];
+            const mAP50 = [];
+            const mAP75 = [];
+            let isFirstAccess = true;
+
+            const bestEpochModel = {
+                maP: {
+                    bbox_maP: null,
+                    best_maP_epoch: null
+                },
+                maP_50: {
+                    bbox_maP_50: null,
+                    best_maP_50_epoch: null
+                },
+                maP_75: {
+                    bbox_maP_75: null,
+                    best_maP_75_epoch: null
+                }
+            };
+
+            const bestLastStep = data.bestEpochMetrics.steps.find(step => step.metrics["coco/bbox_mAP"] !== undefined).metrics;
+            for (const epochKey in data.epochMetrics) {               
+                if (data.epochMetrics.hasOwnProperty(epochKey)) {
+                    const epochData = data.epochMetrics[epochKey];
+                    const lastStep = epochData.steps.find(step => step.metrics["coco/bbox_mAP"] !== undefined);
+
+                    if (lastStep && lastStep.metrics) {
+                        epochs.push(`Epoch ${epochKey}`);
+                        mAP.push(lastStep.metrics["coco/bbox_mAP"] || 0);
+                        mAP50.push(lastStep.metrics["coco/bbox_mAP_50"] || 0);
+                        mAP75.push(lastStep.metrics["coco/bbox_mAP_75"] || 0);
+
+                        if (isFirstAccess) {                           
+                            bestEpochModel.maP.best_maP_epoch = epochKey;
+                            bestEpochModel.maP.bbox_maP = lastStep.metrics["coco/bbox_mAP"];
+                            bestEpochModel.maP_50.best_maP_50_epoch = epochKey;
+                            bestEpochModel.maP_50.bbox_maP_50 = lastStep.metrics["coco/bbox_mAP_50"];
+                            bestEpochModel.maP_75.best_maP_75_epoch = epochKey;
+                            bestEpochModel.maP_75.bbox_maP_75 = lastStep.metrics["coco/bbox_mAP_75"];
+                            isFirstAccess = false;
+                        } 
+                        else {
+                            if (lastStep.metrics["coco/bbox_mAP"] >= bestEpochModel.maP.bbox_maP) {
+                                bestEpochModel.maP.best_maP_epoch = epochKey;
+                                bestEpochModel.maP.bbox_maP = lastStep.metrics["coco/bbox_mAP"];
+                            }
+
+                            if (lastStep.metrics["coco/bbox_mAP_50"] >= bestEpochModel.maP_50.bbox_maP_50) {
+                                bestEpochModel.maP_50.best_maP_50_epoch = epochKey;
+                                bestEpochModel.maP_50.bbox_maP_50 = lastStep.metrics["coco/bbox_mAP_50"];
+                            }
+
+                            if (lastStep.metrics["coco/bbox_mAP_75"] >= bestEpochModel.maP_75.bbox_maP_75) {
+                                bestEpochModel.maP_75.best_maP_75_epoch = epochKey;
+                                bestEpochModel.maP_75.bbox_maP_75 = lastStep.metrics["coco/bbox_mAP_75"];
+                            }
+                        }
+                       
+                    }
+                }
+            }
+
+            return { epochs, mAP, mAP50, mAP75, bestEpochModel};
+        }
+
+        function createChart(metrics) {
+            const ctx = document.getElementById('epochMetricsChart').getContext('2d');
+            const labels = metrics.epochs
+            const data = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: `bbox_mAP (Best: ${metrics.bestEpochModel.maP.bbox_maP} in epoch ${metrics.bestEpochModel.maP.best_maP_epoch})`,
+                        data: metrics.mAP,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        fill: false,
+                        pointStyle: 'circle',
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                    },
+                    {
+                        label: `bbox_mAP_50 (Best: ${metrics.bestEpochModel.maP_50.bbox_maP_50} in epoch ${metrics.bestEpochModel.maP_50.best_maP_50_epoch})`,
+                        data: metrics.mAP50,
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        fill: false,
+                        pointStyle: 'circle',
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)'
+                    },
+                    {
+                        label: `bbox_mAP_75 (Best: ${metrics.bestEpochModel.maP_75.bbox_maP_75} in epoch ${metrics.bestEpochModel.maP_75.best_maP_75_epoch})`,
+                        data: metrics.mAP75,
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        fill: false,
+                        pointStyle: 'circle',
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)'
+                    }
+                ]
+            };
+
+            new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true                                   
+                }
+            });
+        }
+
+        //EDIT
         function editTrainingRunConfirmed() {
             var id = $("#textEditId").val();
             var name = $("#txtEditName").val();
@@ -378,6 +547,20 @@
 
 @section Bodyarea
     {
+    <div class="modal" id="getTrainingRunStatisticsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-info">
+                    <h5 class="modal-title">@DbResHtml.T("Training Run statistics", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="getTrainingRunStatisticsModalBody" class="modal-body">
+                </div>               
+            </div>
+        </div>
+    </div>
     <div class="modal" id="deleteTrainingRunModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">

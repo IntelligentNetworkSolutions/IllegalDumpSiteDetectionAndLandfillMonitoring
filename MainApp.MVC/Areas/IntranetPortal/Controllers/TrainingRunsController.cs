@@ -58,7 +58,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _configuration = configuration;
             _mapper = mapper;
         }
-
+        
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
         public async Task<IActionResult> Index()
@@ -420,6 +420,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return ResultDTO.Fail(resultPublisheTrainedModel.ErrMsg!);
 
             return ResultDTO.Ok();
+        }
+
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRunsStatistics))]
+        public async Task<ResultDTO<TrainingRunResultsDTO>> GetTrainingRunStatistics(Guid trainingRunId)
+        {
+            ResultDTO<TrainingRunResultsDTO> resultGetBestEpoch = _trainingRunService.GetBestEpochForTrainingRun(trainingRunId);
+            if (resultGetBestEpoch.IsSuccess == false && resultGetBestEpoch.HandleError())
+                return ResultDTO<TrainingRunResultsDTO>.Fail(resultGetBestEpoch.ErrMsg!);
+            if (resultGetBestEpoch.Data == null)
+                return ResultDTO<TrainingRunResultsDTO>.Fail("Failed to get training run statistics");
+
+            return ResultDTO<TrainingRunResultsDTO>.Ok(resultGetBestEpoch.Data);
         }
 
         private async Task<ResultDTO<string>> HandleErrorProcess(Guid trainingRunId, string inputErrMsg)
