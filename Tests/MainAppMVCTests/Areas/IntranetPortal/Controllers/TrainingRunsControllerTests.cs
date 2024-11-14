@@ -1062,5 +1062,65 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 It.IsAny<string>()), Times.Once);
         }
 
+        [Fact]
+        public async Task GetTrainingRunStatistics_ReturnsOkResult_WithData_WhenServiceReturnsDataSuccessfully()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            var expectedData = new TrainingRunResultsDTO();
+            var successResult = ResultDTO<TrainingRunResultsDTO>.Ok(expectedData);
+
+            _mockTrainingRunService
+                .Setup(service => service.GetBestEpochForTrainingRun(trainingRunId))
+                .Returns(successResult);
+
+            // Act
+            var result = await _controller.GetTrainingRunStatistics(trainingRunId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(expectedData, result.Data);
+        }
+
+        [Fact]
+        public async Task GetTrainingRunStatistics_ReturnsFailResult_WhenServiceReturnsFailure()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            var errorMessage = "Error retrieving data";
+            var failureResult = ResultDTO<TrainingRunResultsDTO>.Fail(errorMessage);
+
+            _mockTrainingRunService
+                .Setup(service => service.GetBestEpochForTrainingRun(trainingRunId))
+                .Returns(failureResult);
+
+            // Act
+            var result = await _controller.GetTrainingRunStatistics(trainingRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(errorMessage, result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetTrainingRunStatistics_ReturnsFailResult_WhenServiceReturnsNullData()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            var successWithNullDataResult = ResultDTO<TrainingRunResultsDTO>.Ok(null);
+
+            _mockTrainingRunService
+                .Setup(service => service.GetBestEpochForTrainingRun(trainingRunId))
+                .Returns(successWithNullDataResult);
+
+            // Act
+            var result = await _controller.GetTrainingRunStatistics(trainingRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to get training run statistics", result.ErrMsg);
+        }
+
     }
 }

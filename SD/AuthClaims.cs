@@ -583,7 +583,13 @@ namespace SD
             FromModule = Modules.Training,
             Description = "Publish Training Run Trained Model"
         };
-
+        public static readonly AuthClaim ViewTrainingRunsStatistics = new AuthClaim
+        {
+            Value = "19:7",
+            FromModule = Modules.Training,
+            Description = "View Training Runs Statistics"
+        };
+        
 
     }
 }
