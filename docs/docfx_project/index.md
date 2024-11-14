@@ -1,97 +1,325 @@
-<div class="row" style="display: flex; text-align: center; align-items: center; justify-content: end;">
-  <h1 class="col-md-8">
+<div class="row d-flex flex-row flex-wrap align-items-center" style="text-align: center; justify-content: end;">
+  <h1 id="illegal-dump-site-detection-and-landfill-monitoring" class="col-md-8 col-sm-12">
       Illegal Dump Site Detection and Landfill Monitoring
   </h1>
-  <img class="col-md-4" style="width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/logo-robot-formal.png" alt=""/>
+  <img class="col-md-4 col-sm-12" style="width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/logo-robot-formal.png" alt=""/>
 </div>
 
-## Overview  
+<h6 id="welcome" class="col-md-8 col-sm-12" style="text-align: center; font-style: italic;">Welcome to the Illegal Dump Site Detection and Landfill Monitoring platform documentation.</h6>
 
-Welcome to the Illegal Dump Site Detection and Landfill Monitoring platform documentation.  
-This system leverages advanced drone and satellite imagery to enhance waste management and environmental monitoring through cutting-edge technology.  
-
-Our platform utilizes high-resolution images combined with sophisticated image annotation, object detection models, and geospatial analysis to offer robust tools for identifying illegal dump sites and effectively managing regulated landfills.  
-
-## Key Features  
-
-<div style="display: block; float: left">
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-  <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
-    <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
-        Dataset Management
+<div class="col-sm-12 d-flex flex-row flex-wrap">
+  
+  <!-- Map -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="map" class="d-flex flex-grow">
+      Map
     </h4>
-    <h6><a href="/guides/dataset-management/dataset-management-guide.html" style="display: flex; flex-grow: 1;">
-      Dataset Management Guide</a></h6>
-    <h6 style="display: flex; flex-grow: 1;">
-      Manage extensive datasets of drone and satellite images</h6>
-    <h6 style="display: flex; flex-grow: 1;">
-      Tools for uploading, categorizing, and maintaining image data</h6>
-    <h6 style="display: flex; flex-grow: 1;">
-      Features include tagging, filtering, and robust data integrity checks</h6>
-    <h6><a href="/documentation/dataset-management/overview.html" style="display: flex; flex-grow: 1;">
-      Documentation</a></h6>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">
+        View stuff on map</h5>
+      <h5 class="d-flex flex-grow">
+        Open Layers, Layer switcher ...</h5>
+      <h5 class="d-flex flex-grow">
+        Direct GeoTiff Injection ...</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/map/map-guide.html">
+      <h5 class="d-flex flex-grow">
+          Guide</h5>
+    </a>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="/ins-template/public/images/clipart-map-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="/documentation/map/overview.html">
+      <h5 class="d-flex flex-grow">
+          Documentation</h5>
+    </a>
   </div>
-  <img class="col-md-4" style="display: flex; width: 250px; max-width: 250px;" 
-    src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/dataset-manage.jpeg" alt=""/>
-</div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-  <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
-    <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
-        Image Annotation
+  <!-- Map Configurator -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="map-configurator" class="d-flex flex-grow">
+      Map Configurator
     </h4>
-    <h6 style="display: flex; flex-grow: 1;">Annotate high-resolution drone and satellite imagery</h6>
-    <h6><a href="/guides/dataset-management/image-annotation-guide.html" style="display: flex; flex-grow: 1;">
-      How To Annotate</a></h6>
-    <h6><a href="/documentation/dataset-management/image-annotation.html" style="display: flex; flex-grow: 1;">
-      Documentation</a></h6>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">
+        Configure the map to fit your needs</h5>
+      <h5 class="d-flex flex-grow">
+        Customize layers, base maps and more ...</h5>
+      <h5 class="d-flex flex-grow">
+        <i>Further Development: GeoServer Integration ...</i></h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/map/map-configurator-guide.html">
+      <h5 class="d-flex flex-grow">
+          Guide</h5>
+    </a>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="/ins-template/public/images/map-configurator-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="/documentation/map/map-configurator.html">
+      <h5 class="d-flex flex-grow">
+          Documentation</h5>
+    </a>
   </div>
-  <img class="col-md-4" style="display: flex; width: 250px; max-width: 250px;" 
-    src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/annotate.jpeg" alt=""/>
-</div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-  <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
-    <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
-        Object-Detection AI Model Training
+  <!-- Dataset Management -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="dataset-management" class="d-flex flex-grow">
+      Dataset Management
     </h4>
-    <h6 style="display: flex; flex-grow: 1;">Train proven AI model architectures with your custom datasets</h6>
-    <h6><a href="/guides/training-process/training-guide.html" style="display: flex; flex-grow: 1;">
-      What and Why to Train ?</a></h6>
-    <h6><a href="/documentation/training-process/overview.html" style="display: flex; flex-grow: 1;">
-      Documentation</a></h6>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">
+        Manage extensive datasets of drone and satellite images</h5>
+      <h5 class="d-flex flex-grow">
+        Tools for uploading, categorizing, and maintaining image data</h5>
+      <h5 class="d-flex flex-grow">
+        Features include tagging, filtering, and robust data integrity checks</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/dataset-management/dataset-management-guide.html">
+      <h5 class="d-flex flex-grow">
+          Guide</h5>
+    </a>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="/ins-template/public/images/dataset-manage-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="/documentation/dataset-management/overview.html">
+      <h5 class="d-flex flex-grow">
+          Documentation</h5>
+    </a>
   </div>
-  <img class="col-md-4" style="display: flex; max-width: 250px; width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/robot-train.jpeg" alt=""/>
-</div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-  <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
-    <h4 class="col-md-8">
-        Detection and Monitoring of Waste Dumpsites
+  <!-- Image Annotation -->
+  <div class="row col-md-6 d-flex flex-column flex-grow flex-column mb-1r">
+    <h4 id="image-annotation" class="d-flex flex-grow">
+      Image Annotation
     </h4>
-    <h6 style="display: flex; flex-grow: 1;">Deploy pre-trained and custom-trained models</h6>
-    <h6 style="display: flex; flex-grow: 1;">Visualize results on georeferenced maps</h6>
-    <h6><a href="/guides/detection-process/detection-guide.html" style="display: flex; flex-grow: 1;">
-      How To Detect Waste Dumpsites in your Area</a></h6>
-    <h6><a href="/documentation/detection-process/overview.html" style="display: flex; flex-grow: 1;">
-      Documentation</a></h6>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">
+        Annotate high-resolution drone and satellite imagery</h5>
+      <h5 class="d-flex flex-grow">
+        Draw, adjust and enable/disable bounding boxes</h5>
+      <h5 class="d-flex flex-grow">
+        <i>Further Development: Segmentation polygon annotation</i></h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/dataset-management/image-annotation-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+      src="/ins-template/public/images/annotate-500.png" alt=""/>
+    <a class="d-flex flex-column flex-grow" href="/documentation/dataset-management/image-annotation.html">
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
   </div>
-  <img class="col-md-4" style="display: flex; width: 250px; min-width: 250px;" 
-    src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/object-detection.jpeg" alt=""/>
-</div>
 
-<div class="row col-md-12" style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
-  <div class="col-md-8" style="display: flex; flex-direction: column; text-align: start; align-items: flex-start; justify-content: start;">
-    <h4 style="display: flex; flex-grow: 1;" class="col-md-8">
-        Landfill Management
+  <!-- AI Model Training -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="ai-model-training" class="d-flex flex-grow">
+      AI Model Training
     </h4>
-    <h6 style="display: flex; flex-grow: 1;">Advanced tools for legal landfill management</h6>
-    <h6 style="display: flex; flex-grow: 1;">Waste form submission integration</h6>
-    <h6 style="display: flex; flex-grow: 1;">3D point cloud scan integration</h6>
-    <h6><a href="/documentation/landfill-management/overview.html" style="display: flex; flex-grow: 1;">Documentation</a></h6>
+    <div class="col-md-12 d-fled flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">
+        Train proven AI model architectures with your custom datasets</h5>
+      <h5 class="d-flex flex-grow">
+        Reinforce your custom-trained models as more data comes in</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/training-process/training-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/training-process/overview.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" src="/ins-template/public/images/robot-train-full-color.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
   </div>
-  <img class="col-md-4" style="display: flex; width: 250px; min-width: 250px;" src="https://raw.githubusercontent.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/refs/heads/master/docs/docfx_project/ins-template/public/images/truck-waste-fly.jpeg" alt=""/>
-</div>
+
+  <!-- Detection Input Images -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="detection-input-images" class="d-flex flex-grow">
+      Detection Input Images
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">Input images on which detection will be run</h5>
+      <h5 class="d-flex flex-grow">Load input images as Map Layers</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/detection-process/detection-input-images-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/detection-process/detection-input-images.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/detection-input-images-500.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
+  </div>
+
+  <!-- Detection and Monitoring of Waste Dumpsites -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="detection-and-monitoring-of-waste-dumpsites" class="d-flex flex-grow">
+      Detection and Monitoring of Waste Dumpsites
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">Detect using custom-trained models</h5>
+      <h5 class="d-flex flex-grow">Visualize results on georeferenced maps</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/detection-process/detection-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/detection-process/overview.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/object-detection-reduced-logical.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
+  </div>
+
+  <!-- Scheduled Runs  -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="scheduled-runs" class="d-flex flex-grow">
+      Scheduled Runs
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">
+        View status of Scheduled Runs</h5>
+      <h5 class="d-flex flex-grow">
+        Cancel on demand</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/scheduled-runs/scheduled-runs-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/scheduled-runs/overview.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/scheduled-runs-500.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
+  </div>
+
+  <!-- Landfill Management -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="landfill-management" class="d-flex flex-grow">
+      Landfill Management
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">Advanced tools for legal landfill management</h5>
+      <h5 class="d-flex flex-grow">Waste form submission integration</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/landfill-management/landfill-management-guide.html">
+      <h5 class="d-flex flex-grow">Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/landfill-management/overview.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/truck-waste-fly-500.png" alt=""/>
+      <h5 class="d-flex flex-grow">Documentation</h5>
+    </a>
+  </div>
+
+  <!-- 3D Point-Cloud -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="3d-point-cloud" class="d-flex flex-grow">
+      3D Point-Cloud
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">3D Point-Cloud scan integration</h5>
+      <h5 class="d-flex flex-grow">View and Compare 3D scans</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/landfill-management/3d-point-cloud-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/landfill-management/3d-point-cloud.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/3D-point-cloud-upload-500.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
+  </div>
+
+  <!-- User Management -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="user-management" class="d-flex flex-grow">
+      User Management
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">3D Point-Cloud scan integration</h5>
+      <h5 class="d-flex flex-grow">View and Compare 3D scans</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/user-management/user-management-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/user-management/overview.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/user-management-500.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
+  </div>
+
+  <!-- Audit Logs -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="audit-logs" class="d-flex flex-grow">
+      Audit Logs
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">3D Point-Cloud scan integration</h5>
+      <h5 class="d-flex flex-grow">View and Compare 3D scans</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/audit-logs/audit-logs-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/audit-logs/overview.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/audit-logs-500.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
+  </div>
+
+  <!-- Application Settings -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="application-settings" class="d-flex flex-grow">
+      Application Settings
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">Save and Configure your own application settings</h5>
+      <h5 class="d-flex flex-grow">Run the App Your Way</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/application-settings/application-settings-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/application-settings/overview.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/application-settings-500.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
+  </div>
+
+  <!-- Localization -->
+  <div class="row col-md-6 d-flex flex-column flex-grow mb-1r">
+    <h4 id="application-settings" class="d-flex flex-grow">
+      Localization
+    </h4>
+    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
+      <h5 class="d-flex flex-grow">Add Localization for your App</h5>
+      <h5 class="d-flex flex-grow">Support as many languages as you want</h5>
+    </div>
+    <a class="d-flex flex-column flex-grow" href="/guides/localization/localization-guide.html">
+      <h5 class="d-flex flex-grow">
+        Guide</h5>
+    </a>
+    <a class="d-flex flex-column flex-grow" href="/documentation/localization/overview.html">
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
+        src="/ins-template/public/images/localization-500.png" alt=""/>
+      <h5 class="d-flex flex-grow">
+        Documentation</h5>
+    </a>
+  </div>
+
 </div>
 
 ## System Architecture
@@ -117,34 +345,6 @@ Our platform utilizes high-resolution images combined with sophisticated image a
 | | Python | 3.8 | |
 | | C++ | 14 | |
 | | Pytorch | *depends* | *CUDA* |
-
-## Documentation Structure
-
-- [Training Process](/docfx_project/documentation/training-process/overview.html)
-  - Model training workflow
-  - Configuration management
-  - Performance monitoring
-  
-- [Detection Process](/docfx_project/documentation/detection-process/overview.html)
-  - Detection pipeline
-  - Result visualization
-  - Performance optimization
-
-- [Dataset Management](/docfx_project/documentation/dataset-management/overview.html)
-  - Data organization
-  - Annotation workflow
-  - Quality control
-
-- [Landfill Management](/docfx_project/documentation/landfill-management/overview.html)
-  - Waste tracking
-  - 3D scanning
-  - Reporting systems
-
-## Development Resources
-
-- [Development Setup Guide](/docfx_project/documentation/getting-started.md)
-- [Contributing Guidelines](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/CONTRIBUTING.md)
-- [Code of Conduct](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/CODE_OF_CONDUCT.md)
 
 ## License
 

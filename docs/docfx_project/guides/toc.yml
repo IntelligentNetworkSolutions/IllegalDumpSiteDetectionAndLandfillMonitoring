@@ -1,11 +1,50 @@
-- name: User Guide
-  href: ~/guides/
+- name: Guides
+  href: /guides/user-guides.html
   items:
-    - name: Dataset Management Overview
-      href: ~/guides/dataset-management/dataset-management-guide.md
-    - name: Training Process Overview
-      href: ~/guides/training-process/training-guide.md
-    - name: Detection Process Overview
-      href: ~/guides/detection-process/detection-guide.md
-    - name: Landfill Management System Overview
-      href: ~/guides/landfill-management/landfill-management-guide.md
+  - name: Map
+    href: /guides/map/map-guide.html
+    items:
+      - name: Overview
+        href: /guides/map/map-guide.html
+      - name: Map Configurator
+        href: /guides/map/map-configurator-guide.html
+  - name: Dataset Management
+    href: /guides/dataset-management/dataset-management-guide.html
+    items:
+      - name: Dataset Management
+        href: /guides/dataset-management/dataset-management-guide.html
+      - name: Image Annotation
+        href: /guides/dataset-management/image-annotation-guide.html
+  - name: Training Process
+    href: /guides/training-process/training-guide.html
+    items:
+      - name: Training Guide
+        href: /guides/training-process/training-guide.html
+  - name: Detection Process
+    href: /guides/detection-process/detection-guide.html
+    items:
+      - name: Detection Process
+        href: /guides/detection-process/detection-guide.html
+      - name: Input Images
+        href: /guides/detection-process/detection-input-images-guide.html
+  - name: Landfill Management
+    href: /guides/landfill-management/landfill-management-guide.html
+    items:
+      - name: Overview
+        href: /guides/landfill-management/landfill-management-guide.html
+      - name: 3D Point Cloud
+        href: /guides/landfill-management/3d-point-cloud-guide.html
+  - name: Admin
+    href: /guides/user-management/user-management-guide.html
+    items: 
+      - name: Overview
+        href: /guides/user-management/user-management-guide.html
+      - name: Audit Logs
+        href: /guides/audit-logs/audit-logs-guide.html
+  - name: Super Admin
+    href: /guides/application-settings/application-settings-guide.html
+    items: 
+      - name: Application Settings
+        href: /guides/application-settings/application-settings-guide.html
+      - name: Localization
+        href: /guides/localization/localization-guide.html

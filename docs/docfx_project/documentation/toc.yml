@@ -1,37 +1,60 @@
 - name: Documentation
-  href: ~/documentation/
+  href: /documentation/dev-docs-overview.html
   items:
+  - name: Map
+    href: /documentation/map/overview.html
+    items:
+      - name: Overview
+        href: /documentation/map/overview.html
+      - name: Map Configurator
+        href: /documentation/map/map-configurator.html
   - name: Dataset Management
-    href: ~/documentation/dataset-management/
+    href: /documentation/dataset-management/overview.html
     items:
       - name: Overview
-        href: ~/documentation/dataset-management/overview.md
+        href: /documentation/dataset-management/overview.html
       - name: Image Annotation
-        href: ~/documentation/dataset-management/image-annotation.md
+        href: /documentation/dataset-management/image-annotation.html
   - name: Training Process
-    href: ~/documentation/training-process/
+    href: /documentation/training-process/overview.html
     items:
       - name: Overview
-        href: ~/documentation/training-process/overview.md
+        href: /documentation/training-process/overview.html
       - name: Entities
-        href: ~/documentation/training-process/entities.md
+        href: /documentation/training-process/entities.html
       - name: Services
-        href: ~/documentation/training-process/services.md
+        href: /documentation/training-process/services.html
       - name: Controllers
-        href: ~/documentation/training-process/controllers.md
+        href: /documentation/training-process/controllers.html
   - name: Detection Process
-    href: ~/documentation/detection-process/
+    href: /documentation/detection-process/overview.html
     items:
       - name: Overview
-        href: ~/documentation/detection-process/overview.md
+        href: /documentation/detection-process/overview.html
       - name: Input Images
-        href: ~/documentation/detection-process/detection-input-images.md
+        href: /documentation/detection-process/detection-input-images.html
       - name: Detection Runs
-        href: ~/documentation/detection-process/detection-runs.md
+        href: /documentation/detection-process/detection-runs.html
       - name: Ignore Zones
-        href: ~/documentation/detection-process/detection-ignore-zones.md
+        href: /documentation/detection-process/detection-ignore-zones.html
   - name: Landfill Management
-    href: ~/documentation/landfill-management/
+    href: /documentation/landfill-management/overview.html
     items:
       - name: Overview
-        href: ~/documentation/landfill-management/overview.md
+        href: /documentation/landfill-management/overview.html
+      - name: 3D Point Cloud
+        href: /documentation/landfill-management/3d-point-cloud.html
+  - name: Admin
+    href: /documentation/user-management/overview.html
+    items: 
+      - name: Overview
+        href: /documentation/user-management/overview.html
+      - name: Audit Logs
+        href: /documentation/audit-logs/overview.html
+  - name: Super Admin
+    href: /documentation/application-settings/overview.html
+    items: 
+      - name: Application Settings
+        href: /documentation/application-settings/overview.html
+      - name: Localization
+        href: /documentation/localization/overview.html

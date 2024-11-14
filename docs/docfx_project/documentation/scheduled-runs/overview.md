@@ -1,5 +1,8 @@
 # Hangfire Integration
 
+- [Official Page](https://www.hangfire.io/)
+- [Documentation](https://docs.hangfire.io/en/latest/)
+
 ## Configuration
 
 ```csharp

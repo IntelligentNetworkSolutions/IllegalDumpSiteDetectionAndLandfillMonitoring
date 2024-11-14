@@ -1,11 +1,4 @@
-# Landfill Management Module  
-
-## 3D Point Cloud Files  
-
-- Prepare  
-- Upload  
-- View  
-- Compare  
+# Landfill Management Module   
 
 ## Track Trucks  
 
