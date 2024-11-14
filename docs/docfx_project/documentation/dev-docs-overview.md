@@ -98,7 +98,7 @@
         Reinforce your custom-trained models as more data comes in</h5>
     </div>
     <a class="d-flex flex-column flex-grow" href="../documentation/training-process/overview.html">
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" src="../ins-template/public/images/robot-train-full-color.png" alt=""/>
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" src="../ins-template/public/images/robot-train-500.png" alt=""/>
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>
@@ -132,7 +132,7 @@
     </div>
     <a class="d-flex flex-column flex-grow" href="../documentation/detection-process/overview.html">
       <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="../ins-template/public/images/object-detection-reduced-logical.png" alt=""/>
+        src="../ins-template/public/images/object-detection-500.png" alt=""/>
       <h5 class="d-flex flex-grow">
         Documentation</h5>
     </a>

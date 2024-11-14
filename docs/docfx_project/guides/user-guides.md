@@ -100,7 +100,7 @@
     <a class="d-flex flex-column flex-grow" href="../guides/training-process/training-guide.html">
       <h5 class="d-flex flex-grow">
         Guide</h5>
-      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" src="../ins-template/public/images/robot-train-full-color.png" alt=""/>
+      <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" src="../ins-template/public/images/robot-train-500.png" alt=""/>
     </a>
   </div>
 
@@ -134,7 +134,7 @@
       <h5 class="d-flex flex-grow">
         Guide</h5>
       <img style="width: 250px; max-width: 250px; border-top: 1px solid #e7e7e7; border-bottom: 1px solid #e7e7e7;" 
-        src="../ins-template/public/images/object-detection-reduced-logical.png" alt=""/>
+        src="../ins-template/public/images/object-detection-500.png" alt=""/>
     </a>
   </div>
 
