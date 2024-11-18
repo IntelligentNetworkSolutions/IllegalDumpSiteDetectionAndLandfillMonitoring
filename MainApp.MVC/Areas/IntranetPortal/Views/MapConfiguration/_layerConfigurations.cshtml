@@ -68,7 +68,7 @@
                                                 <td>Layer Switcher</td>
                                                 <td>
 
-                                                    <button class="btn btn-sm btn-primary edit-button" data-id="@item.Id" onclick="editMapLayerConfigurationModalFunction('@item.Id')"title="Edit">
+                                                    <button class="btn btn-sm btn-warning edit-button" data-id="@item.Id" onclick="editMapLayerConfigurationModalFunction('@item.Id')"title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                         Edit
                                                     </button>
@@ -583,7 +583,7 @@ function editMapLayerConfiguration(mapId) {
 <div class="modal" id="editMapLayerConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-gradient-danger">
+            <div class="modal-header bg-gradient-warning">
                 <h5 class="modal-title">@DbResHtml.T("Are you sure you want to edit this map layer configuration ?", "Resources")</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -592,7 +592,7 @@ function editMapLayerConfiguration(mapId) {
             <div id="editMapLayerConfigurationModalBody" class="modal-body">
             </div>
             <div class="modal-footer">
-                <button type="button" class="mb-1 btn bg-gradient-danger" onclick="editMapLayerConfiguration('@mapId')" data-dismiss="modal" aria-label="edit">
+                <button type="button" class="mb-1 btn bg-gradient-warning" onclick="editMapLayerConfiguration('@mapId')" data-dismiss="modal" aria-label="edit">
                     <span aria-hidden="true"> @DbResHtml.T("edit", "Resources")</span>
                 </button>
             </div>

@@ -146,20 +146,16 @@
                 "language": {
                     "url": "@langPath"
                 },
-                dom: 'Bfrtip',
                 responsive: true,
-                buttons: [
-                    {
-                        extend: 'excelHtml5',
-                        className: 'btn bg-gradient-success border-0',
-                        text: '<i class="fas fa-file-alt"></i>',
-                        titleAttr: "Export to excel",
-                        filename: "Scheduled detection and training runs - @DateTime.Now.ToString("dd.MM.yyyy")",
-                        exportOptions: {
-                            columns: ':not(.notexport)'
-                        }
-                    }
-                ]
+                dom: '<"top"fB>rt<"bottom"lp>',
+                "buttons": [
+                 {
+                   extend: 'excelHtml5',
+                   text: '<i class="fas fa-file-alt"></i>',
+                   titleAttr: 'Export to Excel',
+                   className: 'btn btn-success'
+                 }
+               ]
             });
         });
         //training runs

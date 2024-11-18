@@ -103,19 +103,15 @@
                     "url": "@langPath"
                 },
                 responsive: true,
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        extend: 'excelHtml5',
-                        className: 'btn bg-gradient-success border-0',
-                        text: '<i class="fas fa-file-alt"></i>',
-                        titleAttr: "Export to excel",
-                        filename: "Detection Runs - @DateTime.Now.ToString("dd.MM.yyyy")",
-                        exportOptions: {
-                            columns: ':not(.notexport)'
+                    dom: '<"top"fB>rt<"bottom"lp>',
+                    "buttons": [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="fas fa-file-alt"></i>',
+                            titleAttr: 'Export to Excel',
+                            className: 'btn btn-success'
                         }
-                    }
-                ]
+                    ]
             });
         });
     </script>

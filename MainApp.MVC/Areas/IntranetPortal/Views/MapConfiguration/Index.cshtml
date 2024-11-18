@@ -44,9 +44,6 @@
                                 @DbResHtml.T("Add Map Configuration", "Resources")
                             </button>
                         }
-                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
-                            <i class="fas fa-file-alt"></i>
-                        </button>
                         <div class="mt-5">
                             <table id="mapConfigurationTable" class="table table-sm table-bordered table-striped custom-responsive-table">
                                 <thead>
@@ -124,24 +121,16 @@
                     "language": {
                         "url": "@langPath"
                     },
-                    dom: 'Bfrtip',
                     responsive: true,
-                    buttons: [
+                    dom: '<"top"fB>rt<"bottom"lp>',
+                    "buttons": [
                         {
                             extend: 'excelHtml5',
-                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
                             text: '<i class="fas fa-file-alt"></i>',
-                            titleAttr: "Export to excel",
-                            filename: "Map Configration - @DateTime.Now.ToString("dd.MM.yyyy")",
-                            exportOptions: {
-                                columns: ':not(.notexport)'
-                            }
+                            titleAttr: 'Export to Excel',
+                            className: 'btn btn-success'
                         }
                     ]
-                });
-
-                $("#exportToExcelButton").click(function () {
-                    $(".export-to-excel-button").click();
                 });
             });
 
@@ -476,12 +465,6 @@
                                 + '<th>@DbResHtml.T("Map Name", "Resources")</th>'
                                 + '<th>@DbResHtml.T("Projection", "Resources")</th>'
                                 + '<th>@DbResHtml.T("TileGridJs", "Resources")</th>'
-                                + '<th>@DbResHtml.T("CenterX", "Resources")</th>'
-                                + '<th>@DbResHtml.T("CenterY", "Resources")</th>'
-                                + '<th>@DbResHtml.T("MinX", "Resources")</th>'
-                                + '<th>@DbResHtml.T("MinY", "Resources")</th>'
-                                + '<th>@DbResHtml.T("MaxX", "Resources")</th>'
-                                + '<th>@DbResHtml.T("MaxY", "Resources")</th>'
                                 + '<th>@DbResHtml.T("Resolutions", "Resources")</th>'
                                 + '<th>@DbResHtml.T("DefaultResolution", "Resources")</th>'
                                 + '</tr>'
@@ -491,12 +474,6 @@
                                 + `<td>${data.data.mapName}</td>`
                                 + `<td>${data.data.projection}</td>`
                                 + `<td>${data.data.tileGridJs}</td>`
-                                + `<td>${data.data.centerX}</td>`
-                                + `<td>${data.data.centerY}</td>`
-                                + `<td>${data.data.minX}</td>`
-                                + `<td>${data.data.minY}</td>`
-                                + `<td>${data.data.maxX}</td>`
-                                + `<td>${data.data.maxY}</td>`
                                 + `<td>${data.data.resolutions}</td>`
                                 + `<td>${data.data.defaultResolution}</td>`
                                 + '</tr>'

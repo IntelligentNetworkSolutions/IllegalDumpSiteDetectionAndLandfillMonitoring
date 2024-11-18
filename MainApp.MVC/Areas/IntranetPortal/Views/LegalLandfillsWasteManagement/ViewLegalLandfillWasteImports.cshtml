@@ -30,7 +30,7 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        <div class="row justify-content-between">
+                        <div class="row justify-content-between mb-3">
                             @if (User.HasAuthClaim(SD.AuthClaims.AddLegalLandfillWasteImports))
                             {
                                 <a asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="CreateLegalLandfillWasteImport" class="mb-1 btn bg-gradient-primary float-left">
@@ -38,9 +38,6 @@
                                     @DbResHtml.T("Add Legal Landfill Waste Import", "Resources")
                                 </a>
                             }
-                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
-                            <i class="fas fa-file-alt"></i>
-                            </button>
                         </div>
                         <div class="card">
                             <div class="card-header">
@@ -211,21 +208,15 @@
             pageLength: 100,
             columnDefs: [{ width: "20%", targets: 2 }],
             language: { url: "@langPath" },
-            dom: 'Bfrtip',
-            buttons: [
-                {
-                    extend: 'excelHtml5',
-                    className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
-                    text: '<i class="fas fa-file-alt"></i>',
-                    titleAttr: "Export to excel",
-                    filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
-                    exportOptions: { columns: ':not(.notexport)' }
-                }
-            ]
-        });
-
-        $("#exportToExcelButton").click(function () {
-            table.button('.export-to-excel-button').trigger();
+            dom: '<"top"fB>rt<"bottom"lp>',
+            "buttons": [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<i class="fas fa-file-alt"></i>',
+                        titleAttr: 'Export to Excel',
+                        className: 'btn btn-success'
+                    }
+                ]
         });
 
             $('.datepicker').datepicker({
@@ -414,7 +405,6 @@
                             + '<th>@DbResHtml.T("Weight", "Resources")</th>'
                             + '<th>@DbResHtml.T("Capacity", "Resources")</th>'
                             + '<th>@DbResHtml.T("Created By", "Resources")</th>'
-                            + '<th>@DbResHtml.T("Created By Id", "Resources")</th>'
                             + '<th>@DbResHtml.T("Created On", "Resources")</th>'
                             + '</tr>'
                             + '</thead>'
@@ -427,8 +417,7 @@
                             + `<td>${data.data.weight}</td>`
                             + `<td>${data.data.capacity}</td>`
                             + `<td>${data.data.createdBy.userName}</td>`
-                            + `<td>${data.data.createdById}</td>`
-                            + `<td>${data.data.createdOn}</td>`
+                            + `<td>${formatDate(data.data.createdOn)}</td>`
                             + `</tr>`
                             + '</tbody>'
                             + '</table>'
@@ -462,6 +451,15 @@
             }
         });
     }
+
+            function formatDate(dateString) {
+                var date = new Date(dateString);
+                var day = date.getDate().toString().padStart(2, '0');
+                var month = (date.getMonth() + 1).toString().padStart(2, '0');
+                var year = date.getFullYear();
+
+                return `${day}.${month}.${year}`;
+            }
 
     </script>
 }
@@ -498,5 +496,7 @@
     {
         return FormatNumber((decimal)number);
     }
+
     }
+
 } 

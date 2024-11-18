@@ -173,3 +173,24 @@ html {
 .custom-responsive-table{
     width: 100% !important;
 }
+
+/*Datatables Excel button in same line with search*/
+
+.dataTables_wrapper .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-top: 5px;
+}
+/*Search button*/
+.dataTables_wrapper .top .dataTables_filter {
+    order: 2;
+}
+
+/*Excel button*/
+.dataTables_wrapper .top .dt-buttons {
+    order: 1; 
+    margin-left: 0;
+    margin-bottom: 0.5rem;
+}

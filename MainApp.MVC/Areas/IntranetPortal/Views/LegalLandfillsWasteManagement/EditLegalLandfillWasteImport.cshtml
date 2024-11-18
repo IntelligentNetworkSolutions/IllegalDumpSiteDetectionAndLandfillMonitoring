@@ -99,8 +99,11 @@
                             </div>
 
                             <input type="hidden" asp-for="CreatedById" />
+                            <input type="hidden" asp-for="CreatedOn" />
+
                         </div>
                     </div>
+                </div>
                 </div>
         </form>
     </div>
@@ -112,6 +115,15 @@
         $('form').on('submit', function (e) {
             var weight = parseFloat($('#weight').val());
             var capacity = parseFloat($('#capacity').val());
+
+                if ((capacity < 0 || weight < 0)) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: "warning",
+                        text: "@DbResHtml.T("Negative values are not allowed for Weight and Capacity.", "Resources")"
+                    });
+                    return;
+                }
 
             if ((isNaN(weight) || weight === "") && (isNaN(capacity) || capacity === "")) {
                 e.preventDefault();
