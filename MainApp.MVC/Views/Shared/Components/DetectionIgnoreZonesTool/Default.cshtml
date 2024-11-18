@@ -319,9 +319,11 @@
         ignoreZonesList.forEach(function (item) {
             detectionIgnoreZonesTable +=
                 `<tr>
-                                            <td class="text-nowrap overflow-auto" style="max-width: 130px;"  title="${item.name}">${item.name}</td>
+                                                <td style="max-width: 130px; word-wrap: break-word; white-space: normal;">${item.name}</td>
                                                 <td class="text-nowrap overflow-auto" style="max-width: 130px;" title="${item.description}">${item.description}</td>
-                                            <td>${item.isEnabled}</td>
+                                                    <td class="text-center">
+                                                            <input type="checkbox" ${item.isEnabled ? 'checked' : ''} disabled style="transform: scale(1.5);">
+                                                    </td>
                                             <td>
                                                 <button onclick='focusOnIgnoreZone("${item.id}")' class="btn btn-xs bg-gradient-dark mr-1" title="@DbResHtml.T("Focus on this zone", "Resources")">
                                                     <i class="fas fa-search-location"></i>
@@ -625,8 +627,8 @@
         var description = $("#editZoneDescription").val();
         var isEnabled = $("#isEditZoneEnabled").prop("checked");
 
-        if (name === '' || description === '') {
-            $("#polygonModal").modal('hide');
+        if (name.trim() === "" || description.trim() === "") {
+            $("#editZoneModal").modal('hide');
             Swal.fire({
                 text: '@DbResHtml.T("All fields are required", "Resources")',
                 confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
@@ -837,7 +839,7 @@
         var isEnabled = $("#isZoneEnabled").prop("checked");
         var geoJsonString = $("#polygonCoordinates").val();
         if (geoJsonString === '') {
-            $("#polygonModal").modal('hide');
+            $("#polygonModal").modal('hide');            
             Swal.fire({
                 text: '@DbResHtml.T("Please enter polygon", "Resources")',
                 confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
@@ -857,7 +859,7 @@
         var geoJsonFormat = new ol.format.GeoJSON();
         var feature = geoJsonFormat.readFeature(geoJsonObject);
         var formattedGeoJson = geoJsonFormat.writeFeature(feature);
-        if (name === '' || description === '') {
+        if (name.trim() === "" || description.trim() === "") {
             $("#polygonModal").modal('hide');
             Swal.fire({
                 text: '@DbResHtml.T("All fields are required", "Resources")',

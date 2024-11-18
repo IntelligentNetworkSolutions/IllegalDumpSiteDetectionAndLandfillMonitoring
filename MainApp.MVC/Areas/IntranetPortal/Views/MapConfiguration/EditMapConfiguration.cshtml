@@ -6,7 +6,7 @@
 
  
 @{
-    ViewData["Title"] = @DbResHtml.T("Map Configurations", "Resources");
+    ViewData["Title"] = @DbResHtml.T("Edit Map Configurations", "Resources");
 
 
 }
@@ -20,13 +20,18 @@
             <div class="col-sm-6">
                 <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
                 <small class="text-muted">
-                    @DbResHtml.T("Add, edit, delete and view maps, add groups and layers.", "Resources")
+                    @DbResHtml.T("Edit map configurations", "Resources")
                 </small>
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
-                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="MapConfiguration" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Map Configurations", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Edit Map Configurations", "Resources")</li>
                 </ol>
             </div>
         </div>

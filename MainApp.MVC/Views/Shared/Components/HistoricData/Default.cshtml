@@ -387,11 +387,11 @@
                         detectionRunsTable +=
                             `<tr>
                             <td hidden>${item.id}</td>
-                                <td class="text-nowrap overflow-auto" style="max-width: 200px;" title="${item.name}">${item.name}</td>
+                               <td style="max-width: 200px; word-wrap: break-word; white-space: normal;">${item.name}</td>
                             <td>
                                <input class="conf_rate_slider" id="conf_rate_range_${item.id}" type="text" name="conf_rate_range_${item.id}" value="">
                             </td>
-                            <td>${new Date(item.createdOn).toLocaleDateString()}</td>
+                                   <td>${new Date(item.createdOn).toLocaleDateString('en-GB').replace(/\//g, '.')}</td>
                             <td>
                                <div class="form-group clearfix">
                                     <div class="icheck-dark mt-3 text-bold">
