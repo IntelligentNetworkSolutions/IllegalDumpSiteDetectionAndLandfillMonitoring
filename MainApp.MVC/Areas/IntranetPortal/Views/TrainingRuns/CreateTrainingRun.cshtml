@@ -14,8 +14,13 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Training", "Resources")</a></li>
-                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Training runs list", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Create Training Run", "Resources")</li>
                 </ol>
             </div>
         </div>
@@ -62,7 +67,7 @@
                                     <label for="batchSize" class="form-label">@DbResHtml.T("Batch size", "Resources")</label>
                                     <select id="batchSize" class="form-control" name="batchSize">
                                         <option></option>
-                                        @for (int i = 0; i <= 4; i++)
+                                        @for (int i = 1; i <= 4; i++)
                                         {
                                             <option value="@i">@i</option>
                                         }

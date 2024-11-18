@@ -14,8 +14,10 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
-                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "User management", "Resources")</li>
                 </ol>
             </div>
         </div>

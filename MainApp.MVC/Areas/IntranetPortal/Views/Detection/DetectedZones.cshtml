@@ -18,8 +18,10 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
-                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "List of detection runs", "Resources")</li>
                 </ol>
             </div>
         </div>
@@ -34,46 +36,59 @@
                         <h3 class="card-title">@DbResHtml.T("Detection Runs", "Resources")</h3>
                     </div> *@
                     <div class="card-body">
-                        <table id="detectionRunsTable" class="table table-sm table-bordered table-striped custom-responsive-table" >
-                            <thead>
-                                <tr>
-                                    <th>
-                                        @DbResHtml.T("Name", "Resources")
-                                    </th>
-                                    <th>
-                                        @DbResHtml.T("Description", "Resources")
-                                    </th>
-                                    <th>
-                                        @DbResHtml.T("Created By", "Resources")
-                                    </th>
-                                    <th>
-                                        @DbResHtml.T("Created On", "Resources")
-                                    </th>
-                                    <th class="notexport">
-                                        @DbResHtml.T("Action", "Resources")
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in Model)
-                                {
+                        @if (User.HasAuthClaim(SD.AuthClaims.CreateDetectionRun))
+                        {
+                            <a asp-action="CreateDetectionRun" asp-controller="Detection" asp-area="IntranetPortal" class="mb-1 btn bg-gradient-primary float-left">
+                                <i class="fas fa-plus"></i>
+                                @DbResHtml.T("Create detection run", "Resources")
+                            </a>
+                        }
+                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                            <i class="fas fa-file-alt"></i>
+                        </button>
+                        <div class="mt-5">
+                            <table id="detectionRunsTable" class="table table-sm table-bordered table-striped custom-responsive-table">
+                                <thead>
                                     <tr>
-                                        <td>@item.Name</td>
-                                        <td>@item.Description</td>
-                                        <td>@item.CreatedBy?.UserName</td>
-                                        <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
-                                        <td>
-                                            @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
-                                            {
-                                                <a asp-controller="Map" asp-action="Index" asp-route-detectionRunId="@item.Id" class="mb-1 btn bg-gradient-info text-white btn-xs" title="@DbResHtml.T("View detection run", "Resources")">
-                                                    <i class="fas fa-map-marked-alt"></i>
-                                                </a>
-                                            }
-                                        </td>
+                                        <th>
+                                            @DbResHtml.T("Name", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Description", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Created By", "Resources")
+                                        </th>
+                                        <th>
+                                            @DbResHtml.T("Created On", "Resources")
+                                        </th>
+                                        <th class="notexport">
+                                            @DbResHtml.T("Action", "Resources")
+                                        </th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.Name</td>
+                                            <td>@item.Description</td>
+                                            <td>@item.CreatedBy?.UserName</td>
+                                            <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
+                                            <td>
+                                                @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionRuns))
+                                                {
+                                                    <a asp-controller="Map" asp-action="Index" asp-route-detectionRunId="@item.Id" class="mb-1 btn bg-gradient-info text-white btn-xs" title="@DbResHtml.T("View detection run", "Resources")">
+                                                        <i class="fas fa-map-marked-alt"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -113,6 +128,9 @@
                         }
                     ]
             });
+                $("#exportToExcelButton").click(function () {
+                    $(".export-to-excel-button").click();
+                });
         });
     </script>
 }

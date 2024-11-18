@@ -17,8 +17,10 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
-                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Legal landfill point cloud files list", "Resources")</li>
                 </ol>
             </div>
         </div>
@@ -195,30 +197,35 @@
                         }
                         else {
                             $("#wasteVolumeDiffAnalysisModalBody").empty();
-                            
+
                             var html = `<div class="info-box">
                                             <span class="info-box-icon bg-secondary"><i class="fas fa-chart-bar"></i></span>
-                                            <div class="info-box-content">
-                                                <span class="info-box-text">File 1:
+                                            <div class="info-box-content d-flex flex-column align-items-start p-2">
+                                                <span class="info-box-text w-100">
+                                                    File 1:
                                                     <br>
-                                                    <label class="btn btn-default text-center font-weight-light">
-                                                        <span class="font-weight-normal">${data.data.fileAName}</span> /
-                                                        ${data.data.scanDateFileA}
-                                                    </label>                                                   
+                                                    <label class="btn btn-default text-justify font-weight-light text-wrap w-100 text-justify">
+                                                        <span>Name:</span>
+                                                        <span class="font-weight-normal text-break d-block">${data.data.fileAName}</span>
+                                                        <span class="mt-2 d-block">Scan Date:</span>
+                                                        <span class="font-weight-normal text-break">${data.data.scanDateFileA}</span>
+                                                    </label>
                                                     <br>
                                                     File 2:
                                                     <br>
-                                                    <label class="btn btn-default text-center font-weight-light">
-                                                         <span class="font-weight-normal">${data.data.fileBName}</span> /
-                                                        ${data.data.scanDateFileB}
+                                                    <label class="btn btn-default text-justify font-weight-light text-wrap w-100 text-justify">
+                                                       <span>Name:</span>
+                                                       <span class="font-weight-normal text-break d-block">${data.data.fileBName}</span>
+                                                       <span class="mt-2 d-block">Scan Date:</span>
+                                                       <span class="font-weight-normal text-break">${data.data.scanDateFileB}</span>
                                                     </label>
                                                     <br>
                                                     <b>Total:</b>
                                                     <br>
-                                                    <label class="btn btn-default text-center text-sm border border-dark">
-                                                        <span class="text-sm">${data.data.difference.toFixed(2)} m³</span>
+                                                    <label class="btn btn-default text-center text-sm border border-dark text-wrap w-100">
+                                                        <span class="text-sm text-break">${data.data.difference.toFixed(2)} m³</span>
                                                     </label>
-                                                </span>                                               
+                                                </span>
                                             </div>
                                         </div>`;
                             $("#wasteVolumeDiffAnalysisModalBody").append(html);

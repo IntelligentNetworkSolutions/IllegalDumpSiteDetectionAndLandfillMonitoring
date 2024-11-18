@@ -5,7 +5,7 @@
 @model IEnumerable<LegalLandfillTruckViewModel>
 
 @{
-    ViewData["Title"] = @DbResHtml.T("Legal landfills Truck list", "Resources");
+    ViewData["Title"] = @DbResHtml.T("Legal landfills truck list", "Resources");
 }
 
 <div class="content-header bg-gradient-white border-bottom mb-4">
@@ -17,8 +17,10 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
-                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Legal landfills truck list", "Resources")</li>
                 </ol>
             </div>
         </div>
@@ -586,7 +588,7 @@
                     <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteLandfillTruckConfirmed()" data-dismiss="modal" aria-label="Delete">
                         <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
                     </button>
-                    <button type="button" class="mb-1 btn bg-gradient-warning" onclick="disableLandfillTruck()" data-dismiss="modal" aria-label="Delete">
+                    <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="disableLandfillTruck()" data-dismiss="modal" aria-label="Delete">
                         <span aria-hidden="true"> @DbResHtml.T("Disable", "Resources")</span>
                     </button>
                 </div>
