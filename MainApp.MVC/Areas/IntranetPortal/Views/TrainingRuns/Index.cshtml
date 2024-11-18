@@ -6,7 +6,7 @@
 
 
 @{
-    ViewData["Title"] = @DbResHtml.T("Training run list", "Resources");
+    ViewData["Title"] = @DbResHtml.T("Training runs list", "Resources");
 }
 
 <div class="content-header bg-gradient-white border-bottom mb-4">
@@ -18,8 +18,10 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
-                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Training runs list", "Resources")</li>
                 </ol>
             </div>
         </div>
@@ -31,6 +33,13 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
+                        @if (User.HasAuthClaim(SD.AuthClaims.CreateTrainingRun))
+                        {
+                            <a asp-action="CreateTrainingRun" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="mb-1 btn bg-gradient-primary float-left">
+                                <i class="fas fa-plus"></i>
+                                @DbResHtml.T("Create Training Run", "Resources")
+                            </a>
+                        }
                         <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
                             <i class="fas fa-file-alt"></i>
                         </button>

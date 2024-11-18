@@ -16,8 +16,10 @@
             </div>
             <div class="col-sm-6">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="#" class="text-success">@DbResHtml.T("Home", "Resources")</a></li>
-                    <li class="breadcrumb-item active">@ViewData["Title"]</li>
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Manage scheduled runs", "Resources")</li>
                 </ol>
             </div>
         </div>
@@ -148,6 +150,19 @@
                 },
                 dom: 'Bfrtip',
                 responsive: true,
+                columnDefs: [
+                  {
+                     targets: 3,
+                     type: 'datetime-moment',
+                     render: function (data, type, row) {
+                               if (type === 'display') {
+                                   return data; 
+                               }
+                               return moment(data, 'DD.MM.YYYY HH:mm').valueOf();
+                           }
+                     }
+                ],
+                order: [[3, 'desc']],
                 buttons: [
                     {
                         extend: 'excelHtml5',
