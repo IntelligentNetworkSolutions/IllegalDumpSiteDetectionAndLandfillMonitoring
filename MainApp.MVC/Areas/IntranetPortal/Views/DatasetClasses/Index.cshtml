@@ -134,6 +134,18 @@
                     placeholder: "@DbResHtml.T("Select Parent Dataset Class", "Resources")",
                     allowClear: true
                 });
+
+                $('#addClassModal').on('hidden.bs.modal', function () {
+                    $("#parentClassInput").val(null).trigger('change');
+                    $("#parentClassInput").select2('close');
+                });
+
+                $('.modal').on('hidden.bs.modal', function () {
+                    $(this).find('.edit_select').val(null).trigger('change');
+                    $(this).find('.edit_select').select2('close');
+                });
+
+
             });
 
         function addNewDatasetClassConfirmed() {
