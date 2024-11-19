@@ -85,14 +85,16 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 text-center">
+                        <div class="col-12 text-center d-flex justify-content-between mt-4">
                             @if (User.HasAuthClaim(SD.AuthClaims.ScheduleTrainingRun))
                             {
                                 <button type="button" onclick="scheduleTrainingRun()" class="btn bg-gradient-success">
                                     @DbResHtml.T("Schedule Training", "Resources")
                                 </button>
                             }
-
+                            <a asp-area="IntranetPortal" asp-controller="TrainingRuns" asp-action="Index" class="btn btn-secondary ml-2">
+                                @DbResHtml.T("Back", "Resources")
+                            </a>
                         </div>
                     </div>
                 </div>

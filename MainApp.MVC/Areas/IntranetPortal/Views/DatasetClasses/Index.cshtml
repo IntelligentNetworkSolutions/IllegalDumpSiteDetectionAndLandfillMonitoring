@@ -43,11 +43,6 @@
                                 <i class="fas fa-plus"></i>
                                 @DbResHtml.T("Add Dataset Class", "Resources")
                             </button>
-                                      
-                            <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
-                                <i class="fas fa-file-alt"></i>
-                            </button>
-                                  
                         }
                         <div class="mt-5">
                             <table id="allClassesTable" class="table table-sm table-bordered table-striped custom-responsive-table">
@@ -122,18 +117,14 @@
                     "language": {
                         "url": "@langPath"
                     },
-                    dom: 'Bfrtip',
                     responsive: true,
-                    buttons: [
+                    dom: '<"top"fB>rt<"bottom"lp>',
+                    "buttons": [
                         {
                             extend: 'excelHtml5',
-                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
                             text: '<i class="fas fa-file-alt"></i>',
-                            titleAttr: "Export to excel",
-                            filename: "Dataset classes - @DateTime.Now.ToString("dd.MM.yyyy")",
-                            exportOptions: {
-                                columns: ':not(.notexport)'
-                            }
+                            titleAttr: 'Export to Excel',
+                            className: 'btn btn-success'
                         }
                     ]
                 });               
@@ -144,11 +135,6 @@
                     allowClear: true
                 });
             });
-        $(document).ready(function () {
-            $("#exportToExcelButton").click(function () {
-                $(".export-to-excel-button").click();
-            });
-        });
 
         function addNewDatasetClassConfirmed() {
             var className = $("#classNameInput").val();

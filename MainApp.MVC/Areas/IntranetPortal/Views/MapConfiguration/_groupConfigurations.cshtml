@@ -45,7 +45,7 @@
                                             <td>@item.Opacity</td>
                                             <td><button class="btn btn-sm btn-primary" onclick="addMapLayerToGroupConfigurationModalFunction('@item.Id')" title="Create">Add a New Layer</button></td>
                                             <td>
-                                                <button class="btn btn-sm btn-primary" onclick="editMapLayerGroupConfigurationModalFunction('@item.Id')" title="Edit"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-sm btn-warning" onclick="editMapLayerGroupConfigurationModalFunction('@item.Id')" title="Edit"><i class="fas fa-edit"></i></button>
                                                 <button class="btn btn-sm btn-danger" onclick="deleteMapLayerGroupConfigurationModalFunction('@item.Id')" title="Delete"><i class="fas fa-trash-alt"></i></button>
                                             </td>
                                         </tr>
@@ -135,7 +135,7 @@ $(document).ready(function () {
                                     <td>${layer.layerName}</td>
                                     <td>${parseInt(layer.order, 10)}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-primary" onclick="editMapLayerConfigurationInGroupModalFunction('${layer.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-sm btn-warning" onclick="editMapLayerConfigurationInGroupModalFunction('${layer.id}')" title="Edit"><i class="fas fa-edit"></i></button>
                                     </td>
                                     <td>
                                         <button class="btn btn-sm btn-danger" onclick="deleteMapLayerConfigurationInGroupModalFunction('${layer.id}')" title="Delete"><i class="fas fa-trash-alt"></i></button>
@@ -944,7 +944,7 @@ function addMapLayerToGroupConfigurationModalFunction(groupId) {
     <div class="modal" id="editMapLayerGroupConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-gradient-danger">
+            <div class="modal-header bg-gradient-warning">
                 <h5 class="modal-title">@DbResHtml.T("Are you sure you want to edit this map layer group configuration ?", "Resources")</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -953,8 +953,8 @@ function addMapLayerToGroupConfigurationModalFunction(groupId) {
             <div id="editMapLayerGroupConfigurationModalBody" class="modal-body">
             </div>
             <div class="modal-footer">
-                <button type="button" class="mb-1 btn bg-gradient-danger" onclick="editMapLayerGroupConfiguration()" data-dismiss="modal" aria-label="edit">
-                    <span aria-hidden="true"> @DbResHtml.T("edit", "Resources")</span>
+                <button type="button" class="mb-1 btn bg-gradient-warning" onclick="editMapLayerGroupConfiguration()" data-dismiss="modal" aria-label="edit">
+                    <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
                 </button>
             </div>
         </div>
@@ -965,7 +965,7 @@ function addMapLayerToGroupConfigurationModalFunction(groupId) {
     <div class="modal" id="addMapLayerToGroupConfigurationModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title">Add New Layer to Group</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -975,8 +975,8 @@ function addMapLayerToGroupConfigurationModalFunction(groupId) {
                <div class="col-md-6">
                     <div class="modal-body">
                         <form id="addLayerForm" onsubmit="submitLayerForm(); return false;">
-                                <div class="card-header">Create form for creating new layer:</div>
-                                <input hidden id="addLayerGroupId" name="MapLayerGroupConfigurationId">
+                            <div class="card-header"><strong>Form for creating new layer:</strong></div>
+                            <input hidden id="addLayerGroupId" name="MapLayerGroupConfigurationId">
                                 <div class="form-group">
                                     <label for="addToGroupMapConfigurationName">@DbResHtml.T("Map Name:", "Resources")</label>
                                     <input type="text" class="form-control" id="addToGroupMapConfigurationName" name="addToGroupMapConfigurationName" value="@mapName" required readonly>
@@ -1011,7 +1011,7 @@ function addMapLayerToGroupConfigurationModalFunction(groupId) {
 
                     <div class="col-md-6">
                         <div class="modal-body">
-                            <div class="card-header">Create form for creating new layer explanation:</div>
+                        <div class="card-header"><strong>Explanation for creating new layer :</strong></div>
                             <div class="form-group" style="min-height: 70px">
                                 <label class="control-label">Map Name</label>
                                 <p>Fill the map name with the name of the map.</p>
@@ -1064,7 +1064,7 @@ function addMapLayerToGroupConfigurationModalFunction(groupId) {
     <div class="modal" id="editMapLayerConfigurationInGroupModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
         <div class="modal-content">
-            <div class="modal-header bg-gradient-danger">
+            <div class="modal-header bg-gradient-warning">
                 <h5 class="modal-title">@DbResHtml.T("Are you sure you want to edit this map layer configuration ?", "Resources")</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -1073,8 +1073,8 @@ function addMapLayerToGroupConfigurationModalFunction(groupId) {
             <div id="editMapLayerConfigurationInGroupModalBody" class="modal-body">
             </div>
             <div class="modal-footer">
-                <button type="button" class="mb-1 btn bg-gradient-danger" onclick="editMapLayerConfigurationInGroup()" data-dismiss="modal" aria-label="edit">
-                    <span aria-hidden="true"> @DbResHtml.T("edit", "Resources")</span>
+                <button type="button" class="mb-1 btn bg-gradient-warning" onclick="editMapLayerConfigurationInGroup()" data-dismiss="modal" aria-label="edit">
+                    <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
                 </button>
             </div>
         </div>

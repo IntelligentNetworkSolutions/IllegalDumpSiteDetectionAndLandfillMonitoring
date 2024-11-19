@@ -195,7 +195,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         [HasAuthClaim(nameof(SD.AuthClaims.EditLegalLandfillTruck))]
         public async Task<ResultDTO> EditLegalLandfillTruckConfirmed(LegalLandfillTruckViewModel legalLandfillTruckViewModel)
         {
@@ -578,7 +578,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 LegalLandfills = legalLandfills.Data,
                 LegalLandfillTrucks = legalLandfillTrucks.Data,
                 LegalLandfillWasteTypes = legalLandfillWasteTypes.Data,
-                CreatedById = userId
+                CreatedById = userId,
+                CreatedOn = entity.Data.CreatedOn
             };
 
             return View(viewModel);

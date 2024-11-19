@@ -43,9 +43,6 @@
                                 @DbResHtml.T("Create detection run", "Resources")
                             </a>
                         }
-                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
-                            <i class="fas fa-file-alt"></i>
-                        </button>
                         <div class="mt-5">
                             <table id="detectionRunsTable" class="table table-sm table-bordered table-striped custom-responsive-table">
                                 <thead>
@@ -118,19 +115,15 @@
                     "url": "@langPath"
                 },
                 responsive: true,
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        extend: 'excelHtml5',
-                        className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
-                        text: '<i class="fas fa-file-alt"></i>',
-                        titleAttr: "Export to excel",
-                        filename: "Detection Runs - @DateTime.Now.ToString("dd.MM.yyyy")",
-                        exportOptions: {
-                            columns: ':not(.notexport)'
+                    dom: '<"top"fB>rt<"bottom"lp>',
+                    "buttons": [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<i class="fas fa-file-alt"></i>',
+                            titleAttr: 'Export to Excel',
+                            className: 'btn btn-success'
                         }
-                    }
-                ]
+                    ]
             });
                 $("#exportToExcelButton").click(function () {
                     $(".export-to-excel-button").click();

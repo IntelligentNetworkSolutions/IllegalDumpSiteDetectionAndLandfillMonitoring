@@ -52,13 +52,13 @@
                             </div>
                             <div class="form-group">
                                 <label asp-for="Weight" class="control-label">@DbResHtml.T("Weight", "Resources")</label>
-                                <input type="number" asp-for="Weight" class="form-control" id="Weight" />
+                                <input type="number" asp-for="Weight" class="form-control" id="Weight" min="0" />
                                 <span asp-validation-for="Weight" class="text-danger"></span>
-                            </div> 
+                            </div>
 
                             <div class="form-group">
                                 <label asp-for="Capacity" class="control-label">@DbResHtml.T("Capacity", "Resources")</label>
-                                <input type="number" asp-for="Capacity" class="form-control" id="Capacity" />
+                                <input type="number" asp-for="Capacity" class="form-control" id="Capacity" min="0" />
                                 <span asp-validation-for="Capacity" class="text-danger"></span>
                             </div>
 
@@ -80,9 +80,14 @@
 
                             <input type="hidden" asp-for="CreatedById" />
 
-                            <div class="form-group">
+                            <div class="form-group d-flex align-items-center">
                                 <button type="submit" class="btn btn-primary">@DbResHtml.T("Add", "Resources")</button>
+                                <a asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="ViewLegalLandfillWasteImports" class="btn btn-secondary ml-3">
+                                    @DbResHtml.T("Back", "Resources")
+                                </a>
                             </div>
+
+
                         </div>
                     </div>
                 </div>
@@ -94,46 +99,54 @@
 
 @section Scripts {
     <script>
-$(document).ready(function () {
-    // Initialize Select2 dropdowns
-    $('#insertedWasteType').select2({
-        width: '100%',
-        theme: 'bootstrap4',
-        placeholder: "@DbResHtml.T("Please select waste type", "Resources")",
-        allowClear: true
-    });
-    
-    $('#insertedLegalLandfill').select2({
-        width: '100%',
-        theme: 'bootstrap4',
-        placeholder: "@DbResHtml.T("Please select waste type", "Resources")",
-        allowClear: true
-    });
-    
-    $('#insertedTruck').select2({
-        width: '100%',
-        theme: 'bootstrap4',
-        placeholder: "@DbResHtml.T("Please select waste type", "Resources")",
-        allowClear: true
-    });
+        $(document).ready(function () {
+            // Initialize Select2 dropdowns
+            $('#insertedWasteType').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Please select waste type", "Resources")",
+                allowClear: true
+            });
 
-        $('form').on('submit', function (e) {
-            var weight = parseFloat($('#Weight').val());
-            var capacity = parseFloat($('#Capacity').val());
+            $('#insertedLegalLandfill').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Please select waste type", "Resources")",
+                allowClear: true
+            });
 
-            if ((isNaN(weight) || weight === "") && (isNaN(capacity) || capacity === "")) {
-                e.preventDefault(); 
-                Swal.fire({
-                    icon: 'warning',
-                    title: '@DbResHtml.T("Validation Error", "Resources")',
-                    text: '@DbResHtml.T("Either Weight or Capacity must be filled with a valid number.", "Resources")'
-                });
-                return;
-            }
-            $('#Weight').next('.text-danger').text('');
-            $('#Capacity').next('.text-danger').text('');
+            $('#insertedTruck').select2({
+                width: '100%',
+                theme: 'bootstrap4',
+                placeholder: "@DbResHtml.T("Please select waste type", "Resources")",
+                allowClear: true
+            });
+
+            $('form').on('submit', function (e) {
+                var weight = parseFloat($('#Weight').val());
+                var capacity = parseFloat($('#Capacity').val());
+
+                if ((capacity < 0 || weight < 0 )) {
+                    Swal.fire({
+                        icon: "warning",
+                        text: "@DbResHtml.T("Negative values are not allowed for Capacity and Weight.", "Resources")"
+                    });
+                    return;
+                }
+
+                if ((isNaN(weight) || weight === "") && (isNaN(capacity) || capacity === "")) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '@DbResHtml.T("Validation Error", "Resources")',
+                        text: '@DbResHtml.T("Either Weight or Capacity must be filled with a valid number.", "Resources")'
+                    });
+                    return;
+                }
+                $('#Weight').next('.text-danger').text('');
+                $('#Capacity').next('.text-danger').text('');
+            });
         });
-    });
 
 
     </script>

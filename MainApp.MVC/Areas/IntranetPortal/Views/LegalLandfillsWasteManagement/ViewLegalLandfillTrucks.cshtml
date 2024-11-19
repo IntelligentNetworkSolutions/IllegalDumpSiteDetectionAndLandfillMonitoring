@@ -39,9 +39,6 @@
                                 @DbResHtml.T("Add Legal Landfill Truck", "Resources")
                             </button>
                         }
-                        <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
-                            <i class="fas fa-file-alt"></i>
-                        </button>
                         <div class="mt-5">
                             <table id="legalLandfillsTable" class="table table-sm table-bordered table-striped custom-responsive-table">
                                 <thead>
@@ -112,23 +109,15 @@
                     "language": {
                         "url": "@langPath"
                     },
-                    dom: 'Bfrtip',
-                    buttons: [
+                    dom: '<"top"fB>rt<"bottom"lp>',
+                    "buttons": [
                         {
                             extend: 'excelHtml5',
-                            className: 'btn bg-gradient-success border-0 d-none export-to-excel-button',
                             text: '<i class="fas fa-file-alt"></i>',
-                            titleAttr: "Export to excel",
-                            filename: "Legal landfills - @DateTime.Now.ToString("dd.MM.yyyy")",
-                            exportOptions: {
-                                columns: ':not(.notexport)'
-                            }
+                            titleAttr: 'Export to Excel',
+                            className: 'btn btn-success'
                         }
                     ]
-                });
-
-                $("#exportToExcelButton").click(function () {
-                    $(".export-to-excel-button").click();
                 });
             });
 
@@ -351,6 +340,7 @@
             const unladenWeight = $("#txtEditUnladenWeight").val();
             const payloadWeight = $("#txtEditPayloadWeight").val();
             const registration = $("#txtEditRegistration").val();
+            const isEnabled = $("#txtEditIsEnabled").val();
 
             if (description == '' || name == '' || registration == '') {
                 Swal.fire({
@@ -367,6 +357,13 @@
                 });
                 return;
             }
+            if ((capacity < 0 || unladenWeight < 0 || payloadWeight < 0)) {
+                 Swal.fire({
+                     icon: "warning",
+                     text: "@DbResHtml.T("Negative values are not allowed for Capacity, Unladen Weight, or Payload Weight.", "Resources")"
+                  });
+                  return;
+            }
 
             var legalLandfillTruckViewModel = {
                 Id: id,
@@ -375,7 +372,8 @@
                 Capacity: capacity,
                 UnladenWeight: unladenWeight,
                 PayloadWeight: payloadWeight,
-                Registration: registration
+                Registration: registration,
+                IsEnabled: isEnabled
             }
 
             $.ajax({
@@ -447,12 +445,13 @@
                             $("#editLegalLandfillTruckModalBody").append(
                                 '<div>'
                                 + `<input type="text" hidden id="txtEditId">`
+                                + `<input type="text" hidden id="txtEditIsEnabled" />`
                                 + `<label class="form-control-label" for="txtEditName">@DbResHtml.T("Name:", "Resources")</label><input class="form-control" type="text" id="txtEditName" />`
                                 + `<label class="form-control-label mt-3" for="txtEditDescription">@DbResHtml.T("Description:", "Resources")</label><input class="form-control" type="text" id="txtEditDescription" />`
                                 + `<label class="form-control-label mt-3" for="txtEditRegistration">@DbResHtml.T("Registration:", "Resources")</label><input class="form-control" type="text" id="txtEditRegistration" />`
-                                + `<label class="form-control-label mt-3" for="txtEditUnladenWeight">@DbResHtml.T("Unladen Weight:(kg)", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditUnladenWeight" />`
-                                + `<label class="form-control-label mt-3" for="txtEditPayloadWeight">@DbResHtml.T("Payload Weight:(kg)", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditPayloadWeight" />`
-                                + `<label class="form-control-label mt-3" for="txtEditCapacity">@DbResHtml.T("Capacity(m3):", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditCapacity" />`
+                                + `<label class="form-control-label mt-3" for="txtEditUnladenWeight">@DbResHtml.T("Unladen Weight:(kg)", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditUnladenWeight" min="0"/>`
+                                    + `<label class="form-control-label mt-3" for="txtEditPayloadWeight">@DbResHtml.T("Payload Weight:(kg)", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditPayloadWeight" min="0"/>`
+                                + `<label class="form-control-label mt-3" for="txtEditCapacity">@DbResHtml.T("Capacity(m3):", "Resources")</label><input class="form-control" type="number" step=".01" id="txtEditCapacity" min="0"/>`
                                 + '</div>'
                             );
 
@@ -463,6 +462,7 @@
                             $(`#txtEditUnladenWeight`).val(data.data.unladenWeight);
                             $(`#txtEditPayloadWeight`).val(data.data.payloadWeight);
                             $(`#txtEditCapacity`).val(data.data.capacity);
+                            $("#txtEditIsEnabled").val(data.data.isEnabled);
 
                             $('#editLegalLandfillTruckModal').modal('show');
                         }
@@ -503,6 +503,14 @@
                     text: "@DbResHtml.T("Capacity, Unladen Weight and Payload Weight must be provided.", "Resources")"
                 });
                 return;
+            }
+
+            if ((capacity < 0 || unladenWeight < 0 || payloadWeight < 0)) {
+                 Swal.fire({
+                     icon: "warning",
+                     text: "@DbResHtml.T("Negative values are not allowed for Capacity, Unladen Weight, or Payload Weight.", "Resources")"
+                  });
+                  return;
             }
 
             var legalLandfillTruckViewModel = {
@@ -631,14 +639,14 @@
                     </div>
                     <div class="form-group">
                         <label class="form-control-label mt-3" for="#addLegalLandfillTruckCapacityInput">@DbResHtml.T("Capacity (in m3):", "Resources")</label>
-                        <input type="number" step="0.01" name="Capacity" class="form-control" id="addLegalLandfillTruckCapacityInput" />
+                        <input type="number" step="0.01" name="Capacity" class="form-control" id="addLegalLandfillTruckCapacityInput"  min="0"/>
                     </div>
                     <div class="form-group">
                         <label class="form-control-label mt-3" for="#addLegalLandfillTruckUnladenWeightInput">@DbResHtml.T("Unladen Weight (in kilograms):", "Resources")</label>
-                        <input type="number" step="0.01" name="UnladenWeight" class="form-control" id="addLegalLandfillTruckUnladenWeightInput" />
+                        <input type="number" step="0.01" name="UnladenWeight" class="form-control" id="addLegalLandfillTruckUnladenWeightInput"  min="0"/>
                     </div>                    <div class="form-group">
-                        <label class="form-control-label mt-3" for="#addLegalLandfillTruckPayloadWeightInput">@DbResHtml.T("Payload Weight (in kilograms):", "Resources")</label>
-                        <input type="number" step="0.01" name="PayloadWeight" class="form-control" id="addLegalLandfillTruckPayloadWeightInput" />
+                        <label class="form-control-label mt-3" for="#addLegalLandfillTruckPayloadWeightInput" >@DbResHtml.T("Payload Weight (in kilograms):", "Resources")</label>
+                            <input type="number" step="0.01" name="PayloadWeight" class="form-control" id="addLegalLandfillTruckPayloadWeightInput" min="0"/>
                     </div>
                 </div>
                 <div class="modal-footer">
