@@ -70,7 +70,9 @@
             });
             return;
         }
-        $("#areaComparisonAvgConfidenceRateModal").empty();
+        if ($("#areaComparisonAvgConfidenceRateModal").length) {
+            $("#areaComparisonAvgConfidenceRateModal").remove();
+        }
         generateAreaComparisonAvgConfidenceRateModal();
     }
 
@@ -452,16 +454,15 @@
             }
         });
     }
-        
+    function closeAreaComparisonAvgConfidenceRateModal() {
+        $("#areaComparisonAvgConfidenceRateModal").modal('hide');        
+    }
     function generateAreaComparisonAvgConfidenceRateModal() {
-        var modalHtml = `<div class="modal fade" id="areaComparisonAvgConfidenceRateModal" tabindex="-1" aria-labelledby="areaComparisonAvgConfidenceRateModalLabel" aria-hidden="true">
+        var modalHtml = `<div class="modal" id="areaComparisonAvgConfidenceRateModal" tabindex="-1" aria-labelledby="areaComparisonAvgConfidenceRateModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header bg-gradient-info">
                         <h5 class="modal-title" id="areaComparisonAvgConfidenceRateModalLabel">Area Comparison</h5>
-                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
                     </div>
                     <div class="modal-body" id='areaComparisonAvgConfidenceRatemodalBody'>
                         <div id="confRateSlider" class="card p-3 bg-light">
@@ -477,6 +478,11 @@
                             </div>
                         </div>
                         <div id="areaComparisonReportTable" class="mt-5"></div>
+                    </div>
+                    <div class="modal-footer">
+                           <button onclick="closeAreaComparisonAvgConfidenceRateModal()" type="button" class="mb-1 btn bg-gradient-secondary" data-dismiss="modal" aria-label="Close">
+                           <span aria-hidden="true">@DbResHtml.T("Close", "Resources")</span>
+                       </button>
                     </div>
                 </div>
               </div>

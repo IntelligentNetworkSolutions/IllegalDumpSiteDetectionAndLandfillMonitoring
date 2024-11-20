@@ -41,11 +41,11 @@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.AddDataset))
                         {
-                            <button class="mb-1 btn btn-outline-primary float-left" data-toggle="modal" data-target="#addNewDatasetModal">
+                            <button class="mb-1 btn btn-primary float-left" data-toggle="modal" data-target="#addNewDatasetModal">
                                 <i class="fas fa-plus"></i> 
                                 @DbResHtml.T("Add Dataset", "Resources")
                             </button>
-                            <button class="mb-1 ml-5 btn btn-outline-primary float-left" data-toggle="modal" data-target="#importNewDatasetModal">
+                            <button class="mb-1 ml-2 btn btn-primary float-left" data-toggle="modal" data-target="#importNewDatasetModal">
                                 <i class="fas fa-plus"></i>
                                 @DbResHtml.T("Upload Dataset", "Resources")
                             </button>                                  
