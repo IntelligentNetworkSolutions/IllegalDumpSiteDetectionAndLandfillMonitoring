@@ -113,7 +113,7 @@
                             @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionInputImages))
                             {
                                 <li class="nav-item">
-                                    <a asp-action="ViewAllImages" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionInputImages"
+                                    <a asp-action="DetectionInputImages" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionInputImages"
                                        title="@DbResHtml.T("Detection Input Images", "Resources")">
                                         <i class="far fa-file-image"></i> &nbsp;&nbsp;
                                         <p>

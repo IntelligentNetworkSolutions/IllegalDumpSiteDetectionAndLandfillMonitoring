@@ -11,12 +11,14 @@
 
     <link rel="icon" type="image/x-icon" href="~/logo.png" asp-append-version="true">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.1.0/css/adminlte.min.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/dist/css/adminlte.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="~/css/LandingPage/landingPageStyle.css">
+
 
     <style>
-        .navbar .form-inline {
-            display: none;
-        }
+
+
     </style>
 
 </head>
@@ -48,7 +50,7 @@
                             <a class="nav-link" asp-area="IntranetPortal" asp-controller="Account" asp-action="Login">Login</a>
                         </li>
                     </ul>
-                    
+
                     <form class="form-inline ml-3">
                         <div class="input-group input-group-sm">
                             <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search">
@@ -59,113 +61,213 @@
                             </div>
                         </div>
                     </form>
-                    
+
                 </div>
             </div>
         </nav>
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger">
+                @TempData["ErrorMessage"]
+            </div>
+        }
 
         <div class="content-wrapper">
-            <section class="content">
-                <section id="about" class="py-5">
-                    <div class="container">
-                        <h2 class="text-center mb-4">About Us</h2>
-                        <p class="lead text-center">Welcome to Illegal Dump Detection, a community-driven initiative dedicated to combating illegal dumping and preserving our environment. Our mission is to empower individuals, communities, and authorities to work together to address the growing problem of illegal dumping and its detrimental effects on our natural surroundings.</p>
-                        <p class="lead text-center">
-                            This platform leverages advanced drone and satellite imagery to enhance waste management and environmental monitoring through cutting-edge technology.
-                            Utilizing high-resolution images combined with sophisticated image annotation, object detection models, and geospatial analysis, our system offers robust tools to identify illegal dump sites and effectively manage regulated landfills.
+            <section id="about" class="py-5 bg-light">
+                <div class="container">
+                    <h2 class="text-center mb-5 text-success font-weight-bold">
+                        <i class="fas fa-info-circle"></i> About Us
+                    </h2>
+
+                    <div class="mb-5">
+                        <h5 class="text-success font-weight-bold mb-3">Our Mission</h5>
+                        <p class="lead">
+                            Welcome to Illegal Dump Detection, a community-driven initiative dedicated to combating illegal dumping and preserving our environment. Our mission is to empower individuals, communities, and authorities to work together to address the growing problem of illegal dumping and its detrimental effects on our natural surroundings.
                         </p>
                     </div>
-                </section>
 
-                <section id="features" class="bg-light py-5">
-                    <div class="container">
-                        <h2 class="text-center mb-4">Features</h2>
-                        <div class="row d-flex flex-wrap">
-                            <div class="col-md-4 d-flex align-items-stretch">
-                                <div class="card mb-4 h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h5 class="card-title">Real-time Illegal Dump Detection</h5>
-                                        <p class="card-text">Implement a system that uses sensors, cameras, or other technologies to detect illegal dump sites in real-time.</p>
+                    <div class="mb-5">
+                        <div>
+                            <h5 class="text-success font-weight-bold mb-3">Cutting-Edge Technology <i class="fas fa-rocket fa-1x text-success mx-3"></i></h5>
+
+                        </div>
+                        <p class="lead">
+                            Our platform leverages advanced drone and satellite imagery to enhance waste management and environmental monitoring. By utilizing high-resolution images, sophisticated image annotation, object detection models, and geospatial analysis, we provide robust tools to identify illegal dump sites and effectively manage regulated landfills.
+                        </p>
+                        <a href="#features" class="btn btn-success btn-lg mt-3">Learn More</a>
+                    </div>
+
+                </div>
+            </section>
+
+
+            <!-- Features Section -->
+            <section class="features-icons bg-light py-5" id="features">
+                <div class="container">
+                    <h2 class="text-center mb-5 text-success font-weight-bold">Our Features</h2>
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadom-md h-100 custom-border feature-card">
+                                <div class="card-body text-center">
+                                    <div>
+                                        <i class="fas fa-binoculars fa-3x text-success mb-3"></i>
                                     </div>
+                                    <h5 class="font-weight-bold mt-3 mb-3">Real-time Detection</h5>
+                                    <p class="card-text">Implement a system that uses sensors, cameras, or other technologies to detect illegal dump sites in real-time.</p>
                                 </div>
                             </div>
-                            <div class="col-md-4 d-flex align-items-stretch">
-                                <div class="card mb-4 h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h5 class="card-title">Geo-tagging of Dump Locations</h5>
-                                        <p class="card-text">Allow users to report illegal dump sites and automatically geo-tag the location for accurate tracking and monitoring.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadom-md h-100 custom-border feature-card">
+                                <div class="card-body text-center">
+                                    <div>
+                                        <i class="fas fa-map-marker-alt fa-3x text-success mb-3"></i>
                                     </div>
+                                    <h5 class="font-weight-bold mt-3 mb-3 text-center">Geo-tagging</h5>
+                                    <p class="card-text">Allow users to report illegal dump sites and automatically geo-tag the location for accurate tracking and monitoring.</p>
                                 </div>
                             </div>
-                            <div class="col-md-4 d-flex align-items-stretch">
-                                <div class="card mb-4 h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h5 class="card-title">Crowdsourced Reporting</h5>
-                                        <p class="card-text">Enable users to report illegal dump incidents through a mobile app or web portal, providing valuable information for enforcement agencies.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadom-md h-100 custom-border feature-card">
+                                <div class="card-body text-center">
+                                    <div>
+                                        <i class="fas fa-users fa-3x text-success mb-3"></i>
                                     </div>
+                                    <h5 class="font-weight-bold mt-3 mb-3 text-center">Crowdsourced Reporting</h5>
+                                    <p class="card-text">Enable users to report illegal dump incidents through a mobile app or web portal, providing valuable information for enforcement agencies.</p>
                                 </div>
                             </div>
-                            <div class="col-md-4 d-flex align-items-stretch">
-                                <div class="card mb-4 h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h5 class="card-title">Image Annotation</h5>
-                                        <p class="card-text">Annotate high-resolution drone and satellite imagery to help train object detection models specifically designed for precise waste detection.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadom-md h-100 custom-border feature-card">
+                                <div class="card-body text-center">
+                                    <div>
+                                        <i class="fas fa-edit fa-3x text-success mb-3"></i>
                                     </div>
+                                    <h5 class="font-weight-bold mt-3 mb-3 text-center">Image Annotation</h5>
+                                    <p class="card-text">Annotate high-resolution drone and satellite imagery to help train object detection models specifically designed for precise waste detection.</p>
                                 </div>
                             </div>
-                            <div class="col-md-4 d-flex align-items-stretch">
-                                <div class="card mb-4 h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h5 class="card-title">Landfill Management</h5>
-                                        <p class="card-text">Advanced tools for managing legal landfills include the submission of waste forms and the integration of 3D point cloud scans derived from drone technology for detailed, real-time monitoring.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadom-md h-100 custom-border feature-card">
+                                <div class="card-body text-center">
+                                    <div>
+                                        <i class="fas fa-dumpster fa-3x text-success mb-3"></i>
                                     </div>
+                                    <h5 class="font-weight-bold mt-3 mb-3 text-center">Landfill Management</h5>
+                                    <p class="card-text">Advanced tools for managing legal landfills include the submission of waste forms and the integration of 3D point cloud scans derived from drone technology for detailed, real-time monitoring.</p>
                                 </div>
                             </div>
-                            <div class="col-md-4 d-flex align-items-stretch">
-                                <div class="card mb-4 h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h5 class="card-title">Object Detection Model Training</h5>
-                                        <p class="card-text">Train sophisticated models with diverse image datasets from drone and satellite sources to enhance detection accuracy across varied environmental conditions.</p>
+                        </div>
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadom-md h-100 custom-border feature-card">
+                                <div class="card-body text-center">
+                                    <div>
+                                        <i class="fas fa-robot fa-3x text-success mb-3"></i>
                                     </div>
+                                    <h5 class="font-weight-bold mt-3 mb-3 text-center">Object Detection Training</h5>
+                                    <p class="card-text">Train sophisticated models with diverse image datasets from drone and satellite sources to enhance detection accuracy across varied environmental conditions.</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                <section id="contact" class="py-5">
-                    <div class="container">
-                        <h2 class="text-center mb-4">Contact Us</h2>
-                        <div class="row">
-                            <div class="col-md-6 mx-auto">
-                                <form id="contactForm" method="post" action="">
-                                    <div class="form-group">
-                                        <label for="name">Name</label>
-                                        <input type="text" class="form-control" id="name" name="name" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="email">Email</label>
-                                        <input type="email" class="form-control" id="email" name="email" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="message">Message</label>
-                                        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Send Message</button>
-                                </form>
+            <!-- Contact Section -->
+            <section id="contact" class="py-5">
+                <div class="container">
+                    <h2 class="text-center mb-4">Contact Us</h2>
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="card shadom-md">
+                                <div class="card-body">
+                                    <form asp-controller="LandingPage" asp-action="ContactForm" method="post">
+                                        <div class="form-group">
+                                            <label for="name">Name</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text bg-success text-white">
+                                                        <i class="fas fa-user"></i>
+                                                    </span>
+                                                </div>
+                                                <input type="text" class="form-control" id="name" name="name" placeholder="Your Name" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="email">Email</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text bg-success text-white">
+                                                        <i class="fas fa-envelope"></i>
+                                                    </span>
+                                                </div>
+                                                <input type="email" class="form-control" id="email" name="email" placeholder="Your Email" required>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="message">Message</label>
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text bg-success text-white">
+                                                        <i class="fas fa-comment-dots"></i>
+                                                    </span>
+                                                </div>
+                                                <textarea id="message" class="form-control" name="message" rows="5" placeholder="Your Message" required></textarea>
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-success btn-block">
+                                            <i class="fas fa-paper-plane"></i> Send Message
+                                        </button>
+                                    </form>
+
+                                </div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
             </section>
         </div>
-
         <footer class="main-footer text-white navbar-dark navbar-success py-4">
             <div class="container text-center">
                 <p>&copy; 2024 Illegal Dump Detection. All rights reserved.</p>
             </div>
         </footer>
+
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/admin-lte/3.1.0/js/adminlte.min.js"></script>
+    <script src="~/vendor/admin-lte/dist/js/adminlte.min.js"></script>
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        $(document).ready(function () {
+            var successMessage = '@TempData["SuccessMessage"]';
+            var errorMessage = '@TempData["ErrorMessage"]';
+
+            if (successMessage) {
+                alert(successMessage);
+            }
+            else if (errorMessage) {
+                alert(errorMessage);
+            }
+        });
+    </script>
 </body>
 </html>

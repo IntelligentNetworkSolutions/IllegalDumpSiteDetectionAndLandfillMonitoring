@@ -1,0 +1,43 @@
+﻿.navbar .form-inline {
+    display: none;
+}
+
+.hero {
+    background: linear-gradient(to right, #28a745, #218838);
+    color: white;
+    padding: 50px 0;
+}
+
+    .hero .brand-image {
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
+    }
+
+.feature-card {
+    transition: transform 0.3s ease-out;
+    backface-visibility: hidden;
+    will-change: transform;
+    border: 2px solid rgb(40,167,69,0.1);
+}
+
+    .feature-card:hover {
+        transform: scale(1.03);
+        border: 2px solid rgb(40,167,69);
+    }
+
+.form-inline {
+    display: none;
+}
+
+footer {
+    background-color: #218838;
+}
+
+    footer p {
+        margin: 0;
+    }
+
+.custom-border {
+    border-radius: 20px;
+}
