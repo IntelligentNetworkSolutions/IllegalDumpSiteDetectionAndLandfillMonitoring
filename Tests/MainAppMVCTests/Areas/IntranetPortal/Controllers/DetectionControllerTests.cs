@@ -930,7 +930,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         #region InputImages
 
         [Fact]
-        public async Task ViewAllImages_ReturnsViewWithImages_WhenServiceReturnsSuccess()
+        public async Task DetectionInputImages_ReturnsViewWithImages_WhenServiceReturnsSuccess()
         {
             // Arrange
             var dtoList = new List<DetectionInputImageDTO> { new DetectionInputImageDTO() };
@@ -945,7 +945,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .Returns(vmList);
 
             // Act
-            var result = await _controller.ViewAllImages();
+            var result = await _controller.DetectionInputImages();
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -954,7 +954,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task ViewAllImages_RedirectsToErrorView_WhenServiceReturnsFailure()
+        public async Task DetectionInputImages_RedirectsToErrorView_WhenServiceReturnsFailure()
         {
             // Arrange
             var errorPath = "/Error";
@@ -965,7 +965,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .ReturnsAsync(ResultDTO<List<DetectionInputImageDTO>>.Fail("Error occurred"));
 
             // Act
-            var result = await _controller.ViewAllImages();
+            var result = await _controller.DetectionInputImages();
 
             // Assert
             var redirectResult = Assert.IsType<RedirectResult>(result);
@@ -973,7 +973,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task ViewAllImages_ReturnsBadRequest_WhenErrorPathIsNull()
+        public async Task DetectionInputImages_ReturnsBadRequest_WhenErrorPathIsNull()
         {
             // Arrange
             _mockDetectionRunService
@@ -983,7 +983,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns((string)null);
 
             // Act
-            var result = await _controller.ViewAllImages();
+            var result = await _controller.DetectionInputImages();
 
             // Assert
             var badRequestResult = Assert.IsType<BadRequestResult>(result);
@@ -1796,7 +1796,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             const string fileName = "test.jpg";
 
             SetupSuccessfulUserAndSettings();
-            
+
             Mock<IWebHostEnvironment> mockWebEnv = new Mock<IWebHostEnvironment>();
             mockWebEnv.Setup(x => x.WebRootPath).Returns(Path.Combine(Path.GetTempPath(), "mockwebhostenv"));
 
@@ -1823,7 +1823,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 _mockDetectionIgnoreZoneService.Object,
                 _mockTrainedModelService.Object);
 
-            List<Claim> claims = [ new Claim("UserId", "test-user-id") ];
+            List<Claim> claims = [new Claim("UserId", "test-user-id")];
             ClaimsIdentity identity = new ClaimsIdentity(claims);
             ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
             controla.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = claimsPrincipal } };
