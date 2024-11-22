@@ -339,11 +339,34 @@ namespace MainApp.BL.Services.TrainingServices
 
             string[] classNames = dataset.DatasetClasses.Select(dc => dc.DatasetClass.ClassName).ToArray();
 
+
             //string datasetRootPath = "C:/vs_code_workspaces/mmdetection/mmdetection/data/ins/v2";
+            //ResultDTO<string>? baseModelFilePath= await GetFirstCreatedBaseTrainedModelFilePath();
+            //string? backboneCheckpointAbsPathAppSettings = _MMDetectionConfiguration.GetBackboneCheckpointAbsPath();
+            //string? backboneCheckpointAbsPath = string.IsNullOrEmpty(backboneCheckpointAbsPathAppSettings) ? baseModelFilePath?.Data : backboneCheckpointAbsPathAppSettings;
+            //if(backboneCheckpointAbsPath == null)
+            //{
+            //    return ResultDTO<string>.Fail("Backbone checkpoint abs path does not exits");
+            //}
+            
+            string? backboneCheckpointAbsPathAppSettings = _MMDetectionConfiguration.GetBackboneCheckpointAbsPath();
+            string backboneCheckpointAbsPath = backboneCheckpointAbsPathAppSettings;
+            if (string.IsNullOrEmpty(backboneCheckpointAbsPathAppSettings))
+            {
+                ResultDTO<string>? resultBaseModelFilePath = await GetFirstCreatedBaseTrainedModelFilePath();
+                if (!resultBaseModelFilePath.IsSuccess && resultBaseModelFilePath.HandleError())
+                    return ResultDTO<string>.Fail(resultBaseModelFilePath.ErrMsg!);
+
+                if (string.IsNullOrEmpty(resultBaseModelFilePath.Data))
+                    return ResultDTO<string>.Fail("Base model file path not found");
+
+                backboneCheckpointAbsPath = resultBaseModelFilePath.Data;
+            }
+
 
             string trainingRunConfigContentStr =
                 TrainingConfigGenerator.GenerateConfigOverrideStr(
-                    backboneCheckpointAbsPath: _MMDetectionConfiguration.GetBackboneCheckpointAbsPath(),
+                    backboneCheckpointAbsPath: backboneCheckpointAbsPath,
                     dataRootAbsPath: _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRunId),
                     //dataRootAbsPath: datasetRootPath, // TODO: Return previous line once Export is available
                     classNames: classNames,
@@ -376,6 +399,36 @@ namespace MainApp.BL.Services.TrainingServices
             }
 
             return ResultDTO<string>.Ok(trainingRunConfigPythonFileAbsPath);
+        }
+
+        public async Task<ResultDTO<string>> GetFirstCreatedBaseTrainedModelFilePath()
+        {
+            try
+            {
+                ResultDTO<IEnumerable<TrainedModel>>? resultGetEntities = await _trainedModelsRepository.GetAll(filter: x => x.BaseModelId == null);
+                if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
+                    return ResultDTO<string>.Fail(resultGetEntities.ErrMsg!);
+
+                if (resultGetEntities.Data == null)
+                {
+                    return ResultDTO<string>.Fail("Trained models not found");
+                }
+
+                TrainedModel? firstCreatedBaseTrainedModel = resultGetEntities.Data.MinBy(x => x.CreatedOn);
+
+                TrainedModelDTO? dto = _mapper.Map<TrainedModelDTO>(firstCreatedBaseTrainedModel);
+                if(dto == null)
+                {
+                    return ResultDTO<string>.Fail("Mapping failed");
+                }
+
+                return ResultDTO<string>.Ok(dto.ModelFilePath!);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         public ResultDTO<TrainingRunResultsDTO> GetBestEpochForTrainingRun(Guid trainingRunId)
