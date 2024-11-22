@@ -105,7 +105,7 @@
                                                     <i class="fas fa-upload"></i>
                                                 </button>
                                             }
-                                            @if(item.Status == nameof(ScheduleRunsStatus.Success) && User.HasAuthClaim(SD.AuthClaims.ViewTrainingRunsStatistics))
+                                            @if(item.Status == nameof(ScheduleRunsStatus.Success) && item.IsCompleted == true && User.HasAuthClaim(SD.AuthClaims.ViewTrainingRunsStatistics))
                                             {
                                                 <button class="mb-1 btn bg-gradient-lightblue btn-xs" id="@item.Id" onclick="getScheduleTrainingRunStatistics('@item.Id')" title="@DbResHtml.T("View Training Run Statistics", "Resources")">
                                                     <i class="fas fa-chart-bar"></i>

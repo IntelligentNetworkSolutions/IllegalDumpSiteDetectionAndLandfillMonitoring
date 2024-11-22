@@ -65,7 +65,7 @@
                                             <td>@item.Name</td>
                                             <td>@item.IsPublished</td>
                                             <td>@item.CreatedBy?.UserName</td>
-                                            <td>@item.CreatedOn?.ToString("dd/MM/yyyy")</td>
+                                            <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
                                             <td>
 
                                                 <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editTrainedModelModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>

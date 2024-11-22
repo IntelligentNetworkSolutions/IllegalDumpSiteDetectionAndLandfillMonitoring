@@ -180,7 +180,7 @@
                 `<tr>
                                                  <td hidden>${item.id}</td>
                                                  <td class="text-nowrap overflow-auto" style="max-width: 220px;" title="${item.name}">${item.name}</td>
-                                                 <td>${ new Date(item.dateTaken).toLocaleDateString('en-GB') } </td>
+                                                 <td>${new Date(item.dateTaken).toLocaleDateString('en-GB').replace(/\//g, '.')}</td>
                                                  <td>${item.createdBy.userName}</td>
                                                  <td>
                                                    <div class="form-group clearfix">
