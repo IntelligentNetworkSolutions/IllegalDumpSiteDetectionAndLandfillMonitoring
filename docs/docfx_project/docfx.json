@@ -3,7 +3,9 @@
     "content": [
       {
         "files": [
-          "**/*.{md,yml}"
+          "**/*.md",
+          "**/*.yml",
+          "toc.yml"
         ]
       }
     ],
@@ -19,9 +21,9 @@
     ],
     "dest": "_site",
     "globalMetadata": {
-      "_appTitle": "Illegal Dump Site Detection",
-      "_appLogoPath": "./ins-template/public/images/logo-robot-formal.png",
-      "_appFaviconPath": "./ins-template/public/images/logo-robot-formal-48x48.png",
+      "_appTitle": "Raven Scan",
+      "_appLogoPath": "./ins-template/public/images/raven-scan-logo-blue-nobg-1080x360.svg",
+      "_appFaviconPath": "./ins-template/public/images/raven-only-logo-nobg-48x48.svg",
       "_enableSearch": true,
       "_enableNewTab": true,
       "_lang": "en",

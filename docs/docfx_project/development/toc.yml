@@ -1,13 +1,39 @@
-- name: Development
-  href: ~/development/intro.md
-- name: Set-up
-  href: ~/development/set-up.md
-- name: Secrets
-  href: ~/development/shhh_secrets.md
-- name: Testing
-  href: ~/development/testing.md
-- name: Usefull Links
-  href: ~/development/usefull-links.md
-- name: Think Licensing
-  href: ~/development/think-licensing.md
-
+items:
+  - name: Development
+    href: intro.md
+    topicHref: intro.md
+  - name: Set-up
+    href: set-up.md
+  - name: Dependencies
+    href: dependencies/dependencies.md
+    items:
+    - name: All
+      href: dependencies/dependencies.md
+    - name: NuGet Dependencies
+      href: dependencies/nuget-dependencies.md
+    - name: npm Dependencies
+      href: dependencies/npm-dependencies.md
+    - name: GitHub Actions Dependencies
+      href: dependencies/github-actions-dependencies.md
+  - name: Development
+    items:
+    - name: Using Secrets
+      href: shhh_secrets.md
+    - name: Using Data Access with a Base Repo
+      href: base_result_repository.md
+  - name: Testing
+    items:
+    - name: Unit Testing
+      href: testing.md
+    - name: Integration Testing
+      href: integration_db_testing.md
+  - name: CI/CD
+    href: workflows.md
+  - name: Project Start-Up
+    items:
+    - name: Diagrams
+      href: ../diagrams/intro.md
+    - name: Usefull Links
+      href: usefull-links.md
+    - name: Think Licensing
+      href: think-licensing.md

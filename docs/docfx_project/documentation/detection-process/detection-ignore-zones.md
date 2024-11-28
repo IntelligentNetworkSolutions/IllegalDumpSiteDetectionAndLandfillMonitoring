@@ -142,19 +142,6 @@ CREATE INDEX idx_detectionignorezones_geom
 ON public.detectionignorezones USING gist (geom);
 ```
 
-### Entity Framework Configuration  
-
-```csharp
-protected override void OnModelCreating(ModelBuilder builder)
-{
-    builder.HasPostgresExtension("postgis");
-    
-    builder.Entity<DetectionIgnoreZone>()
-        .Property(e => e.Geom)
-        .HasColumnType("geometry(Polygon)");
-}
-```
-
 ## Files Involved
 
 ```mermaid

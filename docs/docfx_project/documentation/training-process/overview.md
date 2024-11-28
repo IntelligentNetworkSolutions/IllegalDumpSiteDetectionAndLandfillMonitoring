@@ -2,11 +2,11 @@
 
 ## Introduction
 
-The training process is a core component of the Illegal Dump Site Detection system, handling the training of machine learning models for waste detection. The system uses MMDetection as its underlying framework and implements a robust workflow for model training management.
+The training process is a core component of the Raven Scan system, handling the training of machine learning models for waste detection. The system uses MMDetection as its underlying framework and implements a robust workflow for model training management.
 
 ## Key Components
 
-### [Core Entities](./entities.md)
+### Core Entities
 
 - **TrainingRun**: Represents a single training session
   - Tracks the training progress and status
@@ -22,7 +22,7 @@ The training process is a core component of the Illegal Dump Site Detection syst
 - **TrainingRunService**: Manages training execution and lifecycle
 - **TrainedModelService**: Handles model management and metadata
 
-### [Controllers](./controllers.md)
+### Controllers
 
 - **TrainingRunsController**: Exposes training operations via API
 - **TrainedModelsController**: Handles model management operations
@@ -59,10 +59,3 @@ The training process is a core component of the Illegal Dump Site Detection syst
 - Model versioning and lineage tracking
 - Access control via authorization claims
 - Integration with MMDetection framework
-
-## System Requirements
-
-- .NET 8.0
-- PostgreSQL 16 with PostGIS
-- Python environment with MMDetection
-- Hangfire for background job processing
