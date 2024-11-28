@@ -1,50 +1,51 @@
-- name: Guides
-  href: ../guides/user-guides.html
-  items:
+items:
+  - name: Guides
+    href: user-guides.md
+    topicHref: user-guides.md
   - name: Map
-    href: ../guides/map/map-guide.html
+    href: map/map-guide.md
     items:
       - name: Overview
-        href: ../guides/map/map-guide.html
+        href: map/map-guide.md
       - name: Map Configurator
-        href: ../guides/map/map-configurator-guide.html
+        href: map/map-configurator-guide.md
   - name: Dataset Management
-    href: ../guides/dataset-management/dataset-management-guide.html
+    href: dataset-management/dataset-management-guide.md
     items:
       - name: Dataset Management
-        href: ../guides/dataset-management/dataset-management-guide.html
+        href: dataset-management/dataset-management-guide.md
       - name: Image Annotation
-        href: ../guides/dataset-management/image-annotation-guide.html
+        href: dataset-management/image-annotation-guide.md
   - name: Training Process
-    href: ../guides/training-process/training-guide.html
+    href: training-process/training-guide.md
     items:
       - name: Training Guide
-        href: ../guides/training-process/training-guide.html
+        href: training-process/training-guide.md
   - name: Detection Process
-    href: ../guides/detection-process/detection-guide.html
+    href: detection-process/detection-guide.md
     items:
       - name: Detection Process
-        href: ../guides/detection-process/detection-guide.html
+        href: detection-process/detection-guide.md
       - name: Input Images
-        href: ../guides/detection-process/detection-input-images-guide.html
+        href: detection-process/detection-input-images-guide.md
   - name: Landfill Management
-    href: ../guides/landfill-management/landfill-management-guide.html
+    href: landfill-management/landfill-management-guide.md
     items:
       - name: Overview
-        href: ../guides/landfill-management/landfill-management-guide.html
+        href: landfill-management/landfill-management-guide.md
       - name: 3D Point Cloud
-        href: ../guides/landfill-management/3d-point-cloud-guide.html
+        href: landfill-management/3d-point-cloud-guide.md
   - name: Admin
-    href: ../guides/user-management/user-management-guide.html
+    href: user-management/user-management-guide.md
     items: 
       - name: Overview
-        href: ../guides/user-management/user-management-guide.html
+        href: user-management/user-management-guide.md
       - name: Audit Logs
-        href: ../guides/audit-logs/audit-logs-guide.html
+        href: audit-logs/audit-logs-guide.md
   - name: Super Admin
-    href: ../guides/application-settings/application-settings-guide.html
+    href: application-settings/application-settings-guide.md
     items: 
       - name: Application Settings
-        href: ../guides/application-settings/application-settings-guide.html
+        href: application-settings/application-settings-guide.md
       - name: Localization
-        href: ../guides/localization/localization-guide.html
+        href: localization/localization-guide.md
