@@ -1,6 +1,6 @@
 <div >
   <div >
-    <img style="" src="./docs/docfx_project/ins-template/public/images/raven-scan-logo-blue-nobg-1080x360.svg" alt="Raven Scan Logo"/>
+    <img style="" src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/raven-scan-logo-blue-nobg-1080x360.svg" alt="Raven Scan Logo"/>
   </div>
 </div>
 
@@ -29,146 +29,148 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   
   <tr>
   <!-- Map -->
-    <td align="center">
-      <h4 id="map" >Map</h4>
-      <img width=100 src="./docs/docfx_project/ins-template/public/images/clipart-map-500.png" alt=""/>
-      <table><tr>
-        <td><a href="./docs/docfx_project/guides/map/map-guide.html"><h5>Guide</h5></a></td>
-        <td><a href="./docs/docfx_project/documentation/map/overview.html"><h5>Docs</h5></a></td>
-        </tr></table>
-    </td>
+  <td align="center">
+    <h4 id="map">Map</h4>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/clipart-map-500.png" alt=""/>
+    <table><tr>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/map/map-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/map/overview.html"><h5>Docs</h5></a></td>
+      </tr></table>
+  </td>
   
   <!-- Map Configurator -->
   <td align="center">
     <h4 id="map-configurator">Map Configurator</h4>
-    <img width=100  src="./docs/docfx_project/ins-template/public/images/map-configurator-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/map-configurator-500.png" alt=""/>
     <table><tr>
-        <td><a href="./docs/docfx_project/guides/map/map-configurator-guide.html"><h5>Guide</h5></a></td>
-        <td><a href="./docs/docfx_project/documentation/map/map-configurator.html"><h5>Docs</h5></a></td>
+        <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/map/map-configurator-guide.html"><h5>Guide</h5></a></td>
+        <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/map/map-configurator.html"><h5>Docs</h5></a></td>
       </tr></table>
   </td>
 
   <!-- Dataset Management -->
   <td align="center">
     <h4 id="dataset-management">Dataset Management</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/dataset-manage-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/dataset-manage-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/dataset-management/dataset-management-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/dataset-management/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/dataset-management/dataset-management-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/dataset-management/overview.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
 
   <!-- Image Annotation -->
   <td align="center">
     <h4 id="image-annotation" >Image Annotation</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/annotate-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/annotate-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/dataset-management/image-annotation-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/dataset-management/image-annotation.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/dataset-management/image-annotation-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/dataset-management/image-annotation.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
+  </tr>
 
+  <tr>
   <!-- Detection Input Images -->
   <td align="center">
     <h4 id="detection-input-images">Detection Input Images</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/detection-input-images-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/detection-input-images-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/detection-process/detection-input-images-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/detection-process/detection-input-images.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/detection-process/detection-input-images-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/detection-process/detection-input-images.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
 
   <!-- Scheduled Runs -->
   <td align="center">
     <h4 id="scheduled-runs">Scheduled Runs</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/scheduled-runs-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/scheduled-runs-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/scheduled-runs/scheduled-runs-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/scheduled-runs/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/scheduled-runs/scheduled-runs-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/scheduled-runs/overview.html"><h5>Docs</h5></a></td>
       </tr></table>
   </td>
-  </tr>
 
-  <tr>
   <!-- Landfill Management -->
   <td align="center">
     <h4 id="landfill-management">Landfill Management</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/truck-waste-fly-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/truck-waste-fly-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/landfill-management/landfill-management-guide.html"><h5 >Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/landfill-management/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/landfill-management/landfill-management-guide.html"><h5 >Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/landfill-management/overview.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
 
   <!-- 3D Point-Cloud -->
   <td align="center">
     <h4 id="3d-point-cloud">3D Point-Cloud</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/3D-point-cloud-upload-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/3D-point-cloud-upload-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/landfill-management/3d-point-cloud-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/landfill-management/3d-point-cloud.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/landfill-management/3d-point-cloud-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/landfill-management/3d-point-cloud.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
+  </tr>
 
+  <tr>
   <!-- User Management -->
   <td align="center">
     <h4 id="user-management">User Management</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/user-management-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/user-management-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/user-management/user-management-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/user-management/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/user-management/user-management-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/user-management/overview.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
 
   <!-- Audit Logs -->
   <td align="center">
     <h4 id="audit-logs">Audit Logs</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/audit-logs-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/audit-logs-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/audit-logs/audit-logs-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/audit-logs/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/audit-logs/audit-logs-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/audit-logs/overview.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
 
   <!-- Application Settings -->
   <td align="center">
     <h4 id="app-settings">App Settings</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/application-settings-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/application-settings-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/application-settings/application-settings-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/application-settings/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/application-settings/application-settings-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/application-settings/overview.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
 
   <!-- Localization -->
   <td align="center">
     <h4 id="localization">Localization</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/localization-500.png" alt=""/>
+    <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/localization-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/localization/localization-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/localization/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/localization/localization-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/localization/overview.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
   </tr>
 
   <tr>
   <!-- AI Model Training -->
-  <td align="center" colspan=3>
+  <td align="center" colspan=2>
     <h4 id="ai-model-training">AI Model Training</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/robot-train-500.png" alt=""/>
+    <img width=200 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/robot-train-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/training-process/training-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/training-process/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/training-process/training-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/training-process/overview.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
 
   <!-- Waste Detection and Monitoring of Dumpsites -->
-  <td align="center" colspan=6>
+  <td align="center" colspan=2>
     <h4 id="waste-detection-and-monitoring-of-dumpsites">Waste Detection and Monitoring of Dumpsites</h4>
-    <img width=100 src="./docs/docfx_project/ins-template/public/images/object-detection-500.png" alt=""/>
+    <img width=200 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/object-detection-500.png" alt=""/>
     <table><tr>
-      <td><a href="./docs/docfx_project/guides/detection-process/detection-guide.html"><h5>Guide</h5></a></td>
-      <td><a href="./docs/docfx_project/documentation/detection-process/overview.html"><h5>Docs</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/detection-process/detection-guide.html"><h5>Guide</h5></a></td>
+      <td><a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/detection-process/overview.html"><h5>Docs</h5></a></td>
     </tr></table>
   </td>
   </tr>
@@ -235,17 +237,17 @@ We provide a guide that will help you set up and run the __[ Raven Scan ]__ plat
 | Database Extension      | PostGIS                  |                         |                          |  
 | Scheduling Library      | Hangfire                 |                         |                          |  
 
-- <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 512 512"><path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L96 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M272.2 64.6l-51.1 51.1c-15.3 4.2-29.5 11.9-41.5 22.5L153 161.9C142.8 171 129.5 176 115.8 176L96 176l0 128c20.4 .6 39.8 8.9 54.3 23.4l35.6 35.6 7 7c0 0 0 0 0 0L219.9 397c6.2 6.2 16.4 6.2 22.6 0c1.7-1.7 3-3.7 3.7-5.8c2.8-7.7 9.3-13.5 17.3-15.3s16.4 .6 22.2 6.5L296.5 393c11.6 11.6 30.4 11.6 41.9 0c5.4-5.4 8.3-12.3 8.6-19.4c.4-8.8 5.6-16.6 13.6-20.4s17.3-3 24.4 2.1c9.4 6.7 22.5 5.8 30.9-2.6c9.4-9.4 9.4-24.6 0-33.9L340.1 243l-35.8 33c-27.3 25.2-69.2 25.6-97 .9c-31.7-28.2-32.4-77.4-1.6-106.5l70.1-66.2C303.2 78.4 339.4 64 377.1 64c36.1 0 71 13.3 97.9 37.2L505.1 128l38.9 0 40 0 40 0c8.8 0 16 7.2 16 16l0 208c0 17.7-14.3 32-32 32l-32 0c-11.8 0-22.2-6.4-27.7-16l-84.9 0c-3.4 6.7-7.9 13.1-13.5 18.7c-17.1 17.1-40.8 23.8-63 20.1c-3.6 7.3-8.5 14.1-14.6 20.2c-27.3 27.3-70 30-100.4 8.1c-25.1 20.8-62.5 19.5-86-4.1L159 404l-7-7-35.6-35.6c-5.5-5.5-12.7-8.7-20.4-9.3C96 369.7 81.6 384 64 384l-32 0c-17.7 0-32-14.3-32-32L0 144c0-8.8 7.2-16 16-16l40 0 40 0 19.8 0c2 0 3.9-.7 5.3-2l26.5-23.6C175.5 77.7 211.4 64 248.7 64L259 64c4.4 0 8.9 .2 13.2 .6zM544 320l0-144-48 0c-5.9 0-11.6-2.2-15.9-6.1l-36.9-32.8c-18.2-16.2-41.7-25.1-66.1-25.1c-25.4 0-49.8 9.7-68.3 27.1l-70.1 66.2c-10.3 9.8-10.1 26.3 .5 35.7c9.3 8.3 23.4 8.1 32.5-.3l71.9-66.4c9.7-9 24.9-8.4 33.9 1.4s8.4 24.9-1.4 33.9l-.8 .8 74.4 74.4c10 10 16.5 22.3 19.4 35.1l74.8 0zM64 336a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zm528 16a16 16 0 1 0 0-32 16 16 0 1 0 0 32z"/></svg> See all [Project Dependencies](/development/dependencies/dependencies.md)  
+- <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 512 512"><path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L96 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M272.2 64.6l-51.1 51.1c-15.3 4.2-29.5 11.9-41.5 22.5L153 161.9C142.8 171 129.5 176 115.8 176L96 176l0 128c20.4 .6 39.8 8.9 54.3 23.4l35.6 35.6 7 7c0 0 0 0 0 0L219.9 397c6.2 6.2 16.4 6.2 22.6 0c1.7-1.7 3-3.7 3.7-5.8c2.8-7.7 9.3-13.5 17.3-15.3s16.4 .6 22.2 6.5L296.5 393c11.6 11.6 30.4 11.6 41.9 0c5.4-5.4 8.3-12.3 8.6-19.4c.4-8.8 5.6-16.6 13.6-20.4s17.3-3 24.4 2.1c9.4 6.7 22.5 5.8 30.9-2.6c9.4-9.4 9.4-24.6 0-33.9L340.1 243l-35.8 33c-27.3 25.2-69.2 25.6-97 .9c-31.7-28.2-32.4-77.4-1.6-106.5l70.1-66.2C303.2 78.4 339.4 64 377.1 64c36.1 0 71 13.3 97.9 37.2L505.1 128l38.9 0 40 0 40 0c8.8 0 16 7.2 16 16l0 208c0 17.7-14.3 32-32 32l-32 0c-11.8 0-22.2-6.4-27.7-16l-84.9 0c-3.4 6.7-7.9 13.1-13.5 18.7c-17.1 17.1-40.8 23.8-63 20.1c-3.6 7.3-8.5 14.1-14.6 20.2c-27.3 27.3-70 30-100.4 8.1c-25.1 20.8-62.5 19.5-86-4.1L159 404l-7-7-35.6-35.6c-5.5-5.5-12.7-8.7-20.4-9.3C96 369.7 81.6 384 64 384l-32 0c-17.7 0-32-14.3-32-32L0 144c0-8.8 7.2-16 16-16l40 0 40 0 19.8 0c2 0 3.9-.7 5.3-2l26.5-23.6C175.5 77.7 211.4 64 248.7 64L259 64c4.4 0 8.9 .2 13.2 .6zM544 320l0-144-48 0c-5.9 0-11.6-2.2-15.9-6.1l-36.9-32.8c-18.2-16.2-41.7-25.1-66.1-25.1c-25.4 0-49.8 9.7-68.3 27.1l-70.1 66.2c-10.3 9.8-10.1 26.3 .5 35.7c9.3 8.3 23.4 8.1 32.5-.3l71.9-66.4c9.7-9 24.9-8.4 33.9 1.4s8.4 24.9-1.4 33.9l-.8 .8 74.4 74.4c10 10 16.5 22.3 19.4 35.1l74.8 0zM64 336a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zm528 16a16 16 0 1 0 0-32 16 16 0 1 0 0 32z"/></svg> See all [Project Dependencies](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/development/dependencies/dependencies.html)  
 
 ## Raven Scan in Action  
 
-![Dataset Management Overview of Dataset Images and their statuses](./docs/docfx_project/ins-template/public/images/screen-shot-dataset-manage-designed.png)  
+![Dataset Management Overview of Dataset Images and their statuses](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/screen-shot-dataset-manage-designed.png)  
 _Dataset Management Overview of Dataset Images and their statuses_
 
-![Detected Dumpsites show on Map](./docs/docfx_project/ins-template/public/images/screen-shot-detection-volkovo-best-historic.png)  
+![Detected Dumpsites show on Map](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/screen-shot-detection-volkovo-best-historic.png)  
 _Detected Dumpsites show on Map_
 
-![3D Point-Cloud Volume Calculation of a Landfill's Waste Heap](./docs/docfx_project/ins-template/public/images/screen-shot-3d-point-cloud.png)  
+![3D Point-Cloud Volume Calculation of a Landfill's Waste Heap](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/screen-shot-3d-point-cloud.png)  
 _3D Point-Cloud Volume Calculation of a Landfill's Waste Heap_
 
 ## Development  
@@ -257,7 +259,7 @@ Create an issue in the GitHub repository
 
 If you are ready to contribute, experiencing a bug, or just curious  
 
-- <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=14 viewBox="0 0 384 512"><path d="M64 464c-8.8 0-16-7.2-16-16L48 64c0-8.8 7.2-16 16-16l160 0 0 80c0 17.7 14.3 32 32 32l80 0 0 288c0 8.8-7.2 16-16 16L64 464zM64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-293.5c0-17-6.7-33.3-18.7-45.3L274.7 18.7C262.7 6.7 246.5 0 229.5 0L64 0zm97 289c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0L79 303c-9.4 9.4-9.4 24.6 0 33.9l48 48c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-31-31 31-31zM257 255c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l31 31-31 31c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l48-48c9.4-9.4 9.4-24.6 0-33.9l-48-48z"/></svg> Check out the [Development Documentation](/development/intro.md)  
+- <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=14 viewBox="0 0 384 512"><path d="M64 464c-8.8 0-16-7.2-16-16L48 64c0-8.8 7.2-16 16-16l160 0 0 80c0 17.7 14.3 32 32 32l80 0 0 288c0 8.8-7.2 16-16 16L64 464zM64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-293.5c0-17-6.7-33.3-18.7-45.3L274.7 18.7C262.7 6.7 246.5 0 229.5 0L64 0zm97 289c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0L79 303c-9.4 9.4-9.4 24.6 0 33.9l48 48c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-31-31 31-31zM257 255c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l31 31-31 31c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l48-48c9.4-9.4 9.4-24.6 0-33.9l-48-48z"/></svg> Check out the [Development Documentation](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/development/intro.html)  
 
 ## Licensing  
 
@@ -300,7 +302,7 @@ _In the event that we accidentally failed to list a required notice, please brin
 
 _Each team member has played a pivotal role in bringing this project to fruition, and we are immensely thankful for their hard work and dedication._  
   
-- <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 512 512"><path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L96 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M272.2 64.6l-51.1 51.1c-15.3 4.2-29.5 11.9-41.5 22.5L153 161.9C142.8 171 129.5 176 115.8 176L96 176l0 128c20.4 .6 39.8 8.9 54.3 23.4l35.6 35.6 7 7c0 0 0 0 0 0L219.9 397c6.2 6.2 16.4 6.2 22.6 0c1.7-1.7 3-3.7 3.7-5.8c2.8-7.7 9.3-13.5 17.3-15.3s16.4 .6 22.2 6.5L296.5 393c11.6 11.6 30.4 11.6 41.9 0c5.4-5.4 8.3-12.3 8.6-19.4c.4-8.8 5.6-16.6 13.6-20.4s17.3-3 24.4 2.1c9.4 6.7 22.5 5.8 30.9-2.6c9.4-9.4 9.4-24.6 0-33.9L340.1 243l-35.8 33c-27.3 25.2-69.2 25.6-97 .9c-31.7-28.2-32.4-77.4-1.6-106.5l70.1-66.2C303.2 78.4 339.4 64 377.1 64c36.1 0 71 13.3 97.9 37.2L505.1 128l38.9 0 40 0 40 0c8.8 0 16 7.2 16 16l0 208c0 17.7-14.3 32-32 32l-32 0c-11.8 0-22.2-6.4-27.7-16l-84.9 0c-3.4 6.7-7.9 13.1-13.5 18.7c-17.1 17.1-40.8 23.8-63 20.1c-3.6 7.3-8.5 14.1-14.6 20.2c-27.3 27.3-70 30-100.4 8.1c-25.1 20.8-62.5 19.5-86-4.1L159 404l-7-7-35.6-35.6c-5.5-5.5-12.7-8.7-20.4-9.3C96 369.7 81.6 384 64 384l-32 0c-17.7 0-32-14.3-32-32L0 144c0-8.8 7.2-16 16-16l40 0 40 0 19.8 0c2 0 3.9-.7 5.3-2l26.5-23.6C175.5 77.7 211.4 64 248.7 64L259 64c4.4 0 8.9 .2 13.2 .6zM544 320l0-144-48 0c-5.9 0-11.6-2.2-15.9-6.1l-36.9-32.8c-18.2-16.2-41.7-25.1-66.1-25.1c-25.4 0-49.8 9.7-68.3 27.1l-70.1 66.2c-10.3 9.8-10.1 26.3 .5 35.7c9.3 8.3 23.4 8.1 32.5-.3l71.9-66.4c9.7-9 24.9-8.4 33.9 1.4s8.4 24.9-1.4 33.9l-.8 .8 74.4 74.4c10 10 16.5 22.3 19.4 35.1l74.8 0zM64 336a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zm528 16a16 16 0 1 0 0-32 16 16 0 1 0 0 32z"/></svg> All [Project Dependencies](/development/dependencies/dependencies.md)  
+- <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 512 512"><path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L96 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M272.2 64.6l-51.1 51.1c-15.3 4.2-29.5 11.9-41.5 22.5L153 161.9C142.8 171 129.5 176 115.8 176L96 176l0 128c20.4 .6 39.8 8.9 54.3 23.4l35.6 35.6 7 7c0 0 0 0 0 0L219.9 397c6.2 6.2 16.4 6.2 22.6 0c1.7-1.7 3-3.7 3.7-5.8c2.8-7.7 9.3-13.5 17.3-15.3s16.4 .6 22.2 6.5L296.5 393c11.6 11.6 30.4 11.6 41.9 0c5.4-5.4 8.3-12.3 8.6-19.4c.4-8.8 5.6-16.6 13.6-20.4s17.3-3 24.4 2.1c9.4 6.7 22.5 5.8 30.9-2.6c9.4-9.4 9.4-24.6 0-33.9L340.1 243l-35.8 33c-27.3 25.2-69.2 25.6-97 .9c-31.7-28.2-32.4-77.4-1.6-106.5l70.1-66.2C303.2 78.4 339.4 64 377.1 64c36.1 0 71 13.3 97.9 37.2L505.1 128l38.9 0 40 0 40 0c8.8 0 16 7.2 16 16l0 208c0 17.7-14.3 32-32 32l-32 0c-11.8 0-22.2-6.4-27.7-16l-84.9 0c-3.4 6.7-7.9 13.1-13.5 18.7c-17.1 17.1-40.8 23.8-63 20.1c-3.6 7.3-8.5 14.1-14.6 20.2c-27.3 27.3-70 30-100.4 8.1c-25.1 20.8-62.5 19.5-86-4.1L159 404l-7-7-35.6-35.6c-5.5-5.5-12.7-8.7-20.4-9.3C96 369.7 81.6 384 64 384l-32 0c-17.7 0-32-14.3-32-32L0 144c0-8.8 7.2-16 16-16l40 0 40 0 19.8 0c2 0 3.9-.7 5.3-2l26.5-23.6C175.5 77.7 211.4 64 248.7 64L259 64c4.4 0 8.9 .2 13.2 .6zM544 320l0-144-48 0c-5.9 0-11.6-2.2-15.9-6.1l-36.9-32.8c-18.2-16.2-41.7-25.1-66.1-25.1c-25.4 0-49.8 9.7-68.3 27.1l-70.1 66.2c-10.3 9.8-10.1 26.3 .5 35.7c9.3 8.3 23.4 8.1 32.5-.3l71.9-66.4c9.7-9 24.9-8.4 33.9 1.4s8.4 24.9-1.4 33.9l-.8 .8 74.4 74.4c10 10 16.5 22.3 19.4 35.1l74.8 0zM64 336a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zm528 16a16 16 0 1 0 0-32 16 16 0 1 0 0 32z"/></svg> All [Project Dependencies](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/development/dependencies/dependencies.html)  
 
 ## Code of Conduct
 
