@@ -7,12 +7,14 @@ using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.MainApp.BL.TrainingDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
 using Entities.DetectionEntities;
+using Entities.TrainingEntities;
 using Hangfire;
 using Hangfire.States;
 using Hangfire.Storage;
 using Hangfire.Storage.Monitoring;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
+using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Filters;
 using MainApp.MVC.Helpers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
@@ -448,7 +450,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return detectionRunsViewModelList;
         }
 
-        //TODO: Maybe delete detection run also if the status is error or success
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteDetectionRun))]
         public async Task<ResultDTO> DeleteDetectionRun(Guid detectionRunId)
@@ -471,17 +472,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
             }
 
-            ResultDTO<DetectionRunDTO> resultGetEntity = await _detectionRunService.GetDetectionRunById(detectionRunId);
-            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
-                return ResultDTO.Fail(resultGetEntity.ErrMsg!);
-
-            if (resultGetEntity.Data == null)
-                return ResultDTO.Fail("Detection run not found");
-
-            if (resultGetEntity.Data.Status != nameof(ScheduleRunsStatus.Waiting))
-                return ResultDTO.Fail("Can not delete detection run because it is in process or already finished");
-
-            ResultDTO resultDeleteEntity = await _detectionRunService.DeleteDetectionRun(resultGetEntity.Data);
+            ResultDTO resultDeleteEntity = await _detectionRunService.DeleteDetectionRun(detectionRunId, _webHostEnvironment.WebRootPath);
             if (!resultDeleteEntity.IsSuccess && resultDeleteEntity.HandleError())
                 return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
 

@@ -2,18 +2,15 @@
 
 [![Raven Scan](https://img.shields.io/badge/Raven-Scan-darkgray)](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring)
 [![.Net](https://img.shields.io/badge/.NET-5C2D91?style=flat&logo=.net&logoColor=white)](https://dotnet.microsoft.com/en-us/)
-[![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Python](https://img.shields.io/badge/python-3670A0?style=flat&logo=python&logoColor=ffdd54)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
 [![codecov](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/branch/master/graph/badge.svg?token=44SYRYP1H7)](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring)
 [![Open Source](https://badgen.net/badge/Open%20Source/Permissive?icon=github)](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring?tab=Apache-2.0-1-ov-file)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
-<h2 id="welcome" name="welcome"> Welcome to the Raven Scan repository Documentation</h2>
+# Welcome to the [ __Raven Scan__ ] platform documentation
 
 ## Overview  
 
-This platform leverages advanced drone and satellite imagery to enhance waste management and environmental monitoring through cutting-edge technology.  
+The Raven Scan platform leverages advanced drone and satellite imagery to enhance waste management and environmental monitoring through cutting-edge technology.  
 
 Utilizing high-resolution images combined with sophisticated image annotation, object detection models, and geospatial analysis, our system offers robust tools to identify illegal dump sites and effectively manage regulated landfills.  
 
@@ -25,15 +22,17 @@ Explore each feature through our [User Guides](https://intelligentnetworksolutio
 
 ### Feature Documentation  
 
-Learn more from our detailed [Documentation](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/dev-docs-overview.html)
+Learn more from our detailed [Feature Documentation](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/documentation/dev-docs-overview.html)
 
 ## 📝Table of Contents
 
-| [Overview](#overview)                             | [Getting Started](#getting-started) | [Licensing](#licensing)                        |  
-| ------------------------------------------------- | ----------------------------------- | ----------------------------------- |  
-| [Guides and Docs](#user-guides-and-documentation) | [Dependencies](#dependencies)       | [Open-Sourced](#open-sourced)                     |  
-| [Key Features](#key-features)                     | [Development](#development)         | [Acknowledgments](#acknowledgments)                  |  
-| [Datasets](#dataset-management) \| [Annotation](#image-annotation) \| [Training](#object-detection-model-training) \| [Detection](#detection-and-monitoring) | [3D Landfills](#landfill-management) | [Contributing](#contributing)       | [Code of Conduct](#code-of-conduct)                  |  
+| [Overview](#overview)                                                                                                | [Getting Started](#getting-started)        | [Licensing](#licensing)              |  
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------ |  
+| [Guides and Docs](#user-guides-and-documentation)                                                                    | [Dependencies](#dependencies)              | [Open-Sourced](#open-sourced)       |  
+| [Key Features](#key-features)                                                                                        | [Raven Scan Showcase](raven-scan-showcase) | [Acknowledgments](#acknowledgments) |  
+| [Map](#map)  \| [Datasets](#dataset-management) \| [Annotation](#image-annotation)                                   | [Development](#development)                | [Venture Fund](#unicef-venture-fund)|  
+| [Orthophoto Inputs](#detection-images) \| [Landfill Management](#landfill) \| [3D Point-Cloud Scans](#3d-point-cloud) | [Code of Conduct](#code-of-conduct)        | [MMDetection](#mmdetection)         |  
+| [AI Model Training](#ai-model-training) \| [Waste Detection and Monitoring](#waste-detection)                        | [Contributing](#contributing)              | [Third-Party](#third-party-notices) |  
 
 ## Key Features  
 
@@ -82,7 +81,7 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
 
   <!-- Detection Input Images -->
   <td align="center">
-    <h4 id="detection-input-images">Detection Input Images</h4>
+    <h4 id="detection-images">Detection Input Images</h4>
     <h6>Reuse Input Images and save space</h6>
     <h6>View input images as Map Layers</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/detection-input-images-500.png" alt=""/>
@@ -96,7 +95,7 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <tr>
   <!-- Landfill Management -->
   <td align="center">
-    <h4 id="landfill-management">Landfill Management</h4>
+    <h4 id="landfill">Landfill Management</h4>
     <h6>Advanced tools for legal landfill management</h6>
     <h6>Waste Form Submission integration, types, trucks, imports</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/truck-waste-fly-500.png" alt=""/>
@@ -134,7 +133,7 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
 
   <!-- Waste Detection and Monitoring of Dumpsites -->
   <td align="center">
-    <h4 id="waste-detection-and-monitoring-of-dumpsites">Waste Detection and Monitoring of Dumpsites</h4>
+    <h4 id="waste-detection">Waste Detection and Monitoring of Dumpsites</h4>
     <h6>Detect using Custom-Trained AI Models</h6>
     <h6>Visualize Results on Georeferenced Map</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/object-detection-500.png" alt=""/>
@@ -179,7 +178,9 @@ We provide a guide that will help you set up and run the __[ Raven Scan ]__ plat
 
 - <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 512 512"><path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L96 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M272.2 64.6l-51.1 51.1c-15.3 4.2-29.5 11.9-41.5 22.5L153 161.9C142.8 171 129.5 176 115.8 176L96 176l0 128c20.4 .6 39.8 8.9 54.3 23.4l35.6 35.6 7 7c0 0 0 0 0 0L219.9 397c6.2 6.2 16.4 6.2 22.6 0c1.7-1.7 3-3.7 3.7-5.8c2.8-7.7 9.3-13.5 17.3-15.3s16.4 .6 22.2 6.5L296.5 393c11.6 11.6 30.4 11.6 41.9 0c5.4-5.4 8.3-12.3 8.6-19.4c.4-8.8 5.6-16.6 13.6-20.4s17.3-3 24.4 2.1c9.4 6.7 22.5 5.8 30.9-2.6c9.4-9.4 9.4-24.6 0-33.9L340.1 243l-35.8 33c-27.3 25.2-69.2 25.6-97 .9c-31.7-28.2-32.4-77.4-1.6-106.5l70.1-66.2C303.2 78.4 339.4 64 377.1 64c36.1 0 71 13.3 97.9 37.2L505.1 128l38.9 0 40 0 40 0c8.8 0 16 7.2 16 16l0 208c0 17.7-14.3 32-32 32l-32 0c-11.8 0-22.2-6.4-27.7-16l-84.9 0c-3.4 6.7-7.9 13.1-13.5 18.7c-17.1 17.1-40.8 23.8-63 20.1c-3.6 7.3-8.5 14.1-14.6 20.2c-27.3 27.3-70 30-100.4 8.1c-25.1 20.8-62.5 19.5-86-4.1L159 404l-7-7-35.6-35.6c-5.5-5.5-12.7-8.7-20.4-9.3C96 369.7 81.6 384 64 384l-32 0c-17.7 0-32-14.3-32-32L0 144c0-8.8 7.2-16 16-16l40 0 40 0 19.8 0c2 0 3.9-.7 5.3-2l26.5-23.6C175.5 77.7 211.4 64 248.7 64L259 64c4.4 0 8.9 .2 13.2 .6zM544 320l0-144-48 0c-5.9 0-11.6-2.2-15.9-6.1l-36.9-32.8c-18.2-16.2-41.7-25.1-66.1-25.1c-25.4 0-49.8 9.7-68.3 27.1l-70.1 66.2c-10.3 9.8-10.1 26.3 .5 35.7c9.3 8.3 23.4 8.1 32.5-.3l71.9-66.4c9.7-9 24.9-8.4 33.9 1.4s8.4 24.9-1.4 33.9l-.8 .8 74.4 74.4c10 10 16.5 22.3 19.4 35.1l74.8 0zM64 336a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zm528 16a16 16 0 1 0 0-32 16 16 0 1 0 0 32z"/></svg> See all [Project Dependencies](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/development/dependencies/dependencies.html)  
 
-## Raven Scan in Action  
+## Raven Scan Showcase  
+
+Below are screenshots demonstrating Raven Scan's key capabilities in action:  
 
 ![Dataset Management Overview of Dataset Images and their statuses](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/screen-shot-dataset-manage-designed.png)  
 _Dataset Management Overview of Dataset Images and their statuses_
@@ -200,6 +201,28 @@ Create an issue in the GitHub repository
 If you are ready to contribute, experiencing a bug, or just curious  
 
 - <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=14 viewBox="0 0 384 512"><path d="M64 464c-8.8 0-16-7.2-16-16L48 64c0-8.8 7.2-16 16-16l160 0 0 80c0 17.7 14.3 32 32 32l80 0 0 288c0 8.8-7.2 16-16 16L64 464zM64 0C28.7 0 0 28.7 0 64L0 448c0 35.3 28.7 64 64 64l256 0c35.3 0 64-28.7 64-64l0-293.5c0-17-6.7-33.3-18.7-45.3L274.7 18.7C262.7 6.7 246.5 0 229.5 0L64 0zm97 289c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0L79 303c-9.4 9.4-9.4 24.6 0 33.9l48 48c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-31-31 31-31zM257 255c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l31 31-31 31c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l48-48c9.4-9.4 9.4-24.6 0-33.9l-48-48z"/></svg> Check out the [Development Documentation](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/development/intro.html)  
+
+## Code of Conduct
+
+We are committed to fostering a welcoming and inclusive community.  
+
+Our project adheres to a Code of Conduct that outlines expectations for participation and community standards for behavior.  
+
+We encourage all contributors and participants to review and adhere to these guidelines.
+
+By participating in this project, you agree to abide by its terms.  
+
+- <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg> <svg width=18  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M434.7 64h-85.9c-8 0-15.7 3-21.6 8.4l-98.3 90c-.1 .1-.2 .3-.3 .4-16.6 15.6-16.3 40.5-2.1 56 12.7 13.9 39.4 17.6 56.1 2.7 .1-.1 .3-.1 .4-.2l79.9-73.2c6.5-5.9 16.7-5.5 22.6 1 6 6.5 5.5 16.6-1 22.6l-26.1 23.9L504 313.8c2.9 2.4 5.5 5 7.9 7.7V128l-54.6-54.6c-5.9-6-14.1-9.4-22.6-9.4zM544 128.2v223.9c0 17.7 14.3 32 32 32h64V128.2h-96zm48 223.9c-8.8 0-16-7.2-16-16s7.2-16 16-16 16 7.2 16 16-7.2 16-16 16zM0 384h64c17.7 0 32-14.3 32-32V128.2H0V384zm48-63.9c8.8 0 16 7.2 16 16s-7.2 16-16 16-16-7.2-16-16c0-8.9 7.2-16 16-16zm435.9 18.6L334.6 217.5l-30 27.5c-29.7 27.1-75.2 24.5-101.7-4.4-26.9-29.4-24.8-74.9 4.4-101.7L289.1 64h-83.8c-8.5 0-16.6 3.4-22.6 9.4L128 128v223.9h18.3l90.5 81.9c27.4 22.3 67.7 18.1 90-9.3l.2-.2 17.9 15.5c15.9 13 39.4 10.5 52.3-5.4l31.4-38.6 5.4 4.4c13.7 11.1 33.9 9.1 45-4.7l9.5-11.7c11.2-13.8 9.1-33.9-4.6-45.1z"/></svg> Full [Code of Conduct](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/CODE_OF_CONDUCT.md)  
+
+## Contributing
+
+We welcome contributions from the community.  
+
+Whether you're fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.  
+
+For detailed instructions on how to contribute, please see our
+
+- <svg width=18  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M565.6 36.2C572.1 40.7 576 48.1 576 56l0 336c0 10-6.2 18.9-15.5 22.4l-168 64c-5.2 2-10.9 2.1-16.1 .3L192.5 417.5l-160 61c-7.4 2.8-15.7 1.8-22.2-2.7S0 463.9 0 456L0 120c0-10 6.1-18.9 15.5-22.4l168-64c5.2-2 10.9-2.1 16.1-.3L383.5 94.5l160-61c7.4-2.8 15.7-1.8 22.2 2.7zM48 136.5l0 284.6 120-45.7 0-284.6L48 136.5zM360 422.7l0-285.4-144-48 0 285.4 144 48zm48-1.5l120-45.7 0-284.6L408 136.5l0 284.6z"/></svg> <svg width=18  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M159.9 175.8h64v64a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16v-64h64a16 16 0 0 0 16-16v-64a16 16 0 0 0 -16-16h-64v-64a16 16 0 0 0 -16-16h-64a16 16 0 0 0 -16 16v64h-64a16 16 0 0 0 -16 16v64A16 16 0 0 0 159.9 175.8zM568.1 336.1a39.9 39.9 0 0 0 -55.9-8.5L392.5 415.8H271.9a16 16 0 0 1 0-32H350.1c16 0 30.8-10.9 33.4-26.6a32.1 32.1 0 0 0 -31.6-37.4h-160a117.7 117.7 0 0 0 -74.1 26.3l-46.5 37.7H15.9a16.1 16.1 0 0 0 -16 16v96a16.1 16.1 0 0 0 16 16h347a104.8 104.8 0 0 0 61.7-20.3L559.6 392A40 40 0 0 0 568.1 336.1z"/></svg> Complete [Contributing Guidelines](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/CONTRIBUTING.md)  
 
 ## Licensing  
 
@@ -243,25 +266,3 @@ _In the event that we accidentally failed to list a required notice, please brin
 _Each team member has played a pivotal role in bringing this project to fruition, and we are immensely thankful for their hard work and dedication._  
   
 - <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 512 512"><path d="M0 96C0 78.3 14.3 64 32 64l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 128C14.3 128 0 113.7 0 96zM64 256c0-17.7 14.3-32 32-32l384 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L96 288c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32L32 448c-17.7 0-32-14.3-32-32s14.3-32 32-32l384 0c17.7 0 32 14.3 32 32z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M272.2 64.6l-51.1 51.1c-15.3 4.2-29.5 11.9-41.5 22.5L153 161.9C142.8 171 129.5 176 115.8 176L96 176l0 128c20.4 .6 39.8 8.9 54.3 23.4l35.6 35.6 7 7c0 0 0 0 0 0L219.9 397c6.2 6.2 16.4 6.2 22.6 0c1.7-1.7 3-3.7 3.7-5.8c2.8-7.7 9.3-13.5 17.3-15.3s16.4 .6 22.2 6.5L296.5 393c11.6 11.6 30.4 11.6 41.9 0c5.4-5.4 8.3-12.3 8.6-19.4c.4-8.8 5.6-16.6 13.6-20.4s17.3-3 24.4 2.1c9.4 6.7 22.5 5.8 30.9-2.6c9.4-9.4 9.4-24.6 0-33.9L340.1 243l-35.8 33c-27.3 25.2-69.2 25.6-97 .9c-31.7-28.2-32.4-77.4-1.6-106.5l70.1-66.2C303.2 78.4 339.4 64 377.1 64c36.1 0 71 13.3 97.9 37.2L505.1 128l38.9 0 40 0 40 0c8.8 0 16 7.2 16 16l0 208c0 17.7-14.3 32-32 32l-32 0c-11.8 0-22.2-6.4-27.7-16l-84.9 0c-3.4 6.7-7.9 13.1-13.5 18.7c-17.1 17.1-40.8 23.8-63 20.1c-3.6 7.3-8.5 14.1-14.6 20.2c-27.3 27.3-70 30-100.4 8.1c-25.1 20.8-62.5 19.5-86-4.1L159 404l-7-7-35.6-35.6c-5.5-5.5-12.7-8.7-20.4-9.3C96 369.7 81.6 384 64 384l-32 0c-17.7 0-32-14.3-32-32L0 144c0-8.8 7.2-16 16-16l40 0 40 0 19.8 0c2 0 3.9-.7 5.3-2l26.5-23.6C175.5 77.7 211.4 64 248.7 64L259 64c4.4 0 8.9 .2 13.2 .6zM544 320l0-144-48 0c-5.9 0-11.6-2.2-15.9-6.1l-36.9-32.8c-18.2-16.2-41.7-25.1-66.1-25.1c-25.4 0-49.8 9.7-68.3 27.1l-70.1 66.2c-10.3 9.8-10.1 26.3 .5 35.7c9.3 8.3 23.4 8.1 32.5-.3l71.9-66.4c9.7-9 24.9-8.4 33.9 1.4s8.4 24.9-1.4 33.9l-.8 .8 74.4 74.4c10 10 16.5 22.3 19.4 35.1l74.8 0zM64 336a16 16 0 1 0 -32 0 16 16 0 1 0 32 0zm528 16a16 16 0 1 0 0-32 16 16 0 1 0 0 32z"/></svg> All [Project Dependencies](https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/development/dependencies/dependencies.html)  
-
-## Code of Conduct
-
-We are committed to fostering a welcoming and inclusive community.  
-
-Our project adheres to a Code of Conduct that outlines expectations for participation and community standards for behavior.  
-
-We encourage all contributors and participants to review and adhere to these guidelines.
-
-By participating in this project, you agree to abide by its terms.  
-
-- <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 640 512"><path d="M392.8 1.2c-17-4.9-34.7 5-39.6 22l-128 448c-4.9 17 5 34.7 22 39.6s34.7-5 39.6-22l128-448c4.9-17-5-34.7-22-39.6zm80.6 120.1c-12.5 12.5-12.5 32.8 0 45.3L562.7 256l-89.4 89.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l112-112c12.5-12.5 12.5-32.8 0-45.3l-112-112c-12.5-12.5-32.8-12.5-45.3 0zm-306.7 0c-12.5-12.5-32.8-12.5-45.3 0l-112 112c-12.5 12.5-12.5 32.8 0 45.3l112 112c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256l89.4-89.4c12.5-12.5 12.5-32.8 0-45.3z"/></svg> <svg width=18  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M434.7 64h-85.9c-8 0-15.7 3-21.6 8.4l-98.3 90c-.1 .1-.2 .3-.3 .4-16.6 15.6-16.3 40.5-2.1 56 12.7 13.9 39.4 17.6 56.1 2.7 .1-.1 .3-.1 .4-.2l79.9-73.2c6.5-5.9 16.7-5.5 22.6 1 6 6.5 5.5 16.6-1 22.6l-26.1 23.9L504 313.8c2.9 2.4 5.5 5 7.9 7.7V128l-54.6-54.6c-5.9-6-14.1-9.4-22.6-9.4zM544 128.2v223.9c0 17.7 14.3 32 32 32h64V128.2h-96zm48 223.9c-8.8 0-16-7.2-16-16s7.2-16 16-16 16 7.2 16 16-7.2 16-16 16zM0 384h64c17.7 0 32-14.3 32-32V128.2H0V384zm48-63.9c8.8 0 16 7.2 16 16s-7.2 16-16 16-16-7.2-16-16c0-8.9 7.2-16 16-16zm435.9 18.6L334.6 217.5l-30 27.5c-29.7 27.1-75.2 24.5-101.7-4.4-26.9-29.4-24.8-74.9 4.4-101.7L289.1 64h-83.8c-8.5 0-16.6 3.4-22.6 9.4L128 128v223.9h18.3l90.5 81.9c27.4 22.3 67.7 18.1 90-9.3l.2-.2 17.9 15.5c15.9 13 39.4 10.5 52.3-5.4l31.4-38.6 5.4 4.4c13.7 11.1 33.9 9.1 45-4.7l9.5-11.7c11.2-13.8 9.1-33.9-4.6-45.1z"/></svg> Full [Code of Conduct](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/CODE_OF_CONDUCT.md)  
-
-## Contributing
-
-We welcome contributions from the community.  
-
-Whether you're fixing bugs, adding new features, or improving documentation, your help is greatly appreciated.  
-
-For detailed instructions on how to contribute, please see our
-
-- <svg width=18  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M565.6 36.2C572.1 40.7 576 48.1 576 56l0 336c0 10-6.2 18.9-15.5 22.4l-168 64c-5.2 2-10.9 2.1-16.1 .3L192.5 417.5l-160 61c-7.4 2.8-15.7 1.8-22.2-2.7S0 463.9 0 456L0 120c0-10 6.1-18.9 15.5-22.4l168-64c5.2-2 10.9-2.1 16.1-.3L383.5 94.5l160-61c7.4-2.8 15.7-1.8 22.2 2.7zM48 136.5l0 284.6 120-45.7 0-284.6L48 136.5zM360 422.7l0-285.4-144-48 0 285.4 144 48zm48-1.5l120-45.7 0-284.6L408 136.5l0 284.6z"/></svg> <svg width=18  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M159.9 175.8h64v64a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16v-64h64a16 16 0 0 0 16-16v-64a16 16 0 0 0 -16-16h-64v-64a16 16 0 0 0 -16-16h-64a16 16 0 0 0 -16 16v64h-64a16 16 0 0 0 -16 16v64A16 16 0 0 0 159.9 175.8zM568.1 336.1a39.9 39.9 0 0 0 -55.9-8.5L392.5 415.8H271.9a16 16 0 0 1 0-32H350.1c16 0 30.8-10.9 33.4-26.6a32.1 32.1 0 0 0 -31.6-37.4h-160a117.7 117.7 0 0 0 -74.1 26.3l-46.5 37.7H15.9a16.1 16.1 0 0 0 -16 16v96a16.1 16.1 0 0 0 16 16h347a104.8 104.8 0 0 0 61.7-20.3L559.6 392A40 40 0 0 0 568.1 336.1z"/></svg> Complete [Contributing Guidelines](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/blob/master/CONTRIBUTING.md)  

@@ -1,0 +1,53 @@
+[
+  {
+    "mapConfigurations": [
+      {
+        "mapName": "mainmap",
+        "projection": "EPSG:3857",
+        "tileGridJs": "ol.tilegrid.TileGrid({extent:[%MINX%, %MINY%, %MAXX%, %MAXY%],resolutions:[%RESOLUTIONS%]})",
+        "centerX": 2418799.7,
+        "centerY": 5107860.64,
+        "minX": 2214049.64,
+        "minY": 4963528.81,
+        "maxX": 2614860.44,
+        "maxY": 5241599.57,
+        "resolutions": "140,70,35,13.999999999999998,6.999999999999999,2.8,1.4,0.7,0.28,0.14,0.07,0.035",
+        "defaultResolution": 13.999999999999998,
+        "mapLayerGroupConfigurations": [
+          {
+            "groupName": "BaseMaps",
+            "layerGroupTitleJson": "{\"en\":\"Base Maps\"}",
+            "layerGroupDescriptionJson": "{\"en\":\"Base Maps Group\"}",
+            "order": 1,
+            "opacity": 1,
+            "groupJs": "ol.layer.Group({name:'%NAME%',title:'%TITLE%',description:'%DESCRIPTION%',opacity:1,order:%ORDER%,visible:true,openInLayerSwitcher:true,layers:new ol.Collection(%LAYERS%)})",
+            "mapLayerConfigurations": [
+              {
+                "layerName": "layerEsriTopo",
+                "layerTitleJson": "{\"en\":\"ESRI Topo\"}",
+                "layerDescriptionJson": "{\"en\":\"ESRI Topo Map\"}",
+                "order": 11,
+                "layerJs": "ol.layer.Tile({name:'%NAME%',title:'%TITLE%',order:%ORDER%,visible:true,baseLayer:true,source:new ol.source.XYZ({attributions:'Tiles © <a href=\"https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer\">ArcGIS</a>',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',})})"
+              },
+              {
+                "layerName": "layerEsriSatellite",
+                "layerTitleJson": "{\"en\":\"ESRI Satellite\"}",
+                "layerDescriptionJson": "{\"en\":\"ESRI Satellite Map\"}",
+                "order": 12,
+                "layerJs": "ol.layer.Tile({name:'%NAME%',title:'%TITLE%',order:%ORDER%,visible:false,baseLayer:true,source:new ol.source.XYZ({attributions:'Tiles © <a href=\"https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer\">ArcGIS</a>',url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',})})"
+              }
+            ]
+          },
+          {
+            "groupName": "DetectionRunImages",
+            "layerGroupTitleJson": "{\"en\":\"Detection run images\"}",
+            "layerGroupDescriptionJson": "{\"en\":\"Detection run images\"}",
+            "order": -1,
+            "opacity": 1,
+            "groupJs": "ol.layer.Group({name:'%NAME%',title:'%TITLE%',description:'%DESCRIPTION%',opacity:1,order:%ORDER%,visible:true,openInLayerSwitcher:true,displayInLayerSwitcher:false,fold:'open',layers:new ol.Collection([])})"
+          }
+        ]
+      }
+    ]
+  }
+]
