@@ -32,7 +32,7 @@ items:
   - name: Project Start-Up
     items:
     - name: Diagrams
-      href: ../diagrams/intro.md
+      href: ../diagrams/toc.yml
     - name: Usefull Links
       href: usefull-links.md
     - name: Think Licensing
