@@ -101,13 +101,13 @@ a > span > svg:hover path {
       </button>
       <a title="Home Page" class="navbar-brand" href="{{_rel}}">
         <img id="logo" class="waste-logo" width=200 height=54 
-          src="{{_rel}}/ins-template/public/images/raven-scan-logo-grey-nobg-1080x360.svg" alt="{{_appName}}">
+          src="~/ins-template/public/images/raven-scan-logo-grey-nobg-1080x360.svg" alt="{{_appName}}">
       </a>
     </div>
     <div class="collapse navbar-collapse" id="navbar">
       <a title="Home Page" class="navbar-brand navbar-right d-flex align-items-center" href="{{_rel}}">
         <img id="logo" class="ins-logo" width=200 height=54
-          src="{{_rel}}/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
+          src="~/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
       </a>
       <a title="GitHub" class="navbar-brand navbar-right d-flex align-items-center" style="color: #6e7075; border: 2px solid transparent border-radius: 40%;" href="https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring">
         <svg height="54" aria-hidden="true" viewBox="0 0 24 24" version="1.1" width="48" data-view-component="true" class="octicon octicon-mark-github v-align-middle" style="fill: #059212">

@@ -3,7 +3,7 @@
         <div class="navbar-collapse">
             <a title="Home Page" class="navbar-brand" href="{{_rel}}">
                 <img id="logo" class="waste-logo" height=54 width=200 
-                    src="{{_rel}}/ins-template/public/images/raven-scan-logo-blue-nobg-1080x360.svg" alt="{{_appName}}">
+                    src="~/ins-template/public/images/raven-scan-logo-blue-nobg-1080x360.svg" alt="{{_appName}}">
             </a>
             <ul class="nav level1 navbar-nav">
                 <li>
@@ -35,7 +35,7 @@
                 </a>
                 <a title="Home Page" class="navbar-brand d-flex align-items-center" href="{{_rel}}">
                     <img id="logo" class="ins-logo" style="width: 200px; height: 54px;" 
-                        src="{{_rel}}/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
+                        src="~/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
                 </a>
             </div>
         </div>
