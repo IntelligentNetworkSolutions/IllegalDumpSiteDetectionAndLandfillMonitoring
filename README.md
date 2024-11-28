@@ -26,13 +26,13 @@ Learn more from our detailed [Feature Documentation](https://intelligentnetworks
 
 ## 📝Table of Contents
 
-| [Overview](#overview)                                                                                                | [Getting Started](#getting-started)     | [Licensing](#licensing)              |  
-| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------ |  
-| [Guides and Docs](#user-guides-and-documentation)                                                                    | [Dependencies](#dependencies)            | [Open-Sourced](#open-sourced)       |  
-| [Key Features](#key-features)                                                                                        | [Raven Scan Showcase](raven-scan-action) | [Acknowledgments](#acknowledgments) |  
-| [Map](#map)  \| [Datasets](#dataset-management) \| [Annotation](#image-annotation)                                   | [Development](#development)              | [Venture Fund](#unicef-venture-fund)|  
-| [Orthophoto Inputs](detection-images) \| [Landfill Management](#landfill) \| [3D Point-Cloud Scans](#3d-point-cloud) | [Code of Conduct](#code-of-conduct)      | [MMDetection](#mmdetection)         |  
-| [AI Model Training](#ai-model-training) \| [Waste Detection and Monitoring of Dumpsites](#waste-detection)           | [Contributing](#contributing)            | [Third-Party](#third-party-notices) |  
+| [Overview](#overview)                                                                                                | [Getting Started](#getting-started)        | [Licensing](#licensing)              |  
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------ |  
+| [Guides and Docs](#user-guides-and-documentation)                                                                    | [Dependencies](#dependencies)              | [Open-Sourced](#open-sourced)       |  
+| [Key Features](#key-features)                                                                                        | [Raven Scan Showcase](raven-scan-showcase) | [Acknowledgments](#acknowledgments) |  
+| [Map](#map)  \| [Datasets](#dataset-management) \| [Annotation](#image-annotation)                                   | [Development](#development)                | [Venture Fund](#unicef-venture-fund)|  
+| [Orthophoto Inputs](#detection-images) \| [Landfill Management](#landfill) \| [3D Point-Cloud Scans](#3d-point-cloud) | [Code of Conduct](#code-of-conduct)        | [MMDetection](#mmdetection)         |  
+| [AI Model Training](#ai-model-training) \| [Waste Detection and Monitoring](#waste-detection)                        | [Contributing](#contributing)              | [Third-Party](#third-party-notices) |  
 
 ## Key Features  
 
