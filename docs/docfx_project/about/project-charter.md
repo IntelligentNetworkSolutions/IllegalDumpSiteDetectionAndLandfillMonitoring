@@ -32,27 +32,6 @@ The core software components and algorithms will be made available under a permi
 
 Additionally, we may offer premium services, support, and customization options for commercial entities and advanced users.  
 
-## Deliverables  
-
-1. [__.NET MVC Web App__](#mvc-app-mainapp)  
-    1. [Dataset Management Module](#dataset-management-module)  
-    2. [AI Model Training Module](#ai-model-training-module)
-    3. [Waste Detection Module](#waste-detection-module)  
-    4. [Legal Landfill Management Module](#legal-landfill-management-module)  
-    5. [User Management Module](#user-management-module)  
-    ...
-2. [__.NET API AI Object-Detection Training and Detection__](#api-mlagent)  
-    1. Model Training Endpoints  
-    2. Object Detection Endpoints  
-    3. Reporting Endpoints  
-3. [__Python AI Object-Detection Training and Detection Scripts__](#python-scripts)  
-    1. [MMDetection Platform Scripts](#mmdetection-platform-scripts)
-    2. [Dataset Preparation Scripts](#dataset-preparation-scripts)  
-    3. [AI Model Training Scripts](#model-training-scripts)  
-    4. [Object Detection Scripts](#model-inference-detection-scripts)  
-
-</br>
-
 ## Main components  
 
 ### MVC App (MainApp)
@@ -93,11 +72,9 @@ Additionally, we may offer premium services, support, and customization options 
 
 ### API (MLAgent)  
 
-#### Model Training Endpoints  
+#### Model Training  
 
-#### Object Detection Endpoints  
-
-#### Reporting Endpoints  
+#### Object Detection  
 
 </br>
 

@@ -1,5 +1,12 @@
 # Diagrams
 
+- Initial project diagrams  
+
+> ⚠️ **Important**  
+> These are our initial diagrams, some of the processes might not be fully implemented or follow exactly the same logic  
+> _Objects/Entities/Lines marked in <i style="color: purple">purpule</i> were deemed optional and are not implemented currently_  
+> _Keep in mind that some <i style="color: purple">features</i> may be implemented <i style="color: purple">:D</i>_  
+
 ## Solution Architecture  
 
 - [Solution Architecture Diagram](solution-architecture/solution-architecture-diagram.md)  
