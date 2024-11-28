@@ -7,19 +7,19 @@
             </a>
             <ul class="nav level1 navbar-nav">
                 <li>
-                    <a href="~/index.html" title="Home">Home</a>
+                    <a href="{{_rel}}/index.html" title="Home">Home</a>
                 </li>
                 <li>
-                    <a href="~/guides/user-guides.html">Guides</a>
+                    <a href="{{_rel}}/guides/user-guides.html">Guides</a>
                 </li>
                 <li>
-                    <a href="~/documentation/dev-docs-overview.html" title="Feature Documentation">Documentation</a>
+                    <a href="{{_rel}}/documentation/dev-docs-overview.html" title="Feature Documentation">Documentation</a>
                 </li>
                 <li>
-                    <a href="~/development/intro.html" title="Development Documentation">Development</a>
+                    <a href="{{_rel}}development/intro.html" title="Development Documentation">Development</a>
                 </li>
                 <li>
-                    <a href="~/about/intro.html" title="About Us">About</a>
+                    <a href="{{_rel}}about/intro.html" title="About Us">About</a>
                 </li>
             </ul>
             <div class="pull-right d-flex flex-row align-items-center">
