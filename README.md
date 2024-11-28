@@ -73,7 +73,6 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
     <h4 id="image-annotation" >Image Annotation</h4>
     <h6>Annotate High-Resolution imagery</h6>
     <h6>Draw, adjust, enable and disable bounding boxes</h6>
-    <h6><i>Further Development: Segmentation polygon annotation</i></h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/annotate-500.png" alt=""/>
     <h6 align="center">
       <a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/dataset-management/image-annotation-guide.html">Guide</a>
@@ -99,7 +98,7 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <td align="center">
     <h4 id="landfill-management">Landfill Management</h4>
     <h6>Advanced tools for legal landfill management</h6>
-    <h6>Waste Form Submission integration, Waste Types, Trucks, imports</h6>
+    <h6>Waste Form Submission integration, types, trucks, imports</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/truck-waste-fly-500.png" alt=""/>
     <h6 align="center">
       <a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/landfill-management/landfill-management-guide.html">Guide</a>
@@ -111,7 +110,7 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <td align="center">
     <h4 id="3d-point-cloud">3D Point-Cloud</h4>
     <h6>3D Point-Cloud scan integration</h6>
-    <h6>View and Compare 3D scans, Measure Height, Distance, Volume</h6>
+    <h6>View and Compare, Measure Height, Distance, Volume</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/3D-point-cloud-upload-500.png" alt=""/>
     <h6 align="center">
       <a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/landfill-management/3d-point-cloud-guide.html">Guide</a>
