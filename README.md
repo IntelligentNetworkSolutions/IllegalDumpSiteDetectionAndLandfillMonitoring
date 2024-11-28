@@ -1,6 +1,6 @@
 <div >
   <div >
-    <img style="" src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/raven-scan-logo-blue-nobg-1080x360.svg" alt="Raven Scan Logo"/>
+    <img style="" src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/raven-scan-logo-blue-text-gray-nobg-1080x360.svg" alt="Raven Scan Logo"/>
   </div>
 </div>
 
@@ -41,9 +41,9 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <!-- Map -->
   <td align="center">
     <h4 id="map">Map</h4>
-    <h6>View detected dumpsites on map, add ignore zones</h6>
-    <h6>Open Layers, Layer switcher, change base map, view terrain, adjust coloring</h6>
-    <h6>Direct GeoTiff Injection, review historical image layers of areas</h6>
+    <h6>View Detected Dumpsites on Map</h6>
+    <h6>Open-Layers, layer switcher, view terrain, adjust coloring</h6>
+    <h6>Direct GeoTiff Injection, review historical scans of areas</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/clipart-map-500.png" alt=""/>
     <h6 align="center">
       <a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/map/map-guide.html">Guide</a>
@@ -54,7 +54,7 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <!-- Dataset Management -->
   <td align="center">
     <h4 id="dataset-management">Dataset Management</h4>
-    <h6>Manage extensive datasets of drone and satellite images</h6>
+    <h6>Manage extensive Datasets of Drone and Satellite images</h6>
     <h6>Tools for uploading, categorizing, and maintaining image data</h6>
     <h6>Features include tagging, filtering, and robust data integrity checks</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/dataset-manage-500.png" alt=""/>
@@ -69,8 +69,8 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <!-- Image Annotation -->
   <td align="center">
     <h4 id="image-annotation" >Image Annotation</h4>
-    <h6>Annotate high-resolution drone and satellite imagery</h6>
-    <h6>Draw, adjust and enable/disable bounding boxes</h6>
+    <h6>Annotate High-Resolution imagery</h6>
+    <h6>Draw, adjust, enable and disable bounding boxes</h6>
     <h6><i>Further Development: Segmentation polygon annotation</i></h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/annotate-500.png" alt=""/>
     <h6 align="center">
@@ -82,8 +82,8 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <!-- Detection Input Images -->
   <td align="center">
     <h4 id="detection-input-images">Detection Input Images</h4>
-    <h6>Input images on which detection will be run</h6>
-    <h6>Load input images as Map Layers</h6>
+    <h6>Reuse Input Images and save space</h6>
+    <h6>View input images as Map Layers</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/detection-input-images-500.png" alt=""/>
     <h6 align="center">
       <a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/detection-process/detection-input-images-guide.html">Guide</a>
@@ -97,7 +97,7 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <td align="center">
     <h4 id="landfill-management">Landfill Management</h4>
     <h6>Advanced tools for legal landfill management</h6>
-    <h6>Waste form submission integration, waste types, truck, imports</h6>
+    <h6>Waste Form Submission integration, Waste Types, Trucks, imports</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/truck-waste-fly-500.png" alt=""/>
     <h6 align="center">
       <a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/landfill-management/landfill-management-guide.html">Guide</a>
@@ -109,7 +109,7 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <td align="center">
     <h4 id="3d-point-cloud">3D Point-Cloud</h4>
     <h6>3D Point-Cloud scan integration</h6>
-    <h6>View and Compare 3D scans, measure height, distance, volume</h6>
+    <h6>View and Compare 3D scans, Measure Height, Distance, Volume</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/3D-point-cloud-upload-500.png" alt=""/>
     <h6 align="center">
       <a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/landfill-management/3d-point-cloud-guide.html">Guide</a>
@@ -134,8 +134,8 @@ Learn more from our detailed [Documentation](https://intelligentnetworksolutions
   <!-- Waste Detection and Monitoring of Dumpsites -->
   <td align="center">
     <h4 id="waste-detection-and-monitoring-of-dumpsites">Waste Detection and Monitoring of Dumpsites</h4>
-    <h6>Detect using custom-trained models</h6>
-    <h6>Visualize results on georeferenced maps</h6>
+    <h6>Detect using Custom-Trained AI Models</h6>
+    <h6>Visualize Results on Georeferenced Map</h6>
     <img width=150 src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/object-detection-500.png" alt=""/>
     <h6 align="center">
       <a href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/guides/detection-process/detection-guide.html">Guide</a>
