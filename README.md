@@ -1,13 +1,8 @@
-<div >
-  <div >
-    <img style="" src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/raven-scan-logo-blue-text-gray-nobg-1080x360.svg" alt="Raven Scan Logo"/>
-  </div>
-</div>
-
-<h2 id="welcome" name="welcome" >
-  Welcome to the Raven Scan repository documentation</h2>
+<img style="" src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/raven-scan-logo-blue-text-gray-nobg-1080x360-svg.svg" alt="Raven Scan Logo"/>
 
 [![codecov](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/branch/master/graph/badge.svg?token=44SYRYP1H7)](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring)
+
+<h2 id="welcome" name="welcome"> Welcome to the Raven Scan repository Documentation</h2>
 
 ## Overview  
 
