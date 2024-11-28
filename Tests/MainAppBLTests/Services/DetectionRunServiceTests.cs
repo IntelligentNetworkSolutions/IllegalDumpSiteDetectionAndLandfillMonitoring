@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories.DetectionRepositories;
 using DTOs.MainApp.BL.DetectionDTOs;
 using DTOs.ObjectDetection.API.Responses.DetectionRun;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using SD;
+using SD.Enums;
 using SD.Helpers;
 using System.Linq.Expressions;
 
@@ -27,6 +29,7 @@ namespace Tests.MainAppBLTests.Services
         private readonly DetectionRunService _service;
         private readonly Mock<IFileSystem> _mockFileSystem;
         private readonly Mock<IMMDetectionConfigurationService> _mockMMDetectionConfigurationService;
+        private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
 
         public DetectionRunServiceTests()
         {
@@ -38,6 +41,7 @@ namespace Tests.MainAppBLTests.Services
             _mockFileSystem = new Mock<IFileSystem>();
             _mockMMDetectionConfigurationService = new Mock<IMMDetectionConfigurationService>();
             _mockDetectionIgnoreZoneRepository = new Mock<IDetectionIgnoreZonesRepository>();
+            _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
 
             _mockConfiguration = new Mock<IConfiguration>();
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:CondaExeFileAbsPath"]).Returns("conda_exe_file_path");
@@ -57,7 +61,8 @@ namespace Tests.MainAppBLTests.Services
                                                _mockDetectedDumSiteRepositoryRepository.Object,
                                                 _mockDetectionInputImageRepository.Object,
                                                 _mockMMDetectionConfigurationService.Object,
-                                                _mockDetectionIgnoreZoneRepository.Object);
+                                                _mockDetectionIgnoreZoneRepository.Object,
+                                                _mockAppSettingsAccessor.Object);
         }
 
         [Fact]
@@ -1064,88 +1069,84 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task DeleteDetectionRun_ShouldReturnOk_WhenDeletionIsSuccessful()
+        public async Task DeleteDetectionRun_ShouldReturnFail_WhenDetectionRunNotFound()
         {
             // Arrange
             var detectionRunId = Guid.NewGuid();
-
-            var detectionRunDTO = new DetectionRunDTO { Id = detectionRunId, Name = "Test Run" };
-            var detectionRun = new DetectionRun { Id = detectionRunId, Name = detectionRunDTO.Name };
-
-            // Set up the mapper to map from DTO to entity
-            _mockMapper
-                .Setup(mapper => mapper.Map<DetectionRun>(detectionRunDTO))
-                .Returns(detectionRun);
-
-            // Set up the repository to return a successful result on deletion
             _mockDetectionRunsRepository
-                .Setup(repo => repo.Delete(detectionRun, true, default))
+                .Setup(repo => repo.GetById(detectionRunId, false, null))
+                .ReturnsAsync(ResultDTO<DetectionRun?>.Ok(null));
+
+            // Act
+            var result = await _service.DeleteDetectionRun(detectionRunId, "wwwrootPath");
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Detection run not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionRun_ShouldReturnFail_WhenStatusIsProcessing()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var detectionRun = new DetectionRun { Status = nameof(ScheduleRunsStatus.Processing) };
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetById(detectionRunId, false, null))
+                .ReturnsAsync(ResultDTO<DetectionRun?>.Ok(detectionRun));
+
+            // Act
+            var result = await _service.DeleteDetectionRun(detectionRunId, "wwwrootPath");
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Can not delete detection run because it is in process", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionRun_ShouldDeleteOnlyDetectionRun_WhenStatusIsWaiting()
+        {
+            // Arrange
+            var detectionRunId = Guid.NewGuid();
+            var detectionRun = new DetectionRun { Status = nameof(ScheduleRunsStatus.Waiting) };
+
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.GetById(detectionRunId, false, null))
+                .ReturnsAsync(ResultDTO<DetectionRun?>.Ok(detectionRun));
+            _mockDetectionRunsRepository
+                .Setup(repo => repo.Delete(It.IsAny<DetectionRun>(), true, default))
                 .ReturnsAsync(ResultDTO.Ok());
 
             // Act
-            var result = await _service.DeleteDetectionRun(detectionRunDTO);
+            var result = await _service.DeleteDetectionRun(detectionRunId, "wwwrootPath");
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Null(result.ErrMsg);
+            _mockDetectionRunsRepository.Verify(repo => repo.Delete(It.IsAny<DetectionRun>(), true, default), Times.Once);
         }
 
         [Fact]
-        public async Task DeleteDetectionRun_ShouldReturnFail_WhenDeletionFails()
+        public async Task DeleteDetectionRun_ShouldReturnFail_WhenErrorLogsFolderNotFound()
         {
             // Arrange
             var detectionRunId = Guid.NewGuid();
+            var detectionRun = new DetectionRun { Status = nameof(ScheduleRunsStatus.Error) };
 
-            var detectionRunDTO = new DetectionRunDTO { Id = detectionRunId, Name = "Test Run" };
-            var detectionRun = new DetectionRun { Id = detectionRunId, Name = detectionRunDTO.Name };
-            string errorMessage = "Deletion failed due to repository error.";
-
-            // Set up the mapper to map from DTO to entity
-            _mockMapper
-                .Setup(mapper => mapper.Map<DetectionRun>(detectionRunDTO))
-                .Returns(detectionRun);
-
-            // Set up the repository to return a failure result on deletion
             _mockDetectionRunsRepository
-                .Setup(repo => repo.Delete(detectionRun, true, default))
-                .ReturnsAsync(ResultDTO.Fail(errorMessage));
+                .Setup(repo => repo.GetById(detectionRunId, false, null))
+                .ReturnsAsync(ResultDTO<DetectionRun?>.Ok(detectionRun));
+            _mockAppSettingsAccessor
+                .Setup(accessor => accessor.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", It.IsAny<string>()))
+                .ReturnsAsync(ResultDTO<string>.Fail("Can not get the application settings"));
 
             // Act
-            var result = await _service.DeleteDetectionRun(detectionRunDTO);
+            var result = await _service.DeleteDetectionRun(detectionRunId, "wwwrootPath");
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(errorMessage, result.ErrMsg);
+            Assert.Equal("Can not get the application settings", result.ErrMsg);
         }
-
-        [Fact]
-        public async Task DeleteDetectionRun_ShouldReturnExceptionFail_WhenExceptionIsThrown()
-        {
-            // Arrange
-            var detectionRunId = Guid.NewGuid();
-            var detectionRunDTO = new DetectionRunDTO { Id = detectionRunId, Name = "Test Run" };
-            var detectionRun = new DetectionRun { Id = detectionRunId, Name = detectionRunDTO.Name };
-            string exceptionMessage = "An error occurred during deletion.";
-
-            // Set up the mapper to map from DTO to entity
-            _mockMapper
-                .Setup(mapper => mapper.Map<DetectionRun>(detectionRunDTO))
-                .Returns(detectionRun);
-
-            // Set up the repository to throw an exception
-            _mockDetectionRunsRepository
-                .Setup(repo => repo.Delete(detectionRun, true, default))
-                .ThrowsAsync(new Exception(exceptionMessage));
-
-            // Act
-            var result = await _service.DeleteDetectionRun(detectionRunDTO);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Equal(exceptionMessage, result.ErrMsg);
-
-        }
-
+                
         [Fact]
         public async Task GetAllDetectionRuns_ShouldReturnFail_WhenGetAllFails()
         {

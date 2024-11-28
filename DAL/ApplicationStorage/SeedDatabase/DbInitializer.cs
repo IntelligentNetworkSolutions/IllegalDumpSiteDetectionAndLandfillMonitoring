@@ -73,6 +73,12 @@ namespace DAL.ApplicationStorage.SeedDatabase
                 SeedUsers();
                 Console.WriteLine("SeedUsers Ended");
 
+                // Seed Map Cofiguration
+                Console.WriteLine("SeedMapConfiguration Started");
+                SeedMapConfigurations();
+                Console.WriteLine("SeedMapConfiguration Ended");
+
+
                 //TODO: load modules logic
                 if (loadModules.HasValue && loadModules.Value)
                 {
@@ -115,6 +121,77 @@ namespace DAL.ApplicationStorage.SeedDatabase
             }
         }
 
+
+        private void SeedMapConfigurations()
+        {
+            var mapConfigurationsPath = _configuration["SeedDatabaseFilePaths:SeedDatabaseMapConfigurations"];
+            if (string.IsNullOrEmpty(mapConfigurationsPath))
+            {
+                return;
+            }
+
+            if (_db.MapConfigurations.Any()) return;
+
+            var mapConfigurationsData = File.ReadAllText(mapConfigurationsPath);
+            var jsonArray = JArray.Parse(mapConfigurationsData);
+            var mapConfigurationsDataJson = jsonArray.FirstOrDefault(obj => obj["mapConfigurations"] != null);
+
+            if (mapConfigurationsDataJson == null)
+            {
+                return;
+            }
+
+            var mapConfigurations = mapConfigurationsDataJson["mapConfigurations"]?.ToObject<List<MapConfiguration>>();
+
+            if (mapConfigurations?.Count > 0)
+            {
+                //get superadmin id
+                string? superAdminId = _db.UserClaims.Where(x => x.ClaimValue == "superadmin").Select(x => x.UserId).FirstOrDefault();
+                if (superAdminId == null)
+                {
+                    return;
+                }
+
+                //create map configurations
+                foreach (var mapConfiguration in mapConfigurations)
+                {
+                    mapConfiguration.Id = Guid.NewGuid();
+                    mapConfiguration.CreatedById = superAdminId;
+                    mapConfiguration.CreatedOn = DateTime.UtcNow;
+
+                    _db.MapConfigurations.Add(mapConfiguration);
+
+                    //create map layer groups for each map configuration
+                    if (mapConfiguration.MapLayerGroupConfigurations?.Count > 0)
+                    {
+                        foreach (var layerGroup in mapConfiguration.MapLayerGroupConfigurations)
+                        {
+                            layerGroup.Id = Guid.NewGuid();
+                            layerGroup.CreatedOn = DateTime.UtcNow;
+                            layerGroup.CreatedById = superAdminId;
+                            layerGroup.MapConfigurationId = mapConfiguration.Id;
+
+                            _db.MapLayerGroupConfigurations.Add(layerGroup);
+
+                            //create layer configurations for each group
+                            if (layerGroup.MapLayerConfigurations?.Count > 0)
+                            {
+                                foreach (var layer in layerGroup.MapLayerConfigurations)
+                                {
+                                    layer.CreatedById = superAdminId;
+                                    layer.CreatedOn = DateTime.UtcNow;
+                                    layer.MapLayerGroupConfigurationId = layerGroup.Id;
+
+                                    _db.MapLayerConfigurations.Add(layer);
+                                }
+                            }
+                        }
+                    }
+                }
+                _db.SaveChanges();
+            }
+        }
+           
         private void SeedApplicationSettings()
         {
             var appSettingsPath = _configuration["SeedDatabaseFilePaths:SeedDatabaseApplicationSettings"];
