@@ -1,15 +1,13 @@
 <img style="" src="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/ins-template/public/images/raven-scan-logo-blue-text-gray-nobg-1080x360-svg.svg" alt="Raven Scan Logo"/>
 
+[![Raven Scan](https://img.shields.io/badge/Raven-Scan-darkgray)](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring)
 [![.Net](https://img.shields.io/badge/.NET-5C2D91?style=flat&logo=.net&logoColor=white)](https://dotnet.microsoft.com/en-us/)
-[![JS](https://img.shields.io/badge/JS-black?logo=javascript&logoColor=#F7DF1E)]()
 [![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![MMDetection](https://img.shields.io/badge/mmdetection-blue?style=flat&link=https://mmdetection.readthedocs.io/en/latest/)](https://mmdetection.readthedocs.io/en/latest/)
 [![Python](https://img.shields.io/badge/python-3670A0?style=flat&logo=python&logoColor=ffdd54)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white)](https://pytorch.org/)
 [![codecov](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring/branch/master/graph/badge.svg?token=44SYRYP1H7)](https://codecov.io/gh/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring)
-[![Open Source Permissive](https://badgen.net/badge/Open%20Source/Permissive?icon=github)](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring?tab=Apache-2.0-1-ov-file)
+[![Open Source](https://badgen.net/badge/Open%20Source/Permissive?icon=github)](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring?tab=Apache-2.0-1-ov-file)
 [![Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
-[![Raven Scan](https://img.shields.io/badge/Raven-Scan-darkgray)](https://github.com/IntelligentNetworkSolutions/IllegalDumpSiteDetectionAndLandfillMonitoring)
 
 <h2 id="welcome" name="welcome"> Welcome to the Raven Scan repository Documentation</h2>
 
