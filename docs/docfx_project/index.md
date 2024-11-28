@@ -182,7 +182,7 @@
       <h5 class="d-flex flex-grow">
         View status of Scheduled Runs</h5>
       <h5 class="d-flex flex-grow">
-        Cancel on demand</h5>
+        Queue Prioritization</h5>
     </div>
     <a class="d-flex flex-column flex-grow" href="./guides/scheduled-runs/scheduled-runs-guide.html">
       <h5 class="d-flex flex-grow">
@@ -241,9 +241,9 @@
     <h4 id="user-management" class="d-flex flex-grow">
       User Management
     </h4>
-    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
-      <h5 class="d-flex flex-grow">3D Point-Cloud scan integration</h5>
-      <h5 class="d-flex flex-grow">View and Compare 3D scans</h5>
+    <div class="col-md-12 d-flex flex-grow flex-column align-items-center px-1r text-center">
+      <h5 class="d-flex flex-grow">Manage users and roles</h5>
+      <h5 class="d-flex flex-grow">Assign feature speciffic user permissions/claims</h5>
     </div>
     <a class="d-flex flex-column flex-grow" href="./guides/user-management/user-management-guide.html">
       <h5 class="d-flex flex-grow">
@@ -262,9 +262,9 @@
     <h4 id="audit-logs" class="d-flex flex-grow">
       Audit Logs
     </h4>
-    <div class="col-md-12 d-flex flex-column" style="text-align: start; align-items: flex-start; justify-content: start;">
-      <h5 class="d-flex flex-grow">3D Point-Cloud scan integration</h5>
-      <h5 class="d-flex flex-grow">View and Compare 3D scans</h5>
+    <div class="col-md-12 d-flex flex-grow flex-column align-items-center px-1r text-center">
+      <h5 class="d-flex flex-grow">Keep every write</h5>
+      <h5 class="d-flex flex-grow">Easy audit, disaster recovery</h5>
     </div>
     <a class="d-flex flex-column flex-grow" href="./guides/audit-logs/audit-logs-guide.html">
       <h5 class="d-flex flex-grow">
