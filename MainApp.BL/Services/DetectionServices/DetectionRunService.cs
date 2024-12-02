@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CliWrap;
 using CliWrap.Buffered;
+using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories.DetectionRepositories;
 using DTOs.Helpers;
 using DTOs.MainApp.BL.DetectionDTOs;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using OSGeo.GDAL;
 using SD;
+using SD.Enums;
 using SD.Helpers;
 
 namespace MainApp.BL.Services.DetectionServices
@@ -29,12 +31,13 @@ namespace MainApp.BL.Services.DetectionServices
         private readonly IMapper _mapper;
         private readonly ILogger<DetectionRunService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IAppSettingsAccessor _appSettingsAccessor;
 
         // TODO: Think Refactoring
         private string DetectionResultDummyDatasetClassId = string.Empty;
         private string HasGPU = string.Empty;
 
-        public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository, IMMDetectionConfigurationService mMDetectionConfiguration, IDetectionIgnoreZonesRepository detectionIgnoreZoneRepository)
+        public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository, IMMDetectionConfigurationService mMDetectionConfiguration, IDetectionIgnoreZonesRepository detectionIgnoreZoneRepository, IAppSettingsAccessor appSettingsAccessor)
         {
             _detectionRunRepository = detectionRunRepository;
             _detectionInputImageRepository = detectionInputImageRepository;
@@ -42,6 +45,7 @@ namespace MainApp.BL.Services.DetectionServices
             _logger = logger;
             _configuration = configuration;
             _detectionIgnoreZoneRepository = detectionIgnoreZoneRepository;
+            _appSettingsAccessor = appSettingsAccessor;
 
 
             string? hasGPU = _configuration["AppSettings:MMDetection:HasGPU"];
@@ -235,15 +239,101 @@ namespace MainApp.BL.Services.DetectionServices
             }
         }
 
-        public async Task<ResultDTO> DeleteDetectionRun(DetectionRunDTO detectionRunDTO)
+        public async Task<ResultDTO> DeleteDetectionRun(Guid detectionRunId, string wwwrootPath)
         {
             try
             {
-                DetectionRun detectionRun = _mapper.Map<DetectionRun>(detectionRunDTO);
-                ResultDTO resultDeleteEntity = await _detectionRunRepository.Delete(detectionRun);
+                //get detection run from db
+                ResultDTO<DetectionRun?> resultGetDetectionRunDb = await _detectionRunRepository.GetById(detectionRunId);
+                if (!resultGetDetectionRunDb.IsSuccess && resultGetDetectionRunDb.HandleError())
+                    return ResultDTO.Fail(resultGetDetectionRunDb.ErrMsg!);
 
-                if (resultDeleteEntity.IsSuccess == false && resultDeleteEntity.HandleError())
-                    return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
+                if (resultGetDetectionRunDb.Data == null)
+                    return ResultDTO.Fail("Detection run not found");
+
+                //check status if is PROCESSING
+                if (resultGetDetectionRunDb.Data.Status == nameof(ScheduleRunsStatus.Processing))
+                    return ResultDTO.Fail("Can not delete detection run because it is in process");
+
+                //check if status is waitnig then DELETE ONLY the detection run from db because there are no files entered
+                if (resultGetDetectionRunDb.Data.Status == nameof(ScheduleRunsStatus.Waiting))
+                {
+                    DetectionRun detectionRun = _mapper.Map<DetectionRun>(resultGetDetectionRunDb.Data);
+                    ResultDTO resultDeleteDetectionRun = await _detectionRunRepository.Delete(detectionRun);
+                    if (resultDeleteDetectionRun.IsSuccess == false && resultDeleteDetectionRun.HandleError())
+                        return ResultDTO.Fail(resultDeleteDetectionRun.ErrMsg!);
+                    return ResultDTO.Ok();
+                }
+
+                //delete err msg txt file from wwwroot ONLY IF status is ERROR
+                if (resultGetDetectionRunDb.Data.Status == nameof(ScheduleRunsStatus.Error))
+                {
+                    ResultDTO<string?>? detectionRunsErrorLogsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", "Uploads\\DetectionUploads\\DetectionRunsErrorLogs");
+                    if (!detectionRunsErrorLogsFolder.IsSuccess && detectionRunsErrorLogsFolder.HandleError())
+                    {
+                        return ResultDTO.Fail("Can not get the application settings");
+                    }
+
+                    if (string.IsNullOrEmpty(detectionRunsErrorLogsFolder.Data))
+                    {
+                        return ResultDTO.Fail("Directory path not found");
+                    }
+
+                    string filePath = System.IO.Path.Combine(wwwrootPath, detectionRunsErrorLogsFolder.Data);
+                    if (Directory.Exists(filePath))
+                    {
+                        string fileName = $"{detectionRunId}_errMsg.txt";
+                        string fullFilePath = System.IO.Path.Combine(filePath, fileName);
+                        if (File.Exists(fullFilePath))
+                        {
+                            File.Delete(fullFilePath);
+                        }
+                    }
+                }
+
+                //delete error and success logs from DetectionRunCliOutDirAbsPath:
+                string? successLogFile = Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"succ_{detectionRunId}.txt");
+                if (File.Exists(successLogFile))
+                {
+                    File.Delete(successLogFile);
+                }
+                string? errorLogFile = Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"error_{detectionRunId}.txt");
+                if (File.Exists(errorLogFile))
+                {
+                    File.Delete(errorLogFile);
+                }
+                
+                //delete all files from mmdetection ins-development detections detectionRunId folder
+                string? detectionRunFolderPath = Path.Combine(_MMDetectionConfiguration.GetDetectionRunOutputDirAbsPath(), detectionRunId.ToString());
+                if (Directory.Exists(detectionRunFolderPath))
+                {
+                    try
+                    {
+                        Directory.Delete(detectionRunFolderPath, recursive: true);
+                    }
+                    catch (Exception ex)
+                    {
+                        return ResultDTO.Fail($"Failed to delete folder: {ex.Message}");
+                    }
+                }
+
+                //delete detcted dump sites for the detection run
+                ResultDTO<IEnumerable<DetectedDumpSite>>? resultGetAllDumpSitesForDetectionRun = await _detectedDumpSitesRepository.GetAll(filter: x => x.DetectionRunId == detectionRunId, track: true);
+                if (resultGetAllDumpSitesForDetectionRun.IsSuccess == false && resultGetAllDumpSitesForDetectionRun.HandleError())
+                    return ResultDTO.Fail(resultGetAllDumpSitesForDetectionRun.ErrMsg!);
+                //delete dump sites if there is any
+                if(resultGetAllDumpSitesForDetectionRun.Data != null && resultGetAllDumpSitesForDetectionRun.Data.Any())
+                {
+                    ResultDTO? resultDeleteDetectedDumpSites = await _detectedDumpSitesRepository.DeleteRange(resultGetAllDumpSitesForDetectionRun.Data);
+                    if (resultDeleteDetectedDumpSites.IsSuccess == false && resultDeleteDetectedDumpSites.HandleError())
+                        return ResultDTO.Fail(resultDeleteDetectedDumpSites.ErrMsg!);
+                }
+
+                //delete detection run from db
+                DetectionRun detectionRunEntity = _mapper.Map<DetectionRun>(resultGetDetectionRunDb.Data);
+                ResultDTO resultDeleteDetectionRunEntity = await _detectionRunRepository.Delete(detectionRunEntity);
+                if (resultDeleteDetectionRunEntity.IsSuccess == false && resultDeleteDetectionRunEntity.HandleError())
+                    return ResultDTO.Fail(resultDeleteDetectionRunEntity.ErrMsg!);
 
                 return ResultDTO.Ok();
             }

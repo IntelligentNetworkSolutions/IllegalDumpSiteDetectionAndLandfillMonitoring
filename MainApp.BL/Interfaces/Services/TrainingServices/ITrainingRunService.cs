@@ -16,5 +16,6 @@ namespace MainApp.BL.Interfaces.Services.TrainingServices
         Task<ResultDTO<Guid>> CreateTrainedModelByTrainingRunId(Guid trainingRunId);
         Task<ResultDTO> DeleteTrainingRun(Guid trainingRunId, string wwwrootPath);
         Task<ResultDTO> PublishTrainingRunTrainedModel(Guid trainingRunId);
+        Task<ResultDTO<string>> GetFirstCreatedBaseTrainedModelFilePath();
     }
 }

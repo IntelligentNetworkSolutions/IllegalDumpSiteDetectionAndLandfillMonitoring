@@ -89,7 +89,6 @@
                 placeholder: "@DbResHtml.T("Select Trained Model", "Resources")",
                 allowClear: true
             });
-            //populateTrainedModelsSelect();
 
             $("#detInputImage").select2({
                 placeholder: "@DbResHtml.T("Select Input Image", "Resources")",
@@ -136,7 +135,6 @@
                             $("#inputImagePreview").empty();
                             var inputImagePropertiesHtml = '';
                             var inputImagePreviewHtml = '';
-                            //var thumbnailPath = "/" + data.data.thumbnailFilePath.replace(/\\/g, '/');
 
                             inputImagePropertiesHtml += `
                                                              <strong><i class="fas fa-file-signature mr-1"></i>@DbResHtml.T("Name", "Resources")</strong>
@@ -151,9 +149,7 @@
                                                              <strong><i class="fas fa-user-edit mr-1"></i>@DbResHtml.T("Created By", "Resources")</strong>
                                                              <p class="text-muted">${data.data.createdBy.userName}</p>
                                                             `;
-                            inputImagePreviewHtml += `
-                                                                 <img src='${data.data.thumbnailFilePath}' class="w-75 rounded" />
-                                                            `;
+                            inputImagePreviewHtml += `<img src='${data.data.thumbnailFilePath}' class="w-75 rounded" />`;
                             $("#inputImagePropertiesCardBody").append(inputImagePropertiesHtml);
                             $("#inputImagePreview").append(inputImagePreviewHtml);
                             $("#inputImgDetailsModal").show();
@@ -334,19 +330,18 @@
             });
         }
 
-        function scheduleDetectionRun() {
-            DisableAllChildControlsByContainerClass('content');
-
+        function scheduleDetectionRun() {          
             let inputImg = $("#detInputImage").val();
             let description = $("#inpDescription").val();
             let name = $("#inpName").val();
             let trainedModelId = $("#trainedModelSelect").val();
 
-
             if ((name === '' || name === undefined) || (description === '' || description === undefined) || (inputImg === '' || inputImg === undefined) || (trainedModelId === '' || trainedModelId === undefined)) {
                 Swal.fire({
                     text: "@DbResHtml.T("All fields are required", "Resources")",
-                    icon: 'error'
+                    icon: 'warning',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                    allowOutsideClick: false,
                 });
                 return;
             }
@@ -382,7 +377,6 @@
                                 icon: "success"
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    removeOverlayByQuerySelector('.card-body');
                                     location.href = '@Url.Action("Index", "Map", new { area = "IntranetPortal" })';
                                 }
                             });
@@ -431,8 +425,6 @@
                             </div>
                         </div>
                     </div>
-
-
                 </div>
                 <div class="modal-footer">
                     <button onclick="closeInputImageDetailsModalModal()" type="button" class="mb-1 btn btn-outline-info" data-dismiss="modal" aria-label="Close">

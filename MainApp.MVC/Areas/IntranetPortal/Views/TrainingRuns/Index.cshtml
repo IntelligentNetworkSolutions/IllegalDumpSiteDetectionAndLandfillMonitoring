@@ -1,6 +1,7 @@
 ﻿@using MainApp.MVC.Helpers
 @using MainApp.MVC.ViewModels.IntranetPortal.Training
 @using Microsoft.AspNetCore.Localization
+@using SD.Enums
 @using SD.Helpers
 @model IEnumerable<TrainingRunIndexViewModel>
 
@@ -68,18 +69,18 @@
                                             <td>@item.Name</td>
                                             <td>@item.IsCompleted</td>
                                             <td>@item.CreatedBy?.UserName</td>
-                                            <td>@item.CreatedOn?.ToString("dd/MM/yyyy")</td>
+                                            <td>@item.CreatedOn?.ToString("dd.MM.yyyy")</td>
                                             <td>
-                                                @if (User.HasAuthClaim(SD.AuthClaims.ViewTrainingRunsStatistics))
+                                                @if (User.HasAuthClaim(SD.AuthClaims.ViewTrainingRunsStatistics) && item.IsCompleted == true && item.Status == nameof(ScheduleRunsStatus.Success))
                                                 {
                                                     <button class="mb-1 btn bg-gradient-info btn-xs" id="@item.Id" onclick="getTrainingRunStatistics('@item.Id')" title="@DbResHtml.T("View Training Run Statistics", "Resources")">
                                                         <i class="fas fa-chart-bar"></i>
                                                     </button>
                                                 }                                               
-                                                <button class="mb-1 ml-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editTrainingRunModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
+                                                <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editTrainingRunModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteTrainingRunModalFunction('@item.Id')" title="@DbResHtml.T("Delete Training Run", "Resources")">
+                                                <button class="mb-1 btn bg-gradient-danger btn-xs" onclick="deleteTrainingRunModalFunction('@item.Id')" title="@DbResHtml.T("Delete Training Run", "Resources")">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </td>

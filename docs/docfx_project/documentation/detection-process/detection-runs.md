@@ -21,33 +21,6 @@ public class DetectionRun : BaseEntity<Guid>, ICreatedByUser
 
 ## DetectionRunService Key Methods
 
-### 1. Creating Detection Runs
-
-```csharp
-public async Task<ResultDTO> CreateDetectionRun(DetectionRunDTO detectionRunDTO)
-{
-    try
-    {
-        DetectionRun detectionRunEntity = _mapper.Map<DetectionRun>(detectionRunDTO);
-        ResultDTO<DetectionRun> resultCreate = 
-            await _detectionRunRepository.CreateAndReturnEntity(detectionRunEntity);
-
-        if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-            return ResultDTO.Fail(resultCreate.ErrMsg!);
-
-        if (resultCreate.Data is null)
-            return ResultDTO.Fail("Error Creating Detection Run");
-
-        return ResultDTO.Ok();
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex.Message, ex);
-        return ResultDTO.ExceptionFail(ex.Message, ex);
-    }
-}
-```
-
 ### 2. Starting Detection Process
 
 ```csharp
