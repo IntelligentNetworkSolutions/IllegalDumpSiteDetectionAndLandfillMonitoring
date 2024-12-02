@@ -51,13 +51,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         {
             if (datasetImageId == Guid.Empty)
             {
-                throw new Exception("Object not found");
+                TempData["AnnotateImageErrorMessage"] = "Such image does not exist";
+                return Redirect(Request.Headers["Referer"].ToString() ?? "/");
             }
 
             var datasetImage = await _datasetImagesService.GetDatasetImageById(datasetImageId) ?? throw new Exception("Object not found");
             var datasetAllImages = await _datasetImagesService.GetImagesForDataset((Guid)datasetImage.DatasetId);
             var dataset = await _datasetService.GetDatasetById(datasetImage.DatasetId.GetValueOrDefault());
-            var datasetClasses = await _datasetClassesService.GetAllDatasetClassesByDatasetId(dataset.Id);
+            var datasetClasses = await _datasetClassesService.GetAllDatasetClassesByDatasetId(dataset.Data.Id);
+
             var currentImagePositionInDataset = datasetAllImages
                                                  .IndexOf(datasetAllImages.First(x => x.Id == datasetImage.Id));
 
@@ -72,8 +74,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             AnnotateViewModel model = new AnnotateViewModel
             {
                 DatasetImage = datasetImage,
-                Dataset = dataset,
-                DatasetClasses = datasetClasses,
+                Dataset = dataset.Data,
+                DatasetClasses = datasetClasses.Data,
                 CurrentImagePositionInDataset = currentImagePositionInDataset + 1,
                 NextImage = nextImage,
                 PreviousImage = previousImage,

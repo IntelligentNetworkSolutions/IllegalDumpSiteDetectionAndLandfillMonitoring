@@ -63,13 +63,35 @@ namespace MainApp.BL.Services.DatasetServices
             }
             return dto;
         }
-
-        public async Task<List<DatasetDTO>> GetAllDatasets()
+        //Check if it is needed.
+        public async Task<ResultDTO<CreateDatasetDTO>> FillDatasetDtoResult(CreateDatasetDTO dto)
         {
-            var listDatasets = await _datasetsRepository.GetAll(includeProperties: "CreatedBy,UpdatedBy,ParentDataset");
-            var data = listDatasets.Data ?? throw new Exception("Object not found");
-            var listDatasetsDTOs = _mapper.Map<List<DatasetDTO>>(data) ?? throw new Exception("Dataset list not found");
-            return listDatasetsDTOs;
+            dto ??= new CreateDatasetDTO();
+            if (dto.Id == Guid.Empty)
+            {
+                var allClasses = await _datasetClassesRepository.GetAll(includeProperties: "ParentClass,Datasets");
+                if (allClasses.IsSuccess == false && allClasses.HandleError())
+                {
+                    return ResultDTO<CreateDatasetDTO>.Fail("An error occured while filling the dataset");
+                }
+
+                dto.AllDatasetClasses = _mapper.Map<List<DatasetClassDTO>>(allClasses.Data);
+            }
+            return ResultDTO<CreateDatasetDTO>.Ok(dto);
+        }
+
+        public async Task<ResultDTO<List<DatasetDTO>>> GetAllDatasets()
+        {
+            var resultListDatasets = await _datasetsRepository.GetAll(includeProperties: "CreatedBy,UpdatedBy,ParentDataset");
+            if (resultListDatasets.IsSuccess == false && resultListDatasets.HandleError())
+            {
+                return ResultDTO<List<DatasetDTO>>.Fail(resultListDatasets.ErrMsg!);
+            }
+            var data = resultListDatasets.Data;
+
+            var listDatasetsDTOs = _mapper.Map<List<DatasetDTO>>(data);
+
+            return ResultDTO<List<DatasetDTO>>.Ok(listDatasetsDTOs);
         }
 
         public async Task<ResultDTO<List<DatasetDTO>>> GetAllPublishedDatasets()
@@ -94,14 +116,27 @@ namespace MainApp.BL.Services.DatasetServices
             }
         }
 
-        public async Task<DatasetDTO> GetDatasetById(Guid datasetId)
+        public async Task<ResultDTO<DatasetDTO>> GetDatasetById(Guid datasetId)
         {
-            //var datasetRawDto = GetDatasetJoinedClassesImagesAnnotationsById(datasetId);
+            ResultDTO<Dataset?> datasetDb = await _datasetsRepository.GetById(datasetId);
 
-            var datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
-            var data = datasetDb.Data ?? throw new Exception("Object not found");
-            var datasetDto = _mapper.Map<DatasetDTO>(data) ?? throw new Exception("Object not found");
-            return datasetDto;
+            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+            {
+                return ResultDTO<DatasetDTO>.Fail(datasetDb.ErrMsg!);
+            }
+
+            if (datasetDb.Data is null)
+                return ResultDTO<DatasetDTO>.Fail($"Dataset not found, for id: {datasetId}");
+
+            var data = datasetDb.Data;
+
+            var datasetDTO = _mapper.Map<DatasetDTO>(data);
+
+            if (datasetDTO is null)
+                return ResultDTO<DatasetDTO>.Fail($"Dataset Mapping failed, for id: {datasetId}");
+
+            return ResultDTO<DatasetDTO>.Ok(datasetDTO);
+
         }
 
         public async Task<ResultDTO<DatasetDTO>> GetDatasetDTOFullyIncluded(Guid datasetId, bool track = false)
@@ -130,11 +165,19 @@ namespace MainApp.BL.Services.DatasetServices
             return ResultDTO<DatasetDTO>.Ok(datasetDto);
         }
 
-        public async Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize)
+        public async Task<ResultDTO<EditDatasetDTO>> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize)
         {
-            var taskDatasetDatasetClasses = await _datasetDatasetClassRepository.GetAll(null, null, false, includeProperties: "DatasetClass,Dataset") ?? throw new Exception("Object not found"); ;
-            var taskDatasetClasses = await _datasetClassesRepository.GetAll(null, null, false, includeProperties: "ParentClass,Datasets") ?? throw new Exception("Object not found"); ;
-            var taskCurrentDataset = await _datasetsRepository.GetByIdIncludeThenAll(datasetId, false,
+            ResultDTO<IEnumerable<Dataset_DatasetClass>>? taskDatasetDatasetClasses = await _datasetDatasetClassRepository.GetAll(null, null, false, includeProperties: "DatasetClass,Dataset");
+
+            if (taskDatasetDatasetClasses.IsSuccess == false && taskDatasetDatasetClasses.HandleError())
+                return ResultDTO<EditDatasetDTO>.Fail(taskDatasetDatasetClasses.ErrMsg!);
+
+            ResultDTO<IEnumerable<DatasetClass>> taskDatasetClasses = await _datasetClassesRepository.GetAll(null, null, false, includeProperties: "ParentClass,Datasets");
+
+            if (taskDatasetClasses.IsSuccess == false && taskDatasetClasses.HandleError())
+                return ResultDTO<EditDatasetDTO>.Fail(taskDatasetClasses.ErrMsg!);
+
+            ResultDTO<Dataset?> taskCurrentDataset = await _datasetsRepository.GetByIdIncludeThenAll(datasetId, false,
                 includeProperties: new (Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[] {
             (d => d.CreatedBy, null),
             (d => d.UpdatedBy, null),
@@ -147,11 +190,25 @@ namespace MainApp.BL.Services.DatasetServices
                 di => ((DatasetImage)di).ImageAnnotations,
                 ia => ((ImageAnnotation)ia).CreatedBy
             })
-                }) ?? throw new Exception("Object not found"); ;
-            var taskNumberOfImagesToPublish = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100) ?? throw new Exception("Object not found"); ;
-            var taskNumberOfClassesToPublish = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1) ?? throw new Exception("Object not found"); ;
+                });
 
-            var imageResult = await _datasetImagesRepository.GetAll(x => x.DatasetId == datasetId, null, false, includeProperties: "ImageAnnotations") ?? throw new Exception("Object not found");
+            if (taskCurrentDataset.IsSuccess == false && taskCurrentDataset.HandleError())
+                return ResultDTO<EditDatasetDTO>.Fail(taskCurrentDataset.ErrMsg!);
+
+            ResultDTO<int> taskNumberOfImagesToPublish = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100);
+
+            if (taskNumberOfImagesToPublish.IsSuccess == false && taskNumberOfImagesToPublish.HandleError())
+                return ResultDTO<EditDatasetDTO>.Fail(taskNumberOfImagesToPublish.ErrMsg!);
+
+            var taskNumberOfClassesToPublish = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1);
+
+            if (taskNumberOfClassesToPublish.IsSuccess == false && taskNumberOfClassesToPublish.HandleError())
+                return ResultDTO<EditDatasetDTO>.Fail(taskNumberOfClassesToPublish.ErrMsg!);
+
+            var imageResult = await _datasetImagesRepository.GetAll(x => x.DatasetId == datasetId, null, false, includeProperties: "ImageAnnotations");
+
+            if (imageResult.IsSuccess == false && imageResult.HandleError())
+                return ResultDTO<EditDatasetDTO>.Fail(imageResult.ErrMsg!);
 
             var imageList = imageResult.Data;
 
@@ -209,10 +266,20 @@ namespace MainApp.BL.Services.DatasetServices
             var numberOfEnabledImages = imageList.Count(x => x.IsEnabled == true);
             var allEnabledImagesHaveAnnotations = listOfDatasetImages.All(x => annotatedImageIds.Contains(x.Id));
 
-            var insertedClasses = taskDatasetDatasetClasses?.Data?.Where(x => x.DatasetId == datasetId).Select(x => x.DatasetClass).ToList() ?? throw new Exception("Object not found"); ;
-            var insertedClassesIds = taskDatasetDatasetClasses?.Data?.Where(x => x.DatasetId == datasetId).Select(x => x.DatasetClassId).ToList() ?? throw new Exception("Object not found"); ;
-            var uninsertedRootClasses = taskDatasetClasses?.Data?.Where(x => !insertedClassesIds.Contains(x.Id) && x.ParentClassId == null).ToList() ?? throw new Exception("Object not found"); ;
-            var uninsertedSubclasses = taskDatasetClasses?.Data?.Where(x => !insertedClassesIds.Contains(x.Id) && x.ParentClassId != null).ToList() ?? throw new Exception("Object not found"); ;
+            if (taskDatasetDatasetClasses?.Data == null)
+            {
+                return ResultDTO<EditDatasetDTO>.Fail("Failed to retrieve dataset classes associated with the dataset.");
+            }
+
+            if (taskDatasetClasses?.Data == null)
+            {
+                return ResultDTO<EditDatasetDTO>.Fail("Failed to retrieve available dataset classes.");
+            }
+
+            var insertedClasses = taskDatasetDatasetClasses.Data.Where(x => x.DatasetId == datasetId).Select(x => x.DatasetClass).ToList();
+            var insertedClassesIds = taskDatasetDatasetClasses.Data.Where(x => x.DatasetId == datasetId).Select(x => x.DatasetClassId).ToList();
+            var uninsertedRootClasses = taskDatasetClasses.Data.Where(x => !insertedClassesIds.Contains(x.Id) && x.ParentClassId == null).ToList();
+            var uninsertedSubclasses = taskDatasetClasses.Data.Where(x => !insertedClassesIds.Contains(x.Id) && x.ParentClassId != null).ToList();
 
             var dto = new EditDatasetDTO
             {
@@ -222,7 +289,7 @@ namespace MainApp.BL.Services.DatasetServices
                 NumberOfDatasetClasses = insertedClasses?.Count ?? 0,
                 CurrentDataset = _mapper.Map<DatasetDTO>(taskCurrentDataset.Data),
                 NumberOfChildrenDatasets = taskDatasetDatasetClasses?.Data?.Where(x => x.Dataset.ParentDatasetId == datasetId).Count() ?? 0,
-                ParentDatasetClasses = _mapper.Map<List<DatasetClassDTO>>(taskDatasetDatasetClasses?.Data?.Where(x => x.DatasetId == taskCurrentDataset.Data?.ParentDatasetId).Select(x => x.DatasetClass).ToList()) ?? throw new Exception("Object not found"),
+                ParentDatasetClasses = _mapper.Map<List<DatasetClassDTO>>(taskDatasetDatasetClasses?.Data?.Where(x => x.DatasetId == taskCurrentDataset.Data?.ParentDatasetId).Select(x => x.DatasetClass).ToList()),
                 ListOfDatasetImages = listOfDatasetImages,
                 NumberOfDatasetImages = imageList.Count(),
                 AllImageAnnotations = _mapper.Map<List<ImageAnnotationDTO>>(annotationsForPagedImages),
@@ -234,18 +301,31 @@ namespace MainApp.BL.Services.DatasetServices
                 ListOfAllDatasetImagesUnFiltered = _mapper.Map<List<DatasetImageDTO>>(imageList)
             };
 
-            return dto;
+            return ResultDTO<EditDatasetDTO>.Ok(dto);
         }
         #endregion
 
         #region Create
-        public async Task<DatasetDTO> CreateDataset(DatasetDTO dto)
+
+        public async Task<ResultDTO<DatasetDTO>> CreateDataset(DatasetDTO dto)
         {
             Dataset dataset = _mapper.Map<Dataset>(dto);
-            var insertedDatasetResult = await _datasetsRepository.CreateAndReturnEntity(dataset) ?? throw new Exception("Object not found");
-            var insertedDataset = insertedDatasetResult.Data ?? throw new Exception("Object not found");
+
+            var insertedDatasetResult = await _datasetsRepository.CreateAndReturnEntity(dataset);
+            if (insertedDatasetResult.IsSuccess == false && insertedDatasetResult.HandleError())
+                return ResultDTO<DatasetDTO>.Fail(insertedDatasetResult.ErrMsg!);
+
+            if (insertedDatasetResult.Data is null)
+                return ResultDTO<DatasetDTO>.Fail("Failed to create dataset. Dataset is null.");
+
+            var insertedDataset = insertedDatasetResult.Data;
+
             DatasetDTO newDTO = _mapper.Map<DatasetDTO>(insertedDataset);
-            return newDTO;
+
+            if (newDTO is null)
+                return ResultDTO<DatasetDTO>.Fail("Mapping failed");
+
+            return ResultDTO<DatasetDTO>.Ok(newDTO);
         }
         public async Task<ResultDTO<int>> AddDatasetClassForDataset(Guid selectedClassId, Guid datasetId, string userId)
         {

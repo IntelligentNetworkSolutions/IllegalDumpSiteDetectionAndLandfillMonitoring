@@ -2,6 +2,7 @@
 using DAL.Interfaces.Repositories.DatasetRepositories;
 using DTOs.MainApp.BL.DatasetDTOs;
 using MainApp.BL.Interfaces.Services.DatasetServices;
+using SD;
 
 namespace MainApp.BL.Services.DatasetServices
 {
@@ -16,11 +17,21 @@ namespace MainApp.BL.Services.DatasetServices
             _mapper = mapper;
         }
 
-        public async Task<List<Dataset_DatasetClassDTO>> GetDataset_DatasetClassByClassId(Guid classId)
+        public async Task<ResultDTO<List<Dataset_DatasetClassDTO>>> GetDataset_DatasetClassByClassId(Guid classId)
         {
-            var dataset_datasetClass = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetClassId == classId) ?? throw new Exception("Object not found");
-            var data = dataset_datasetClass.Data ?? throw new Exception("Object not found");
-            return _mapper.Map<List<Dataset_DatasetClassDTO>>(data);
+            var dataset_datasetClassResult = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetClassId == classId);
+            if (dataset_datasetClassResult.IsSuccess == false && dataset_datasetClassResult.HandleError())
+            {
+                return ResultDTO<List<Dataset_DatasetClassDTO>>.Fail(dataset_datasetClassResult.ErrMsg!);
+            }
+            var data = dataset_datasetClassResult.Data;
+
+            if (data is null)
+                return ResultDTO<List<Dataset_DatasetClassDTO>>.Fail("DatasetClass is null"!);
+
+            var dtos = _mapper.Map<List<Dataset_DatasetClassDTO>>(data);
+
+            return ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(dtos);
         }
     }
 }

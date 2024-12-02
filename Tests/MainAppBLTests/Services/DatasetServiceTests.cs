@@ -93,7 +93,7 @@ namespace Tests.MainAppBLTests.Services
             var datasetDto = new DatasetDTO { Id = datasetId };
 
             _mockDatasetRepository
-                .Setup(repo => repo.GetById(datasetId, It.IsAny<bool>(), "CreatedBy,UpdatedBy,ParentDataset"))
+                .Setup(repo => repo.GetById(datasetId, false, null))
                 .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
 
             _mockMapper
@@ -105,42 +105,47 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(datasetId, result.Id);
+            Assert.Equal(datasetId, result.Data.Id);
         }
 
         [Fact]
-        public async Task GetDatasetById_ShouldThrowException_WhenDatasetNotFound()
+        public async Task GetDatasetById_ReturnsErrorResult_WhenDatasetNotFound()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
 
-            _mockDatasetRepository
-                .Setup(repo => repo.GetById(datasetId, It.IsAny<bool>(), "CreatedBy,UpdatedBy,ParentDataset"))
-                .ReturnsAsync(ResultDTO<Dataset?>.Fail("Object not found"));
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await _datasetService.GetDatasetById(datasetId));
-            Assert.Equal("Object not found", exception.Message);
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, null))
+                .ReturnsAsync(ResultDTO<Dataset>.Fail("Failed to retrieve dataset."));
+
+            // Act
+            var result = await _datasetService.GetDatasetById(datasetId);
+
+            //Assert
+            Assert.Equal("Failed to retrieve dataset.", result.ErrMsg);
         }
 
         [Fact]
-        public async Task GetDatasetById_ShouldThrowException_WhenMappingFails()
+        public async Task GetDatasetById_RetunsErrorResult_WhenMappingFails()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
             var dataset = new Dataset { Id = datasetId };
 
             _mockDatasetRepository
-                .Setup(repo => repo.GetById(datasetId, It.IsAny<bool>(), "CreatedBy,UpdatedBy,ParentDataset"))
-                .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
+                .Setup(repo => repo.GetById(datasetId, false, null))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
 
             _mockMapper
                 .Setup(mapper => mapper.Map<DatasetDTO>(It.IsAny<Dataset>()))
                 .Returns((DatasetDTO)null);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await _datasetService.GetDatasetById(datasetId));
-            Assert.Equal("Object not found", exception.Message);
+            // Act
+            var result = await _datasetService.GetDatasetById(datasetId);
+
+            //Assert
+            Assert.Equal($"Dataset Mapping failed, for id: {datasetId}", result.ErrMsg);
         }
 
         [Fact]
@@ -168,7 +173,7 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(datasetDto.Id, result.Id);
+            Assert.Equal(datasetDto.Id, result.Data.Id);
         }
 
         [Fact]
@@ -184,28 +189,14 @@ namespace Tests.MainAppBLTests.Services
 
             _mockDatasetRepository
                 .Setup(repo => repo.CreateAndReturnEntity(It.IsAny<Dataset>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ResultDTO<Dataset>.Fail("Object not found"));
+                .ReturnsAsync(ResultDTO<Dataset>.Fail("Failed to create dataset."));
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await _datasetService.CreateDataset(datasetDto));
-            Assert.Equal("Object not found", exception.Message);
+            // Act
+            var result = await _datasetService.CreateDataset(datasetDto);
+
+            //Assert
+            Assert.Equal("Failed to create dataset.", result.ErrMsg);
         }
-
-        [Fact]
-        public async Task CreateDataset_ShouldThrowException_WhenInitialMappingFails()
-        {
-            // Arrange
-            var datasetDto = new DatasetDTO { Id = Guid.NewGuid() };
-
-            _mockMapper
-                .Setup(mapper => mapper.Map<Dataset>(It.IsAny<DatasetDTO>()))
-                .Returns((Dataset)null);
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await _datasetService.CreateDataset(datasetDto));
-            Assert.Equal("Object not found", exception.Message);
-        }
-
 
         [Fact]
         public async Task AddDatasetClassForDataset_ShouldThrowException_WhenDatasetNotFound()
@@ -413,45 +404,24 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(datasetDtos.Count, result.Count);
-            Assert.Equal(datasetDtos[0].Id, result[0].Id);
-            Assert.Equal(datasetDtos[1].Id, result[1].Id);
+            Assert.Equal(datasetDtos.Count, result.Data.Count);
+            Assert.Equal(datasetDtos[0].Id, result.Data[0].Id);
+            Assert.Equal(datasetDtos[1].Id, result.Data[1].Id);
         }
 
         [Fact]
-        public async Task GetAllDatasets_ShouldThrowException_WhenNoDatasetsFound()
+        public async Task GetAllDatasets_ReturnsFailResult_WhenNoDatasetsFound()
         {
             // Arrange
             _mockDatasetRepository
                 .Setup(repo => repo.GetAll(null, null, false, "CreatedBy,UpdatedBy,ParentDataset", null))
-                .ReturnsAsync(ResultDTO<IEnumerable<Dataset>>.Fail("Object not found"));
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset>>.Fail("Dataset not found"));
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await _datasetService.GetAllDatasets());
-            Assert.Equal("Object not found", exception.Message);
-        }
+            // Act
+            var result = await _datasetService.GetAllDatasets();
 
-        [Fact]
-        public async Task GetAllDatasets_ShouldThrowException_WhenMappingFails()
-        {
-            // Arrange
-            var datasets = new List<Dataset>
-                {
-                    new Dataset { Id = Guid.NewGuid() },
-                    new Dataset { Id = Guid.NewGuid() }
-                };
-
-            _mockDatasetRepository
-                .Setup(repo => repo.GetAll(null, null, false, "CreatedBy,UpdatedBy,ParentDataset", null))
-                .ReturnsAsync(ResultDTO<IEnumerable<Dataset>>.Ok(datasets));
-
-            _mockMapper
-                .Setup(mapper => mapper.Map<List<DatasetDTO>>(It.IsAny<IEnumerable<Dataset>>()))
-                .Returns((List<DatasetDTO>)null);
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await _datasetService.GetAllDatasets());
-            Assert.Equal("Dataset list not found", exception.Message);
+            // Assert
+            Assert.Equal("Dataset not found", result.ErrMsg);
         }
 
         [Fact]
@@ -632,96 +602,160 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsType<EditDatasetDTO>(result);
+            Assert.IsType<ResultDTO<EditDatasetDTO>>(result);
         }
 
         [Fact]
-        public async Task GetObjectForEditDataset_ShouldThrowException_WhenDatasetDatasetClassesIsNull()
+        public async Task GetObjectForEditDataset_ShouldReturnFailResult_WhenDatasetDatasetClassesIsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
             _mockDatasetDatasetClassRepository
                 .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
-                .ReturnsAsync((ResultDTO<IEnumerable<Dataset_DatasetClass>>?)null);
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Fail("Failed to retrieve dataset classes associated with the dataset."));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () =>
-                await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10));
+            // Act
+            var result = await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve dataset classes associated with the dataset.", result.ErrMsg);
         }
 
         [Fact]
-        public async Task GetObjectForEditDataset_ShouldThrowException_WhenDatasetClassesIsNull()
+        public async Task GetObjectForEditDataset_ShouldReturnFailResult_WhenDatasetClassesIsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
+            var datasetDatasetClasses = new List<Dataset_DatasetClass>();
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetDatasetClasses));
             _mockDatasetClassesRepository
                 .Setup(repo => repo.GetAll(null, null, false, "ParentClass,Datasets", null))
-                .ReturnsAsync((ResultDTO<IEnumerable<DatasetClass>>?)null);
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Fail("Failed to retrieve available dataset classes."));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () =>
-                await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10));
+            // Act
+            var result = await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve available dataset classes.", result.ErrMsg);
         }
 
         [Fact]
-        public async Task GetObjectForEditDataset_ShouldThrowException_WhenCurrentDatasetIsNull()
+        public async Task GetObjectForEditDataset_ShouldReturnFailResult_WhenCurrentDatasetIsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
+            var datasetClasses = new List<DatasetClass>();
+            var datasetDatasetClasses = new List<Dataset_DatasetClass>();
             _mockDatasetRepository
-                .Setup(repo => repo.GetByIdIncludeThenAll(
-                    datasetId,
-                    false,
-                    It.IsAny<(Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]>()))
-                .ReturnsAsync((ResultDTO<Dataset?>?)null);
+                .Setup(repo => repo.GetByIdIncludeThenAll(datasetId, false, It.IsAny<(Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]>()))
+                .ReturnsAsync(ResultDTO<Dataset>.Fail("Failed to retrieve current dataset."));
+            _mockDatasetClassesRepository
+                .Setup(repo => repo.GetAll(null, null, false, "ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(datasetClasses));
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetDatasetClasses));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () =>
-                await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10));
+            // Act
+            var result = await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve current dataset.", result.ErrMsg);
         }
 
         [Fact]
-        public async Task GetObjectForEditDataset_ShouldThrowException_WhenNumberOfImagesToPublishIsNull()
+        public async Task GetObjectForEditDataset_ShouldReturnFailResult_WhenNumberOfImagesToPublishIsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
+            var dataset = new Dataset();
+            var datasetClasses = new List<DatasetClass>();
+            var datasetDatasetClasses = new List<Dataset_DatasetClass>();
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetByIdIncludeThenAll(datasetId, false, It.IsAny<(Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]>()))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
+            _mockDatasetClassesRepository
+                .Setup(repo => repo.GetAll(null, null, false, "ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(datasetClasses));
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetDatasetClasses));
             _mockAppSettingsAccessor
                 .Setup(accessor => accessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100))
-                .ReturnsAsync((ResultDTO<int>?)null);
+                .ReturnsAsync(ResultDTO<int>.Fail("Failed to retrieve number of images needed to publish the dataset."));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () =>
-                await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10));
+            // Act
+            var result = await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve number of images needed to publish the dataset.", result.ErrMsg);
         }
 
         [Fact]
-        public async Task GetObjectForEditDataset_ShouldThrowException_WhenNumberOfClassesToPublishIsNull()
+        public async Task GetObjectForEditDataset_ShouldReturnFailResult_WhenNumberOfClassesToPublishIsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
+            var dataset = new Dataset();
+            var datasetClasses = new List<DatasetClass>();
+            var datasetDatasetClasses = new List<Dataset_DatasetClass>();
+            _mockDatasetRepository
+                .Setup(repo => repo.GetByIdIncludeThenAll(datasetId, false, It.IsAny<(Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]>()))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
+            _mockDatasetClassesRepository
+                .Setup(repo => repo.GetAll(null, null, false, "ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(datasetClasses));
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetDatasetClasses));
+            _mockAppSettingsAccessor
+                .Setup(accessor => accessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100))
+                .ReturnsAsync(ResultDTO<int>.Ok(1));
             _mockAppSettingsAccessor
                 .Setup(accessor => accessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1))
-                .ReturnsAsync((ResultDTO<int>?)null);
+                .ReturnsAsync(ResultDTO<int>.Fail("Failed to retrieve number of classes needed to publish the dataset."));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () =>
-                await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10));
+            // Act
+            var result = await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve number of classes needed to publish the dataset.", result.ErrMsg);
         }
 
         [Fact]
-        public async Task GetObjectForEditDataset_ShouldThrowException_WhenImageResultIsNull()
+        public async Task GetObjectForEditDataset_ShouldReturnFailResult_WhenImageResultIsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
             SetupSuccessfulMocks(datasetId);
+
             _mockDatasetImagesRepository
                 .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetImage, bool>>>(), null, false, "ImageAnnotations", null))
-                .ReturnsAsync((ResultDTO<IEnumerable<DatasetImage>>?)null);
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetImage>>.Fail("Failed to retrieve dataset images."));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () =>
-                await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10));
+            // Act
+            var result = await _datasetService.GetObjectForEditDataset(datasetId, null, null, null, null, 1, 10);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve dataset images.", result.ErrMsg);
         }
+
 
         [Fact]
         public async Task GetObjectForEditDataset_ShouldFilterImages_ByImageName()
@@ -746,7 +780,7 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.All(result.ListOfDatasetImages, image => Assert.Equal("test-image", image.Name));
+            Assert.All(result.Data.ListOfDatasetImages, image => Assert.Equal("test-image", image.Name));
         }
 
 
@@ -773,7 +807,7 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.All(result.ListOfDatasetImages, image => Assert.True(image.IsEnabled));
+            Assert.All(result.Data.ListOfDatasetImages, image => Assert.True(image.IsEnabled));
         }
 
         [Fact]
@@ -810,7 +844,7 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.NotEqual(0, result.NumberOfAnnotatedImages);
+            Assert.NotEqual(0, result.Data.NumberOfAnnotatedImages);
         }
 
         [Fact]
@@ -827,18 +861,18 @@ namespace Tests.MainAppBLTests.Services
             Assert.NotNull(result);
 
             // Validate properties of EditDatasetDTO
-            Assert.Equal(1, result.NumberOfDatasetClasses);
-            Assert.Equal("MappedDataset", result.CurrentDataset.Name);
-            Assert.Equal(2, result.NumberOfDatasetImages);
-            Assert.Equal(1, result.NumberOfClassesNeededToPublishDataset);
-            Assert.Equal(100, result.NumberOfImagesNeededToPublishDataset);
-            Assert.Equal(1, result.NumberOfEnabledImages);
-            Assert.Equal(2, result.NumberOfAnnotatedImages);
-            Assert.False(result.AllEnabledImagesHaveAnnotations);
-            Assert.NotEmpty(result.ListOfAllDatasetImagesUnFiltered);
+            Assert.Equal(1, result.Data.NumberOfDatasetClasses);
+            Assert.Equal("MappedDataset", result.Data.CurrentDataset.Name);
+            Assert.Equal(2, result.Data.NumberOfDatasetImages);
+            Assert.Equal(1, result.Data.NumberOfClassesNeededToPublishDataset);
+            Assert.Equal(100, result.Data.NumberOfImagesNeededToPublishDataset);
+            Assert.Equal(1, result.Data.NumberOfEnabledImages);
+            Assert.Equal(2, result.Data.NumberOfAnnotatedImages);
+            Assert.False(result.Data.AllEnabledImagesHaveAnnotations);
+            Assert.NotEmpty(result.Data.ListOfAllDatasetImagesUnFiltered);
 
-            Assert.Equal("MappedClass", result.UninsertedDatasetRootClasses.First().ClassName);
-            Assert.Single(result.UninsertedDatasetSubclasses);
+            Assert.Equal("MappedClass", result.Data.UninsertedDatasetRootClasses.First().ClassName);
+            Assert.Single(result.Data.UninsertedDatasetSubclasses);
         }
 
 

@@ -46,21 +46,18 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDatasets))]
         public async Task<IActionResult> Index()
         {
-            List<DatasetDTO> datasetsList = await _datasetService.GetAllDatasets();
-            List<DatasetViewModel> model = _mapper.Map<List<DatasetViewModel>>(datasetsList) ?? throw new Exception("Model not found");
+            var datasetListResult = await _datasetService.GetAllDatasets();
+
+            List<DatasetViewModel> model = _mapper.Map<List<DatasetViewModel>>(datasetListResult.Data);
 
             List<DatasetViewModel> parentDatasetsList = model.Where(d => d.ParentDatasetId == null).OrderBy(x => x.Name).ToList();
-            //string optionsHtml = GenerateDatasetOptionsHtml(parentDatasetsList, model,"");
-            //ViewBag.OptionsHtml = optionsHtml;
 
             return View(model);
         }
-
-        // TODO: Add Auth Claim
         public async Task<List<DatasetDTO>> GetAllDatasets()
         {
             var datasets = await _datasetService.GetAllDatasets() ?? throw new Exception("Object not found");
-            return datasets;
+            return datasets.Data;
         }
 
         public async Task<ResultDTO<List<DatasetDTO>>> GetAllPublishedDatasets()
@@ -82,13 +79,22 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         {
             if (currentDatasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
-            List<DatasetDTO> allDatasetsDb = await _datasetService.GetAllDatasets() ?? throw new Exception("Object not found");
-            DatasetDTO currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId) ?? throw new Exception(message: "Object not found");
-            if (currentDatasetDb == null)
+
+            ResultDTO<List<DatasetDTO>> allDatasetsDb = await _datasetService.GetAllDatasets();
+
+            if (allDatasetsDb.IsSuccess == false && allDatasetsDb.HandleError() || allDatasetsDb.Data is null)
+                return Json(new { responseError = DbResHtml.T("No datasets found.", "Resources") });
+
+
+            ResultDTO<DatasetDTO> currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId);
+            if (currentDatasetDb.IsSuccess == false && currentDatasetDb.HandleError() || currentDatasetDb == null)
                 return Json(new { responseError = DbResHtml.T("Invalid current dataset", "Resources") });
 
-            List<DatasetDTO> childrenDatasets = allDatasetsDb.Where(x => x.ParentDatasetId == currentDatasetId).ToList() ?? throw new Exception("Object not found");
-            DatasetDTO? parentDataset = currentDatasetDb.ParentDataset;
+            List<DatasetDTO> childrenDatasets = allDatasetsDb.Data.Where(x => x.ParentDatasetId == currentDatasetId).ToList();
+            if (!childrenDatasets.Any())
+                return Json(new { responseError = DbResHtml.T("No child datasets found.", "Resources") });
+
+            DatasetDTO? parentDataset = currentDatasetDb.Data.ParentDataset;
             if (parentDataset == null)
             {
                 DatasetDTO datasetDTO = new();
@@ -110,21 +116,31 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (!ModelState.IsValid)
                 return Json(new { responseError = DbResHtml.T("Dataset model is not valid", "Resources") });
 
-            DatasetDTO selectedParentDataset;
+            ResultDTO<DatasetDTO> selectedParentDataset;
             if (datasetViewModel.ParentDatasetId != null)
             {
                 selectedParentDataset = await _datasetService.GetDatasetById(datasetViewModel.ParentDatasetId.Value);
-                if (selectedParentDataset.IsPublished == false)
+                if (selectedParentDataset.IsSuccess == false && selectedParentDataset.HandleError())
+                    return Json(new { responseError = DbResHtml.T(selectedParentDataset.ErrMsg!, "Resources") });
+
+                if (selectedParentDataset.Data.IsPublished == false)
                     return Json(new { responseError = DbResHtml.T("Selected parent dataset is not published. You can not add subdataset for unpublished datasets!", "Resources") });
             }
 
             datasetViewModel.CreatedById = userId;
-            DatasetDTO dataSetDto = _mapper.Map<DatasetDTO>(datasetViewModel) ?? throw new Exception("Model not found");
-            var insertedDatasetDTO = await _datasetService.CreateDataset(dataSetDto) ?? throw new Exception("Model not found");
-            if (datasetViewModel.ParentDatasetId != null)
-                await _datasetService.AddInheritedParentClasses(insertedDatasetDTO.Id, datasetViewModel.ParentDatasetId.Value);
+            DatasetDTO dataSetDto = _mapper.Map<DatasetDTO>(datasetViewModel);
+            if (dataSetDto is null)
+                return Json(new { responseError = DbResHtml.T("Mapping failed!", "Resources") });
 
-            return Json(new { id = insertedDatasetDTO.Id });
+            var insertedDatasetDTO = await _datasetService.CreateDataset(dataSetDto);
+
+            if (insertedDatasetDTO.IsSuccess == false && insertedDatasetDTO.HandleError())
+                return Json(new { responseError = DbResHtml.T(insertedDatasetDTO.ErrMsg!, "Resources") });
+
+            if (datasetViewModel.ParentDatasetId != null)
+                await _datasetService.AddInheritedParentClasses(insertedDatasetDTO.Data.Id, datasetViewModel.ParentDatasetId.Value);
+
+            return Json(new { id = insertedDatasetDTO.Data.Id });
         }
 
         // TODO: Create ViewModel
@@ -161,20 +177,40 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                                               bool? SearchByIsEnabledImage, int? SearchByShowNumberOfImages, string? OrderByImages)
         {
             if (datasetId == Guid.Empty)
-                return NotFound();
+            {
+                TempData["EditDatasetErrorMessage"] = "Such dataset does not exist";
+                return RedirectToAction("Index");
+            }
+            var datasetDb = await _datasetService.GetDatasetById(datasetId);
 
-            DatasetDTO datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Object not found");
-            //if (datasetDb.IsPublished == true)
-            //{
-            //    TempData["ErrorDatasetIsPublished"] = DbRes.T("This dataset is published and cannot be edited.", "Resources");
-            //    return RedirectToAction(nameof(Index));
-            //}
+            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+            {
+                TempData["EditDatasetErrorMessage"] = datasetDb.ErrMsg;
+                return RedirectToAction("Index");
+            }
+
+            if (datasetDb.Data is null)
+            {
+                TempData["EditDatasetErrorMessage"] = "Dataset is not found";
+                return RedirectToAction("Index");
+            }
 
             int pageSize = SearchByShowNumberOfImages ?? 20;
             int pageNumber = page ?? 1;
 
-            EditDatasetDTO dto = await _datasetService.GetObjectForEditDataset(datasetId, SearchByImageName, SearchByIsAnnotatedImage, SearchByIsEnabledImage, OrderByImages, pageNumber, pageSize);
-            IPagedList<DatasetImageDTO> pagedImagesList = new StaticPagedList<DatasetImageDTO>(dto.ListOfDatasetImages, pageNumber, pageSize, dto.NumberOfDatasetImages);
+            ResultDTO<EditDatasetDTO> resultGetObjectForEditDataset = await _datasetService.GetObjectForEditDataset(
+                datasetId, SearchByImageName, SearchByIsAnnotatedImage, SearchByIsEnabledImage, OrderByImages, pageNumber, pageSize);
+
+            if (resultGetObjectForEditDataset.IsSuccess == false && resultGetObjectForEditDataset.HandleError())
+            {
+                TempData["EditDatasetErrorMessage"] = resultGetObjectForEditDataset.ErrMsg;
+                return RedirectToAction("Index");
+            }
+
+            var dto = resultGetObjectForEditDataset.Data;
+
+            IPagedList<DatasetImageDTO> pagedImagesList = new StaticPagedList<DatasetImageDTO>(
+                dto.ListOfDatasetImages, pageNumber, pageSize, dto.NumberOfDatasetImages);
 
             EditDatasetViewModel model = _mapper.Map<EditDatasetViewModel>(dto);
             model.PagedImagesList = pagedImagesList;
@@ -186,6 +222,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             return View(model);
         }
+
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.EditDatasetImage))]
@@ -218,10 +255,18 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Incorect dataset id", "Resources") });
 
-            DatasetDTO datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Dataset not found");
+            ResultDTO<DatasetDTO> datasetDb = await _datasetService.GetDatasetById(datasetId);
+
+            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
+
+            if (datasetDb.Data is null)
+                return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
+
+
             ResultDTO<int> nubmerOfImagesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100);
             ResultDTO<int> nubmerOfClassesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1);
-            if (datasetDb.IsPublished == true)
+            if (datasetDb.Data.IsPublished == true)
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
             ResultDTO<int> isPublished = await _datasetService.PublishDataset(datasetId, userId);
@@ -402,8 +447,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (selectedClassId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset class id", "Resources") });
 
-            DatasetDTO datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Object not found");
-            if (datasetDb.IsPublished == true)
+            ResultDTO<DatasetDTO?> datasetDb = await _datasetService.GetDatasetById(datasetId);
+
+            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
+
+            if (datasetDb.Data is null)
+                return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
+
+            if (datasetDb.Data.IsPublished == true)
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
             ResultDTO<int> isClassAdded = await _datasetService.AddDatasetClassForDataset(selectedClassId, datasetId, userId);
@@ -430,8 +482,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetClassId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset class id", "Resources") });
 
-            var datasetDb = await _datasetService.GetDatasetById(datasetId) ?? throw new Exception("Object not found");
-            if (datasetDb.IsPublished == true)
+            ResultDTO<DatasetDTO?> datasetDb = await _datasetService.GetDatasetById(datasetId);
+
+            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
+
+            if (datasetDb.Data is null)
+                return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
+
+            if (datasetDb.Data.IsPublished == true)
                 return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
             var isClassDeleted = await _datasetService.DeleteDatasetClassForDataset(datasetClassId, datasetId, userId);
@@ -581,17 +640,22 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             try
             {
-                DatasetDTO datasetDb = await _datasetService.GetDatasetById(datasetId)
-                                       ?? throw new Exception("Dataset not found");
+                ResultDTO<DatasetDTO> datasetDb = await _datasetService.GetDatasetById(datasetId);
 
-                if (datasetDb.IsPublished == true)
+                if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                    return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
+
+                if (datasetDb.Data is null)
+                    return Json(new { responseError = DbResHtml.T("Dataset not found", "Resources") });
+
+                if (datasetDb.Data.IsPublished == true)
                     return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
                 ResultDTO<string?> datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
                 if (datasetThumbnailsFolder.IsSuccess == false || datasetThumbnailsFolder.Data == null)
                     return Json(new { responseError = DbResHtml.T("Could not retrieve thumbnail folder", "Resources") });
 
-                string thumbnailsFolder = Path.Combine(_webHostEnvironment.WebRootPath, datasetThumbnailsFolder.Data, datasetDb.Id.ToString());
+                string thumbnailsFolder = Path.Combine(_webHostEnvironment.WebRootPath, datasetThumbnailsFolder.Data, datasetDb.Data.Id.ToString());
                 if (!Directory.Exists(thumbnailsFolder))
                     Directory.CreateDirectory(thumbnailsFolder);
 
@@ -691,9 +755,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
 
                 return ResultDTO<string>.Ok(
-                    DbResHtml.T("Thumbnails generated successfully", "Resources").Value! 
-                    + (stringBuilder.Length == 0 
-                        ? "" 
+                    DbResHtml.T("Thumbnails generated successfully", "Resources").Value!
+                    + (stringBuilder.Length == 0
+                        ? ""
                         : " \n with Errors: " + stringBuilder.ToString()));
             }
             catch (Exception ex)

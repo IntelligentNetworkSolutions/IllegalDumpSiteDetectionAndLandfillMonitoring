@@ -69,7 +69,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var imageCropped = "data:image/jpeg;base64,/9j/4AAQSkZJRgABA...";
             var imageName = "testimage";
 
-            _mockDatasetService.Setup(ds => ds.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(ds => ds.GetDatasetById(datasetId)).ReturnsAsync((ResultDTO<DatasetDTO>)null);
 
             // Act
             var result = await _controller.UploadDatasetImage(datasetId, imageCropped, imageName);
@@ -195,7 +195,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var imageName = "testimage";
 
             var datasetDto = new DatasetDTO { IsPublished = true };
-            _mockDatasetService.Setup(ds => ds.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(ds => ds.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
 
             var userId = "test-user-id";
 
@@ -227,7 +227,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var imageName = "testimage";
 
             var datasetDto = new DatasetDTO { IsPublished = false };
-            _mockDatasetService.Setup(ds => ds.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(ds => ds.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
 
             var tempImagesFolder = Path.Combine(Path.GetTempPath(), "DatasetImages");
             var tempThumbnailsFolder = Path.Combine(Path.GetTempPath(), "DatasetThumbnails");
@@ -305,7 +305,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var model = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Name = "TestImage" };
-            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync((ResultDTO<DatasetDTO>)null);
 
             // Act
             var result = await _controller.EditDatasetImage(model);
@@ -322,7 +322,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var model = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Name = "TestImage" };
             var datasetDto = new DatasetDTO { IsPublished = true };
-            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             var userId = "test-user-id";
 
             var claims = new List<Claim> { new Claim("UserId", userId) };
@@ -349,7 +349,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var model = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Id = Guid.NewGuid(), Name = "TestImage" };
             var datasetDto = new DatasetDTO { IsPublished = false };
             var datasetImageDto = new DatasetImageDTO { ImageAnnotations = new List<ImageAnnotationDTO> { new ImageAnnotationDTO() } }; // With annotations
-            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(model.Id)).ReturnsAsync(datasetImageDto);
             _mockDatasetImagesService.Setup(s => s.EditDatasetImage(model)).ReturnsAsync(ResultDTO<int>.Ok(1));
             var userId = "test-user-id";
@@ -378,7 +378,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var model = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Id = Guid.NewGuid(), Name = "TestImage" };
             var datasetDto = new DatasetDTO { IsPublished = false };
             var datasetImageDto = new DatasetImageDTO { ImageAnnotations = new List<ImageAnnotationDTO> { new ImageAnnotationDTO() } };
-            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(model.Id)).ReturnsAsync(datasetImageDto);
             _mockDatasetImagesService.Setup(s => s.EditDatasetImage(model)).ReturnsAsync(ResultDTO<int>.Fail("Some error occurred"));
             var userId = "test-user-id";
@@ -407,7 +407,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var model = new EditDatasetImageDTO { DatasetId = Guid.NewGuid(), Id = Guid.NewGuid(), Name = "TestImage" };
             var datasetDto = new DatasetDTO { IsPublished = false };
             var datasetImageDto = new DatasetImageDTO { ImageAnnotations = new List<ImageAnnotationDTO> { new ImageAnnotationDTO() } };
-            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(model.Id)).ReturnsAsync(datasetImageDto);
             _mockDatasetImagesService.Setup(s => s.EditDatasetImage(model)).ReturnsAsync(ResultDTO<int>.Fail("Dataset image was not updated"));
             var userId = "test-user-id";
@@ -470,7 +470,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetImageId = Guid.NewGuid();
             var datasetId = Guid.NewGuid();
             var dataset = new DatasetDTO { IsPublished = true };
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(dataset);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(dataset));
 
             // Act
             var result = await _controller.DeleteDatasetImage(datasetImageId, datasetId);
@@ -489,7 +489,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetId = Guid.NewGuid();
             var datasetDto = new DatasetDTO { IsPublished = true };
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
 
             // Act
             var result = await _controller.DeleteDatasetImage(datasetImageId, datasetId);
@@ -508,7 +508,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetId = Guid.NewGuid();
             var datasetDto = new DatasetDTO { IsPublished = false };
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(datasetImageId)).ReturnsAsync((DatasetImageDTO)null);
 
             // Act
@@ -529,7 +529,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetDto = new DatasetDTO { IsPublished = false };
             var datasetImageDto = new DatasetImageDTO { Id = datasetImageId };
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(datasetImageId)).ReturnsAsync(datasetImageDto);
             _mockImageAnnotationsService.Setup(s => s.GetImageAnnotationsByImageId(datasetImageId))
                 .ReturnsAsync(new List<ImageAnnotationDTO>());
@@ -556,7 +556,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetImageDto = new DatasetImageDTO { Id = datasetImageId };
             var activeAnnotations = new List<ImageAnnotationDTO> { new ImageAnnotationDTO() }; // Mock active annotations
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(datasetImageId)).ReturnsAsync(datasetImageDto);
             _mockImageAnnotationsService.Setup(s => s.GetImageAnnotationsByImageId(datasetImageId)).ReturnsAsync(activeAnnotations);
 
@@ -579,7 +579,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetImageDto = new DatasetImageDTO { Id = datasetImageId };
             var activeAnnotations = new List<ImageAnnotationDTO> { new ImageAnnotationDTO() }; // Mock active annotations
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(datasetImageId)).ReturnsAsync(datasetImageDto);
             _mockImageAnnotationsService.Setup(s => s.GetImageAnnotationsByImageId(datasetImageId)).ReturnsAsync(activeAnnotations);
             _mockDatasetImagesService.Setup(s => s.DeleteDatasetImage(datasetImageId, true))
@@ -605,7 +605,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var activeAnnotations = new List<ImageAnnotationDTO>(); // Mock active annotations
 
             // Mock the dataset service to return a valid dataset
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(datasetImageId)).ReturnsAsync(datasetImageDto);
             _mockImageAnnotationsService.Setup(s => s.GetImageAnnotationsByImageId(datasetImageId)).ReturnsAsync(activeAnnotations);
 
@@ -644,7 +644,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             }; var datasetDto = new DatasetDTO { IsPublished = false };
 
             // Mock the dataset service to return a valid dataset
-            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(s => s.GetDatasetById(model.DatasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
 
             // Mock the user ID
 

@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Repositories.DatasetRepositories;
-using DocumentFormat.OpenXml.VariantTypes;
 using DTOs.MainApp.BL.DatasetDTOs;
 using Entities.DatasetEntities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using SD;
 using System.Data;
-using System.Runtime.InteropServices;
 
 namespace MainApp.BL.Services.DatasetServices
 {
@@ -26,131 +24,252 @@ namespace MainApp.BL.Services.DatasetServices
         }
 
         #region Read
-        public async Task<List<DatasetClassDTO>> GetAllDatasetClasses()
-        {
-            var list = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets") ?? throw new Exception("Model not found");
-            var model = _mapper.Map<List<DatasetClassDTO>>(list.Data) ?? throw new Exception("Model not found");
-            return model;
 
-        }        
-        
-        public async Task<List<DatasetClassDTO>> GetAllDatasetClassesByDatasetId(Guid datasetId)
+        public async Task<ResultDTO<List<DatasetClassDTO>>> GetAllDatasetClasses()
         {
-            var list = await _datasetDatasetClassRepository.GetAll(filter: x=>x.DatasetId == datasetId, includeProperties: "DatasetClass") ?? throw new Exception("Model not found");
-            var resList = list.Data.Select(x=>x.DatasetClass).ToList();
-            var model = _mapper.Map<List<DatasetClassDTO>>(resList) ?? throw new Exception("Model not found");
-            return model;
+            var resultGetEntity = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets");
+
+            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                return ResultDTO<List<DatasetClassDTO>>.Fail(resultGetEntity.ErrMsg!);
+
+            var model = _mapper.Map<List<DatasetClassDTO>>(resultGetEntity.Data);
+
+            return ResultDTO<List<DatasetClassDTO>>.Ok(model);
 
         }
-        
-        public async Task<DatasetClassDTO> GetDatasetClassById(Guid classId)
+
+        public async Task<ResultDTO<List<DatasetClassDTO>>> GetAllDatasetClassesByDatasetId(Guid datasetId)
         {
-            var datasetClass = await _datasetClassesRepository.GetById(classId,includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
-            var model = _mapper.Map<DatasetClassDTO>(datasetClass.Data) ?? throw new Exception("Model not found");
-            return model;
+            var resultGetEntity = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetId == datasetId, includeProperties: "DatasetClass");
+
+            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                return ResultDTO<List<DatasetClassDTO>>.Fail(resultGetEntity.ErrMsg!);
+
+            var resList = resultGetEntity.Data.Select(x => x.DatasetClass).ToList();
+
+            var model = _mapper.Map<List<DatasetClassDTO>>(resList);
+
+            return ResultDTO<List<DatasetClassDTO>>.Ok(model);
         }
+        public async Task<ResultDTO<DatasetClassDTO>> GetDatasetClassById(Guid classId)
+        {
+            var datasetClassResult = await _datasetClassesRepository.GetById(classId, includeProperties: "CreatedBy,ParentClass");
+            if (datasetClassResult == null || datasetClassResult.Data == null)
+            {
+                return ResultDTO<DatasetClassDTO>.Fail("Dataset class not found");
+            }
+
+            var model = _mapper.Map<DatasetClassDTO>(datasetClassResult.Data);
+            if (model == null)
+            {
+                return ResultDTO<DatasetClassDTO>.Fail("Failed to map dataset class");
+            }
+
+            return ResultDTO<DatasetClassDTO>.Ok(model);
+        }
+
         #endregion
 
         #region Create
         public async Task<ResultDTO<int>> AddDatasetClass(CreateDatasetClassDTO dto)
         {
-            if(dto.ParentClassId != null)
-            {                
-                var resultDTO = await _datasetClassesRepository.GetById(dto.ParentClassId.Value, includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
-                DatasetClass? parentClassDb = resultDTO.Data;               
-                if (parentClassDb?.ParentClassId != null)
+            if (dto.ParentClassId != null)
+            {
+                var resultDTO = await _datasetClassesRepository.GetById(dto.ParentClassId.Value, includeProperties: "CreatedBy,ParentClass");
+
+                if (resultDTO?.Data == null || resultDTO.IsSuccess == false && resultDTO.HandleError())
                 {
-                    return new ResultDTO<int>(IsSuccess: false, 2, "You can not add this class as a subclass because the selected parent class is already set as subclass!", null);
+                    return new ResultDTO<int>(IsSuccess: false, 0, "Parent class not found", null);
+                }
+
+                var parentClassDb = resultDTO.Data;
+                if (parentClassDb.ParentClassId != null)
+                {
+                    return new ResultDTO<int>(IsSuccess: false, Data: 2, ErrMsg: "You cannot add this class as a subclass because the selected parent class is already set as a subclass!", null);
                 }
             }
-             
-            var newClass = _mapper.Map<DatasetClass>(dto) ?? throw new Exception("Object not found");
+
+            var newClass = _mapper.Map<DatasetClass>(dto);
+            if (newClass == null)
+            {
+                return new ResultDTO<int>(IsSuccess: false, 0, "Failed to map the new dataset class", null);
+            }
+
             var isAdded = await _datasetClassesRepository.Create(newClass);
-            if (isAdded.IsSuccess == true)
-            {
-                return new ResultDTO<int>(IsSuccess: true, 1, null, null);
-            }
-            else
-            {
-                return new ResultDTO<int>(IsSuccess: false, 3, isAdded.ErrMsg, null);
-            }
+
+            return isAdded.IsSuccess
+                ? new ResultDTO<int>(IsSuccess: true, Data: 1, ErrMsg: null, null)
+                : new ResultDTO<int>(IsSuccess: false, Data: 3, ErrMsg: isAdded.ErrMsg, null);
         }
+
         #endregion
 
         #region Update
+        //public async Task<ResultDTO<int>> EditDatasetClass(EditDatasetClassDTO dto)
+        //{
+        //    var datasetClassDb = await _datasetClassesRepository.GetById(dto.Id, track: true, includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
+        //    var allClasses = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets") ?? throw new Exception("Object not found");
+        //    var childrenClassesList = allClasses.Data?.Where(x => x.ParentClassId == datasetClassDb.Data?.Id).ToList() ?? throw new Exception("Object not found");
+        //    var all_dataset_datasetClasses = await _datasetDatasetClassRepository.GetAll(includeProperties: "DatasetClass,Dataset") ?? throw new Exception("Object not found");
+        //    var all_dataset_datasetClasses_data = all_dataset_datasetClasses.Data ?? throw new Exception("Object not found");
+        //    var dataset_datasetClasses = all_dataset_datasetClasses_data.Where(x => x.DatasetClassId == dto.Id).ToList();
+
+        //    if (childrenClassesList.Count > 0 && dto.ParentClassId != null)
+        //    {
+        //        return new ResultDTO<int>(IsSuccess: false, 2, "This dataset class has subclasses and can not be set as a subclass too!", null);
+        //    }
+        //    if (dataset_datasetClasses.Count > 0)
+        //    {
+        //        return new ResultDTO<int>(IsSuccess: false, 3, "The selected class is already in use in dataset/s, you can only change the class name!", null);
+        //    }
+        //    if (dto.ParentClassId != null)
+        //    {
+        //        var parentClassDb = await _datasetClassesRepository.GetById(dto.ParentClassId.Value, includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
+        //        if (parentClassDb.Data?.ParentClassId != null)
+        //        {
+        //            return new ResultDTO<int>(IsSuccess: false, 4, "You can not add this class as a subclass because the selected parent class is already set as subclass!", null);
+        //        }
+        //    }
+
+        //    var mappedClass = _mapper.Map(dto, datasetClassDb.Data) ?? throw new Exception("Object not found");
+        //    var isUpdated = await _datasetClassesRepository.Update(mappedClass);
+        //    if (isUpdated.IsSuccess == true)
+        //    {
+        //        return new ResultDTO<int>(IsSuccess: true, 1, null, null);
+        //    }
+        //    else
+        //    {
+        //        return new ResultDTO<int>(IsSuccess: false, 5, isUpdated.ErrMsg, null);
+        //    }
+        //}
+
         public async Task<ResultDTO<int>> EditDatasetClass(EditDatasetClassDTO dto)
         {
-            var datasetClassDb = await _datasetClassesRepository.GetById(dto.Id, track: true, includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
-            var allClasses = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets") ?? throw new Exception("Object not found");
-            var childrenClassesList = allClasses.Data?.Where(x => x.ParentClassId == datasetClassDb.Data?.Id).ToList() ?? throw new Exception("Object not found");
-            var all_dataset_datasetClasses = await _datasetDatasetClassRepository.GetAll(includeProperties: "DatasetClass,Dataset") ?? throw new Exception("Object not found");
-            var all_dataset_datasetClasses_data = all_dataset_datasetClasses.Data ?? throw new Exception("Object not found");
-            var dataset_datasetClasses = all_dataset_datasetClasses_data.Where(x => x.DatasetClassId == dto.Id).ToList();
-            
+            var datasetClassDb = await _datasetClassesRepository.GetById(dto.Id, track: true, includeProperties: "CreatedBy,ParentClass");
+            if (datasetClassDb == null || datasetClassDb.Data == null)
+            {
+                return new ResultDTO<int>(false, 0, "Dataset class not found", null);
+            }
+
+            var allClasses = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets");
+            if (allClasses.IsSuccess == false || allClasses.Data == null)
+            {
+                return new ResultDTO<int>(false, 0, "Failed to retrieve dataset classes", null);
+            }
+
+            var childrenClassesList = allClasses.Data.Where(x => x.ParentClassId == datasetClassDb.Data.Id).ToList();
+
             if (childrenClassesList.Count > 0 && dto.ParentClassId != null)
             {
-                return new ResultDTO<int>(IsSuccess: false, 2, "This dataset class has subclasses and can not be set as a subclass too!", null);
-            }            
-            if (dataset_datasetClasses.Count > 0)
-            {
-                return new ResultDTO<int>(IsSuccess: false, 3, "The selected class is already in use in dataset/s, you can only change the class name!", null);
+                return new ResultDTO<int>(false, 2, "This dataset class has subclasses and cannot be set as a subclass too!", null);
             }
+
+            var allDatasetDatasetClasses = await _datasetDatasetClassRepository.GetAll(includeProperties: "DatasetClass,Dataset");
+            if (allDatasetDatasetClasses.IsSuccess == false || allDatasetDatasetClasses.Data == null)
+            {
+                return new ResultDTO<int>(false, 0, "Failed to retrieve dataset-dataset class mappings", null);
+            }
+
+            var datasetDatasetClasses = allDatasetDatasetClasses.Data.Where(x => x.DatasetClassId == dto.Id).ToList();
+
+
+            if (datasetDatasetClasses.Any())
+            {
+                return new ResultDTO<int>(false, 3, "The selected class is already in use in dataset(s). You can only change the class name!", null);
+            }
+
             if (dto.ParentClassId != null)
             {
-                var parentClassDb = await _datasetClassesRepository.GetById(dto.ParentClassId.Value, includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
-                if (parentClassDb.Data?.ParentClassId != null)
+                var parentClassDb = await _datasetClassesRepository.GetById(dto.ParentClassId.Value, includeProperties: "CreatedBy,ParentClass");
+                if (parentClassDb.IsSuccess == false || parentClassDb.Data == null)
                 {
-                   return new ResultDTO<int> (IsSuccess:false,4, "You can not add this class as a subclass because the selected parent class is already set as subclass!", null);
+                    return new ResultDTO<int>(false, 0, "Parent class not found", null);
+                }
+
+                if (parentClassDb.Data.ParentClassId != null)
+                {
+                    return new ResultDTO<int>(false, 4, "You cannot add this class as a subclass because the selected parent class is already set as a subclass!", null);
                 }
             }
 
-            var mappedClass = _mapper.Map(dto, datasetClassDb.Data) ?? throw new Exception("Object not found");
+            var mappedClass = _mapper.Map(dto, datasetClassDb.Data);
+            if (mappedClass == null)
+            {
+                return new ResultDTO<int>(false, 0, "Failed to map dataset class", null);
+            }
+
             var isUpdated = await _datasetClassesRepository.Update(mappedClass);
-            if(isUpdated.IsSuccess == true)
-            {
-                return new ResultDTO<int>(IsSuccess: true, 1, null, null);
-            }
-            else
-            {
-                return new ResultDTO<int>(IsSuccess: false, 5, isUpdated.ErrMsg, null);
-            }
+            return isUpdated.IsSuccess
+                ? new ResultDTO<int>(true, 1, null, null)
+                : new ResultDTO<int>(false, 5, isUpdated.ErrMsg, null);
         }
+
+
         #endregion
 
         #region Delete
         public async Task<ResultDTO<int>> DeleteDatasetClass(Guid classId)
         {
-            var datasetClass = await _datasetClassesRepository.GetById(classId, track:true, includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
-            var datasetClassData = datasetClass.Data ?? throw new Exception("Object not found");
-            var listOfAllDatasetClasses = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets") ?? throw new Exception("Object not found");
-            var childrenDatasetClasses = listOfAllDatasetClasses.Data?.Where(x => x.ParentClassId == classId).ToList();
-            var all_dataset_datasetClasses = await _datasetDatasetClassRepository.GetAll() ?? throw new Exception("Object not found");
-            var all_dataset_datasetClasses_data = all_dataset_datasetClasses.Data ?? throw new Exception("Object not found");
-            var dataset_datasetClasses = all_dataset_datasetClasses_data.Where(x => x.DatasetClassId == classId).ToList() ?? throw new Exception("Object not found");
-            if (childrenDatasetClasses?.Count > 0)
+            var datasetClass = await _datasetClassesRepository.GetById(classId, track: true, includeProperties: "CreatedBy,ParentClass");
+            if (datasetClass == null || datasetClass.Data == null)
             {
-                return new ResultDTO<int>(IsSuccess: false, 2, "This dataset class can not be deleted because there are subclasses. Delete first the subclasses!", null);
+                return new ResultDTO<int>(IsSuccess: false, 0, "Dataset class not found.", null);
             }
-            if (dataset_datasetClasses.Count > 0)
+            var datasetClassData = datasetClass.Data;
+
+            var listOfAllDatasetClasses = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets");
+            if (listOfAllDatasetClasses.IsSuccess == false || listOfAllDatasetClasses.Data == null)
             {
-                return new ResultDTO<int>(IsSuccess: false, 3, "This dataset class can not be deleted because this class is already in use in dataset/s!", null);
+                return new ResultDTO<int>(IsSuccess: false, 0, "Failed to retrieve dataset classes.", null);
             }
-            var list_result = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetClassId == classId) ?? throw new Exception("Object not found");
-            List<Dataset_DatasetClass> list_dataset_DatasetClassDb = list_result?.Data?.ToList() ?? throw new Exception("Object not found");
-            if(list_dataset_DatasetClassDb.Count > 0)
+
+            var childrenDatasetClasses = listOfAllDatasetClasses.Data
+                .Where(x => x.ParentClassId == classId)
+                .ToList();
+            if (childrenDatasetClasses.Count > 0)
             {
-                await _datasetDatasetClassRepository.DeleteRange(list_dataset_DatasetClassDb);
+                return new ResultDTO<int>(IsSuccess: false, 2, "This dataset class cannot be deleted because there are subclasses. Delete the subclasses first.", null);
             }
-            var isDeleted = await _datasetClassesRepository.Delete(datasetClass.Data);
-            if (isDeleted.IsSuccess == true)
+
+            var allDatasetDatasetClasses = await _datasetDatasetClassRepository.GetAll();
+            if (allDatasetDatasetClasses.IsSuccess == false || allDatasetDatasetClasses.Data == null)
             {
-                return new ResultDTO<int>(IsSuccess: true, 1, null, null);
+                return new ResultDTO<int>(IsSuccess: false, 0, "Failed to retrieve dataset-dataset class relationships.", null);
+            }
+
+            var datasetDatasetClasses = allDatasetDatasetClasses.Data
+                .Where(x => x.DatasetClassId == classId)
+                .ToList();
+            if (datasetDatasetClasses.Count > 0)
+            {
+                return new ResultDTO<int>(IsSuccess: false, 3, "This dataset class cannot be deleted because it is in use in datasets.", null);
+            }
+
+            var associatedDatasetClasses = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetClassId == classId);
+            if (associatedDatasetClasses != null && associatedDatasetClasses.Data != null)
+            {
+                var listDatasetDatasetClassDb = associatedDatasetClasses.Data.ToList();
+                if (listDatasetDatasetClassDb.Count > 0)
+                {
+                    var deleteRelationsResult = await _datasetDatasetClassRepository.DeleteRange(listDatasetDatasetClassDb);
+                    if (!deleteRelationsResult.IsSuccess)
+                    {
+                        return new ResultDTO<int>(IsSuccess: false, 0, "Failed to delete associated dataset-dataset class relationships.", null);
+                    }
+                }
+            }
+
+            var deleteResult = await _datasetClassesRepository.Delete(datasetClassData);
+            if (deleteResult.IsSuccess)
+            {
+                return new ResultDTO<int>(IsSuccess: true, 1, "Dataset class deleted successfully.", null);
             }
             else
             {
-                return new ResultDTO<int>(IsSuccess: false, 4, isDeleted.ErrMsg, null);
+                return new ResultDTO<int>(IsSuccess: false, 4, deleteResult.ErrMsg ?? "Failed to delete the dataset class.", null);
             }
         }
+
         #endregion
     }
 }

@@ -1,11 +1,5 @@
 ﻿using DTOs.MainApp.BL.DatasetDTOs;
-using Entities.DatasetEntities;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
 {
@@ -13,9 +7,9 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
     {
         #region Read
         #region Get Datasetclass/es
-        Task<List<DatasetClassDTO>> GetAllDatasetClasses();
-        Task<DatasetClassDTO> GetDatasetClassById(Guid classId);
-        Task<List<DatasetClassDTO>> GetAllDatasetClassesByDatasetId(Guid datasetId);
+        Task<ResultDTO<List<DatasetClassDTO>>> GetAllDatasetClasses();
+        Task<ResultDTO<DatasetClassDTO>> GetDatasetClassById(Guid classId);
+        Task<ResultDTO<List<DatasetClassDTO>>> GetAllDatasetClassesByDatasetId(Guid datasetId);
         #endregion
         #endregion
 
@@ -29,7 +23,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
 
         #region Delete
         Task<ResultDTO<int>> DeleteDatasetClass(Guid classId);
-        
+
         #endregion
     }
 }

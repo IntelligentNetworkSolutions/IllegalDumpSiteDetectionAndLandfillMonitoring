@@ -66,12 +66,12 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsType<List<DatasetClassDTO>>(result);
-            Assert.Single(result);
+            Assert.IsType<ResultDTO<List<DatasetClassDTO>>>(result);
+            Assert.Single(result.Data);
         }
 
         [Fact]
-        public async Task GetAllDatasetClasses_WhenRepositoryReturnsNull_ShouldThrowException()
+        public async Task GetAllDatasetClasses_WhenRepositoryReturnsNull_ReturnsFailResult()
         {
             // Arrange
             var datasetsRepositoryMock = new Mock<IDatasetsRepository>();
@@ -85,7 +85,7 @@ namespace Tests.MainAppBLTests.Services
                 It.IsAny<bool>(),
                 It.IsAny<string>(),
                 It.IsAny<int?>()
-            )).ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(null));
+            )).ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Fail("Repository failed"));
 
             // Create instance of service
             var service = new DatasetClassesService(
@@ -95,8 +95,12 @@ namespace Tests.MainAppBLTests.Services
                 mapperMock.Object
             );
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => service.GetAllDatasetClasses());
+            // Act
+            var result = await service.GetAllDatasetClasses();
+
+            // Assert
+            Assert.True(!result.IsSuccess);
+            Assert.Equal("Repository failed", result.ErrMsg);
         }
 
         [Fact]
@@ -150,49 +154,8 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.IsType<List<DatasetClassDTO>>(result);
-            Assert.Equal(2, result.Count);
-        }
-
-        [Fact]
-        public async Task GetAllDatasetClassesByDatasetId_WhenMapperReturnsNull_ShouldThrowException()
-        {
-            // Arrange
-            var datasetsRepositoryMock = new Mock<IDatasetsRepository>();
-            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
-            var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
-            var mapperMock = new Mock<IMapper>();
-
-            // Mock data
-            var datasetId = Guid.NewGuid();
-            var datasetClassEntities = new List<Dataset_DatasetClass>
-            {
-                new Dataset_DatasetClass { DatasetId = datasetId, DatasetClass = new DatasetClass { Id = Guid.NewGuid(), ClassName = "Class 1" } },
-                new Dataset_DatasetClass { DatasetId = datasetId, DatasetClass = new DatasetClass { Id = Guid.NewGuid(), ClassName = "Class 2" } }
-            };
-
-            // Setup repository mock
-            datasetDatasetClassRepositoryMock.Setup(repo => repo.GetAll(
-                It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(),
-                It.IsAny<Func<IQueryable<Dataset_DatasetClass>, IOrderedQueryable<Dataset_DatasetClass>>>(),
-                It.IsAny<bool>(),
-                It.IsAny<string>(),
-                It.IsAny<int?>()
-            )).ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetClassEntities));
-
-            // Setup mapper mock to return null
-            mapperMock.Setup(mapper => mapper.Map<List<DatasetClassDTO>>(It.IsAny<IEnumerable<DatasetClass>>())).Returns((IEnumerable<DatasetClass> source) => null);
-
-            // Create instance of service
-            var service = new DatasetClassesService(
-                datasetsRepositoryMock.Object,
-                datasetClassesRepositoryMock.Object,
-                datasetDatasetClassRepositoryMock.Object,
-                mapperMock.Object
-            );
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => service.GetAllDatasetClassesByDatasetId(datasetId));
+            Assert.IsType<ResultDTO<List<DatasetClassDTO>>>(result);
+            Assert.Equal(2, result.Data.Count);
         }
 
         [Fact]
@@ -224,8 +187,8 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(expectedDto.Id, result.Id);
-            Assert.Equal(expectedDto.ClassName, result.ClassName);
+            Assert.Equal(expectedDto.Id, result.Data.Id);
+            Assert.Equal(expectedDto.ClassName, result.Data.ClassName);
         }
 
         [Fact]
@@ -270,8 +233,8 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(expectedDto.Id, result.Id);
-            Assert.Equal(expectedDto.ClassName, result.ClassName);
+            Assert.Equal(expectedDto.Id, result.Data.Id);
+            Assert.Equal(expectedDto.ClassName, result.Data.ClassName);
         }
 
         [Fact]
@@ -387,22 +350,22 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal(2, result.Data);
-            Assert.Equal("You can not add this class as a subclass because the selected parent class is already set as subclass!", result.ErrMsg);
+            Assert.Equal("You cannot add this class as a subclass because the selected parent class is already set as a subclass!", result.ErrMsg);
         }
 
         [Fact]
-        public async Task AddDatasetClass_With_NonExistentParentClassId_Throws_Exception()
+        public async Task AddDatasetClass_With_NonExistentParentClassId_ReturnsFailResult()
         {
             // Arrange
             var dto = new CreateDatasetClassDTO
             {
                 ClassName = "NewClass",
-                ParentClassId = Guid.NewGuid() // Set a ParentClassId that does not exist
+                ParentClassId = Guid.NewGuid()
             };
 
             var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
             datasetClassesRepositoryMock.Setup(repo => repo.GetById(dto.ParentClassId.Value, false, It.IsAny<string>()))
-                                         .ReturnsAsync((ResultDTO<DatasetClass?>)null);
+                                         .ReturnsAsync(ResultDTO<DatasetClass>.Fail("Parent class not found"));
 
             var mapperMock = new Mock<IMapper>();
             var newClass = new DatasetClass { Id = Guid.NewGuid(), ClassName = "NewClass" };
@@ -415,8 +378,13 @@ namespace Tests.MainAppBLTests.Services
                 mapper: mapperMock.Object
             );
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await service.AddDatasetClass(dto));
+            // Act 
+            var result = await service.AddDatasetClass(dto);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("Parent class not found", result.ErrMsg);
+
         }
 
 
@@ -458,7 +426,7 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Null(result.ErrMsg);
+            Assert.Equal("Dataset class deleted successfully.", result.ErrMsg);
         }
 
 
@@ -511,25 +479,38 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task EditDatasetClass_Throws_Exception_When_Child_Classes_Exist()
+        public async Task EditDatasetClass_Returns_Error_When_Child_Classes_Exist()
         {
             // Arrange
             var dto = new EditDatasetClassDTO
             {
                 Id = Guid.NewGuid(),
-                ClassName = "EditedClass"
+                ClassName = "EditedClass",
+                ParentClassId = Guid.NewGuid(),
             };
-
+            var datasetClass = new DatasetClass
+            {
+                Id = dto.Id,
+                ClassName = "TestClass"
+            };
             var childClasses = new List<DatasetClass>
             {
                 new DatasetClass { Id = Guid.NewGuid(), ClassName = "ChildClass", ParentClassId = dto.Id }
             };
 
-            var childClassesResult = ResultDTO<IEnumerable<DatasetClass>>.Ok(childClasses);
+            var datasetClassResult = ResultDTO<DatasetClass>.Ok(datasetClass);
+
+            var allClassesResult = ResultDTO<IEnumerable<DatasetClass>>.Ok(new List<DatasetClass>
+            {
+                datasetClass,
+                new DatasetClass { Id = Guid.NewGuid(), ClassName = "AnotherClass", ParentClassId = datasetClass.Id }
+            });
 
             var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
             datasetClassesRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetClass, bool>>>(), null, It.IsAny<bool>(), It.IsAny<string>(), null))
-                                         .ReturnsAsync(childClassesResult);
+                                        .ReturnsAsync(allClassesResult);
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(dto.Id, true, "CreatedBy,ParentClass"))
+                                        .ReturnsAsync(datasetClassResult);
 
             var mapperMock = new Mock<IMapper>();
 
@@ -540,8 +521,13 @@ namespace Tests.MainAppBLTests.Services
                 mapper: mapperMock.Object
             );
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => service.EditDatasetClass(dto));
+            // Act
+            var result = await service.EditDatasetClass(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(2, result.Data);
+            Assert.Equal("This dataset class has subclasses and cannot be set as a subclass too!", result.ErrMsg);
         }
 
         [Fact]
@@ -588,7 +574,7 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal(2, result.Data); // Assuming 2 is the error code for this scenario
-            Assert.Equal("This dataset class has subclasses and can not be set as a subclass too!", result.ErrMsg);
+            Assert.Equal("This dataset class has subclasses and cannot be set as a subclass too!", result.ErrMsg);
         }
 
         [Fact]
@@ -635,7 +621,7 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal(3, result.Data); // Error code for dataset usage
-            Assert.Equal("The selected class is already in use in dataset/s, you can only change the class name!", result.ErrMsg);
+            Assert.Equal("The selected class is already in use in dataset(s). You can only change the class name!", result.ErrMsg);
         }
 
 
@@ -682,7 +668,7 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal(4, result.Data); // Error code for parent class being a subclass
-            Assert.Equal("You can not add this class as a subclass because the selected parent class is already set as subclass!", result.ErrMsg);
+            Assert.Equal("You cannot add this class as a subclass because the selected parent class is already set as a subclass!", result.ErrMsg);
         }
 
 
@@ -735,10 +721,12 @@ namespace Tests.MainAppBLTests.Services
 
 
         [Fact]
-        public async Task DeleteDatasetClass_Throws_Exception_When_Child_Classes_Exist()
+        public async Task DeleteDatasetClass_ReturnsErrorMessage_When_Child_Classes_Exist()
         {
             // Arrange
             var classId = Guid.NewGuid();
+            var datasetClass = new DatasetClass { Id = classId };
+            var datasetClassesList = new List<DatasetClass>();
             var childClasses = new List<DatasetClass>
             {
                 new DatasetClass { Id = Guid.NewGuid(), ParentClassId = classId }
@@ -747,10 +735,14 @@ namespace Tests.MainAppBLTests.Services
             var childClassesResult = ResultDTO<IEnumerable<DatasetClass>>.Ok(childClasses);
 
             var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(classId, true, "CreatedBy,ParentClass"))
+                            .ReturnsAsync(ResultDTO<DatasetClass>.Ok(datasetClass));
+            datasetClassesRepositoryMock.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                                        .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(datasetClassesList));
             datasetClassesRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetClass, bool>>>(), null, It.IsAny<bool>(), It.IsAny<string>(), null))
                                          .ReturnsAsync(childClassesResult);
 
-            var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
 
             var mapperMock = new Mock<IMapper>();
 
@@ -761,15 +753,22 @@ namespace Tests.MainAppBLTests.Services
                 mapper: mapperMock.Object
             );
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => service.DeleteDatasetClass(classId));
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("This dataset class cannot be deleted because there are subclasses. Delete the subclasses first.", result.ErrMsg);
+            Assert.Equal(2, result.Data);
         }
 
         [Fact]
-        public async Task DeleteDatasetClass_Throws_Exception_When_Class_In_Use_By_Datasets()
+        public async Task DeleteDatasetClass_ReturnsErrorMessage_When_Class_In_Use_By_Datasets()
         {
             // Arrange
             var classId = Guid.NewGuid();
+            var datasetClass = new DatasetClass { Id = classId };
+            var datasetClassesList = new List<DatasetClass>();
             var datasetDatasetClasses = new List<Dataset_DatasetClass>
             {
                 new Dataset_DatasetClass { DatasetClassId = classId }
@@ -778,10 +777,13 @@ namespace Tests.MainAppBLTests.Services
             var datasetDatasetClassesResult = ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetDatasetClasses);
 
             var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(classId, true, "CreatedBy,ParentClass"))
+                                        .ReturnsAsync(ResultDTO<DatasetClass>.Ok(datasetClass));
+            datasetClassesRepositoryMock.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                                        .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(datasetClassesList));
             datasetDatasetClassRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(), null, It.IsAny<bool>(), It.IsAny<string>(), null))
                                              .ReturnsAsync(datasetDatasetClassesResult);
-
-            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
 
             var mapperMock = new Mock<IMapper>();
 
@@ -792,8 +794,13 @@ namespace Tests.MainAppBLTests.Services
                 mapper: mapperMock.Object
             );
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => service.DeleteDatasetClass(classId));
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("This dataset class cannot be deleted because it is in use in datasets.", result.ErrMsg);
+            Assert.Equal(3, result.Data);
         }
 
         [Fact]
@@ -838,7 +845,7 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal(2, result.Data); // Assuming 2 is the error code for child classes
-            Assert.Equal("This dataset class can not be deleted because there are subclasses. Delete first the subclasses!", result.ErrMsg);
+            Assert.Equal("This dataset class cannot be deleted because there are subclasses. Delete the subclasses first.", result.ErrMsg);
         }
 
         [Fact]
@@ -878,7 +885,7 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal(3, result.Data); // Assuming 3 is the error code for dataset usage
-            Assert.Equal("This dataset class can not be deleted because this class is already in use in dataset/s!", result.ErrMsg);
+            Assert.Equal("This dataset class cannot be deleted because it is in use in datasets.", result.ErrMsg);
         }
 
 

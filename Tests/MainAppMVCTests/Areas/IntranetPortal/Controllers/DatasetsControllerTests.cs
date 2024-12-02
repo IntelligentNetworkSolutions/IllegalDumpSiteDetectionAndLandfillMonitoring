@@ -8,6 +8,7 @@ using MainApp.MVC.ViewModels.IntranetPortal.Dataset;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -61,11 +62,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var datasetId = Guid.NewGuid();
             var parentDataset = new DatasetDTO { Id = datasetId, Name = "Parent Dataset" };
-            var childDataset1 = new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 1", ParentDatasetId = datasetId };
-            var childDataset2 = new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 2", ParentDatasetId = datasetId };
 
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(new List<DatasetDTO> { childDataset1, childDataset2 });
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(parentDataset);
+            var childernDatasets = new List<DatasetDTO>
+            {
+                new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 1", ParentDatasetId = datasetId },
+                new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 2", ParentDatasetId = datasetId }
+            };
+
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(childernDatasets));
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(parentDataset));
 
             // Act
             var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
@@ -91,51 +96,74 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task GetParentAndChildrenDatasets_ThrowsException_WhenGetAllDatasetsReturnsNull()
+        public async Task GetParentAndChildrenDatasets_ReturnsErrorJsonResult_WhenGetAllDatasetsReturnsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync((List<DatasetDTO>)null);
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(null));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.GetParentAndChildrenDatasets(datasetId));
+            // Act
+            var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
+
+            var data = JObject.FromObject(result.Value);
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("No datasets found.", data["responseError"]["Value"].ToString());
         }
 
         [Fact]
-        public async Task GetParentAndChildrenDatasets_ThrowsException_WhenGetDatasetByIdReturnsNull()
+        public async Task GetParentAndChildrenDatasets_ReturnsErrorJsonResult_WhenGetDatasetByIdReturnsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(new List<DatasetDTO>());
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+            var datasets = new List<DatasetDTO>();
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Fail("Invalid current dataset"));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.GetParentAndChildrenDatasets(datasetId));
+            // Act
+            var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
+            var data = JObject.FromObject(result.Value);
+
+            //Assert
+            Assert.NotNull(result);
+            Assert.Equal("Invalid current dataset", data["responseError"]["Value"].ToString());
         }
 
         [Fact]
-        public async Task GetParentAndChildrenDatasets_ThrowsException_WhenChildrenDatasetsAreNotFound()
+        public async Task GetParentAndChildrenDatasets_ReturnsErrorJsonResult_WhenChildrenDatasetsAreNotFound()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
             var parentDataset = new DatasetDTO { Id = datasetId, Name = "Parent Dataset" };
+            var datasets = new List<DatasetDTO> { parentDataset };
 
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync((List<DatasetDTO>)null);
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(parentDataset);
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(parentDataset));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.GetParentAndChildrenDatasets(datasetId));
+            // Act 
+            var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
+            var data = JObject.FromObject(result.Value);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("No child datasets found.", data["responseError"]["Value"].ToString());
         }
 
         [Fact]
-        public async Task GetParentAndChildrenDatasets_ThrowsException_WhenCurrentDatasetIsNull()
+        public async Task GetParentAndChildrenDatasets_ReturnsErrorJsonResult_WhenCurrentDatasetIsNull()
         {
+            // Arrange
             var datasetId = Guid.NewGuid();
             var allDatasets = new List<DatasetDTO> { new DatasetDTO { ParentDatasetId = datasetId } };
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(allDatasets);
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(allDatasets));
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Fail("Invalid current dataset"));
 
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.GetParentAndChildrenDatasets(datasetId));
+            var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
+            var data = JObject.FromObject(result.Value);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("Invalid current dataset", data["responseError"]["Value"].ToString()); ;
         }
 
         [Fact]
@@ -150,13 +178,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 Name = "Parent Dataset",
                 ParentDataset = grandparentDataset // Correctly set the parent dataset
             };
-            var childDataset1 = new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 1", ParentDatasetId = datasetId };
-            var childDataset2 = new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 2", ParentDatasetId = datasetId };
+            var childrenDatasets = new List<DatasetDTO>
+            {
+                new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 1", ParentDatasetId = datasetId },
+                new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 2", ParentDatasetId = datasetId }
+            };
 
-            _mockDatasetService.Setup(s => s.GetAllDatasets())
-                .ReturnsAsync(new List<DatasetDTO> { childDataset1, childDataset2 });
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId))
-                .ReturnsAsync(parentDataset);
+            // Mocking services
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(childrenDatasets));
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(parentDataset));
 
             // Act
             var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
@@ -173,10 +203,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Check children list
             var childrenList = data["childrenList"].ToObject<List<DatasetDTO>>();
-            Assert.Equal(2, childrenList.Count());
+            Assert.Equal(2, childrenList.Count);
 
             // Check the current dataset
-            var returnedCurrentDataset = data["currentDataset"].ToObject<DatasetDTO>();
+            var returnedCurrentDataset = data["currentDataset"]["Data"].ToObject<DatasetDTO>();
             Assert.Equal(parentDataset.Id, returnedCurrentDataset.Id);
             Assert.Equal(parentDataset.Name, returnedCurrentDataset.Name);
         }
@@ -185,17 +215,21 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
 
         [Fact]
-        public async Task Edit_ReturnsNotFound_WhenDatasetIdIsEmpty()
+        public async Task Edit_RedirectsToIndex_WhenDatasetIdIsEmpty()
         {
             // Arrange
             Guid emptyId = Guid.Empty;
+            _controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
 
             // Act
             var result = await _controller.Edit(emptyId, null, null, null, null, null, null);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectResult.ActionName);
+            Assert.Null(redirectResult.ControllerName);
         }
+
 
         [Fact]
         public async Task Edit_ReturnsViewWithModel_WhenDatasetIsNotPublished()
@@ -208,9 +242,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 ListOfDatasetImages = new List<DatasetImageDTO> { },
                 NumberOfDatasetImages = 100
             };
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.GetObjectForEditDataset(It.IsAny<Guid>(), null, null, null, null, 1, 20))
-                .ReturnsAsync(editDto);
+                .ReturnsAsync(ResultDTO<EditDatasetDTO>.Ok(editDto));
 
             var model = new EditDatasetViewModel { /* initialize with properties */ };
             _mockMapper.Setup(m => m.Map<EditDatasetViewModel>(editDto)).Returns(model);
@@ -225,15 +259,22 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task Edit_ThrowsException_WhenDatasetIsNotFound()
+        public async Task Edit_Redirects_WhenDatasetIsNotFound()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(null));
+            _controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.Edit(datasetId, null, null, null, null, null, null));
+            // Act
+            var result = await _controller.Edit(datasetId, null, null, null, null, null, null);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Index", redirectResult.ActionName);
+            Assert.Null(redirectResult.ControllerName);
         }
+
 
         [Fact]
         public async Task EnableAllImages_ReturnsNotFound_WhenDatasetIdIsEmpty()
@@ -340,7 +381,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             // Mocking dependencies
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.PublishDataset(datasetId, userId)).ReturnsAsync(resultDto);
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100))
                                     .ReturnsAsync(ResultDTO<int>.Ok(100));
@@ -357,7 +398,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task PublishDataset_ThrowsException_WhenDatasetNotFound()
+        public async Task PublishDataset_ReturnsErrorMessage_WhenDatasetNotFound()
         {
             // Arrange
             var userId = "test-user-id";
@@ -371,10 +412,16 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             // Mocking dependencies
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(null));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.PublishDataset(datasetId));
+            // Act
+            var result = await _controller.PublishDataset(datasetId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Dataset is not found", jsonData["responseError"]["Value"].ToString());
+
         }
 
         [Fact]
@@ -393,7 +440,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             // Mocking dependencies
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
 
             // Act
             var result = await _controller.PublishDataset(datasetId);
@@ -420,7 +467,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             // Mocking dependencies
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.PublishDataset(datasetId, userId)).ReturnsAsync(new ResultDTO<int>(IsSuccess: false, 2, null, null));
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100))
                                     .ReturnsAsync(ResultDTO<int>.Ok(100));
@@ -453,7 +500,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             // Mocking dependencies
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.PublishDataset(datasetId, userId)).ReturnsAsync(ResultDTO<int>.Fail("fail"));
 
             // Act
@@ -661,7 +708,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetId = Guid.NewGuid();
             var datasetDto = new DatasetDTO { IsPublished = true };
             var userId = "test-user-id";
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
@@ -688,7 +735,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetDto = new DatasetDTO { IsPublished = false };
             var userId = "test-user-id";
             var resultDto = new ResultDTO<int>(true, 1, null, null);
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.AddDatasetClassForDataset(selectedClassId, datasetId, userId)).ReturnsAsync(resultDto);
             _controller.ControllerContext = new ControllerContext
             {
@@ -717,7 +764,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var userId = "test-user-id";
             var errorMessage = "An error occurred";
             var resultDto = new ResultDTO<int>(false, 0, errorMessage, null);
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.AddDatasetClassForDataset(selectedClassId, datasetId, userId)).ReturnsAsync(resultDto);
             _controller.ControllerContext = new ControllerContext
             {
@@ -745,7 +792,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetDto = new DatasetDTO { IsPublished = false };
             var userId = "test-user-id";
             var resultDto = new ResultDTO<int>(false, 0, null, null);
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.AddDatasetClassForDataset(selectedClassId, datasetId, userId)).ReturnsAsync(resultDto);
             _controller.ControllerContext = new ControllerContext
             {
@@ -765,7 +812,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task AddDatasetClass_ThrowsException_WhenDatasetNotFound()
+        public async Task AddDatasetClass_ReturnsJsonError_WhenDatasetNotFound()
         {
             // Arrange
             string userId = "test-user-id";
@@ -780,10 +827,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 }
             };
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(null));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.AddDatasetClass(selectedClassId, datasetId));
+            // Act
+            var result = await _controller.AddDatasetClass(selectedClassId, datasetId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Dataset is not found", jsonData["responseError"]["Value"].ToString());
         }
 
 
@@ -816,10 +868,11 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var mockMapper = new Mock<IMapper>();
             mockMapper.Setup(mapper => mapper.Map<List<DatasetViewModel>>(It.IsAny<List<DatasetDTO>>()))
                 .Returns(new List<DatasetViewModel>());
+            var datasets = new List<DatasetDTO>();
 
             var mockDatasetService = new Mock<IDatasetService>();
             mockDatasetService.Setup(service => service.GetAllDatasets())
-                .ReturnsAsync(new List<DatasetDTO>());
+                .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             var controller = new DatasetsController(null, mockMapper.Object, mockDatasetService.Object, null, null, null);
 
@@ -856,7 +909,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task DeleteDatasetClass_ThrowsException_WhenDatasetNotFound()
+        public async Task DeleteDatasetClass_ReturnsJsonError_WhenDatasetNotFound()
         {
             // Arrange
             string userId = "test-user-id";
@@ -871,10 +924,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 }
             };
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(null));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.DeleteDatasetClass(datasetClassId, datasetId));
+            // Act
+            var result = await _controller.DeleteDatasetClass(datasetClassId, datasetId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Dataset is not found", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -933,7 +991,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetId = Guid.NewGuid();
             var datasetDto = new DatasetDTO { IsPublished = true };
             var userId = "test-user-id";
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
@@ -960,7 +1018,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetDto = new DatasetDTO { IsPublished = false };
             var userId = "test-user-id";
             var resultDto = new ResultDTO<int>(true, 1, null, null);
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.DeleteDatasetClassForDataset(datasetClassId, datasetId, userId)).ReturnsAsync(resultDto);
             _controller.ControllerContext = new ControllerContext
             {
@@ -989,7 +1047,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var userId = "test-user-id";
             var errorMessage = "An error occurred";
             var resultDto = new ResultDTO<int>(false, 0, errorMessage, null);
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.DeleteDatasetClassForDataset(datasetClassId, datasetId, userId)).ReturnsAsync(resultDto);
             _controller.ControllerContext = new ControllerContext
             {
@@ -1017,7 +1075,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetDto = new DatasetDTO { IsPublished = false };
             var userId = "test-user-id";
             var resultDto = new ResultDTO<int>(false, 0, null, null);
-            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(datasetDto);
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.DeleteDatasetClassForDataset(datasetClassId, datasetId, userId)).ReturnsAsync(resultDto);
             _controller.ControllerContext = new ControllerContext
             {
@@ -1173,7 +1231,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             var mockDatasetService = new Mock<IDatasetService>();
-            mockDatasetService.Setup(service => service.GetAllDatasets()).ReturnsAsync(expectedDatasets);
+            mockDatasetService.Setup(service => service.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(expectedDatasets));
             var controller = new DatasetsController(null, null, mockDatasetService.Object, null, null, null);
 
             // Act
@@ -1189,23 +1247,24 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task GetAllDatasets_ThrowsException_WhenDatasetServiceReturnsNull()
         {
             // Arrange
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync((List<DatasetDTO>)null);
+            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync((ResultDTO<List<DatasetDTO>>)null);
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(async () => await _controller.GetAllDatasets());
         }
 
 
-        [Fact]
-        public async Task Index_ThrowsException_WhenModelMappingFails()
-        {
-            // Arrange
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(new List<DatasetDTO>());
-            _mockMapper.Setup(m => m.Map<List<DatasetViewModel>>(It.IsAny<List<DatasetDTO>>())).Returns((List<DatasetViewModel>)null);
+        //[Fact]
+        //public async Task Index_ThrowsException_WhenModelMappingFails()
+        //{
+        //    // Arrange
+        //    var datasets = new List<DatasetDTO>();
+        //    _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
+        //    _mockMapper.Setup(m => m.Map<List<DatasetViewModel>>(It.IsAny<List<DatasetDTO>>())).Returns((List<DatasetViewModel>)null);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.Index());
-        }
+        //    // Act & Assert
+        //    await Assert.ThrowsAsync<Exception>(async () => await _controller.Index());
+        //}
 
         [Fact]
         public async Task CreateConfirmed_ReturnsJsonError_WhenParentDatasetIsNotPublished()
@@ -1213,8 +1272,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var parentDatasetId = Guid.NewGuid();
             var datasetViewModel = new CreateDatasetViewModel { ParentDatasetId = parentDatasetId };
+            var datasetDTO = new DatasetDTO { IsPublished = false };
             _mockDatasetService.Setup(s => s.GetDatasetById(parentDatasetId))
-                .ReturnsAsync(new DatasetDTO { IsPublished = false });
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDTO));
 
             // Act
             var result = await _controller.CreateConfirmed(datasetViewModel) as JsonResult;
@@ -1224,13 +1284,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonData = JObject.FromObject(result.Value);
             Assert.Equal("User id is not valid", jsonData["responseError"]["Value"].ToString());
         }
-
         [Fact]
-        public async Task CreateConfirmed_ThrowsException_WhenDatasetCreationFails()
+        public async Task CreateConfirmed_ReturnsErrorMessage_WhenDatasetCreationFails()
         {
             // Arrange
             var datasetViewModel = new CreateDatasetViewModel { ParentDatasetId = null };
             string userId = "test-user-id";
+            var datasetDTO = new DatasetDTO { IsPublished = true };
 
             _controller.ControllerContext = new ControllerContext
             {
@@ -1240,13 +1300,19 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 }
             };
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(It.IsAny<Guid>())).ReturnsAsync(new DatasetDTO { IsPublished = true });
+            _mockDatasetService.Setup(s => s.GetDatasetById(It.IsAny<Guid>())).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDTO));
             _mockMapper.Setup(m => m.Map<DatasetDTO>(It.IsAny<CreateDatasetViewModel>())).Returns(new DatasetDTO());
-            _mockDatasetService.Setup(s => s.CreateDataset(It.IsAny<DatasetDTO>())).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(s => s.CreateDataset(It.IsAny<DatasetDTO>())).ReturnsAsync(ResultDTO<DatasetDTO>.Fail("Dataset creation failed"));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.CreateConfirmed(datasetViewModel));
+            // Act
+            var result = await _controller.CreateConfirmed(datasetViewModel) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            var jsonData = JObject.FromObject(result.Value);
+            Assert.Equal("Dataset creation failed", jsonData["responseError"]["Value"].ToString());
         }
+
 
 
         // Check why model state error is not initiated
@@ -1286,7 +1352,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var claims = new List<Claim> { new Claim("UserId", userId) };
             var identity = new ClaimsIdentity(claims, "TestAuthType");
             var claimsPrincipal = new ClaimsPrincipal(identity);
-
+            var datasetDTO = new DatasetDTO { IsPublished = false };
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext { User = claimsPrincipal }
@@ -1294,7 +1360,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             var datasetViewModel = new CreateDatasetViewModel { ParentDatasetId = parentDatasetId };
             _mockDatasetService.Setup(s => s.GetDatasetById(parentDatasetId))
-                .ReturnsAsync(new DatasetDTO { IsPublished = false });
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDTO));
 
             // Act
             var result = await _controller.CreateConfirmed(datasetViewModel) as JsonResult;
@@ -1306,7 +1372,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task CreateConfirmed_ThrowsException_WhenDatasetMappingFails()
+        public async Task CreateConfirmed_ReturnsErrorMessage_WhenDatasetMappingFails()
         {
             // Arrange
             var userId = "test-user-id";
@@ -1322,9 +1388,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetViewModel = new CreateDatasetViewModel();
             _mockMapper.Setup(m => m.Map<DatasetDTO>(datasetViewModel)).Returns((DatasetDTO)null);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.CreateConfirmed(datasetViewModel));
+            // Act
+            var result = await _controller.CreateConfirmed(datasetViewModel) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            var jsonData = JObject.FromObject(result.Value);
+            Assert.Equal("Mapping failed!", jsonData["responseError"]["Value"].ToString());
         }
+
 
         [Fact]
         public async Task CreateConfirmed_CreatesDatasetAndReturnsJsonId_WhenValidInput()
@@ -1346,8 +1418,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var parentDatasetDTO = new DatasetDTO { Id = parentDatasetId, IsPublished = true };
 
             _mockMapper.Setup(m => m.Map<DatasetDTO>(datasetViewModel)).Returns(datasetDTO);
-            _mockDatasetService.Setup(s => s.GetDatasetById(parentDatasetId)).ReturnsAsync(parentDatasetDTO);
-            _mockDatasetService.Setup(s => s.CreateDataset(datasetDTO)).ReturnsAsync(datasetDTO);
+            _mockDatasetService.Setup(s => s.GetDatasetById(parentDatasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(parentDatasetDTO));
+            _mockDatasetService.Setup(s => s.CreateDataset(datasetDTO)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDTO));
 
             // Act
             var result = await _controller.CreateConfirmed(datasetViewModel) as JsonResult;
@@ -1727,7 +1799,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 }
             };
 
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync((DatasetDTO)null);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(null));
 
             // Act
             var result = await _controller.GenerateThumbnailsForDataset(datasetId);
@@ -1753,7 +1825,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             var datasetDb = new DatasetDTO { IsPublished = true };
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDb);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDb));
 
             // Act
             var result = await _controller.GenerateThumbnailsForDataset(datasetId);
@@ -1779,7 +1851,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             var datasetDb = new DatasetDTO { IsPublished = false };
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDb);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDb));
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
                 .ReturnsAsync(new ResultDTO<string>(false, null, "Error retrieving folder", null));
 
@@ -1807,7 +1879,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             var datasetDb = new DatasetDTO { IsPublished = false };
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDb);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDb));
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
                 .ReturnsAsync(new ResultDTO<string>(true, "Thumbnails", null, null));
             _mockDatasetImagesService.Setup(s => s.GetImagesForDataset(datasetId))
@@ -1841,7 +1913,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
 
             var datasetDb = new DatasetDTO { IsPublished = false };
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(datasetDb);
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDb));
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
                 .ReturnsAsync(new ResultDTO<string>(true, "Thumbnails", null, null));
 

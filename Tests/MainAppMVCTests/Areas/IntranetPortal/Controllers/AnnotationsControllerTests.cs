@@ -7,6 +7,7 @@ using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.Annotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using SD;
@@ -46,14 +47,35 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task Annotate_InvalidDatasetImageId_ThrowsException()
+        public async Task Annotate_InvalidDatasetImageId_ReturnsRedirectWithTempDataError()
         {
             // Arrange
             var datasetImageId = Guid.Empty;
+            var refererUrl = "/previous-page";
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.Annotate(datasetImageId));
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    Request =
+            {
+                Headers = { ["Referer"] = refererUrl }
+            }
+                }
+            };
+
+            _controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+
+            // Act
+            var result = await _controller.Annotate(datasetImageId);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal(refererUrl, redirectResult.Url);
+            Assert.True(_controller.TempData.ContainsKey("AnnotateImageErrorMessage"));
+            Assert.Equal("Such image does not exist", _controller.TempData["AnnotateImageErrorMessage"]);
         }
+
 
         [Fact]
         public async Task Annotate_ValidDatasetImageId_ReturnsViewResult()
@@ -73,10 +95,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .ReturnsAsync(datasetAllImages);
 
             _mockDatasetService.Setup(service => service.GetDatasetById(datasetId))
-                .ReturnsAsync(dataset);
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(dataset));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClassesByDatasetId(datasetId))
-                .ReturnsAsync(datasetClasses);
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(datasetClasses));
 
             // Act
             var result = await _controller.Annotate(datasetImageId);
@@ -238,10 +260,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .ReturnsAsync(datasetAllImages);
 
             _mockDatasetService.Setup(service => service.GetDatasetById(datasetId))
-                .ReturnsAsync(dataset);
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(dataset));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClassesByDatasetId(datasetId))
-                .ReturnsAsync(datasetClasses);
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(datasetClasses));
 
             // Act
             var result = await _controller.Annotate(datasetImageId);

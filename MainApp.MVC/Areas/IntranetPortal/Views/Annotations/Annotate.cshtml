@@ -210,8 +210,22 @@
 
 @section Scripts {
     <script src="~/vendor/ol/dist/ol.js"></script>
+
 }
 
+@if (TempData["AnnotateImageErrorMessage"] != null)
+{
+    <script>
+        Swal.fire({
+            title: 'Error',
+            text: '@TempData["AnnotateImageErrorMessage"]',
+            icon: 'error',
+            showCancelButton: true,
+            showConfirmButton: false,
+            cancelButtonText: '@DbResHtml.T("Ok", "Resources")'
+        });
+    </script>
+}
 <script>
     $(function () {
 
