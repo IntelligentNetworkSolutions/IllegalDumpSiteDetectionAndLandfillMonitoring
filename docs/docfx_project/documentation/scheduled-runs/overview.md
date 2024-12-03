@@ -119,3 +119,131 @@ public class DetectionJobRetryAttribute : JobFilterAttribute, IElectStateFilter
     }
 }
 ```
+# Job processing in detection and training runs
+## Single queue management
+When a detection or training run is scheduled, the application ensures sequential processing:
+- If a Hangfire job is already executing a detection/training run, newly created runs will wait in the queue.
+- The next run starts only after the previous job completes.
+```csharp
+//start processing this job when the previous one finish
+string jobId = _backgroundJobClient.Enqueue(() => StartDetectionRun(detectionRunDTO));
+```
+
+## Processing status monitoring
+The application implements a robust status checking mechanism:
+- When accessing the <i>View Scheduled Runs page</i>, background checks are performed.
+- If a run is stuck in <i>processing</i> status and no corresponding Hangfire job is active(processing), the status is automatically updated to either <i>error</i> or <i>success</i> based on the job's final state.
+```csharp
+ //Get jobs parameter 
+ List<string> processingJobsRunIds = GetProcessingJobRunIds(processingJobs);
+
+ foreach (var run in allProcessingRuns)
+ {
+     if (!processingJobsDetectionRunIds.Contains(run.Id.Value.ToString()))
+     {
+         //check if the job is in failed jobs 
+         bool jobFoundInFailedJobs = await CheckFailedJobsAndUpdateStatus(run, failedJobs);
+         if (!jobFoundInFailedJobs)
+         {
+             //check if the job is in success jobs 
+             await CheckSucceededJobsAndUpdateStatus(run, succeededJobs, monitoringApi);
+         }                       
+     }
+ }
+``` 
+
+## Cancellation Scenarios
+Cancellation/deletion depend on the Hangfire job status:
+1. Queue cancellation
+- Training/Detection runs with <i>waiting</i> status can be canceled/deleted.
+- Applicable when the Hangfire job is still in the queue.
+
+2. Processing training/detection run restrictions
+- Generally, runs with <i>processing</i> status cannot be canceled/deleted. 
+```csharp
+//frontend validation
+ if (item.Status != nameof(ScheduleRunsStatus.Processing) && User.HasAuthClaim(SD.AuthClaims.DeleteTrainingRun))
+ {
+     <button class="mb-1 btn bg-gradient-danger btn-xs" id="delete_@item.Id" onclick="deleteTrainingRunModalFunction('@item.Id')" title="@DbResHtml.T("Delete Training Run", "Resources")">
+         <i class="fas fa-trash"></i>
+     </button>
+ }
+//backend validation
+ if (resultGetDetectionRunDb.Data.Status == nameof(ScheduleRunsStatus.Processing))
+     return ResultDTO.Fail("Can not delete detection run because it is in process");
+```
+
+3. Post-Execution Deletion
+- After job completion (with <i>error</i> or <i>success</i> status), deletion is possible.
+- Deletes related files (created during the execution process) to free up disk space.
+```csharp
+//delete err msg txt file from wwwroot ONLY IF status is ERROR
+if (resultGetDetectionRunDb.Data.Status == nameof(ScheduleRunsStatus.Error))
+{
+    ResultDTO<string?>? detectionRunsErrorLogsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", "Uploads\\DetectionUploads\\DetectionRunsErrorLogs");
+    if (!detectionRunsErrorLogsFolder.IsSuccess && detectionRunsErrorLogsFolder.HandleError())
+    {
+        return ResultDTO.Fail("Can not get the application settings");
+    }
+
+    if (string.IsNullOrEmpty(detectionRunsErrorLogsFolder.Data))
+    {
+        return ResultDTO.Fail("Directory path not found");
+    }
+
+    string filePath = System.IO.Path.Combine(wwwrootPath, detectionRunsErrorLogsFolder.Data);
+    if (Directory.Exists(filePath))
+    {
+        string fileName = $"{detectionRunId}_errMsg.txt";
+        string fullFilePath = System.IO.Path.Combine(filePath, fileName);
+        if (File.Exists(fullFilePath))
+        {
+            File.Delete(fullFilePath);
+        }
+    }
+}
+
+//delete error and success logs from DetectionRunCliOutDirAbsPath:
+string? successLogFile = Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"succ_{detectionRunId}.txt");
+if (File.Exists(successLogFile))
+{
+    File.Delete(successLogFile);
+}
+string? errorLogFile = Path.Combine(_MMDetectionConfiguration.GetDetectionRunCliOutDirAbsPath(), $"error_{detectionRunId}.txt");
+if (File.Exists(errorLogFile))
+{
+    File.Delete(errorLogFile);
+}
+
+//delete all files from mmdetection ins-development detections detectionRunId folder
+string? detectionRunFolderPath = Path.Combine(_MMDetectionConfiguration.GetDetectionRunOutputDirAbsPath(), detectionRunId.ToString());
+if (Directory.Exists(detectionRunFolderPath))
+{
+    try
+    {
+        Directory.Delete(detectionRunFolderPath, recursive: true);
+    }
+    catch (Exception ex)
+    {
+        return ResultDTO.Fail($"Failed to delete folder: {ex.Message}");
+    }
+}
+```
+
+4. Manual Cancellation (Super Admin Only)
+> [!WARNING]
+> <b>Caution</b>: Manual cancellation via Hangfire dashboard
+> - Not recommended in Production
+> - Requires stopping associated Task Manager background processes 
+> - May cause significant functionality issues
+
+Important Considerations
+- Only accessible to super admin users
+- Uses Hangfire dashboard UI
+- Terminates  ex. Python.exe, Conda.exe, and other related processes
+
+Best Practices:
+- Prefer built-in cancellation mechanisms
+- Avoid manual intervention during critical operations
+
+
