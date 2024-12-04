@@ -1,47 +1,62 @@
 # Dataset Management  
 
-- The initial step in detecting Your Kind of Waste.  
+_The initial step in detecting Your Kind of Waste_  
 
-## Imaging  
-  
-- Images should have the same resolution  
-  - 1280x1280 pixels  
-- Images should have the same color settings when taken  
-  
-## Image Pre Processing  
+### Image preprocessing  
 
-- ...  
+...  
 
-## Create Dataset  
+### Create Dataset  
 
-- Create a new Dataset  
+Create a new Dataset  
 
-## Create a Dataset Class
+#### Import Dataset  
 
-## Add Dataset Class to Dataset  
+##### Requirements  
 
-## Image Upload  
+- The dataset must be in a `.zip` file format.  
+- Annotation files must be named `annotations_coco.json`.  
+
+> [!WARNING]  
+> MMDetection COCO Format  
+> same as the standard COCO Format but without the **NULL Class**.  
+> [Official format documentation](https://mmdetection.readthedocs.io/en/latest/user_guides/dataset_prepare.html)  
+
+---
+
+You can import datasets in two ways: **Split Dataset** or **Non-Split Dataset**.  
+
+##### Split Dataset  
+
+For a split dataset, the `.zip` file must contain the following structure:  
+
+- Three folders named exactly:  
+- `train`  
+- `valid`  
+- `test`  
+- Each folder should include:  
+- The images for the respective split.  
+- An `_annotations.coco.json` file.  
+
+##### Non-Split Dataset  
+
+For a non-split dataset, the `.zip` file should contain:  
+
+- All images in the root directory.  
+- A single `_annotations.coco.json` file in the root directory.  
+
+#### Manual Image Upload  
 
 - Upload images one by one  
 - Through the Edit Dataset page  
   - Click on the Add new dataset image  
   - Choose an image on your device  
   - Choose the part of the image that you want to use  
-    - images must be at least 1280x1280 pixels _for now, will become a dataset setting_  
 
-## Import Dataset  
+>[!IMPORTANT]  
+> Images must be at least 1280x1280 pixels _for now, will become a dataset setting_  
 
-- Already have an annotated dataset ?
-  - we got you  
-  - you just have to convert your annotations file/s to the MMDetection COCO Format  
-  - same as the COCO Format without the NULL Class  
-- Must be in the .zip file format  
-- Directories can be split  
-- Annotations files should be named __annotations_coco.json__  
-
-## Enabling Images  
-
-### Best Practices Procedure  
+### Prepare and Annotate Procedure Best Practices  
 
 - Through the Edit Dataset page  
   - Click on the Edit Image button while hovering over an image  
@@ -56,23 +71,30 @@
 - Consult team about the annotations in the remaining disabled images  
   - think about end goal (what will be detected)  
 
-## Publish Dataset  
+### Publish Dataset  
 
-- All Images must be Enabled  
-- All Images must have Annotations _(will change)_  
-- There must be at lease a 100 images in the dataset  
+Preconditions for Dataset Publishing  
 
-## Delete Image  
+- All Images Must Be Enabled  
+  - All images associated with the dataset must be enabled. _(Optionally: Enable all images at once)_  
+- All Enabled Images Must Have Annotations _(Planned Change)_  
+  - In the current implementation, all enabled images in the dataset must have at least one annotation associated with them.  
+- Minimum Number of Images Required  
+  - The dataset must contain at least 100 images to be eligible for publishing.  
+- Minimum Number of Classes Required  
+  - The dataset must include at least 1 dataset class linked to it.  
+
+### Delete Image  
 
 - Through the Edit Dataset page  
   - Click on the Edit Image button while hovering over an image  
   - Press the Delete button  
   - Press the Delete button again in the new pop-up  
 
-## Export Dataset  
+### Export Dataset  
 
 - Export Dataset for further use  
-  - Press the Export Annotations_(will be changed)_ to COCO Format button  
+  - Press the Export Annotations _(will be changed)_ to COCO Format button  
   - Choose the options that suits your case  
     - Export Options  
       - All Images _default option_  
@@ -89,3 +111,7 @@
         - images are split randomly into the three directories  
         - each directory has a separate annotations_coco.json file for the images in that directory  
         - _current implementation works only for single class datasets_  
+
+> [!TIP]
+>
+>For more information, check the [**Dataset Management Documentation**](../../documentation/dataset-management/overview.md) here.

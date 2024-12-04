@@ -1,58 +1,20 @@
-# Detection Process User Guide  
+# Detection Process  
 
-## Table of Contents  
+The Detection Process helps you analyze aerial imagery to identify potential illegal dump sites.  
+This guide walks you through the complete workflow from uploading images to viewing detection results.  
 
-1. [Overview](#overview)  
-2. [Managing Input Images](#managing-input-images)  
-3. [Creating Detection Runs](#creating-detection-runs)  
-4. [Managing Ignore Zones](#managing-ignore-zones)  
-5. [Viewing Detection Results](#viewing-detection-results)  
-6. [Troubleshooting](#troubleshooting)  
+### Creating Detection Runs  
 
-## Overview  
-
-- The Detection Process system helps you analyze aerial imagery to identify potential illegal dump sites.  
-- This guide walks you through the complete workflow from uploading images to viewing detection results.  
-
-## Managing Input Images  
-
-### Accessing the Input Images Page  
-
-1. Navigate to the Detection section in the main menu  
-2. Click on "Detection Input Images"  
-3. The system displays a list of all available input images  
-
-### Uploading New Images  
-
-1. Click the "Add Input Image" button  
-2. Fill in the required information:  
-   - **Name**: Enter a descriptive name for the image  
-   - **Description**: Add relevant details about the image  
-   - **Date Taken**: Select when the image was captured  
-   - **Image File**: Click "Choose File" to select your image  
-3. Click "Upload" to start the upload process  
-4. Wait for the progress bar to complete  
-5. The system will automatically generate a thumbnail  
-
-### Managing Existing Images
-
-- **Preview**: Click the preview button (eye icon) to view the image  
-- **Edit**: Use the edit button (pencil icon) to modify image details  
-- **Delete**: Click the delete button (trash icon) to remove an image  
-  > Note: You cannot delete images that are associated with existing detection runs  
-
-## Creating Detection Runs  
-
-### Starting a New Detection Run  
+#### Starting a New Detection Run  
 
 1. Navigate to "Create Detection Run" in the Detection section  
 2. Fill in the detection run details:  
    - **Name**: Enter a descriptive name for the detection run  
    - **Description**: (Optional) Add additional information  
    - **Select Trained Model**: Choose from available trained models  
-   - **Select Input Image**: Choose the image to analyze  
+   - **Select Input Image**: Choose a [detection input image](detection-input-images-guide.md) to use  
 
-### Choosing Detection Parameters  
+#### Choosing Detection Parameters  
 
 1. Select a trained model:  
    - Models are listed with their training dates  
@@ -62,18 +24,20 @@
    - Preview thumbnails are available  
 3. Click "Schedule Detection" to start the process  
 
-### Monitoring Detection Progress  
+#### Monitoring Detection Progress  
 
 1. The system will display the current status:  
    - **Waiting**: Detection run is queued  
    - **Processing**: Analysis is in progress  
    - **Success**: Detection completed successfully  
    - **Error**: Detection encountered problems  
-2. You can track progress in the Map Interface  
+2. You can track progress in the Scheduled Runs page  
 
-## Managing Ignore Zones  
+## Detection Ignore Zones
 
-### Creating Ignore Zones
+### Managing Ignore Zones  
+
+#### Creating Ignore Zones
 
 1. Open the Ignore Zones tool in the map interface  
 2. Click "Add Ignore Zone"  
@@ -86,15 +50,15 @@
    - **Description**: Add purpose or notes  
    - **Enabled**: Toggle zone activation  
 
-### Using Ignore Zones  
+#### Using Ignore Zones  
 
 - Active ignore zones automatically filter detection results  
 - Areas within ignore zones are marked differently in results  
 - Toggle zones on/off to adjust detection visibility  
 
-## Viewing Detection Results  
+### Viewing Detection Results  
 
-### Accessing Results  
+#### Accessing Results  
 
 You can view results in two ways:  
 
@@ -109,7 +73,7 @@ You can view results in two ways:
    - View all completed detection runs  
    - Click to show individual run results  
 
-### Understanding Result Display  
+#### Understanding Result Display  
 
 Results are color-coded:  
 
@@ -118,7 +82,7 @@ Results are color-coded:
 - Confidence rates are displayed on each detection  
 - Hover over detections for additional details  
 
-### Filtering and Analysis  
+#### Filtering and Analysis  
 
 1. Use confidence rate sliders to filter results  
 2. Compare multiple detection runs:  
@@ -126,15 +90,15 @@ Results are color-coded:
    - Use the "Area Comparison" report  
    - View statistics and metrics  
 
-### Exporting Results  
+#### Exporting Results  
 
 1. Select detection runs to export  
 2. Choose export format (if available)  
 3. Download results for external use  
 
-## Troubleshooting  
+### Troubleshooting  
 
-### Common Issues  
+#### Common Issues  
 
 1. **Upload Failures**  
    - Check file format compatibility  
@@ -151,30 +115,6 @@ Results are color-coded:
    - Clear browser cache  
    - Check layer visibility settings  
 
-### Getting Help  
-
-- Check error messages for specific guidance  
-- Contact system administrators for persistent issues  
-- Document steps that led to any errors  
-
-### Best Practices  
-
-1. **Input Images**  
-   - Use high-resolution imagery  
-   - Ensure proper georeferencing  
-   - Keep file sizes manageable  
-
-2. **Detection Runs**  
-   - Use descriptive names  
-   - Document run parameters  
-   - Monitor progress regularly  
-
-3. **Result Analysis**  
-   - Start with default confidence thresholds  
-   - Compare multiple runs for accuracy  
-   - Document significant findings  
-
-4. **System Performance**  
-   - Limit concurrent detection runs  
-   - Clean up unused data  
-   - Regular system maintenance  
+> [!TIP]
+>
+>For more information, check the [**Detection Guide Documentation**](../../documentation/detection-process/overview.md) here.
