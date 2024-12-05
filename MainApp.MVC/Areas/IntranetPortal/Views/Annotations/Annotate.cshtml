@@ -251,7 +251,7 @@
     @if (@Model.DatasetClasses != null)
     {
         <text>
-                annotatorVars.datasetClasses = @Html.Raw(Json.Serialize(@Model.DatasetClasses));
+                    annotatorVars.datasetClasses = @Html.Raw(Json.Serialize(@Model.DatasetClasses));
         </text>
     }
 
@@ -413,23 +413,32 @@
         }
 
         annotator.addControl(mousePositionAnnotatorControl());
+$.ajax({
+    type: "GET",
+    url: "@Url.Action("GetImageAnnotations", "Annotations", new { Area = "IntranetPortal" })",
+    data: { datasetImageId: "@Model.DatasetImage.Id" },
+    success: function (response) {
+        if (response.responseSuccess) {
+            const imageAnnotations = response.data; 
 
-        $.ajax({
-            type: "GET",
-            url: "@Url.Action("GetImageAnnotations", "Annotations", new { Area = "IntranetPortal" })",
-            data: { datasetImageId: "@Model.DatasetImage.Id" },
-            success: function (data) {
+            if (Array.isArray(imageAnnotations)) {
+                if (imageAnnotations.length === 0) {
 
-                console.info(data);
-                AddImageAnnotationsToAnnotator(data);
-            },
-            error: function (req, status, error) {
-                Swal.fire({
-                    icon: 'error',
-                    text: `@DbResHtml.T("Something went wrong!", "Resources") - ${req.status}`
-                })
+                } else {
+                    AddImageAnnotationsToAnnotator(imageAnnotations);
+                }
+            } else {
+
+                console.error("Expected an array of annotations but got:", imageAnnotations);
             }
-        });
+        } else {
+            console.error("Failed to retrieve annotations:", response.errMsg || "Unknown error");
+        }
+    },
+    error: function (req, status, error) {
+        console.error("AJAX request failed:", status, error);
+    }
+});
 
         function featureSelected(feature) {
             annotatorVars.selectedFeature = feature;
@@ -483,23 +492,39 @@
         $("#btnDeleteAnnotation").click(deleteSelectedFeature);
         $("#saveToolBtn").click(saveAnnotations);
 
+        
         function AddImageAnnotationsToAnnotator(imageAnnotations) {
+    var jsonReader = new ol.format.GeoJSON();
 
-            var jsonReader = new ol.format.GeoJSON();
+    imageAnnotations.forEach(function (imageAnnotation) {
+        try {
+            // Parse geoJson if it's a string
+            var geoJsonData = typeof imageAnnotation.geoJson === 'string' 
+                ? JSON.parse(imageAnnotation.geoJson) 
+                : imageAnnotation.geoJson;
 
-            imageAnnotations.forEach(function (imageAnnotation) {
-                var feature = jsonReader.readFeature(imageAnnotation.geoJson, { dataProjection: annotationsProjection, featureProjection: imageProjection });
+            // Check if geoJsonData is valid and has a type property
+            if (!geoJsonData || !geoJsonData.type) {
+                throw new Error("Invalid GeoJSON data: " + JSON.stringify(geoJsonData));
+            }
 
-                feature.set("id", imageAnnotation.id);
-                feature.set("datasetClassId", imageAnnotation.datasetClassId);
-                feature.set("createdOn", imageAnnotation.createdOn);
-                feature.set("isEnabled", imageAnnotation.isEnabled);
-                feature.set("updatedOn", imageAnnotation.updatedOn);
-
-                annotationsVectorSource.addFeature(feature);
+            var feature = jsonReader.readFeature(geoJsonData, { 
+                dataProjection: annotationsProjection, 
+                featureProjection: imageProjection 
             });
 
+            feature.set("id", imageAnnotation.id);
+            feature.set("datasetClassId", imageAnnotation.datasetClassId);
+            feature.set("createdOn", imageAnnotation.createdOn);
+            feature.set("isEnabled", imageAnnotation.isEnabled);
+            feature.set("updatedOn", imageAnnotation.updatedOn);
+
+            annotationsVectorSource.addFeature(feature);
+        } catch (error) {
+            console.error("Error processing annotation:", error);
         }
+    });
+}
 
         let drawBboxInteraction; // global so we can remove it later
         function addDrawBboxInteraction() {

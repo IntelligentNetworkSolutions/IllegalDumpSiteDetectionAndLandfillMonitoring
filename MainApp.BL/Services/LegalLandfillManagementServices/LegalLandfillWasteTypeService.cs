@@ -74,7 +74,11 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
             try
             {
                 LegalLandfillWasteType legalLandfillWasteTypeEntity = _mapper.Map<LegalLandfillWasteType>(legalLandfillWasteTypeDTO);
-                var resultGetWasteImports = await _legalLandfillWasteImportRepository.GetAll() ?? throw new Exception("Object not found");
+                var resultGetWasteImports = await _legalLandfillWasteImportRepository.GetAll();
+
+                if (resultGetWasteImports.IsSuccess == false && resultGetWasteImports.HandleError())
+                    return ResultDTO.Fail(resultGetWasteImports.ErrMsg!);
+
                 var isWasteTypeUsed = resultGetWasteImports.Data.Any(x => x.LegalLandfillWasteTypeId == legalLandfillWasteTypeEntity.Id);
 
                 if (isWasteTypeUsed)

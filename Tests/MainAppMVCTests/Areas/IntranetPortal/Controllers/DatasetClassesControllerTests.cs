@@ -69,18 +69,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task Index_ServiceThrowsException_ReturnsErrorView()
-        {
-            // Arrange
-            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ThrowsAsync(new Exception("Object not found"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.Index());
-        }
-
-
-        [Fact]
         public async Task CreateClass_ModelStateIsInvalid_ReturnsErrorJson()
         {
             // Arrange
@@ -155,7 +143,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Some error occurred", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("An error occurred. Dataset class was not added.", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -176,7 +164,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Dataset class was not added", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("An error occurred. Dataset class was not added.", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -459,7 +447,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var classId = Guid.NewGuid();
-            var errorMessage = "This dataset class can not be deleted because there are subclasses. Delete first the subclasses!";
+            var errorMessage = "Subclasses for this class exist. Please delete them first.";
             var childrenClassesList = new List<DatasetClassDTO> { new DatasetClassDTO { Id = Guid.NewGuid(), ParentClassId = classId } };
             var datasetDatasetClass = new List<Dataset_DatasetClassDTO>();
             var datasets = new List<DatasetDTO>();
@@ -552,7 +540,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var classId = Guid.NewGuid();
-            var errorMessage = "This dataset class cannot be deleted because there are subclasses.";
+            var errorMessage = "Subclasses for this class exist. Please delete them first.";
             var childrenClassesList = new List<DatasetClassDTO>
             {
                 new DatasetClassDTO { Id = Guid.NewGuid(), ParentClassId = classId }
@@ -586,7 +574,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var classId = Guid.NewGuid();
-            var errorMessage = "This dataset class is in use and cannot be deleted.";
+            var errorMessage = "Class is currently in use in datasets.";
             var datasetList = new List<DatasetDTO>
     {
         new DatasetDTO { Id = Guid.NewGuid(), Name = "Dataset1" },
@@ -647,7 +635,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Dataset class was not deleted due to an other error.", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("Dataset class was not deleted due to another error.", jsonData["responseError"]["Value"].ToString());
         }
 
 

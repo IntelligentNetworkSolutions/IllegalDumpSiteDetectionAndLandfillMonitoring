@@ -21,8 +21,6 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
         Task<ResultDTO<List<DatasetDTO>>> GetAllDatasets();
         Task<ResultDTO<List<DatasetDTO>>> GetAllPublishedDatasets();
         Task<ResultDTO<DatasetDTO>> GetDatasetById(Guid datasetId);
-        Task<CreateDatasetDTO> FillDatasetDto(CreateDatasetDTO dto);
-        Task<ResultDTO<CreateDatasetDTO>> FillDatasetDtoResult(CreateDatasetDTO dto); // kj
         Task<ResultDTO<EditDatasetDTO>> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize);
         Task<ResultDTO<DatasetDTO>> GetDatasetDTOFullyIncluded(Guid datasetId, bool track = false);
         #endregion
@@ -42,7 +40,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
 
         #region Delete
         Task<ResultDTO<int>> DeleteDatasetClassForDataset(Guid selectedClassId, Guid datasetId, string userId);
-        Task<ResultDTO<int>> DeleteDataset(Guid datasetId);
+        //Task<ResultDTO<int>> DeleteDataset(Guid datasetId);
         Task<ResultDTO> DeleteDatasetCompletelyIncluded(Guid datasetId);
         #endregion
 

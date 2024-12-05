@@ -56,12 +56,20 @@ namespace MainApp.BL.Services
             return new ResultDTO<bool>(res, res, "", null);
         }
 
-        public async Task<List<ImageAnnotationDTO>> GetImageAnnotationsByImageId(Guid datasetImageId)
+        public async Task<ResultDTO<List<ImageAnnotationDTO>>> GetImageAnnotationsByImageId(Guid datasetImageId)
         {
-            var datasetImageDb = await _imageAnnotationsRepository.GetAll(filter: x => x.DatasetImageId == datasetImageId);
-            var datasetImages = datasetImageDb.Data ?? new List<ImageAnnotation>();
-            var datasetImagesDto = _mapper.Map<List<ImageAnnotationDTO>>(datasetImages) ?? throw new Exception("Dataset Images Annotatons list not found");
-            return datasetImagesDto;
+            var datasetImageResult = await _imageAnnotationsRepository.GetAll(filter: x => x.DatasetImageId == datasetImageId);
+            if (datasetImageResult.IsSuccess == false && datasetImageResult.HandleError())
+                return ResultDTO<List<ImageAnnotationDTO>>.Fail(datasetImageResult.ErrMsg!);
+
+            var datasetImagesDto = _mapper.Map<List<ImageAnnotationDTO>>(datasetImageResult.Data);
+
+            if (datasetImagesDto == null || !datasetImagesDto.Any())
+            {
+                return ResultDTO<List<ImageAnnotationDTO>>.Fail("Dataset Images Annotations list not found");
+            }
+
+            return ResultDTO<List<ImageAnnotationDTO>>.Ok(datasetImagesDto);
         }
     }
 }

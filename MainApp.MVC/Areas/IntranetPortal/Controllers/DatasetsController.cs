@@ -46,101 +46,157 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDatasets))]
         public async Task<IActionResult> Index()
         {
-            var datasetListResult = await _datasetService.GetAllDatasets();
+            try
+            {
+                var datasetListResult = await _datasetService.GetAllDatasets();
 
-            List<DatasetViewModel> model = _mapper.Map<List<DatasetViewModel>>(datasetListResult.Data);
+                if (datasetListResult.IsSuccess == false && datasetListResult.HandleError())
+                {
+                    var errorPath = _configuration["ErrorViewsPath:Error"];
+                    if (errorPath != null)
+                    {
+                        return BadRequest();
+                    }
+                    return Redirect(errorPath);
+                }
 
-            List<DatasetViewModel> parentDatasetsList = model.Where(d => d.ParentDatasetId == null).OrderBy(x => x.Name).ToList();
+                List<DatasetViewModel> model = _mapper.Map<List<DatasetViewModel>>(datasetListResult.Data);
 
-            return View(model);
+                if (model == null)
+                {
+                    var errorPath = _configuration["ErrorViewsPath:Error404"];
+                    if (errorPath != null)
+                    {
+                        return BadRequest();
+                    }
+                    return Redirect(errorPath);
+                }
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                var errorPath = _configuration["ErrorViewsPath:Error"];
+                if (errorPath != null)
+                {
+                    return BadRequest();
+                }
+                return Redirect(errorPath);
+            }
         }
+        // Remove maybe ? 
         public async Task<List<DatasetDTO>> GetAllDatasets()
         {
-            var datasets = await _datasetService.GetAllDatasets() ?? throw new Exception("Object not found");
+            var datasets = await _datasetService.GetAllDatasets();
             return datasets.Data;
         }
 
         public async Task<ResultDTO<List<DatasetDTO>>> GetAllPublishedDatasets()
         {
-            ResultDTO<List<DatasetDTO>>? resultGetEntities = await _datasetService.GetAllPublishedDatasets();
-            if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
-                return ResultDTO<List<DatasetDTO>>.Fail(resultGetEntities.ErrMsg!);
+            try
+            {
+                ResultDTO<List<DatasetDTO>>? resultGetEntities = await _datasetService.GetAllPublishedDatasets();
 
-            if (resultGetEntities.Data == null)
-                return ResultDTO<List<DatasetDTO>>.Fail("Published datasets not found");
+                if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
+                    return ResultDTO<List<DatasetDTO>>.Fail(resultGetEntities.ErrMsg!);
 
-            return ResultDTO<List<DatasetDTO>>.Ok(resultGetEntities.Data);
+                if (resultGetEntities.Data == null)
+                    return ResultDTO<List<DatasetDTO>>.Fail("Published datasets not found");
 
+                return ResultDTO<List<DatasetDTO>>.Ok(resultGetEntities.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<List<DatasetDTO>>.Fail("An unexpected error occurred while retrieving published datasets.");
+            }
         }
+
 
 
         [HttpPost]
         public async Task<IActionResult> GetParentAndChildrenDatasets(Guid currentDatasetId)
         {
-            if (currentDatasetId == Guid.Empty)
-                return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
-
-            ResultDTO<List<DatasetDTO>> allDatasetsDb = await _datasetService.GetAllDatasets();
-
-            if (allDatasetsDb.IsSuccess == false && allDatasetsDb.HandleError() || allDatasetsDb.Data is null)
-                return Json(new { responseError = DbResHtml.T("No datasets found.", "Resources") });
-
-
-            ResultDTO<DatasetDTO> currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId);
-            if (currentDatasetDb.IsSuccess == false && currentDatasetDb.HandleError() || currentDatasetDb == null)
-                return Json(new { responseError = DbResHtml.T("Invalid current dataset", "Resources") });
-
-            List<DatasetDTO> childrenDatasets = allDatasetsDb.Data.Where(x => x.ParentDatasetId == currentDatasetId).ToList();
-            if (!childrenDatasets.Any())
-                return Json(new { responseError = DbResHtml.T("No child datasets found.", "Resources") });
-
-            DatasetDTO? parentDataset = currentDatasetDb.Data.ParentDataset;
-            if (parentDataset == null)
+            try
             {
-                DatasetDTO datasetDTO = new();
-                return Json(new { parent = datasetDTO, childrenList = childrenDatasets, currentDataset = currentDatasetDb });
+                if (currentDatasetId == Guid.Empty)
+                    return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
+
+                ResultDTO<List<DatasetDTO>> allDatasetsDb = await _datasetService.GetAllDatasets();
+
+                if (allDatasetsDb.IsSuccess == false && allDatasetsDb.HandleError() || allDatasetsDb.Data is null)
+                    return Json(new { responseError = DbResHtml.T("No datasets found.", "Resources") });
+
+                ResultDTO<DatasetDTO> currentDatasetDb = await _datasetService.GetDatasetById(currentDatasetId);
+                if (currentDatasetDb.IsSuccess == false && currentDatasetDb.HandleError() || currentDatasetDb == null)
+                    return Json(new { responseError = DbResHtml.T("Invalid current dataset", "Resources") });
+
+                List<DatasetDTO> childrenDatasets = allDatasetsDb.Data.Where(x => x.ParentDatasetId == currentDatasetId).ToList();
+                if (!childrenDatasets.Any())
+                    return Json(new { responseError = DbResHtml.T("No child datasets found.", "Resources") });
+
+                DatasetDTO? parentDataset = currentDatasetDb.Data.ParentDataset;
+                if (parentDataset == null)
+                {
+                    DatasetDTO datasetDTO = new();
+                    return Json(new { parent = datasetDTO, childrenList = childrenDatasets, currentDataset = currentDatasetDb });
+                }
+
+                return Json(new { parent = parentDataset, childrenList = childrenDatasets, currentDataset = currentDatasetDb });
             }
-
-            return Json(new { parent = parentDataset, childrenList = childrenDatasets, currentDataset = currentDatasetDb });
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T("An unexpected error occurred while retrieving datasets.", "Resources") });
+            }
         }
-
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.AddDataset))]
         public async Task<IActionResult> CreateConfirmed(CreateDatasetViewModel datasetViewModel)
         {
-            string? userId = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(userId))
-                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
-
-            if (!ModelState.IsValid)
-                return Json(new { responseError = DbResHtml.T("Dataset model is not valid", "Resources") });
-
-            ResultDTO<DatasetDTO> selectedParentDataset;
-            if (datasetViewModel.ParentDatasetId != null)
+            try
             {
-                selectedParentDataset = await _datasetService.GetDatasetById(datasetViewModel.ParentDatasetId.Value);
-                if (selectedParentDataset.IsSuccess == false && selectedParentDataset.HandleError())
-                    return Json(new { responseError = DbResHtml.T(selectedParentDataset.ErrMsg!, "Resources") });
+                string? userId = User.FindFirstValue("UserId");
+                if (string.IsNullOrEmpty(userId))
+                    return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
 
-                if (selectedParentDataset.Data.IsPublished == false)
-                    return Json(new { responseError = DbResHtml.T("Selected parent dataset is not published. You can not add subdataset for unpublished datasets!", "Resources") });
+                if (!ModelState.IsValid)
+                    return Json(new { responseError = DbResHtml.T("Dataset model is not valid", "Resources") });
+
+                ResultDTO<DatasetDTO> selectedParentDataset;
+                if (datasetViewModel.ParentDatasetId != null)
+                {
+                    selectedParentDataset = await _datasetService.GetDatasetById(datasetViewModel.ParentDatasetId.Value);
+                    if (selectedParentDataset.IsSuccess == false && selectedParentDataset.HandleError())
+                        return Json(new { responseError = DbResHtml.T(selectedParentDataset.ErrMsg!, "Resources") });
+
+                    if (selectedParentDataset.Data.IsPublished == false)
+                        return Json(new { responseError = DbResHtml.T("Selected parent dataset is not published. You can not add subdataset for unpublished datasets!", "Resources") });
+                }
+
+                datasetViewModel.CreatedById = userId;
+                DatasetDTO dataSetDto = _mapper.Map<DatasetDTO>(datasetViewModel);
+                if (dataSetDto is null)
+                    return Json(new { responseError = DbResHtml.T("Mapping failed!", "Resources") });
+
+                var insertedDatasetDTO = await _datasetService.CreateDataset(dataSetDto);
+
+                if (insertedDatasetDTO.IsSuccess == false && insertedDatasetDTO.HandleError())
+                    return Json(new { responseError = DbResHtml.T(insertedDatasetDTO.ErrMsg!, "Resources") });
+
+                if (datasetViewModel.ParentDatasetId != null)
+                {
+                    var inheritedParrentClass = await _datasetService.AddInheritedParentClasses(insertedDatasetDTO.Data.Id, datasetViewModel.ParentDatasetId.Value);
+
+                    if (inheritedParrentClass.IsSuccess == false && inheritedParrentClass.HandleError())
+                        return Json(new { responseError = DbResHtml.T($"{inheritedParrentClass.ErrMsg}", "Resources") });
+                }
+
+                return Json(new { id = insertedDatasetDTO.Data.Id });
             }
-
-            datasetViewModel.CreatedById = userId;
-            DatasetDTO dataSetDto = _mapper.Map<DatasetDTO>(datasetViewModel);
-            if (dataSetDto is null)
-                return Json(new { responseError = DbResHtml.T("Mapping failed!", "Resources") });
-
-            var insertedDatasetDTO = await _datasetService.CreateDataset(dataSetDto);
-
-            if (insertedDatasetDTO.IsSuccess == false && insertedDatasetDTO.HandleError())
-                return Json(new { responseError = DbResHtml.T(insertedDatasetDTO.ErrMsg!, "Resources") });
-
-            if (datasetViewModel.ParentDatasetId != null)
-                await _datasetService.AddInheritedParentClasses(insertedDatasetDTO.Data.Id, datasetViewModel.ParentDatasetId.Value);
-
-            return Json(new { id = insertedDatasetDTO.Data.Id });
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T("An unexpected error occurred while creating the dataset. Please try again later.", "Resources") });
+            }
         }
 
         // TODO: Create ViewModel
@@ -176,108 +232,133 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public async Task<IActionResult> Edit(Guid datasetId, int? page, string? SearchByImageName, bool? SearchByIsAnnotatedImage,
                                               bool? SearchByIsEnabledImage, int? SearchByShowNumberOfImages, string? OrderByImages)
         {
-            if (datasetId == Guid.Empty)
+            try
             {
-                TempData["EditDatasetErrorMessage"] = "Such dataset does not exist";
+                if (datasetId == Guid.Empty)
+                {
+                    TempData["EditDatasetErrorMessage"] = "Such dataset does not exist";
+                    return RedirectToAction("Index");
+                }
+
+                var datasetDb = await _datasetService.GetDatasetById(datasetId);
+
+                if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                {
+                    TempData["EditDatasetErrorMessage"] = datasetDb.ErrMsg;
+                    return RedirectToAction("Index");
+                }
+
+                if (datasetDb.Data is null)
+                {
+                    TempData["EditDatasetErrorMessage"] = "Dataset is not found";
+                    return RedirectToAction("Index");
+                }
+
+                int pageSize = SearchByShowNumberOfImages ?? 20;
+                int pageNumber = page ?? 1;
+
+                ResultDTO<EditDatasetDTO> resultGetObjectForEditDataset = await _datasetService.GetObjectForEditDataset(
+                    datasetId, SearchByImageName, SearchByIsAnnotatedImage, SearchByIsEnabledImage, OrderByImages, pageNumber, pageSize);
+
+                if (resultGetObjectForEditDataset.IsSuccess == false && resultGetObjectForEditDataset.HandleError())
+                {
+                    TempData["EditDatasetErrorMessage"] = resultGetObjectForEditDataset.ErrMsg;
+                    return RedirectToAction("Index");
+                }
+
+                var dto = resultGetObjectForEditDataset.Data;
+
+                IPagedList<DatasetImageDTO> pagedImagesList = new StaticPagedList<DatasetImageDTO>(
+                    dto.ListOfDatasetImages, pageNumber, pageSize, dto.NumberOfDatasetImages);
+
+                EditDatasetViewModel model = _mapper.Map<EditDatasetViewModel>(dto);
+                model.PagedImagesList = pagedImagesList;
+                model.SearchByImageName = SearchByImageName;
+                model.SearchByIsAnnotatedImage = SearchByIsAnnotatedImage;
+                model.SearchByIsEnabledImage = SearchByIsEnabledImage;
+                model.SearchByShowNumberOfImages = SearchByShowNumberOfImages;
+                model.OrderByImages = OrderByImages;
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                TempData["EditDatasetErrorMessage"] = "An unexpected error occurred while editing the dataset. Please try again later.";
                 return RedirectToAction("Index");
             }
-            var datasetDb = await _datasetService.GetDatasetById(datasetId);
-
-            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
-            {
-                TempData["EditDatasetErrorMessage"] = datasetDb.ErrMsg;
-                return RedirectToAction("Index");
-            }
-
-            if (datasetDb.Data is null)
-            {
-                TempData["EditDatasetErrorMessage"] = "Dataset is not found";
-                return RedirectToAction("Index");
-            }
-
-            int pageSize = SearchByShowNumberOfImages ?? 20;
-            int pageNumber = page ?? 1;
-
-            ResultDTO<EditDatasetDTO> resultGetObjectForEditDataset = await _datasetService.GetObjectForEditDataset(
-                datasetId, SearchByImageName, SearchByIsAnnotatedImage, SearchByIsEnabledImage, OrderByImages, pageNumber, pageSize);
-
-            if (resultGetObjectForEditDataset.IsSuccess == false && resultGetObjectForEditDataset.HandleError())
-            {
-                TempData["EditDatasetErrorMessage"] = resultGetObjectForEditDataset.ErrMsg;
-                return RedirectToAction("Index");
-            }
-
-            var dto = resultGetObjectForEditDataset.Data;
-
-            IPagedList<DatasetImageDTO> pagedImagesList = new StaticPagedList<DatasetImageDTO>(
-                dto.ListOfDatasetImages, pageNumber, pageSize, dto.NumberOfDatasetImages);
-
-            EditDatasetViewModel model = _mapper.Map<EditDatasetViewModel>(dto);
-            model.PagedImagesList = pagedImagesList;
-            model.SearchByImageName = SearchByImageName;
-            model.SearchByIsAnnotatedImage = SearchByIsAnnotatedImage;
-            model.SearchByIsEnabledImage = SearchByIsEnabledImage;
-            model.SearchByShowNumberOfImages = SearchByShowNumberOfImages;
-            model.OrderByImages = OrderByImages;
-
-            return View(model);
         }
+
 
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.EditDatasetImage))]
         public async Task<IActionResult> EnableAllImages(Guid datasetId)
         {
-            if (datasetId == Guid.Empty)
+            try
             {
-                return NotFound();
+                if (datasetId == Guid.Empty)
+                {
+                    return Json(new { responseError = DbResHtml.T($"Invalid dataset id.", "Resources") });
+                }
+
+                ResultDTO updateDataset = await _datasetService.EnableAllImagesInDataset(datasetId);
+
+                if (updateDataset.IsSuccess == false && updateDataset.HandleError())
+                {
+                    return Json(new { responseError = DbResHtml.T("An error occurred while enabling images.", "Resources") });
+                }
+
+                return Json(new { responseSuccess = DbResHtml.T("All dataset images have been enabled", "Resources") });
             }
-
-            ResultDTO updateDataset = await _datasetService.EnableAllImagesInDataset(datasetId);
-
-            if (updateDataset.IsSuccess == false && updateDataset.HandleError())
-                return Json(new { responseError = DbResHtml.T("An error occured while enabeling images.", "Resources") });
-
-            return Json(new { responseSuccess = DbResHtml.T("All dataset images have been enabled", "Resources") });
-
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T("An unexpected error occurred while enabling the images. Please try again later.", "Resources") });
+            }
         }
-
 
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.PublishDataset))]
         public async Task<IActionResult> PublishDataset(Guid datasetId)
         {
-            string? userId = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(userId))
-                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            try
+            {
+                string? userId = User.FindFirstValue("UserId");
+                if (string.IsNullOrEmpty(userId))
+                    return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
 
-            if (datasetId == Guid.Empty)
-                return Json(new { responseError = DbResHtml.T("Incorect dataset id", "Resources") });
+                if (datasetId == Guid.Empty)
+                    return Json(new { responseError = DbResHtml.T("Incorrect dataset id", "Resources") });
 
-            ResultDTO<DatasetDTO> datasetDb = await _datasetService.GetDatasetById(datasetId);
+                ResultDTO<DatasetDTO> datasetDb = await _datasetService.GetDatasetById(datasetId);
 
-            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
-                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
+                if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                    return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
 
-            if (datasetDb.Data is null)
-                return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
+                if (datasetDb.Data is null)
+                    return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
 
+                ResultDTO<int> numberOfImagesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100);
+                ResultDTO<int> numberOfClassesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1);
 
-            ResultDTO<int> nubmerOfImagesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100);
-            ResultDTO<int> nubmerOfClassesNeededToPublishDataset = await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1);
-            if (datasetDb.Data.IsPublished == true)
-                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
+                if (datasetDb.Data.IsPublished == true)
+                    return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
-            ResultDTO<int> isPublished = await _datasetService.PublishDataset(datasetId, userId);
-            if (isPublished.IsSuccess == true && isPublished.Data == 1 && string.IsNullOrEmpty(isPublished.ErrMsg))
-                return Json(new { responseSuccess = DbResHtml.T("Successfully published dataset", "Resources") });
+                ResultDTO<int> isPublished = await _datasetService.PublishDataset(datasetId, userId);
+                if (isPublished.IsSuccess == true && isPublished.Data == 1 && string.IsNullOrEmpty(isPublished.ErrMsg))
+                    return Json(new { responseSuccess = DbResHtml.T("Successfully published dataset", "Resources") });
 
-            if (isPublished.IsSuccess == false && isPublished.Data == 2)
-                return Json(new { responseError = DbResHtml.T($"Insert at least {nubmerOfImagesNeededToPublishDataset.Data} images, {nubmerOfClassesNeededToPublishDataset.Data} class/es and annotate all enabled images to publish the dataset", "Resources") });
+                if (isPublished.IsSuccess == false && isPublished.Data == 2)
+                    return Json(new { responseError = DbResHtml.T($"Insert at least {numberOfImagesNeededToPublishDataset.Data} images, {numberOfClassesNeededToPublishDataset.Data} class/es and annotate all enabled images to publish the dataset", "Resources") });
 
-            return Json(new { responseError = DbResHtml.T("Dataset was not published", "Resources") });
+                return Json(new { responseError = DbResHtml.T("Dataset was not published", "Resources") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T("An unexpected error occurred while publishing the dataset. Please try again later.", "Resources") });
+            }
         }
+
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetClass))]
@@ -332,7 +413,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 ResultDTO<string> resultExportDatasetAsCoco =
                     await _datasetService.ExportDatasetAsCOCOFormat(datasetId, exportOption, downloadLocation, asSplit);
 
-                if (!resultExportDatasetAsCoco.IsSuccess)
+                if (resultExportDatasetAsCoco.IsSuccess == false && resultExportDatasetAsCoco.HandleError())
                     return Json(new { responseError = DbResHtml.T(resultExportDatasetAsCoco.ErrMsg, "Resources") });
 
                 zipFilePath = resultExportDatasetAsCoco.Data;
@@ -355,12 +436,21 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public async Task<IActionResult> CleanupTempFilesFromExportDataset(string fileGuid)
         {
-            var filePath = Path.Combine(Path.GetTempPath(), fileGuid);
-            if (System.IO.File.Exists(filePath))
+            try
             {
-                System.IO.File.Delete(filePath);
+                var filePath = Path.Combine(Path.GetTempPath(), fileGuid);
+
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
+
+                return Ok();
             }
-            return Ok();
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T(ex.Message, "Resources") });
+            }
         }
 
         #endregion
@@ -397,7 +487,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 ResultDTO<DatasetDTO> importDatasetResult =
                     await _datasetService.ImportDatasetCocoFormatedAtDirectoryPath(datasetName, outputJsonPath, userId, _webHostEnvironment.WebRootPath, allowUnannotatedImages);
 
-                if (!importDatasetResult.IsSuccess)
+                if (importDatasetResult.IsSuccess == false && importDatasetResult.HandleError())
                 {
                     CleanUpFoldersFromImportingDataset(tempFilePath, outputJsonPath);
                     return Json(new { responseError = DbResHtml.T("Error importing dataset file", "Resources") });
@@ -437,36 +527,44 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.AddDatasetClass))]
         public async Task<IActionResult> AddDatasetClass(Guid selectedClassId, Guid datasetId)
         {
-            string? userId = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(userId))
-                return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
+            try
+            {
+                string? userId = User.FindFirstValue("UserId");
+                if (string.IsNullOrEmpty(userId))
+                    return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
 
-            if (datasetId == Guid.Empty)
-                return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
+                if (datasetId == Guid.Empty)
+                    return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
 
-            if (selectedClassId == Guid.Empty)
-                return Json(new { responseError = DbResHtml.T("Invalid dataset class id", "Resources") });
+                if (selectedClassId == Guid.Empty)
+                    return Json(new { responseError = DbResHtml.T("Invalid dataset class id", "Resources") });
 
-            ResultDTO<DatasetDTO?> datasetDb = await _datasetService.GetDatasetById(datasetId);
+                ResultDTO<DatasetDTO?> datasetDb = await _datasetService.GetDatasetById(datasetId);
 
-            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
-                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
+                if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                    return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
 
-            if (datasetDb.Data is null)
-                return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
+                if (datasetDb.Data is null)
+                    return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
 
-            if (datasetDb.Data.IsPublished == true)
-                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
+                if (datasetDb.Data.IsPublished == true)
+                    return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
-            ResultDTO<int> isClassAdded = await _datasetService.AddDatasetClassForDataset(selectedClassId, datasetId, userId);
-            if (isClassAdded.IsSuccess == true && isClassAdded.Data == 1 && string.IsNullOrEmpty(isClassAdded.ErrMsg))
-                return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset class", "Resources") });
+                ResultDTO<int> isClassAdded = await _datasetService.AddDatasetClassForDataset(selectedClassId, datasetId, userId);
+                if (isClassAdded.IsSuccess == true && isClassAdded.Data == 1 && string.IsNullOrEmpty(isClassAdded.ErrMsg))
+                    return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset class", "Resources") });
 
-            if (!string.IsNullOrEmpty(isClassAdded.ErrMsg))
-                return Json(new { responseError = DbResHtml.T(isClassAdded.ErrMsg, "Resources") });
+                if (isClassAdded.IsSuccess == false && isClassAdded.HandleError())
+                    return Json(new { responseError = DbResHtml.T("Dataset class was not added.", "Resources") });
 
-            return Json(new { responseError = DbResHtml.T("Dataset class was not added", "Resources") });
+                return Json(new { responseError = DbResHtml.T("Dataset class was not added", "Resources") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T("An unexpected error occurred while adding the dataset class. Please try again later.", "Resources") });
+            }
         }
+
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteDatasetClass))]
@@ -482,25 +580,32 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetClassId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset class id", "Resources") });
 
-            ResultDTO<DatasetDTO?> datasetDb = await _datasetService.GetDatasetById(datasetId);
+            try
+            {
+                ResultDTO<DatasetDTO?> datasetDb = await _datasetService.GetDatasetById(datasetId);
 
-            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
-                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
+                if (datasetDb.IsSuccess == false)
+                    return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
 
-            if (datasetDb.Data is null)
-                return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
+                if (datasetDb.Data is null)
+                    return Json(new { responseError = DbResHtml.T("Dataset is not found", "Resources") });
 
-            if (datasetDb.Data.IsPublished == true)
-                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
+                if (datasetDb.Data.IsPublished == true)
+                    return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
-            var isClassDeleted = await _datasetService.DeleteDatasetClassForDataset(datasetClassId, datasetId, userId);
-            if (isClassDeleted.IsSuccess == true && isClassDeleted.Data == 1 && string.IsNullOrEmpty(isClassDeleted.ErrMsg))
+                var isClassDeleted = await _datasetService.DeleteDatasetClassForDataset(datasetClassId, datasetId, userId);
+                if (isClassDeleted.IsSuccess == false && isClassDeleted.HandleError() || isClassDeleted.Data != 1 || !string.IsNullOrEmpty(isClassDeleted.ErrMsg))
+                {
+                    return Json(new { responseError = DbResHtml.T(isClassDeleted.ErrMsg ?? "Error deleting dataset class", "Resources") });
+                }
+
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset class", "Resources") });
 
-            if (!string.IsNullOrEmpty(isClassDeleted.ErrMsg))
-                return Json(new { responseError = DbResHtml.T(isClassDeleted.ErrMsg, "Resources") });
-
-            return Json(new { responseError = DbResHtml.T("Some error occured", "Resources") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T($"{ex.Message}", "Resources") });
+            }
         }
 
         [HttpPost]
@@ -514,19 +619,31 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (datasetId == Guid.Empty)
                 return Json(new { responseError = DbResHtml.T("Invalid dataset id", "Resources") });
 
-            ResultDTO<int> isSetAnnontationsPerSubclass =
-                await _datasetService.SetAnnotationsPerSubclass(datasetId, annotationsPerSubclass, userId);
+            try
+            {
+                ResultDTO<int> isSetAnnontationsPerSubclass =
+                    await _datasetService.SetAnnotationsPerSubclass(datasetId, annotationsPerSubclass, userId);
 
-            if (isSetAnnontationsPerSubclass.IsSuccess == true
-                && isSetAnnontationsPerSubclass.Data == 1
-                && string.IsNullOrEmpty(isSetAnnontationsPerSubclass.ErrMsg))
-                return Json(new { responseSuccess = DbResHtml.T("Now you can add classes for this dataset", "Resources") });
+                if (isSetAnnontationsPerSubclass.IsSuccess == true
+                    && isSetAnnontationsPerSubclass.Data == 1
+                    && string.IsNullOrEmpty(isSetAnnontationsPerSubclass.ErrMsg))
+                {
+                    return Json(new { responseSuccess = DbResHtml.T("Now you can add classes for this dataset", "Resources") });
+                }
 
-            if (!string.IsNullOrEmpty(isSetAnnontationsPerSubclass.ErrMsg))
-                return Json(new { responseError = DbResHtml.T(isSetAnnontationsPerSubclass.ErrMsg, "Resources") });
+                if (!string.IsNullOrEmpty(isSetAnnontationsPerSubclass.ErrMsg) && isSetAnnontationsPerSubclass.IsSuccess == false && isSetAnnontationsPerSubclass.HandleError())
+                {
+                    return Json(new { responseError = DbResHtml.T(isSetAnnontationsPerSubclass.ErrMsg, "Resources") });
+                }
 
-            return Json(new { responseError = DbResHtml.T("Choosed option was not saved", "Resources") });
+                return Json(new { responseError = DbResHtml.T("Choosed option was not saved", "Resources") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T($"{ex.Message}", "Resources") });
+            }
         }
+
         #endregion
 
         private string ProcessZipFile(string zipFilePath, string webRootPath)
@@ -659,9 +776,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 if (!Directory.Exists(thumbnailsFolder))
                     Directory.CreateDirectory(thumbnailsFolder);
 
-                List<DatasetImageDTO> datasetImages = await _datasetImagesService.GetImagesForDataset(datasetId);
+                ResultDTO<List<DatasetImageDTO>> datasetImages = await _datasetImagesService.GetImagesForDataset(datasetId);
+                if (datasetImages.IsSuccess == false && datasetImages.HandleError())
+                    return Json(new { responseError = DbResHtml.T($"{datasetImages.ErrMsg}", "Resources") });
 
-                foreach (var datasetImage in datasetImages)
+                foreach (var datasetImage in datasetImages.Data)
                 {
                     string imageFilePath =
                         Path.Combine(_webHostEnvironment.WebRootPath, datasetImage.ImagePath.TrimStart(Path.DirectorySeparatorChar), datasetImage.FileName);
@@ -719,9 +838,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 if (Directory.Exists(thumbnailsFolder) == false)
                     Directory.CreateDirectory(thumbnailsFolder);
 
-                List<DatasetImageDTO> datasetImages = await _datasetImagesService.GetImagesForDataset(datasetId);
+                ResultDTO<List<DatasetImageDTO>> datasetImages = await _datasetImagesService.GetImagesForDataset(datasetId);
+                if (datasetImages.IsSuccess == false && datasetImages.HandleError())
+                    return ResultDTO<string>.Fail(DbResHtml.T($"{datasetImages.ErrMsg!}", "Resources").Value!);
 
-                foreach (DatasetImageDTO datasetImage in datasetImages)
+
+                foreach (DatasetImageDTO datasetImage in datasetImages.Data)
                 {
                     string imageFilePath =
                         Path.Combine(_webHostEnvironment.WebRootPath, datasetImage.ImagePath.TrimStart(Path.DirectorySeparatorChar), datasetImage.FileName);
@@ -762,7 +884,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             catch (Exception ex)
             {
-                // TODO: Add logging
                 return ResultDTO<string>.ExceptionFail(ex.Message, ex);
             }
         }

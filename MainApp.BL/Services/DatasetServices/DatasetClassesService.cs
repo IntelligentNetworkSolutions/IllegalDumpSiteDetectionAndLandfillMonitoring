@@ -51,12 +51,13 @@ namespace MainApp.BL.Services.DatasetServices
 
             return ResultDTO<List<DatasetClassDTO>>.Ok(model);
         }
+
         public async Task<ResultDTO<DatasetClassDTO>> GetDatasetClassById(Guid classId)
         {
             var datasetClassResult = await _datasetClassesRepository.GetById(classId, includeProperties: "CreatedBy,ParentClass");
-            if (datasetClassResult == null || datasetClassResult.Data == null)
+            if (datasetClassResult.IsSuccess == false && datasetClassResult.HandleError())
             {
-                return ResultDTO<DatasetClassDTO>.Fail("Dataset class not found");
+                return ResultDTO<DatasetClassDTO>.Fail(datasetClassResult.ErrMsg!);
             }
 
             var model = _mapper.Map<DatasetClassDTO>(datasetClassResult.Data);
@@ -146,7 +147,7 @@ namespace MainApp.BL.Services.DatasetServices
         public async Task<ResultDTO<int>> EditDatasetClass(EditDatasetClassDTO dto)
         {
             var datasetClassDb = await _datasetClassesRepository.GetById(dto.Id, track: true, includeProperties: "CreatedBy,ParentClass");
-            if (datasetClassDb == null || datasetClassDb.Data == null)
+            if (datasetClassDb.IsSuccess == false && datasetClassDb.HandleError() || datasetClassDb.Data == null)
             {
                 return new ResultDTO<int>(false, 0, "Dataset class not found", null);
             }
@@ -165,7 +166,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
 
             var allDatasetDatasetClasses = await _datasetDatasetClassRepository.GetAll(includeProperties: "DatasetClass,Dataset");
-            if (allDatasetDatasetClasses.IsSuccess == false || allDatasetDatasetClasses.Data == null)
+            if (allDatasetDatasetClasses.IsSuccess == false && allDatasetDatasetClasses.HandleError() || allDatasetDatasetClasses.Data == null)
             {
                 return new ResultDTO<int>(false, 0, "Failed to retrieve dataset-dataset class mappings", null);
             }
@@ -181,7 +182,7 @@ namespace MainApp.BL.Services.DatasetServices
             if (dto.ParentClassId != null)
             {
                 var parentClassDb = await _datasetClassesRepository.GetById(dto.ParentClassId.Value, includeProperties: "CreatedBy,ParentClass");
-                if (parentClassDb.IsSuccess == false || parentClassDb.Data == null)
+                if (parentClassDb.IsSuccess == false && parentClassDb.HandleError() || parentClassDb.Data == null)
                 {
                     return new ResultDTO<int>(false, 0, "Parent class not found", null);
                 }
@@ -211,14 +212,14 @@ namespace MainApp.BL.Services.DatasetServices
         public async Task<ResultDTO<int>> DeleteDatasetClass(Guid classId)
         {
             var datasetClass = await _datasetClassesRepository.GetById(classId, track: true, includeProperties: "CreatedBy,ParentClass");
-            if (datasetClass == null || datasetClass.Data == null)
+            if (datasetClass.IsSuccess == false && datasetClass.HandleError() || datasetClass.Data == null)
             {
                 return new ResultDTO<int>(IsSuccess: false, 0, "Dataset class not found.", null);
             }
             var datasetClassData = datasetClass.Data;
 
             var listOfAllDatasetClasses = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets");
-            if (listOfAllDatasetClasses.IsSuccess == false || listOfAllDatasetClasses.Data == null)
+            if (listOfAllDatasetClasses.IsSuccess == false && listOfAllDatasetClasses.HandleError() || listOfAllDatasetClasses.Data == null)
             {
                 return new ResultDTO<int>(IsSuccess: false, 0, "Failed to retrieve dataset classes.", null);
             }
@@ -232,7 +233,7 @@ namespace MainApp.BL.Services.DatasetServices
             }
 
             var allDatasetDatasetClasses = await _datasetDatasetClassRepository.GetAll();
-            if (allDatasetDatasetClasses.IsSuccess == false || allDatasetDatasetClasses.Data == null)
+            if (allDatasetDatasetClasses.IsSuccess == false && allDatasetDatasetClasses.HandleError() || allDatasetDatasetClasses.Data == null)
             {
                 return new ResultDTO<int>(IsSuccess: false, 0, "Failed to retrieve dataset-dataset class relationships.", null);
             }
@@ -240,19 +241,26 @@ namespace MainApp.BL.Services.DatasetServices
             var datasetDatasetClasses = allDatasetDatasetClasses.Data
                 .Where(x => x.DatasetClassId == classId)
                 .ToList();
+
             if (datasetDatasetClasses.Count > 0)
             {
                 return new ResultDTO<int>(IsSuccess: false, 3, "This dataset class cannot be deleted because it is in use in datasets.", null);
             }
 
-            var associatedDatasetClasses = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetClassId == classId);
-            if (associatedDatasetClasses != null && associatedDatasetClasses.Data != null)
+            ResultDTO<IEnumerable<Dataset_DatasetClass>> associatedDatasetClasses = await _datasetDatasetClassRepository.GetAll(filter: x => x.DatasetClassId == classId);
+
+            if (associatedDatasetClasses.IsSuccess == false && associatedDatasetClasses.HandleError())
+            {
+                return new ResultDTO<int>(IsSuccess: false, 0, "Failed to retrieve associated dataset-dataset class relationships.", null);
+            }
+
+            if (associatedDatasetClasses.Data != null)
             {
                 var listDatasetDatasetClassDb = associatedDatasetClasses.Data.ToList();
                 if (listDatasetDatasetClassDb.Count > 0)
                 {
                     var deleteRelationsResult = await _datasetDatasetClassRepository.DeleteRange(listDatasetDatasetClassDb);
-                    if (!deleteRelationsResult.IsSuccess)
+                    if (deleteRelationsResult.IsSuccess == false && deleteRelationsResult.HandleError())
                     {
                         return new ResultDTO<int>(IsSuccess: false, 0, "Failed to delete associated dataset-dataset class relationships.", null);
                     }
@@ -260,14 +268,13 @@ namespace MainApp.BL.Services.DatasetServices
             }
 
             var deleteResult = await _datasetClassesRepository.Delete(datasetClassData);
-            if (deleteResult.IsSuccess)
-            {
-                return new ResultDTO<int>(IsSuccess: true, 1, "Dataset class deleted successfully.", null);
-            }
-            else
+            if (deleteResult.IsSuccess == false && datasetClass.HandleError())
             {
                 return new ResultDTO<int>(IsSuccess: false, 4, deleteResult.ErrMsg ?? "Failed to delete the dataset class.", null);
             }
+
+            return new ResultDTO<int>(IsSuccess: true, 1, "Dataset class deleted successfully.", null);
+
         }
 
         #endregion

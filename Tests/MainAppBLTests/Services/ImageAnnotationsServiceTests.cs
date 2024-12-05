@@ -63,7 +63,7 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task GetImageAnnotationsByImageId_NullResult()
+        public async Task GetImageAnnotationsByImageId_GetAllImages_ReturnFail()
         {
             // Arrange
             var imageAnnotationsRepositoryMock = new Mock<IImageAnnotationsRepository>();
@@ -74,10 +74,15 @@ namespace Tests.MainAppBLTests.Services
             var datasetImageId = Guid.NewGuid();
 
             imageAnnotationsRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<ImageAnnotation, bool>>>(), null, false, null, null))
-                                          .ReturnsAsync(ResultDTO<IEnumerable<ImageAnnotation>>.Ok(null));
+                                          .ReturnsAsync(ResultDTO<IEnumerable<ImageAnnotation>>.Fail("Failed to get all images"));
 
             // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => service.GetImageAnnotationsByImageId(datasetImageId));
+            var result = await service.GetImageAnnotationsByImageId(datasetImageId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to get all images", result.ErrMsg);
         }
 
         [Fact]
@@ -94,9 +99,17 @@ namespace Tests.MainAppBLTests.Services
 
             imageAnnotationsRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<ImageAnnotation, bool>>>(), null, false, null, null))
                                           .ReturnsAsync(ResultDTO<IEnumerable<ImageAnnotation>>.Ok(annotations));
+            mapperMock.Setup(mapper => mapper.Map<List<ImageAnnotationDTO>>(annotations))
+                       .Returns(new List<ImageAnnotationDTO>());
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => service.GetImageAnnotationsByImageId(datasetImageId));
+            // Act
+            var result = await service.GetImageAnnotationsByImageId(datasetImageId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset Images Annotations list not found", result.ErrMsg);
+
         }
 
         [Fact]
@@ -114,19 +127,25 @@ namespace Tests.MainAppBLTests.Services
                 new ImageAnnotation { Id = Guid.NewGuid() },
                 new ImageAnnotation { Id = Guid.NewGuid()}
             };
+            var mappedAnnotations = new List<ImageAnnotationDTO>()
+            {
+                new ImageAnnotationDTO { Id = annotations[0].Id },
+                new ImageAnnotationDTO { Id = annotations[1].Id },
+
+            };
 
             imageAnnotationsRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<ImageAnnotation, bool>>>(), null, false, null, null))
                                           .ReturnsAsync(ResultDTO<IEnumerable<ImageAnnotation>>.Ok(annotations));
 
             mapperMock.Setup(mapper => mapper.Map<List<ImageAnnotationDTO>>(annotations))
-                       .Returns(new List<ImageAnnotationDTO>());
+                       .Returns(mappedAnnotations);
 
             // Act
             var result = await service.GetImageAnnotationsByImageId(datasetImageId);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Empty(result);
+            Assert.True(result.IsSuccess);
         }
 
         [Fact]

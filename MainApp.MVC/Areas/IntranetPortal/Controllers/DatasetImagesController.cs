@@ -52,48 +52,55 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 return Json(new { responseError = DbResHtml.T("Invalid dataset image id", "Resources") });
             }
-
-            var datasetDb = await _datasetService.GetDatasetById(datasetId);
-
-            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
-                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
-
-            if (datasetDb is null)
-                return Json(new { responseError = DbResHtml.T("Dataset not found", "Resources") });
-
-
-            if (datasetDb.Data.IsPublished)
+            try
             {
-                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
-            }
+                var datasetDb = await _datasetService.GetDatasetById(datasetId);
 
-            var datasetImageDb = await _datasetImagesService.GetDatasetImageById(datasetImageId);
-            if (datasetImageDb == null)
-            {
-                return Json(new { responseError = DbResHtml.T("Dataset image not found", "Resources") });
-            }
+                if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                    return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
 
-            var activeAnnotations = await _imageAnnotationsService.GetImageAnnotationsByImageId(datasetImageId);
-            if (activeAnnotations.Any() && !deleteAnnotations)
-            {
-                return Json(new
+                if (datasetDb is null)
+                    return Json(new { responseError = DbResHtml.T("Dataset not found", "Resources") });
+
+                if (datasetDb.Data.IsPublished)
                 {
-                    responseAnnotated = true,
-                    responseError = DbResHtml.T("This image has active annotations. Do you want to continue anyway?", "Resources")
-                });
-            }
+                    return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
+                }
 
-            ResultDTO<int> isImageDeleted = await _datasetImagesService.DeleteDatasetImage(datasetImageId, deleteAnnotations);
-            if (isImageDeleted.IsSuccess && isImageDeleted.Data == 1)
-            {
+                var datasetImageDb = await _datasetImagesService.GetDatasetImageById(datasetImageId);
+                if (datasetImageDb.IsSuccess == false && datasetImageDb.HandleError())
+                {
+                    return Json(new { responseError = DbResHtml.T($"Dataset image not found.{datasetDb.ErrMsg}", "Resources") });
+                }
+
+                var activeAnnotations = await _imageAnnotationsService.GetImageAnnotationsByImageId(datasetImageId);
+                if (activeAnnotations.IsSuccess == false && activeAnnotations.HandleError())
+                {
+                    return Json(new { responseError = DbResHtml.T($"Failed to retrive annotations.{activeAnnotations.ErrMsg}", "Resources") });
+
+                }
+                if (activeAnnotations.Data.Any() && !deleteAnnotations)
+                {
+                    return Json(new
+                    {
+                        responseAnnotated = true,
+                        responseError = DbResHtml.T("This image has active annotations. Do you want to continue anyway?", "Resources")
+                    });
+                }
+
+                ResultDTO<int> isImageDeleted = await _datasetImagesService.DeleteDatasetImage(datasetImageId, deleteAnnotations);
+                if (isImageDeleted.IsSuccess == false && isImageDeleted.HandleError())
+                {
+                    return Json(new { responseError = DbResHtml.T(isImageDeleted.ErrMsg ?? "Error occurred while deleting the image", "Resources") });
+                }
+
                 return Json(new { responseSuccess = DbResHtml.T("Successfully deleted dataset image", "Resources") });
             }
-
-            return Json(new { responseError = DbResHtml.T("Error occurred while deleting the image", "Resources") });
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T($"Error occurred while deleting the image. {ex.Message}", "Resources") });
+            }
         }
-
-
-
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.EditDatasetImage))]
@@ -106,27 +113,34 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (string.IsNullOrEmpty(userId))
                 return Json(new { responseError = DbResHtml.T("User id is not valid", "Resources") });
 
-            ResultDTO<DatasetDTO> datasetDb = await _datasetService.GetDatasetById(model.DatasetId);
-            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
-                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
+            try
+            {
+                ResultDTO<DatasetDTO> datasetDb = await _datasetService.GetDatasetById(model.DatasetId);
+                if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                    return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
 
-            if (datasetDb.Data is null)
-                return Json(new { responseError = DbResHtml.T("Dataset not found", "Resources") });
+                if (datasetDb.Data.IsPublished == true)
+                    return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
-            if (datasetDb.Data.IsPublished == true)
-                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
+                model.FileName = string.Format("{0}.jpg", model.Name);
+                model.UpdatedById = userId;
 
-            model.FileName = string.Format("{0}.jpg", model.Name);
-            model.UpdatedById = userId;
-            ResultDTO<int> resultImageUpdate = await _datasetImagesService.EditDatasetImage(model);
-            if (resultImageUpdate.IsSuccess == true && resultImageUpdate.Data == 1 && string.IsNullOrEmpty(resultImageUpdate.ErrMsg))
-                return Json(new { responseSuccess = DbResHtml.T("Successfully updated dataset image", "Resources") });
+                ResultDTO<int> resultImageUpdate = await _datasetImagesService.EditDatasetImage(model);
 
-            if (!string.IsNullOrEmpty(resultImageUpdate.ErrMsg))
-                return Json(new { responseError = DbResHtml.T(resultImageUpdate.ErrMsg, "Resources") });
+                if (resultImageUpdate.IsSuccess && resultImageUpdate.Data == 1)
+                    return Json(new { responseSuccess = DbResHtml.T("Successfully updated dataset image", "Resources") });
 
-            return Json(new { responseError = DbResHtml.T("Dataset image was not updated", "Resources") });
+                if (resultImageUpdate.IsSuccess == false && resultImageUpdate.HandleError())
+                    return Json(new { responseError = DbResHtml.T(resultImageUpdate.ErrMsg ?? "An error occurred while updating the dataset image", "Resources") });
+
+                return Json(new { responseError = DbResHtml.T("Dataset image was not updated", "Resources") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T($"An unexpected error occurred: {ex.Message}", "Resources") });
+            }
         }
+
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.AddDatasetImage))]
@@ -145,59 +159,65 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (string.IsNullOrEmpty(imageName))
                 return Json(new { responseError = DbResHtml.T("Invalid image name", "Resources") });
 
-            ResultDTO<DatasetDTO> datasetDb = await _datasetService.GetDatasetById(datasetId);
-            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
-                return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
-
-            if (datasetDb.Data is null)
-                return Json(new { responseError = DbResHtml.T("Dataset not found", "Resources") });
-
-            if (datasetDb.Data.IsPublished == true)
-                return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
-
-            ResultDTO<string?> datasetImagesFolder =
-                await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
-            ResultDTO<string?> datasetThumbnailsFolder =
-                await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
-            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Data.Id.ToString());
-            if (!Directory.Exists(uploadsFolder))
-                Directory.CreateDirectory(uploadsFolder);
-
-            DatasetImageDTO dto = new()
+            try
             {
-                FileName = $"{imageName}.jpg",
-                Name = imageName,
-                DatasetId = datasetId,
-                IsEnabled = false,
-                CreatedOn = DateTime.UtcNow,
-                CreatedById = userId,
-                ImagePath = Path.Combine(datasetImagesFolder.Data, datasetDb.Data.Id.ToString()),
-                ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetDb.Data.Id.ToString()),
-            };
+                ResultDTO<DatasetDTO> datasetDb = await _datasetService.GetDatasetById(datasetId);
+                if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                    return Json(new { responseError = DbResHtml.T(datasetDb.ErrMsg!, "Resources") });
 
-            ResultDTO<Guid> resultImageAdd = await _datasetImagesService.AddDatasetImage(dto);
-            if (resultImageAdd.IsSuccess && resultImageAdd.Data != Guid.Empty)
-            {
-                string imageFileName = string.Format("{0}.jpg", resultImageAdd.Data);
-                string imagePath =
-                    Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Data.Id.ToString(), imageFileName);
-                string base64Datas = imageCropped.Split(',')[1];
-                byte[] imageBytes = Convert.FromBase64String(base64Datas);
+                if (datasetDb.Data.IsPublished == true)
+                    return Json(new { responseErrorAlreadyPublished = DbResHtml.T("Dataset is already published. No changes allowed", "Resources") });
 
-                using (MemoryStream ms = new(imageBytes))
+                ResultDTO<string?> datasetImagesFolder =
+                    await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
+                ResultDTO<string?> datasetThumbnailsFolder =
+                    await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+
+                string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Data.Id.ToString());
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                DatasetImageDTO dto = new()
                 {
-                    using (MagickImage image = new(ms))
-                    {
-                        image.Quality = 95;
-                        image.Write(imagePath);
-                    }
-                }
-                SaveTumbnailImage(datasetId, resultImageAdd.Data, imageCropped, datasetThumbnailsFolder.Data);
-                return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset image", "Resources") });
-            }
+                    FileName = $"{imageName}.jpg",
+                    Name = imageName,
+                    DatasetId = datasetId,
+                    IsEnabled = false,
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedById = userId,
+                    ImagePath = Path.Combine(datasetImagesFolder.Data, datasetDb.Data.Id.ToString()),
+                    ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetDb.Data.Id.ToString()),
+                };
 
-            return Json(new { responseError = DbResHtml.T(resultImageAdd.ErrMsg, "Resources") });
+                ResultDTO<Guid> resultImageAdd = await _datasetImagesService.AddDatasetImage(dto);
+                if (resultImageAdd.IsSuccess && resultImageAdd.Data != Guid.Empty)
+                {
+                    string imageFileName = string.Format("{0}.jpg", resultImageAdd.Data);
+                    string imagePath = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Data.Id.ToString(), imageFileName);
+                    string base64Datas = imageCropped.Split(',')[1];
+                    byte[] imageBytes = Convert.FromBase64String(base64Datas);
+
+                    using (MemoryStream ms = new(imageBytes))
+                    {
+                        using (MagickImage image = new(ms))
+                        {
+                            image.Quality = 95;
+                            image.Write(imagePath);
+                        }
+                    }
+
+                    SaveTumbnailImage(datasetId, resultImageAdd.Data, imageCropped, datasetThumbnailsFolder.Data);
+                    return Json(new { responseSuccess = DbResHtml.T("Successfully added dataset image", "Resources") });
+                }
+
+                return Json(new { responseError = DbResHtml.T(resultImageAdd.ErrMsg, "Resources") });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { responseError = DbResHtml.T($"An unexpected error occurred: {ex.Message}", "Resources") });
+            }
         }
+
 
         private ResultDTO SaveTumbnailImage(Guid datasetId, Guid addedImageId, string originalImage, string thumbnailsFolderData)
         {

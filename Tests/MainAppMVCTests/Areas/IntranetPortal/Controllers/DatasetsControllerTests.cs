@@ -277,13 +277,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
 
         [Fact]
-        public async Task EnableAllImages_ReturnsNotFound_WhenDatasetIdIsEmpty()
+        public async Task EnableAllImages_ReturnsJsonError_WhenDatasetIdIsEmpty()
         {
             // Act
-            var result = await _controller.EnableAllImages(Guid.Empty);
+            var result = await _controller.EnableAllImages(Guid.Empty) as JsonResult;
+            var jsonData = JObject.FromObject(result.Value);
 
             // Assert
-            Assert.IsType<NotFoundResult>(result);
+            Assert.NotNull(result);
+            Assert.Equal("Invalid dataset id.", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -299,7 +301,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("An error occured while enabeling images.", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("An error occurred while enabling images.", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -361,7 +363,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Incorect dataset id", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("Incorrect dataset id", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -762,7 +764,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetId = Guid.NewGuid();
             var datasetDto = new DatasetDTO { IsPublished = false };
             var userId = "test-user-id";
-            var errorMessage = "An error occurred";
+            var errorMessage = "Dataset class was not added.";
             var resultDto = new ResultDTO<int>(false, 0, errorMessage, null);
             _mockDatasetService.Setup(service => service.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
             _mockDatasetService.Setup(service => service.AddDatasetClassForDataset(selectedClassId, datasetId, userId)).ReturnsAsync(resultDto);
@@ -808,7 +810,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Dataset class was not added", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("Dataset class was not added.", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -1091,7 +1093,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Some error occured", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("Error deleting dataset class", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -1242,17 +1244,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.IsType<List<DatasetDTO>>(result);
             Assert.Equal(expectedDatasets.Count, result.Count);
         }
-
-        [Fact]
-        public async Task GetAllDatasets_ThrowsException_WhenDatasetServiceReturnsNull()
-        {
-            // Arrange
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync((ResultDTO<List<DatasetDTO>>)null);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.GetAllDatasets());
-        }
-
 
         //[Fact]
         //public async Task Index_ThrowsException_WhenModelMappingFails()
@@ -1413,7 +1404,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 HttpContext = new DefaultHttpContext { User = claimsPrincipal }
             };
 
-            var datasetViewModel = new CreateDatasetViewModel { ParentDatasetId = parentDatasetId };
+            var datasetViewModel = new CreateDatasetViewModel();
             var datasetDTO = new DatasetDTO { Id = Guid.NewGuid() };
             var parentDatasetDTO = new DatasetDTO { Id = parentDatasetId, IsPublished = true };
 
@@ -1870,6 +1861,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             string userId = "test-user-id";
             var datasetId = Guid.NewGuid();
+            var images = new List<DatasetImageDTO>
+                {
+                new DatasetImageDTO { Id = Guid.NewGuid(), ImagePath = "/images/", FileName = "image.jpg" }
+                };
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
@@ -1883,10 +1878,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
                 .ReturnsAsync(new ResultDTO<string>(true, "Thumbnails", null, null));
             _mockDatasetImagesService.Setup(s => s.GetImagesForDataset(datasetId))
-                .ReturnsAsync(new List<DatasetImageDTO>
-                {
-                new DatasetImageDTO { Id = Guid.NewGuid(), ImagePath = "/images/", FileName = "image.jpg" }
-                });
+                .ReturnsAsync(ResultDTO<List<DatasetImageDTO>>.Ok(images));
             _mockWebHostEnvironment.Setup(env => env.WebRootPath).Returns(Path.Combine("..", "..", "wwwroot"));
 
             // Act
@@ -2058,6 +2050,11 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             string userId = "test-user-id";
             var datasetId = Guid.NewGuid();
+            var imageId = Guid.NewGuid();
+            var images = new List<DatasetImageDTO>
+            {
+              new DatasetImageDTO { Id = imageId, ImagePath = "images", FileName = "missing-image.jpg" }
+            };
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
@@ -2073,12 +2070,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockAppSettingsAccessor.Setup(a => a.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails"))
                                     .ReturnsAsync(new ResultDTO<string>(true, "Thumbnails", null, null));
 
-            var imageId = Guid.NewGuid();
             _mockDatasetImagesService.Setup(s => s.GetImagesForDataset(datasetId))
-                                     .ReturnsAsync(new List<DatasetImageDTO>
-                                     {
-                                 new DatasetImageDTO { Id = imageId, ImagePath = "images", FileName = "missing-image.jpg" }
-                                     });
+                                     .ReturnsAsync(ResultDTO<List<DatasetImageDTO>>.Ok(images));
 
             _mockWebHostEnvironment.Setup(env => env.WebRootPath).Returns(Path.Combine("..", "..", "wwwroot"));
 

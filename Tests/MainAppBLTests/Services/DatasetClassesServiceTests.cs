@@ -11,6 +11,104 @@ namespace Tests.MainAppBLTests.Services
 {
     public class DatasetClassesServiceTests
     {
+
+        //kj 
+        private Mock<IDatasetClassesRepository> _datasetClassesRepositoryMock;
+        private Mock<IDataset_DatasetClassRepository> _datasetDatasetClassRepositoryMock;
+
+        public DatasetClassesServiceTests()
+        {
+            _datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            _datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
+        }
+
+        private DatasetClassesService CreateService()
+        {
+            return new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: _datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: _datasetDatasetClassRepositoryMock.Object,
+                mapper: null
+            );
+        }
+
+        private void SetupDatasetClassMocks(Guid classId, bool hasChildClasses, bool isInUseByDatasets)
+        {
+            var datasetClass = new DatasetClass { Id = classId };
+
+            var childClasses = hasChildClasses
+                ? new List<DatasetClass> { new DatasetClass { Id = Guid.NewGuid(), ParentClassId = classId } }
+                : new List<DatasetClass>();
+
+            var datasetDatasetClasses = isInUseByDatasets
+                ? new List<Dataset_DatasetClass> { new Dataset_DatasetClass { DatasetClassId = classId } }
+                : new List<Dataset_DatasetClass>();
+
+            _datasetClassesRepositoryMock.Setup(repo => repo.GetById(classId, true, It.IsAny<string>()))
+                                         .ReturnsAsync(ResultDTO<DatasetClass>.Ok(datasetClass));
+
+            _datasetClassesRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetClass, bool>>>(), null, It.IsAny<bool>(), It.IsAny<string>(), null))
+                                         .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(childClasses));
+
+            _datasetDatasetClassRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(), null, It.IsAny<bool>(), It.IsAny<string>(), null))
+                                              .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetDatasetClasses));
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClass_ShouldReturnError_WhenClassInUseByDatasets()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            SetupDatasetClassMocks(classId, hasChildClasses: false, isInUseByDatasets: true);
+            var service = CreateService();
+
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(3, result.Data); // Error code for "in use by datasets"
+            Assert.Equal("This dataset class cannot be deleted because it is in use in datasets.", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClass_ShouldReturnError_WhenChildClassesExist()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            SetupDatasetClassMocks(classId, hasChildClasses: true, isInUseByDatasets: false);
+            var service = CreateService();
+
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(2, result.Data); // Error code for "has child classes"
+            Assert.Equal("This dataset class cannot be deleted because there are subclasses. Delete the subclasses first.", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClass_ShouldSucceed_WhenNoDependencies()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            SetupDatasetClassMocks(classId, hasChildClasses: false, isInUseByDatasets: false);
+
+            _datasetClassesRepositoryMock.Setup(repo => repo.Delete(It.IsAny<DatasetClass>(), true, default))
+                                         .ReturnsAsync(ResultDTO.Ok());
+
+            var service = CreateService();
+
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(1, result.Data); // Success code
+            Assert.Equal("Dataset class deleted successfully.", result.ErrMsg);
+        }
+        //kj
         [Fact]
         public async Task GetAllDatasetClasses_ShouldReturnListOfDatasetClassDTO()
         {
@@ -718,8 +816,6 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal("Update failed", result.ErrMsg);
         }
 
-
-
         [Fact]
         public async Task DeleteDatasetClass_ReturnsErrorMessage_When_Child_Classes_Exist()
         {
@@ -836,7 +932,7 @@ namespace Tests.MainAppBLTests.Services
                 datasetsRepository: null,
                 datasetClassesRepository: datasetClassesRepositoryMock.Object,
                 datasetDatasetClassRepository: datasetDatasetClassRepositoryMock.Object,
-                mapper: null // No mapper needed for this test
+                mapper: null
             );
 
             // Act
@@ -844,7 +940,7 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(2, result.Data); // Assuming 2 is the error code for child classes
+            Assert.Equal(2, result.Data);
             Assert.Equal("This dataset class cannot be deleted because there are subclasses. Delete the subclasses first.", result.ErrMsg);
         }
 

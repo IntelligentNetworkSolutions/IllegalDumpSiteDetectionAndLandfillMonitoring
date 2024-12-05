@@ -7,8 +7,8 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
     {
         #region Read
         #region Get DatasetImage/es
-        Task<DatasetImageDTO> GetDatasetImageById(Guid datasetImageId);
-        Task<List<DatasetImageDTO>> GetImagesForDataset(Guid datasetId);
+        Task<ResultDTO<DatasetImageDTO>> GetDatasetImageById(Guid datasetImageId);
+        Task<ResultDTO<List<DatasetImageDTO>>> GetImagesForDataset(Guid datasetId);
         #endregion
         #endregion
 
