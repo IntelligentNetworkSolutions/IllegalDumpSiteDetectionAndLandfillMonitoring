@@ -1,29 +1,21 @@
-# Illegal Dump Site Detection System
+# Training process  
 
-## Training System User Guide
+Training a deep learning model entails providing it with data and fine-tuning its parameters to enable it to make precise predictions.  
 
-## Table of Contents
+### Introduction  
 
-- [Introduction](#introduction)
-- [Getting Started](#getting-started)
-- [Creating a New Training Run](#creating-a-new-training-run)
-- [Monitoring Training Progress](#monitoring-training-progress)
-- [Managing Trained Models](#managing-trained-models)
-- [Troubleshooting](#troubleshooting)
+The Raven Scan Platform helps you train AI models to detect waste in images.  
+This guide will walk you through the process of creating and managing training runs, and working with trained models.
 
-## Introduction
+### Getting Started
 
-The Illegal Dump Site Detection System helps you train AI models to detect waste in images. This guide will walk you through the process of creating and managing training runs, and working with trained models.
-
-## Getting Started
-
-### Prerequisites
+#### Prerequisites
 
 - Valid system account with appropriate permissions
 - Prepared dataset for training
 - Base model for transfer learning (if performing fine-tuning)
 
-### Required Permissions
+#### Required Permissions
 
 To use the training system, you need one or more of these permissions:
 
@@ -33,157 +25,117 @@ To use the training system, you need one or more of these permissions:
 - Delete Training Run
 - Publish Training Run Model
 
-## Creating a New Training Run
+### Creating a New Training Run  
 
-### Step 1: Initialize New Training
+**Step 1: Initialize New Training**  
 
-1. Navigate to the Training section
-2. Click "Create New Training Run"
-3. You'll be presented with the training setup form
+1. Navigate to the Training section  
+2. Click "Create New Training Run"  
+3. You'll be presented with the training setup form  
 
-### Step 2: Configure Training
+**Step 2: Configure Training**  
 
-Fill in the required information:
+Fill in the required information:  
 
-- **Name**: Give your training run a descriptive name
-- **Dataset**: Select the dataset you want to use
-- **Base Model**: Choose a pre-trained model to start from
+- **Name**: Give your training run a descriptive name  
+- **Dataset**: Select the dataset you want to use  
+- **Base Model**: Choose a pre-trained model to start from  
 
-### Step 3: Start Training
+**Step 3: Start Training**  
 
-1. Review your settings
-2. Click "Schedule Training Run"
-3. The system will validate your inputs and start the process
+1. Review your settings  
+2. Click "Schedule Training Run"  
+3. The system will validate your inputs and start the process  
 
-> ⚠️ **Important**: Once training starts, it may take several hours to complete depending on your dataset size and configuration.
+> [!IMPORTANT]
+>
+> Once training starts, it may take several hours to complete depending on your dataset size and configuration.  
 
-## Monitoring Training Progress
+### Monitoring Training Progress  
 
-### Viewing Training Status
+**Checking Training Progress**  
 
-Training runs can have the following statuses:
+1. Navigate to the Training Runs list  
+2. Find your training run  
+3. The status will update automatically  
+4. Click on a training run to view detailed progress  
 
-- **Waiting**: Training is queued
-- **Processing**: Training is actively running
-- **Success**: Training completed successfully
-- **Error**: Training encountered an error
+**Viewing Training Status**  
 
-### Checking Training Progress
+Training runs can have the following statuses  
 
-1. Navigate to the Training Runs list
-2. Find your training run
-3. The status will update automatically
-4. Click on a training run to view detailed progress
+- **Waiting**: Training is queued  
+- **Processing**: Training is actively running  
+- **Success**: Training completed successfully  
+- **Error**: Training encountered an error  
 
-### Error Handling
+#### Error Handling  
 
-If your training run encounters an error:
+If your training run encounters an error:  
 
-1. Click on the training run
-2. Look for the error message
-3. Review the error logs for details
-4. You may need to start a new training run with adjusted parameters
+1. Click on the training run  
+2. Look for the error message  
+3. Review the error logs for details  
+4. You may need to start a new training run with adjusted parameters  
 
-## Managing Trained Models
+### Managing Trained Models  
 
-### Reviewing Results
+**Reviewing Results**  
 
-After successful training:
+After successful training:  
 
-1. Navigate to the Trained Models section
-2. Find your newly created model
-3. Review the training metrics and performance
+1. Navigate to the Trained Models section  
+2. Find your newly created model  
+3. Review the training metrics and performance  
 
-### Publishing Models
+### Publishing Models  
 
-To make a model available for detection:
+To make a model available for detection:  
 
-1. Select the trained model
-2. Click "Publish Model"
-3. Confirm the publication
+1. Select the trained model  
+2. Click "Publish Model"  
+3. Confirm the publication  
 
-> 📝 **Note**: Only publish models that have been properly validated and meet your performance requirements.
+> [!NOTE]
+>
+> Only publish models that have been properly validated and meet your performance requirements.  
 
-### Model Management
+### Model Management  
 
-You can:
+- View all trained models  
+- Check model details and configurations  
+- See which dataset was used  
+- Track model lineage (base model relationships)  
 
-- View all trained models
-- Check model details and configurations
-- See which dataset was used
-- Track model lineage (base model relationships)
+### Common Issues  
 
-## Troubleshooting
+#### Training Won't Start  
 
-### Common Issues
+- Check if you have the necessary permissions  
+- Verify dataset is properly prepared  
+- Ensure base model is accessible  
 
-#### Training Won't Start
+#### Training Fails  
 
-- Check if you have the necessary permissions
-- Verify dataset is properly prepared
-- Ensure base model is accessible
+1. Check the error message  
+2. Review the training logs  
+3. Common causes  
+   - Dataset format issues  
+   - Resource constraints  
+   - Configuration problems  
 
-#### Training Fails
+#### Model Won't Publish  
 
-1. Check the error message
-2. Review the training logs
-3. Common causes:
-   - Dataset format issues
-   - Resource constraints
-   - Configuration problems
+- Ensure training completed successfully  
+- Check you have publish permissions  
+- Verify model meets quality requirements  
 
-#### Model Won't Publish
+### Training Tips  
 
-- Ensure training completed successfully
-- Check you have publish permissions
-- Verify model meets quality requirements
+- Use descriptive names for training runs  
+- Start with smaller datasets to validate configuration  
+- Monitor training progress regularly  
+- Keep track of successful configurations  
 
-### Getting Help
-
-If you encounter issues:
-
-1. Check the error messages
-2. Review the logs
-3. Contact system administrators with:
-   - Training Run ID
-   - Error messages
-   - Steps to reproduce
-
-## Best Practices
-
-### Training Tips
-
-- Use descriptive names for training runs
-- Start with smaller datasets to validate configuration
-- Monitor training progress regularly
-- Keep track of successful configurations
-
-### Model Management
-
-- Document model changes and improvements
-- Test models before publishing
-- Maintain a clear model versioning strategy
-- Archive unused models
-
----
-
-## Quick Reference
-
-### Training Run Controls
-
-- Create New Training ➜ Starts new training setup
-- Schedule Training ➜ Begins training process
-- Delete Training ➜ Removes training run
-- View Details ➜ Shows training information
-- Publish Model ➜ Makes model available for use
-
-### Status Indicators
-
-- 🟡 Waiting - Training is queued
-- 🔵 Processing - Training is running
-- ✅ Success - Training completed
-- ❌ Error - Training failed
-
----
-
-Need more help? Contact your system administrator or refer to the technical documentation.
+> [!TIP]
+> Need more help? Contact your system administrator or check the [**Training Documentation**](../../documentation/training-process) here.  

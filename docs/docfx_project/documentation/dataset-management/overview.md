@@ -39,6 +39,15 @@
 - Directories can be split  
 - Annotations files should be named __annotations_coco.json__  
 
+<div class="col-md-12 d-flex flex-column flex-grow mb-3r align-items-center p-1">
+  <iframe
+    src="https://huggingface.co/datasets/INS-IntelligentNetworkSolutions/Waste-Dumpsites-DroneImagery/embed/viewer/default/test"
+    frameborder="0"
+    width="100%"
+    height="420px">
+  </iframe>
+</div>
+
 ## Enabling Images  
 
 ### Best Practices Procedure  

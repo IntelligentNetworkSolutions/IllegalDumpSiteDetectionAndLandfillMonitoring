@@ -39,14 +39,6 @@ from mmdet.utils.misc import get_file_list
 
 # INS added
 
-# import pprint
-# def print_full_content(obj):
-#     """
-#     Print the full content of an object without truncation.
-#     """
-#     pp = pprint.PrettyPrinter(indent=4, width=200, depth=None)
-#     return pp.pformat(obj)
-
 import json
 import torch
 import cv2
@@ -345,31 +337,30 @@ def main():
                 'iou_threshold': args.merge_iou_thr
             })
         
-        visualizer.add_datasample(
-            filename,
-            img,
-            data_sample=image_result,
-            draw_gt=False,
-            show=args.show,
-            wait_time=0,
-            out_file=out_file,
-            pred_score_thr=args.score_thr,
-        )
+        # Default MMDetection Visualizer with BBoxes drawn
+        # visualizer.add_datasample(
+        #     filename,
+        #     img,
+        #     data_sample=image_result,
+        #     draw_gt=False,
+        #     show=args.show,
+        #     wait_time=0,
+        #     out_file=out_file,
+        #     pred_score_thr=args.score_thr,
+        # )
         progress_bar.update()
-
-        tensor_bboxes_out_file_json = os.path.join(args.out_dir, "detection_bboxes.json")
-        json_drawn_out_file_img = os.path.join(args.out_dir, "detection_bboxes_printed_" + os.path.basename(out_file))
 
         # Convert image_result to JSON
         json_data = detdatasample_to_dict(image_result)
 
         # Save as JSON
+        tensor_bboxes_out_file_json = os.path.join(args.out_dir, "detection_bboxes.json")
         with open(tensor_bboxes_out_file_json, 'w') as f:
             json.dump(json_data, f, indent=2)
 
         print(f"JSON data saved to {tensor_bboxes_out_file_json}")
-
-        draw_bboxes_from_json(tensor_bboxes_out_file_json, file, json_drawn_out_file_img)
+        # json_drawn_out_file_img = os.path.join(args.out_dir, "detection_bboxes_printed_" + os.path.basename(out_file))
+        # draw_bboxes_from_json(tensor_bboxes_out_file_json, file, json_drawn_out_file_img)
 
     if not args.show or (args.debug and args.save_patch):
         print_log(f'\nResults have been saved at {os.path.abspath(args.out_dir)}')

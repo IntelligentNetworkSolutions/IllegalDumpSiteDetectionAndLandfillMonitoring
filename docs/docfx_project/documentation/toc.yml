@@ -44,7 +44,7 @@ items:
   - name: Admin
     href: user-management/overview.md
     items: 
-      - name: Overview
+      - name: User Management
         href: user-management/overview.md
       - name: Audit Logs
         href: audit-logs/overview.md
