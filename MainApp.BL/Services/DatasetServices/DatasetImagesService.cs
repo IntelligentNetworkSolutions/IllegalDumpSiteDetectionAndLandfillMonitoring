@@ -33,18 +33,36 @@ namespace MainApp.BL.Services.DatasetServices
 
         #region Read
         #region Get DatasetImage/es
-        public async Task<DatasetImageDTO> GetDatasetImageById(Guid datasetImageId)
+        public async Task<ResultDTO<DatasetImageDTO>> GetDatasetImageById(Guid datasetImageId)
         {
-            ResultDTO<DatasetImage?> datasetImageDb =
-                await _datasetImagesRepository.GetById(datasetImageId) ?? throw new Exception("Object not found");
-            return _mapper.Map<DatasetImageDTO>(datasetImageDb.Data);
+            ResultDTO<DatasetImage?> datasetImageResult = await _datasetImagesRepository.GetById(datasetImageId);
+
+            if (datasetImageResult.IsSuccess == false && datasetImageResult.HandleError())
+                return ResultDTO<DatasetImageDTO>.Fail(datasetImageResult.ErrMsg);
+
+            var datasetImageDto = _mapper.Map<DatasetImageDTO>(datasetImageResult.Data);
+
+            if (datasetImageDto is null)
+                return ResultDTO<DatasetImageDTO>.Fail("Mapping failed for this dataset image");
+
+            return ResultDTO<DatasetImageDTO>.Ok(datasetImageDto);
         }
 
-        public async Task<List<DatasetImageDTO>> GetImagesForDataset(Guid datasetId)
+        public async Task<ResultDTO<List<DatasetImageDTO>>> GetImagesForDataset(Guid datasetId)
         {
             ResultDTO<IEnumerable<DatasetImage>> datasetImages =
-                await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetId) ?? throw new Exception("Object not found");
-            return _mapper.Map<List<DatasetImageDTO>>(datasetImages.Data);
+                await _datasetImagesRepository.GetAll(filter: x => x.DatasetId == datasetId);
+
+            if (datasetImages.IsSuccess == false && datasetImages.HandleError())
+                return ResultDTO<List<DatasetImageDTO>>.Fail(datasetImages.ErrMsg!);
+
+            var mappedDto = _mapper.Map<List<DatasetImageDTO>>(datasetImages.Data);
+
+            if (mappedDto is null)
+                return ResultDTO<List<DatasetImageDTO>>.Fail("Mapping failed");
+
+
+            return ResultDTO<List<DatasetImageDTO>>.Ok(mappedDto);
         }
         #endregion
         #endregion
@@ -53,14 +71,32 @@ namespace MainApp.BL.Services.DatasetServices
         public async Task<ResultDTO<Guid>> AddDatasetImage(DatasetImageDTO datasetImageDto)
         {
             // TODO: Refactor to not throw exceptions 
-            Guid datasetId = datasetImageDto.DatasetId ?? throw new Exception("Dataset id is null");
+            Guid datasetId = datasetImageDto.DatasetId ?? Guid.Empty; // To handle since it is Guid?  will be handled on first if clause
+
+            if (datasetId == Guid.Empty)
+                return new ResultDTO<Guid>(IsSuccess: false, Guid.Empty, "Dataset id is null", null);
+
             ResultDTO<Dataset?> datasetDb =
-                await _datasetsRepository.GetById(datasetId, track: true, includeProperties: "CreatedBy,UpdatedBy,ParentDataset") ?? throw new Exception("Object not found");
-            Dataset datasetDbData = datasetDb.Data ?? throw new Exception("Object not found");
+                await _datasetsRepository.GetById(datasetId, track: true, includeProperties: "CreatedBy,UpdatedBy,ParentDataset");
+            if (datasetDb.IsSuccess == false && datasetDb.HandleError())
+                return new ResultDTO<Guid>(IsSuccess: false, Guid.Empty, datasetDb.ErrMsg!, null);
+
+            if (datasetDb.Data is null)
+                return new ResultDTO<Guid>(IsSuccess: false, Guid.Empty, "Could not retrive dataset.", null);
+
+            Dataset datasetDbData = datasetDb.Data;
 
             DatasetImage datasetImage = _mapper.Map<DatasetImage>(datasetImageDto);
-            ResultDTO<DatasetImage> imageAddedResult = await _datasetImagesRepository.CreateAndReturnEntity(datasetImage) ?? throw new Exception("Object not found");
-            DatasetImage imageAddedData = imageAddedResult.Data ?? throw new Exception("Object not found");
+            ResultDTO<DatasetImage> imageAddedResult = await _datasetImagesRepository.CreateAndReturnEntity(datasetImage);
+
+            if (imageAddedResult.IsSuccess == false && imageAddedResult.HandleError())
+                return new ResultDTO<Guid>(IsSuccess: false, Guid.Empty, imageAddedResult.ErrMsg!, null);
+
+
+            DatasetImage imageAddedData = imageAddedResult.Data;
+
+            if (imageAddedData is null)
+                return new ResultDTO<Guid>(IsSuccess: false, Guid.Empty, "Object not found", null);
 
             datasetDbData.UpdatedOn = DateTime.UtcNow;
             datasetDbData.UpdatedById = datasetImageDto.UpdatedById;
@@ -130,20 +166,31 @@ namespace MainApp.BL.Services.DatasetServices
         #region Delete
         public async Task<ResultDTO<int>> DeleteDatasetImage(Guid datasetImageId, bool deleteAnnotations)
         {
-            var datasetImageDb = await _datasetImagesRepository.GetById(datasetImageId, includeProperties: "ImageAnnotations") ?? throw new Exception("Object not found");
-            DatasetImage data = datasetImageDb.Data ?? throw new Exception("Object not found");
+            var datasetImageDb = await _datasetImagesRepository.GetById(datasetImageId, includeProperties: "ImageAnnotations");
+            if (datasetImageDb.IsSuccess == false && datasetImageDb.HandleError())
+                return new ResultDTO<int>(IsSuccess: false, 2, datasetImageDb.ErrMsg!, null);
+
+
+            DatasetImage data = datasetImageDb.Data;
+            if (data is null)
+                return new ResultDTO<int>(IsSuccess: false, 2, "Dataset image is null.", null);
+
             if (deleteAnnotations)
             {
-                await _imageAnnotationsRepository.DeleteRange(datasetImageDb.Data.ImageAnnotations);
+                var resultDeleteAnnotations = await _imageAnnotationsRepository.DeleteRange(datasetImageDb.Data.ImageAnnotations);
+
+                if (resultDeleteAnnotations.IsSuccess == false && resultDeleteAnnotations.HandleError())
+                    return new ResultDTO<int>(IsSuccess: false, 2, resultDeleteAnnotations.ErrMsg!, null);
             }
 
             var isImageDeleted = await _datasetImagesRepository.Delete(datasetImageDb.Data);
-            if (isImageDeleted.IsSuccess)
-            {
-                return new ResultDTO<int>(IsSuccess: true, 1, null, null);
-            }
 
-            return new ResultDTO<int>(IsSuccess: false, 2, "Dataset image was not deleted", null);
+            if (isImageDeleted.IsSuccess == false && isImageDeleted.HandleError())
+                return new ResultDTO<int>(IsSuccess: false, 2, "Dataset image was not deleted", null);
+
+
+            return new ResultDTO<int>(IsSuccess: true, 1, null, null);
+
         }
         #endregion
     }

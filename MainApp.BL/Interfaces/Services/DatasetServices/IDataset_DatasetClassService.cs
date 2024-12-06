@@ -1,9 +1,5 @@
 ﻿using DTOs.MainApp.BL.DatasetDTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SD;
 
 namespace MainApp.BL.Interfaces.Services.DatasetServices
 {
@@ -11,20 +7,20 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
     {
         #region Read
         #region Get obejct/s
-        Task<List<Dataset_DatasetClassDTO>> GetDataset_DatasetClassByClassId(Guid classId);
+        Task<ResultDTO<List<Dataset_DatasetClassDTO>>> GetDataset_DatasetClassByClassId(Guid classId);
         #endregion
         #endregion
 
         #region Create
-        
+
         #endregion
 
         #region Update
-        
+
         #endregion
 
         #region Delete
-      
+
 
         #endregion
     }

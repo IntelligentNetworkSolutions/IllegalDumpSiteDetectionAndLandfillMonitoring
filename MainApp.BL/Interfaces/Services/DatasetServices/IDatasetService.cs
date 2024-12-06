@@ -18,17 +18,16 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
 
         #region Read
         #region Get Dataset/es
-        Task<List<DatasetDTO>> GetAllDatasets();
+        Task<ResultDTO<List<DatasetDTO>>> GetAllDatasets();
         Task<ResultDTO<List<DatasetDTO>>> GetAllPublishedDatasets();
-        Task<DatasetDTO> GetDatasetById(Guid datasetId);
-        Task<CreateDatasetDTO> FillDatasetDto(CreateDatasetDTO dto);
-        Task<EditDatasetDTO> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize);
+        Task<ResultDTO<DatasetDTO>> GetDatasetById(Guid datasetId);
+        Task<ResultDTO<EditDatasetDTO>> GetObjectForEditDataset(Guid datasetId, string? searchByImageName, bool? searchByIsAnnotatedImage, bool? searchByIsEnabledImage, string? orderByImages, int pageNumber, int pageSize);
         Task<ResultDTO<DatasetDTO>> GetDatasetDTOFullyIncluded(Guid datasetId, bool track = false);
         #endregion
         #endregion
 
         #region Create
-        Task<DatasetDTO> CreateDataset(DatasetDTO dto);
+        Task<ResultDTO<DatasetDTO>> CreateDataset(DatasetDTO dto);
         Task<ResultDTO<int>> AddDatasetClassForDataset(Guid selectedClassId, Guid datasetId, string userId);
         Task<ResultDTO<int>> AddInheritedParentClasses(Guid insertedDatasetId, Guid parentDatasetId);
         #endregion
@@ -41,7 +40,7 @@ namespace MainApp.BL.Interfaces.Services.DatasetServices
 
         #region Delete
         Task<ResultDTO<int>> DeleteDatasetClassForDataset(Guid selectedClassId, Guid datasetId, string userId);
-        Task<ResultDTO<int>> DeleteDataset(Guid datasetId);
+        //Task<ResultDTO<int>> DeleteDataset(Guid datasetId);
         Task<ResultDTO> DeleteDatasetCompletelyIncluded(Guid datasetId);
         #endregion
 

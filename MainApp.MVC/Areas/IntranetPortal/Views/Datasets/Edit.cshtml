@@ -412,8 +412,8 @@
                                             {
                                                 if (Model.CurrentDataset.IsPublished)
                                                 {
-                                                    <input class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" disabled readonly/>
-                                                    
+                                                    <input class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" disabled readonly />
+
                                                 }
                                                 else
                                                 {
@@ -424,11 +424,13 @@
                                             {
                                                 if (Model.CurrentDataset.IsPublished)
                                                 {
-                                                    <input class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" disabled readonly/>
+                                                    <input class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" disabled readonly />
                                                 }
                                                 else
                                                 {
-                                                    <a id="@($"{item.Id}_editImageAnnotation")" href="@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = item.Id })" class="editAnnotation btn btn-xs bg-gradient-orange text-white">Edit annotations</a>
+                                                    <a id="@($"{item.Id}_editImageAnnotation")" href="javascript:void(0);"
+                                                       class="editAnnotation btn btn-xs bg-gradient-orange text-white"
+                                                       data-dataset-image-id="@item.Id">Edit annotations</a>
                                                 }
                                             }
                                             <input type="hidden" id="annotationStatus_@item.Id" value="@isAnnotated" />
@@ -605,6 +607,37 @@
             });
         });
 
+        $(document).ready(function () {
+            $('.editAnnotation').on('click', function () {
+                var datasetImageId = $(this).data('dataset-image-id');
+                $.ajax({
+                    url: '@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal" })',
+                    type: 'GET',
+                    data: { datasetImageId: datasetImageId },
+                    success: function (response) {
+                        if (response.responseSuccess) {
+                            // Redirect to the annotate page
+                            window.location.href = '@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal" })' + '?datasetImageId=' + datasetImageId;
+                        } else {
+                            // Show error message using SweetAlert
+                            console.log(response.responseError);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: `${response.responseError}`,
+                            });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An unexpected error occurred.',
+                        });
+                    }
+                });
+            });
+        });
 
         function deleteDatasetImage(datasetImageId, datasetImageFileName) {
             var datasetId = '@Model.CurrentDataset.Id';
@@ -1217,6 +1250,24 @@
 
 
     </script>
+    @{
+        var errorMessage = TempData["AnnotateImageErrorMessage"] as string;
+        TempData["AnnotateImageErrorMessage"] = null;
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <script>
+            Swal.fire({
+                title: 'Error',
+                text: '@errorMessage',
+                icon: 'error',
+                showCancelButton: true,
+                showConfirmButton: false,
+                cancelButtonText: '@DbResHtml.T("Ok", "Resources")'
+            });
+        </script>
+    }
 }
 
 @section BodyArea {
@@ -1543,8 +1594,4 @@
         </div>
     </div>
 </div>
-
-
-
-
 }

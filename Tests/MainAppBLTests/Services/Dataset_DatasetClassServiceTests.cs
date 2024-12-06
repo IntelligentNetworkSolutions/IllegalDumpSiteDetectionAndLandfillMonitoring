@@ -5,13 +5,7 @@ using Entities.DatasetEntities;
 using MainApp.BL.Services.DatasetServices;
 using Moq;
 using SD;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using X.PagedList;
 
 namespace Tests.MainAppBLTests.Services
 {
@@ -53,23 +47,30 @@ namespace Tests.MainAppBLTests.Services
             var result = await _service.GetDataset_DatasetClassByClassId(classId);
 
             Assert.NotNull(result);
-            Assert.Equal(2, result.Count);
-            Assert.All(result, item => Assert.Equal(classId, item.DatasetClassId));
+            Assert.Equal(2, result.Data.Count);
+            Assert.All(result.Data, item => Assert.Equal(classId, item.DatasetClassId));
         }
 
         [Fact]
-        public async Task GetDataset_DatasetClassByClassId_ObjectNotFound_ThrowsException()
+        public async Task GetDataset_DatasetClassByClassId_ObjectNotFound_ReturnsFailResult()
         {
+            // Arrange
             var classId = Guid.NewGuid();
 
             var resultDto = ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(null);
-
             _datasetDatasetClassRepositoryMock
                 .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(), null, false, null, null))
                 .ReturnsAsync(resultDto);
 
-            await Assert.ThrowsAsync<Exception>(() => _service.GetDataset_DatasetClassByClassId(classId));
+            // Act
+            var result = await _service.GetDataset_DatasetClassByClassId(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess, "Expected result to indicate failure.");
+            Assert.Equal("DatasetClass is null", result.ErrMsg);
+            Assert.Null(result.Data);
         }
+
 
         [Fact]
         public async Task GetDataset_DatasetClassByClassId_RepositoryThrowsException_ThrowsException()
@@ -85,6 +86,6 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal(expectedExceptionMessage, exception.Message);
         }
 
-      
+
     }
 }

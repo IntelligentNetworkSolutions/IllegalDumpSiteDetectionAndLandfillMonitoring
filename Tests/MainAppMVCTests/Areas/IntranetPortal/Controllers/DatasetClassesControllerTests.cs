@@ -48,7 +48,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 new DatasetClassDTO { Id = Guid.NewGuid(), ClassName = "Class 2" }
             };
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(datasetClassDtoList);
+                                      .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(datasetClassDtoList));
             var datasetClassViewModelList = new List<DatasetClassViewModel>
             {
                 new DatasetClassViewModel { Id = datasetClassDtoList[0].Id, ClassName = "Class 1" },
@@ -67,18 +67,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Class 1", model[0].ClassName);
             Assert.Equal("Class 2", model[1].ClassName);
         }
-
-        [Fact]
-        public async Task Index_ServiceThrowsException_ReturnsErrorView()
-        {
-            // Arrange
-            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ThrowsAsync(new Exception("Object not found"));
-
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _controller.Index());
-        }
-
 
         [Fact]
         public async Task CreateClass_ModelStateIsInvalid_ReturnsErrorJson()
@@ -113,7 +101,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("User id is not valid", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("User ID is not valid", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -155,7 +143,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Some error occurred", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("An error occurred. Dataset class was not added.", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -165,7 +153,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             SetupUser("validUserId");
 
             var model = new CreateDatasetClassDTO();
-            var resultDto = new ResultDTO<int>(IsSuccess: false, 3, null, null);
+            var resultDto = new ResultDTO<int>(IsSuccess: false, 0, null, null);
 
             _mockDatasetClassesService.Setup(service => service.AddDatasetClass(It.IsAny<CreateDatasetClassDTO>()))
                                       .ReturnsAsync(resultDto);
@@ -176,7 +164,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Dataset class was not added", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("An error occurred. Dataset class was not added.", jsonData["responseError"]["Value"].ToString());
         }
 
         [Fact]
@@ -202,7 +190,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var datasetClassDto = new DatasetClassDTO { Id = classId };
 
             _mockDatasetClassesService.Setup(service => service.GetDatasetClassById(classId))
-                                      .ReturnsAsync(datasetClassDto);
+                                      .ReturnsAsync(ResultDTO<DatasetClassDTO>.Ok(datasetClassDto));
 
             // Act
             var result = await _controller.GetClassById(classId);
@@ -214,17 +202,23 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task GetClassById_ClassIdIsNotEmpty_ServiceReturnsNull_ThrowsException()
+        public async Task GetClassById_ClassIdIsNotEmpty_ServiceReturnsNull_ReturnsEmptyDatasetClassDTO()
         {
             // Arrange
             var classId = Guid.NewGuid();
 
             _mockDatasetClassesService.Setup(service => service.GetDatasetClassById(classId))
-                                      .ReturnsAsync((DatasetClassDTO)null);
+                .ReturnsAsync(ResultDTO<DatasetClassDTO>.Fail("Class not found"));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetClassById(classId));
+            // Act
+            var result = await _controller.GetClassById(classId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.IsType<DatasetClassDTO>(result);
+            Assert.Equal(Guid.Empty, result.Id);
         }
+
 
         [Fact]
         public async Task EditClass_ModelStateIsInvalid_ReturnsErrorJson()
@@ -248,18 +242,20 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
+            var datasets = new List<DatasetDTO>();
+            var datasetDatasetClassDto = new List<Dataset_DatasetClassDTO>();
+            var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
 
             _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
                                       .ReturnsAsync(new ResultDTO<int>(true, 1, null, null));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(new List<DatasetClassDTO>());
-
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(allClasses));
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
-                                           .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                   .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClassDto));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.EditClass(model);
@@ -276,18 +272,20 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
             var errorMessage = "Error specific to Data = 2";
+            var datasets = new List<DatasetDTO>();
+            var datasetDatasetClassDto = new List<Dataset_DatasetClassDTO>();
 
             _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
                 .ReturnsAsync(new ResultDTO<int>(false, 2, errorMessage, null));
 
             var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                .ReturnsAsync(allClasses);
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(allClasses));
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
-                               .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                   .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClassDto));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.EditClass(model);
@@ -305,17 +303,19 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
             var errorMessage = "Error specific to Data = 4";
+            var datasets = new List<DatasetDTO>();
+            var datasetDatasetClassDto = new List<Dataset_DatasetClassDTO>();
 
             _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
                 .ReturnsAsync(new ResultDTO<int>(false, 4, errorMessage, null));
             var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                .ReturnsAsync(allClasses);
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(allClasses));
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
-                   .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                   .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClassDto));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.EditClass(model);
@@ -332,17 +332,19 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
             var errorMessage = "Error specific to Data = 5";
+            var datasets = new List<DatasetDTO>();
+            var datasetDatasetClassDto = new List<Dataset_DatasetClassDTO>();
 
             _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
                 .ReturnsAsync(new ResultDTO<int>(false, 5, errorMessage, null));
             var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                .ReturnsAsync(allClasses);
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(allClasses));
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
-                   .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                   .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClassDto));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.EditClass(model);
@@ -362,13 +364,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
                 .ReturnsAsync(new ResultDTO<int>(false, 0, "General update failure", null));
             var allClasses = new List<DatasetClassDTO> { new DatasetClassDTO { ParentClassId = model.Id } };
+            var datasets = new List<DatasetDTO>();
+            var datasetDatasetClassDto = new List<Dataset_DatasetClassDTO>();
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                .ReturnsAsync(allClasses);
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(allClasses));
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(model.Id))
-                   .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                   .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClassDto));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.EditClass(model);
@@ -380,39 +384,54 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task EditClass_ChildrenClassesListIsNull_ThrowsException()
+        public async Task EditClass_ReturnsError_WhenChildrenClassesListIsEmpty()
         {
             // Arrange
             var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
-
-            // Set up GetAllDatasetClasses to return an empty list to simulate no matching ParentClassId
-            var allClasses = new List<DatasetClassDTO>();
+            var resultDTO = new ResultDTO<int>(IsSuccess: false, 2, "Dataset class update failed", null);
+            var datasets = new List<DatasetDTO>();
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                .ReturnsAsync(allClasses);
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(new List<DatasetClassDTO>()));
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _controller.EditClass(model));
-            Assert.Equal("Object not found", exception.Message);
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                .ReturnsAsync(resultDTO);
+
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
+
+            // Act
+            var result = await _controller.EditClass(model) as JsonResult;
+
+            // Assert
+            Assert.NotNull(result);
+            var jsonData = JObject.FromObject(result.Value);
+            Assert.NotNull(jsonData["responseError"]);
+            Assert.Equal("Dataset class update failed", jsonData["responseError"]["Value"].ToString());
+            Assert.True(jsonData.ContainsKey("childrenClassesList"));
+            Assert.Empty(jsonData["childrenClassesList"]);
+
         }
-
 
         [Fact]
         public async Task DeleteClass_Success_ReturnsSuccessJson()
         {
             // Arrange
             var classId = Guid.NewGuid();
+            var datasetClass = new List<DatasetClassDTO>();
+            var datasetDatasetClass = new List<Dataset_DatasetClassDTO>();
+            var datasets = new List<DatasetDTO>();
 
             _mockDatasetClassesService.Setup(service => service.DeleteDatasetClass(classId))
                                       .ReturnsAsync(new ResultDTO<int>(true, 1, null, null));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(new List<DatasetClassDTO>());
+                                      .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(datasetClass));
 
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
-                                           .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                                           .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClass));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.DeleteClass(classId);
@@ -428,20 +447,22 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var classId = Guid.NewGuid();
-            var errorMessage = "This dataset class can not be deleted because there are subclasses. Delete first the subclasses!";
+            var errorMessage = "Subclasses for this class exist. Please delete them first.";
             var childrenClassesList = new List<DatasetClassDTO> { new DatasetClassDTO { Id = Guid.NewGuid(), ParentClassId = classId } };
+            var datasetDatasetClass = new List<Dataset_DatasetClassDTO>();
+            var datasets = new List<DatasetDTO>();
 
             _mockDatasetClassesService.Setup(service => service.DeleteDatasetClass(classId))
                                       .ReturnsAsync(new ResultDTO<int>(false, 2, errorMessage, null));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(childrenClassesList);
+                                      .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(childrenClassesList));
 
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
-                                           .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                                           .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClass));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.DeleteClass(classId);
@@ -458,18 +479,20 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var classId = Guid.NewGuid();
             var errorMessage = "An unexpected error occurred";
-
+            var datasetClass = new List<DatasetClassDTO>();
+            var datasetDatasetClass = new List<Dataset_DatasetClassDTO>();
+            var datasets = new List<DatasetDTO>();
             _mockDatasetClassesService.Setup(service => service.DeleteDatasetClass(classId))
                                       .ReturnsAsync(new ResultDTO<int>(false, 4, errorMessage, null));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(new List<DatasetClassDTO>());
+                                      .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(datasetClass));
 
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
-                                           .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                                           .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClass));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.DeleteClass(classId);
@@ -493,15 +516,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             var allClasses = new List<DatasetClassDTO>();
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(allClasses);
+                                      .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(allClasses));
 
             var datasetDatasetClasses = new List<Dataset_DatasetClassDTO>();
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
-                                           .ReturnsAsync(datasetDatasetClasses);
+                                           .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClasses));
 
             var datasets = new List<DatasetDTO>();
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(datasets);
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.EditClass(model);
@@ -517,7 +540,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var classId = Guid.NewGuid();
-            var errorMessage = "This dataset class cannot be deleted because there are subclasses.";
+            var errorMessage = "Subclasses for this class exist. Please delete them first.";
             var childrenClassesList = new List<DatasetClassDTO>
             {
                 new DatasetClassDTO { Id = Guid.NewGuid(), ParentClassId = classId }
@@ -527,15 +550,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                                       .ReturnsAsync(new ResultDTO<int>(false, 2, errorMessage, null));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(childrenClassesList);
+                                      .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(childrenClassesList));
 
             var datasetDatasetClasses = new List<Dataset_DatasetClassDTO>();
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
-                                           .ReturnsAsync(datasetDatasetClasses);
+                                           .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClasses));
 
             var datasets = new List<DatasetDTO>();
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(datasets);
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.DeleteClass(classId);
@@ -551,7 +574,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var classId = Guid.NewGuid();
-            var errorMessage = "This dataset class is in use and cannot be deleted.";
+            var errorMessage = "Class is currently in use in datasets.";
             var datasetList = new List<DatasetDTO>
     {
         new DatasetDTO { Id = Guid.NewGuid(), Name = "Dataset1" },
@@ -562,18 +585,19 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         new Dataset_DatasetClassDTO { DatasetId = datasetList[0].Id },
         new Dataset_DatasetClassDTO { DatasetId = datasetList[1].Id }
     };
+            var datasetClassDTO = new List<DatasetClassDTO>();
 
             _mockDatasetClassesService.Setup(service => service.DeleteDatasetClass(classId))
                                       .ReturnsAsync(new ResultDTO<int>(false, 3, errorMessage, null));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(new List<DatasetClassDTO>());
+                                      .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(datasetClassDTO));
 
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
-                                           .ReturnsAsync(datasetClassesForClass);
+                                           .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetClassesForClass));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(datasetList);
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasetList));
 
             // Act
             var result = await _controller.DeleteClass(classId);
@@ -590,18 +614,20 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         {
             // Arrange
             var classId = Guid.NewGuid();
-
+            var datasetClassesDTO = new List<DatasetClassDTO>();
+            var datasets = new List<DatasetDTO>();
+            var datasetDatasetClassesDTO = new List<Dataset_DatasetClassDTO>();
             _mockDatasetClassesService.Setup(service => service.DeleteDatasetClass(classId))
                                       .ReturnsAsync(new ResultDTO<int>(false, 0, null, null));
 
             _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
-                                      .ReturnsAsync(new List<DatasetClassDTO>());
+                                      .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(datasetClassesDTO));
 
             _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
-                                           .ReturnsAsync(new List<Dataset_DatasetClassDTO>());
+                                           .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(datasetDatasetClassesDTO));
 
             _mockDatasetService.Setup(service => service.GetAllDatasets())
-                               .ReturnsAsync(new List<DatasetDTO>());
+                               .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
 
             // Act
             var result = await _controller.DeleteClass(classId);
@@ -609,7 +635,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             var jsonResult = Assert.IsType<JsonResult>(result);
             var jsonData = JObject.FromObject(jsonResult.Value);
-            Assert.Equal("Dataset class was not deleted", jsonData["responseError"]["Value"].ToString());
+            Assert.Equal("Dataset class was not deleted due to another error.", jsonData["responseError"]["Value"].ToString());
         }
 
 

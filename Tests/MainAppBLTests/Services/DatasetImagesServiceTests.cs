@@ -90,17 +90,17 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(datasetImageDto.Id, result.Id);
-            Assert.Equal(datasetImageDto.FileName, result.FileName);
-            Assert.Equal(datasetImageDto.Name, result.Name);
-            Assert.Equal(datasetImageDto.ImagePath, result.ImagePath);
-            Assert.Equal(datasetImageDto.ThumbnailPath, result.ThumbnailPath);
-            Assert.Equal(datasetImageDto.IsEnabled, result.IsEnabled);
-            Assert.Equal(datasetImageDto.DatasetId, result.DatasetId);
-            Assert.Equal(datasetImageDto.CreatedById, result.CreatedById);
-            Assert.Equal(datasetImageDto.CreatedOn, result.CreatedOn);
-            Assert.Equal(datasetImageDto.UpdatedById, result.UpdatedById);
-            Assert.Equal(datasetImageDto.UpdatedOn, result.UpdatedOn);
+            Assert.Equal(datasetImageDto.Id, result.Data.Id);
+            Assert.Equal(datasetImageDto.FileName, result.Data.FileName);
+            Assert.Equal(datasetImageDto.Name, result.Data.Name);
+            Assert.Equal(datasetImageDto.ImagePath, result.Data.ImagePath);
+            Assert.Equal(datasetImageDto.ThumbnailPath, result.Data.ThumbnailPath);
+            Assert.Equal(datasetImageDto.IsEnabled, result.Data.IsEnabled);
+            Assert.Equal(datasetImageDto.DatasetId, result.Data.DatasetId);
+            Assert.Equal(datasetImageDto.CreatedById, result.Data.CreatedById);
+            Assert.Equal(datasetImageDto.CreatedOn, result.Data.CreatedOn);
+            Assert.Equal(datasetImageDto.UpdatedById, result.Data.UpdatedById);
+            Assert.Equal(datasetImageDto.UpdatedOn, result.Data.UpdatedOn);
         }
 
         [Fact]
@@ -150,18 +150,23 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(2, result.Count);
-            Assert.Equal("Image1", result[0].FileName);
-            Assert.Equal("Image2", result[1].FileName);
+            Assert.Equal(2, result.Data.Count);
+            Assert.Equal("Image1", result.Data[0].FileName);
+            Assert.Equal("Image2", result.Data[1].FileName);
         }
 
         [Fact]
-        public async Task AddDatasetImage_NullDatasetId_ThrowsException()
+        public async Task AddDatasetImage_NullDatasetId_ReturnsErrorMEssage()
         {
-            var datasetImageDto = new DatasetImageDTO();
+            // Arrange
+            DatasetImageDTO dto = new DatasetImageDTO();
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _service.AddDatasetImage(datasetImageDto));
+            // Act
+            var result = await _service.AddDatasetImage(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset id is null", result.ErrMsg);
         }
 
         [Fact]
@@ -204,7 +209,7 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task AddDatasetImage_DatasetNotFound_ThrowsException()
+        public async Task AddDatasetImage_DatasetNotFound_ReturnsError()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
@@ -212,14 +217,18 @@ namespace Tests.MainAppBLTests.Services
 
             _mockDatasetsRepository
                 .Setup(repo => repo.GetById(datasetId, true, "CreatedBy,UpdatedBy,ParentDataset"))
-                .ReturnsAsync((ResultDTO<Dataset?>)null);
+                .ReturnsAsync(ResultDTO<Dataset?>.Fail("Dataset not found"));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _service.AddDatasetImage(datasetImageDto));
+            // Act
+            var result = await _service.AddDatasetImage(datasetImageDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset not found", result.ErrMsg);
         }
 
         [Fact]
-        public async Task AddDatasetImage_FailedDatasetImageCreation_ThrowsException()
+        public async Task AddDatasetImage_FailedDatasetImageCreation_ReturnsError()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
@@ -233,10 +242,14 @@ namespace Tests.MainAppBLTests.Services
 
             _mockDatasetImagesRepository
                 .Setup(repo => repo.CreateAndReturnEntity(It.IsAny<DatasetImage>(), true, default))
-                .ReturnsAsync((ResultDTO<DatasetImage>)null);
+                .ReturnsAsync(ResultDTO<DatasetImage>.Fail("Creation Failed"));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _service.AddDatasetImage(datasetImageDto));
+            // Act
+            var result = await _service.AddDatasetImage(datasetImageDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Creation Failed", result.ErrMsg);
         }
 
         [Fact]
@@ -464,32 +477,21 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task DeleteDatasetImage_InvalidId_ThrowsException()
+        public async Task DeleteDatasetImage_ImageNotFound_ReturnsError()
         {
             // Arrange
             var invalidDatasetImageId = Guid.NewGuid();
 
             _mockDatasetImagesRepository
-                .Setup(repo => repo.GetById(It.IsAny<Guid>(), false, null))
-                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(null));
+                .Setup(repo => repo.GetById(It.IsAny<Guid>(), false, "ImageAnnotations"))
+                .ReturnsAsync(ResultDTO<DatasetImage?>.Fail("Image not found"));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(invalidDatasetImageId, false));
-        }
+            // Act 
+            var result = await _service.DeleteDatasetImage(invalidDatasetImageId, false);
 
-        [Fact]
-        public async Task DeleteDatasetImage_ImageNotFound_ThrowsException()
-        {
-            // Arrange
-            var invalidDatasetImageId = Guid.NewGuid();
-
-            _mockDatasetImagesRepository
-                .Setup(repo => repo.GetById(It.IsAny<Guid>(), false, null))
-                .ReturnsAsync(ResultDTO<DatasetImage?>.Ok(null));
-
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await _service.DeleteDatasetImage(invalidDatasetImageId, false));
-            Assert.Equal("Object not found", exception.Message);
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Image not found", result.ErrMsg);
         }
 
         [Fact]
