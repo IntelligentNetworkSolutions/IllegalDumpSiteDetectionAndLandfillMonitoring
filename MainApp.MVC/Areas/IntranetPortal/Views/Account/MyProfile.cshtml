@@ -283,44 +283,40 @@
                         $("#confirmPassword").val("");
                         $("#currentPassword").val("");
                         $('#message').empty();
-                        if (data.currentPasswordFailed == true){
-                            Swal.fire({
-                                icon: 'warning',
-                                text: '@DbResHtml.T("Current password is incorrect!", "Resources")'
-                            })
-                        }else if(data.paswwordFieldsEmpty == true){
-                            Swal.fire({
-                                icon: 'warning',
-                                text: '@DbResHtml.T("Please provied correct password values!", "Resources")'
-                            })
-                        }else if(data.passwordUpdatedSuccessfully == true){
-                             Swal.fire({
-                                icon: 'success',
-                                text: '@DbResHtml.T("Password has been successfully changed", "Resources")'
-                            })
-                        } else if (data.userDbNotFound) {
-                            Swal.fire({
-                                icon: 'warning',
-                                text: '@DbResHtml.T("User not found!", "Resources")'
-                            })
-                        } else if (data.wrongUserId) {
-                            Swal.fire({
-                                icon: 'warning',
-                                text: '@DbResHtml.T("Wrong user id!", "Resources")'
-                            })
-                        } else{
-                            Swal.fire({
-                                icon: 'error',
-                                text: '@DbResHtml.T("Something went wrong!", "Resources")'
-                            })
+                        if (data != undefined || data != null) {
+                            if (data.isSuccess == false && data.errMsg != null) {
+                                Swal.fire({
+                                    text: `${data.errMsg}`,
+                                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                    allowOutsideClick: false,
+                                    icon: "error"
+                                });
+                            }
+                            else {
+                                Swal.fire({
+                                    text: `@DbResHtml.T("Password changed successfully", "Resources")`,
+                                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                    allowOutsideClick: false,
+                                    icon: "success"
+                                });
+                            }
                         }
-                       
+                        else {
+                            Swal.fire({
+                                text: `@DbResHtml.T("No data received", "Resources")`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
                     },
                     error: function (req, status, error) {
                         Swal.fire({
-                            icon: 'error',
-                            text: `@DbResHtml.T("Something went wrong!", "Resources") - ${req.status}`
-                        })
+                            text: '@DbResHtml.T("Error occured", "Resources")',
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
                     }
                 });
             }

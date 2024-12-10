@@ -617,7 +617,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             _mockUserManagementService
                 .Setup(s => s.GetUserById(_userId))
-                .ReturnsAsync((UserDTO)null);
+                .ReturnsAsync(ResultDTO<UserDTO>.Ok((UserDTO)null));
 
             // Act
             var result = await _controller.ScheduleTrainingRun(viewModel);
@@ -641,9 +641,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var user = new UserDTO { Id = _userId, UserName = "Test User" };
             _mockUserManagementService
                 .Setup(s => s.GetUserById(_userId))
-                .ReturnsAsync(user);
+                .ReturnsAsync(ResultDTO<UserDTO>.Fail("Services failed"));
 
-            var errorMessage = "Service error";
+            var errorMessage = "Services failed";
             _mockTrainingRunService
                 .Setup(s => s.CreateTrainingRunWithBaseModel(It.IsAny<TrainingRunDTO>()))
                 .ReturnsAsync(ResultDTO<TrainingRunDTO>.Fail(errorMessage));
@@ -670,7 +670,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var user = new UserDTO { Id = _userId, UserName = "Test User" };
             _mockUserManagementService
                 .Setup(s => s.GetUserById(_userId))
-                .ReturnsAsync(user);
+                .ReturnsAsync(ResultDTO<UserDTO>.Ok(user));
 
             TrainingRunDTO capturedDto = null;
             _mockTrainingRunService

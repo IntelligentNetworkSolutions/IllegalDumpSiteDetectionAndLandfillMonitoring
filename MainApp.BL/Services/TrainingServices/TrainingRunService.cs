@@ -50,13 +50,15 @@ namespace MainApp.BL.Services.TrainingServices
         {
             try
             {
-                ResultDTO<TrainingRun?> resultGetById =
-                    await _trainingRunsRepository.GetById(id, track: track, includeProperties: "CreatedBy");
-
+                ResultDTO<TrainingRun?>? resultGetById = await _trainingRunsRepository.GetById(id, track: track, includeProperties: "CreatedBy");
                 if (resultGetById.IsSuccess == false && resultGetById.HandleError())
                     return ResultDTO<TrainingRunDTO>.Fail(resultGetById.ErrMsg!);
+                if (resultGetById.Data == null)
+                    return ResultDTO<TrainingRunDTO>.Fail("Training run not found");
 
-                TrainingRunDTO dto = _mapper.Map<TrainingRunDTO>(resultGetById.Data);
+                TrainingRunDTO? dto = _mapper.Map<TrainingRunDTO>(resultGetById.Data);
+                if (dto == null)
+                    return ResultDTO<TrainingRunDTO>.Fail("Mapping training run failed");
 
                 return ResultDTO<TrainingRunDTO>.Ok(dto);
             }
@@ -72,14 +74,14 @@ namespace MainApp.BL.Services.TrainingServices
             try
             {
                 ResultDTO<IEnumerable<TrainingRun>>? resultGetEntities = await _trainingRunsRepository.GetAll(includeProperties: "CreatedBy,TrainedModel");
-
                 if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
                     return ResultDTO<List<TrainingRunDTO>>.Fail(resultGetEntities.ErrMsg!);
-
                 if (resultGetEntities.Data == null)
                     return ResultDTO<List<TrainingRunDTO>>.Fail("Training runs not found");
 
-                List<TrainingRunDTO> dto = _mapper.Map<List<TrainingRunDTO>>(resultGetEntities.Data);
+                List<TrainingRunDTO>? dto = _mapper.Map<List<TrainingRunDTO>>(resultGetEntities.Data);
+                if (dto == null)
+                    return ResultDTO<List<TrainingRunDTO>>.Fail("Mapping training run list failed");
 
                 return ResultDTO<List<TrainingRunDTO>>.Ok(dto);
             }
@@ -95,9 +97,9 @@ namespace MainApp.BL.Services.TrainingServices
             try
             {
                 //get base trained model
-                ResultDTO<TrainedModel?> getInsBestTrainedModelResult = 
+                ResultDTO<TrainedModel?>? getInsBestTrainedModelResult = 
                     await _trainedModelsRepository.GetByIdInclude(inputTrainingRunDTO.TrainedModelId.Value, track: false);
-                if (getInsBestTrainedModelResult.IsSuccess == false)
+                if (getInsBestTrainedModelResult.IsSuccess == false && getInsBestTrainedModelResult.HandleError())
                     return ResultDTO<TrainingRunDTO>.Fail(getInsBestTrainedModelResult.ErrMsg!);
                 if (getInsBestTrainedModelResult.Data == null)
                     return ResultDTO<TrainingRunDTO>.Fail($"Base model not found, for id: {inputTrainingRunDTO.TrainedModelId}");
@@ -105,19 +107,21 @@ namespace MainApp.BL.Services.TrainingServices
                 inputTrainingRunDTO.BaseModelId = getInsBestTrainedModelResult.Data.Id;
 
                 //map trained model entity to dto 
-                TrainedModelDTO trainedModelDTO = _mapper.Map<TrainedModelDTO>(getInsBestTrainedModelResult.Data);
+                TrainedModelDTO? trainedModelDTO = _mapper.Map<TrainedModelDTO>(getInsBestTrainedModelResult.Data);
                 if (trainedModelDTO == null)
                     return ResultDTO<TrainingRunDTO>.Fail("Mapping failed");
 
                 //map inputDTO to training run entity
-                TrainingRun entity = _mapper.Map<TrainingRun>(inputTrainingRunDTO);
+                TrainingRun? entity = _mapper.Map<TrainingRun>(inputTrainingRunDTO);
                 if (entity == null)
                     return ResultDTO<TrainingRunDTO>.Fail("Mapping failed");
 
                 //create training run 
-                ResultDTO<TrainingRun> createTrainingRunResult = await _trainingRunsRepository.CreateAndReturnEntity(entity);
-                if (createTrainingRunResult.IsSuccess == false && ResultDTO<TrainingRun>.HandleError(createTrainingRunResult))
+                ResultDTO<TrainingRun>? createTrainingRunResult = await _trainingRunsRepository.CreateAndReturnEntity(entity);
+                if (createTrainingRunResult.IsSuccess == false && createTrainingRunResult.HandleError())
                     return ResultDTO<TrainingRunDTO>.Fail(createTrainingRunResult.ErrMsg!);
+                if (createTrainingRunResult.Data == null)
+                    return ResultDTO<TrainingRunDTO>.Fail("Created training run not found");
 
                 //map training run entity to dto
                 TrainingRunDTO? outputTrainingRunDTO = _mapper.Map<TrainingRunDTO>(createTrainingRunResult.Data);
@@ -143,28 +147,35 @@ namespace MainApp.BL.Services.TrainingServices
                     return ResultDTO<Guid>.Fail("Training run id is null");
 
                 //get training run from db
-                ResultDTO<TrainingRun?> resultTrainingRunEntity = await _trainingRunsRepository.GetById(trainingRunId);
-                if (resultTrainingRunEntity.IsSuccess == false)
+                ResultDTO<TrainingRun?>? resultTrainingRunEntity = await _trainingRunsRepository.GetById(trainingRunId);
+                if (resultTrainingRunEntity.IsSuccess == false && resultTrainingRunEntity.HandleError())
                     return ResultDTO<Guid>.Fail(resultTrainingRunEntity.ErrMsg!);
                 if (resultTrainingRunEntity.Data == null)
                     return ResultDTO<Guid>.Fail("Training run not found");
 
-                ResultDTO<string> getTrainedModelConfigFilePathResult = _MMDetectionConfiguration.GetTrainedModelConfigFileAbsPath(resultTrainingRunEntity.Data.Id);
-                if (getTrainedModelConfigFilePathResult.IsSuccess == false)
+                ResultDTO<string>? getTrainedModelConfigFilePathResult = _MMDetectionConfiguration.GetTrainedModelConfigFileAbsPath(resultTrainingRunEntity.Data.Id);
+                if (getTrainedModelConfigFilePathResult.IsSuccess == false && getTrainedModelConfigFilePathResult.HandleError())
                     return ResultDTO<Guid>.Fail(getTrainedModelConfigFilePathResult.ErrMsg!);
+                if (getTrainedModelConfigFilePathResult.Data == null)
+                    return ResultDTO<Guid>.Fail("Config file path not found");
 
-                ResultDTO<TrainingRunResultsDTO> getBestEpochResult = GetBestEpochForTrainingRun(resultTrainingRunEntity.Data.Id);
+
+                ResultDTO<TrainingRunResultsDTO>? getBestEpochResult = GetBestEpochForTrainingRun(resultTrainingRunEntity.Data.Id);
                 if (getBestEpochResult.IsSuccess == false && getBestEpochResult.HandleError())
                     return ResultDTO<Guid>.Fail(getBestEpochResult.ErrMsg!);
+                if (getBestEpochResult.Data == null)
+                    return ResultDTO<Guid>.Fail("Best epoch not found");
 
-                ResultDTO<string> getTrainedModelBestEpochFilePathResult = _MMDetectionConfiguration.GetTrainedModelBestEpochFileAbsPath(resultTrainingRunEntity.Data.Id, getBestEpochResult.Data!.BestEpochMetrics.Epoch);
-                if (getTrainedModelBestEpochFilePathResult.IsSuccess == false)
+                ResultDTO<string>? getTrainedModelBestEpochFilePathResult = _MMDetectionConfiguration.GetTrainedModelBestEpochFileAbsPath(resultTrainingRunEntity.Data.Id, getBestEpochResult.Data!.BestEpochMetrics.Epoch);
+                if (getTrainedModelBestEpochFilePathResult.IsSuccess == false && getTrainedModelBestEpochFilePathResult.HandleError())
                     return ResultDTO<Guid>.Fail(getTrainedModelBestEpochFilePathResult.ErrMsg!);
+                if (getTrainedModelBestEpochFilePathResult.Data == null)
+                    return ResultDTO<Guid>.Fail("Best epoch file path not found");
 
                 TrainedModel trainedModel = new TrainedModel()
                 {
-                    ModelConfigPath = getTrainedModelConfigFilePathResult.Data!,
-                    ModelFilePath = getTrainedModelBestEpochFilePathResult.Data!,
+                    ModelConfigPath = getTrainedModelConfigFilePathResult.Data,
+                    ModelFilePath = getTrainedModelBestEpochFilePathResult.Data,
 
                     TrainingRunId = resultTrainingRunEntity.Data.Id,
                     DatasetId = resultTrainingRunEntity.Data.DatasetId,
@@ -177,11 +188,13 @@ namespace MainApp.BL.Services.TrainingServices
                     CreatedById = resultTrainingRunEntity.Data.CreatedById,
                 };
 
-                ResultDTO<TrainedModel> createTrainedModelResult = await _trainedModelsRepository.CreateAndReturnEntity(trainedModel);
+                ResultDTO<TrainedModel>? createTrainedModelResult = await _trainedModelsRepository.CreateAndReturnEntity(trainedModel);
                 if (createTrainedModelResult.IsSuccess == false && createTrainedModelResult.HandleError())
                     return ResultDTO<Guid>.Fail(createTrainedModelResult.ErrMsg!);
+                if (createTrainedModelResult.Data == null)
+                    return ResultDTO<Guid>.Fail("Created trained model not found");
 
-                return ResultDTO<Guid>.Ok(createTrainedModelResult.Data!.Id);
+                return ResultDTO<Guid>.Ok(createTrainedModelResult.Data.Id);
             }
             catch (Exception ex)
             {
@@ -194,31 +207,25 @@ namespace MainApp.BL.Services.TrainingServices
         {
             try
             {
-                ResultDTO<TrainingRun?> resultGetEntity = await _trainingRunsRepository.GetById(trainingRunId, track: true);
+                ResultDTO<TrainingRun?>? resultGetEntity = await _trainingRunsRepository.GetById(trainingRunId, track: true);
                 if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
                     return ResultDTO.Fail(resultGetEntity.ErrMsg!);
-
                 if (resultGetEntity.Data is null)
                     return ResultDTO.Fail($"No Training Run found with ID: {trainingRunId}");
 
-                if (trainedModelId != null)
-                {
+                if (trainedModelId != null)                
                     resultGetEntity.Data.TrainedModelId = trainedModelId;
-                }
-                if (status != null)
-                {
+                
+                if (status != null)                
                     resultGetEntity.Data.Status = status;
-                }
-                if (isCompleted != null)
-                {
+                
+                if (isCompleted != null)                
                     resultGetEntity.Data.IsCompleted = isCompleted.Value;
-                }
-                if (name != null)
-                {
+                
+                if (name != null)                
                     resultGetEntity.Data.Name = name;
-                }
-
-                ResultDTO updateRunResult = await _trainingRunsRepository.Update(resultGetEntity.Data);
+                
+                ResultDTO? updateRunResult = await _trainingRunsRepository.Update(resultGetEntity.Data);
                 if (updateRunResult.IsSuccess == false && updateRunResult.HandleError())
                     return ResultDTO.Fail(updateRunResult.ErrMsg!);
 
@@ -408,20 +415,15 @@ namespace MainApp.BL.Services.TrainingServices
                 ResultDTO<IEnumerable<TrainedModel>>? resultGetEntities = await _trainedModelsRepository.GetAll(filter: x => x.BaseModelId == null);
                 if (resultGetEntities.IsSuccess == false && resultGetEntities.HandleError())
                     return ResultDTO<string>.Fail(resultGetEntities.ErrMsg!);
-
-                if (resultGetEntities.Data == null)
-                {
+                if (resultGetEntities.Data == null)                
                     return ResultDTO<string>.Fail("Trained models not found");
-                }
-
+                
                 TrainedModel? firstCreatedBaseTrainedModel = resultGetEntities.Data.MinBy(x => x.CreatedOn);
 
                 TrainedModelDTO? dto = _mapper.Map<TrainedModelDTO>(firstCreatedBaseTrainedModel);
-                if(dto == null)
-                {
+                if(dto == null)                
                     return ResultDTO<string>.Fail("Mapping failed");
-                }
-
+                
                 return ResultDTO<string>.Ok(dto.ModelFilePath!);
             }
             catch (Exception ex)
@@ -438,9 +440,11 @@ namespace MainApp.BL.Services.TrainingServices
                 ResultDTO<string> getLogFilePathResult = _MMDetectionConfiguration.GetTrainingRunResultLogFileAbsPath(trainingRunId);
                 if (getLogFilePathResult.IsSuccess == false && getLogFilePathResult.HandleError())
                     return ResultDTO<TrainingRunResultsDTO>.Fail(getLogFilePathResult.ErrMsg!);
+                if (getLogFilePathResult.Data == null)
+                    return ResultDTO<TrainingRunResultsDTO>.Fail("Log file path results not found");
 
                 Dictionary<int, TrainingEpochMetricsDTO> epochMetrics = new Dictionary<int, TrainingEpochMetricsDTO>();
-                using (StreamReader reader = new StreamReader(getLogFilePathResult.Data!))
+                using (StreamReader reader = new StreamReader(getLogFilePathResult.Data))
                 {
                     string jsonContent = "";
                     int currentEpoch = 0;
@@ -528,7 +532,6 @@ namespace MainApp.BL.Services.TrainingServices
                 ResultDTO<TrainingRun?> resultGetEntity = await _trainingRunsRepository.GetById(trainingRunId, includeProperties: "TrainedModel");
                 if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
                     return ResultDTO.Fail(resultGetEntity.ErrMsg!);
-
                 if (resultGetEntity.Data == null)
                     return ResultDTO.Fail("Training run not found");
 
@@ -563,10 +566,9 @@ namespace MainApp.BL.Services.TrainingServices
             try
             {
                 //get training run entity
-                ResultDTO<TrainingRunDTO> resultGetEntity = await GetTrainingRunById(trainingRunId);
+                ResultDTO<TrainingRunDTO>? resultGetEntity = await GetTrainingRunById(trainingRunId);
                 if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
                     return ResultDTO.Fail(resultGetEntity.ErrMsg!);
-
                 if (resultGetEntity.Data == null)
                     return ResultDTO.Fail("Training run not found");
 
@@ -578,64 +580,58 @@ namespace MainApp.BL.Services.TrainingServices
                 if (resultGetEntity.Data.Status == nameof(ScheduleRunsStatus.Waiting))
                 {
                     //delete training run from db
-                    TrainingRun trainingRunEntity = _mapper.Map<TrainingRun>(resultGetEntity.Data);
-                    ResultDTO resultDeleteTrainingRun = await _trainingRunsRepository.Delete(trainingRunEntity);
+                    TrainingRun? trainingRunEntity = _mapper.Map<TrainingRun>(resultGetEntity.Data);
+                    if (trainingRunEntity == null)
+                        return ResultDTO.Fail("Mapping training run failed");
+
+                    ResultDTO? resultDeleteTrainingRun = await _trainingRunsRepository.Delete(trainingRunEntity);
                     if (resultDeleteTrainingRun.IsSuccess == false && resultDeleteTrainingRun.HandleError())
                         return ResultDTO.Fail(resultDeleteTrainingRun.ErrMsg!);
+
                     return ResultDTO.Ok();
                 }
 
                 //Get deteciton runs to check if there is detection run for the trained model from this training run
-                ResultDTO<List<DetectionRunDTO>> resultGetDetections = await _detectionRunService.GetAllDetectionRuns();
+                ResultDTO<List<DetectionRunDTO>>? resultGetDetections = await _detectionRunService.GetAllDetectionRuns();
                 if (resultGetDetections.IsSuccess == false && resultGetDetections.HandleError())
                     return ResultDTO.Fail(resultGetDetections.ErrMsg!);
                 if (resultGetDetections.Data == null)
                     return ResultDTO.Fail("Detection runs not found");
 
                 bool hasDetectionRun = resultGetDetections.Data.Any(x => x.TrainedModelId == resultGetEntity.Data.TrainedModelId);
-                if (hasDetectionRun)
-                {
+                if (hasDetectionRun)                
                     return ResultDTO.Fail("There is already detection run/s for this trained model, delete first detection run/s");
-                }
+                
 
                 //delete err msg txt file from wwwroot ONLY IF status is ERROR
                 if (resultGetEntity.Data.Status == nameof(ScheduleRunsStatus.Error))
                 {
                     ResultDTO<string?>? trainingRunsErrorLogsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("TrainingRunsErrorLogsFolder", "Uploads\\TrainingUploads\\TrainingRunsErrorLogs");
-                    if (!trainingRunsErrorLogsFolder.IsSuccess && trainingRunsErrorLogsFolder.HandleError())
-                    {
-                        return ResultDTO.Fail("Can not get the application settings");
-                    }
-
-                    if (string.IsNullOrEmpty(trainingRunsErrorLogsFolder.Data))
-                    {
+                    if (!trainingRunsErrorLogsFolder.IsSuccess && trainingRunsErrorLogsFolder.HandleError())                    
+                        return ResultDTO.Fail("Can not get the application settings");    
+                    if (string.IsNullOrEmpty(trainingRunsErrorLogsFolder.Data))                    
                         return ResultDTO.Fail("Directory path not found");
-                    }
+                    
 
-                    string filePath = System.IO.Path.Combine(wwwrootPath, trainingRunsErrorLogsFolder.Data);
+                    string? filePath = System.IO.Path.Combine(wwwrootPath, trainingRunsErrorLogsFolder.Data);
                     if (Directory.Exists(filePath))
                     {
                         string fileName = $"{trainingRunId}_errMsg.txt";
                         string fullFilePath = System.IO.Path.Combine(filePath, fileName);
-                        if (File.Exists(fullFilePath))
-                        {
-                            File.Delete(fullFilePath);
-                        }                        
+                        if (File.Exists(fullFilePath))                        
+                            File.Delete(fullFilePath);                                             
                     }
                 }
 
                 //delete error and success logs from TrainingRunCliOutDirAbsPath:
                 string? successLogFile = Path.Combine(_MMDetectionConfiguration.GetTrainingRunCliOutDirAbsPath(), $"succ_{trainingRunId}.txt");
-                if (File.Exists(successLogFile))
-                {
+                if (File.Exists(successLogFile))                
                     File.Delete(successLogFile);
-                }
+                
                 string? errorLogFile = Path.Combine(_MMDetectionConfiguration.GetTrainingRunCliOutDirAbsPath(), $"error_{trainingRunId}.txt");
-                if (File.Exists(errorLogFile))
-                {
+                if (File.Exists(errorLogFile))                
                     File.Delete(errorLogFile);
-                }
-
+                
                 //delete all files from mmdetection ins-development trainings trainingRunId folder
                 string? trainingRunFolderPath = Path.Combine(_MMDetectionConfiguration.GetTrainingRunsBaseOutDirAbsPath(), trainingRunId.ToString());
                 if (Directory.Exists(trainingRunFolderPath))
@@ -651,32 +647,35 @@ namespace MainApp.BL.Services.TrainingServices
                 }
 
                 //get trained model entity
-                ResultDTO<TrainedModel?> resultGetTrainedModel = await _trainedModelsRepository.GetById(resultGetEntity.Data.TrainedModelId!.Value, track: true);
+                ResultDTO<TrainedModel?>? resultGetTrainedModel = await _trainedModelsRepository.GetById(resultGetEntity.Data.TrainedModelId!.Value, track: true);
                 if (!resultGetTrainedModel.IsSuccess && resultGetTrainedModel.HandleError())
                     return ResultDTO.Fail(resultGetTrainedModel.ErrMsg!);
                 if (resultGetTrainedModel.Data == null)
                     return ResultDTO.Fail("Training model not found");
                 
                 //get all training runs
-                ResultDTO<IEnumerable<TrainingRun>> resultGetAllTrainingRuns = await _trainingRunsRepository.GetAll();
+                ResultDTO<IEnumerable<TrainingRun>>? resultGetAllTrainingRuns = await _trainingRunsRepository.GetAll();
                 if (!resultGetAllTrainingRuns.IsSuccess && resultGetAllTrainingRuns.HandleError())
                     return ResultDTO.Fail(resultGetAllTrainingRuns.ErrMsg!);
                 if (resultGetAllTrainingRuns.Data == null)
                     return ResultDTO.Fail("Training runs not found");
 
                 //all trained model ids from other training runs
-                var trainingModelIdsList = resultGetAllTrainingRuns.Data.Where(x => x.Id != trainingRunId).Select(x => x.TrainedModelId).ToList();
+                List<Guid?>? trainingModelIdsList = resultGetAllTrainingRuns.Data.Where(x => x.Id != trainingRunId).Select(x => x.TrainedModelId).ToList();
                 if (!trainingModelIdsList.Contains(resultGetTrainedModel.Data.Id))
                 {
                     //detele trained model from db if it is not contained in other training runs
-                    ResultDTO resultDeleteTrainedModel = await _trainedModelsRepository.Delete(resultGetTrainedModel.Data);
+                    ResultDTO? resultDeleteTrainedModel = await _trainedModelsRepository.Delete(resultGetTrainedModel.Data);
                     if (!resultDeleteTrainedModel.IsSuccess && resultDeleteTrainedModel.HandleError())
                         return ResultDTO.Fail(resultDeleteTrainedModel.ErrMsg!);
                 } 
 
                 //delete training run from db
-                TrainingRun trainingRun = _mapper.Map<TrainingRun>(resultGetEntity.Data);
-                ResultDTO resultDeleteEntity = await _trainingRunsRepository.Delete(trainingRun);
+                TrainingRun? trainingRun = _mapper.Map<TrainingRun>(resultGetEntity.Data);
+                if (trainingRun == null)
+                    return ResultDTO.Fail("Mapping training run failed");
+
+                ResultDTO? resultDeleteEntity = await _trainingRunsRepository.Delete(trainingRun);
                 if (resultDeleteEntity.IsSuccess == false && resultDeleteEntity.HandleError())
                     return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
 

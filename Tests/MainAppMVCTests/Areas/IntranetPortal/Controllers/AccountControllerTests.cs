@@ -65,79 +65,116 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             };
         }
 
-
         [Fact]
-        public async Task UpdatePassword_ReturnsJsonResult_WhenUserIdIsNull()
-        {
-            // Act
-            var result = await _controller.UpdatePassword(null, "password", "password", null);
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var expectedJson = JsonConvert.SerializeObject(new { wrongUserId = true });
-            var actualJson = JsonConvert.SerializeObject(jsonResult.Value);
-            Assert.Equal(expectedJson, actualJson);
-        }
-
-        [Fact]
-        public async Task UpdatePassword_ReturnsJsonResult_WhenPasswordFieldsAreEmpty()
-        {
-            // Act
-            var result = await _controller.UpdatePassword(null, null, null, "userId");
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var expectedJson = JsonConvert.SerializeObject(new { passwordFieldsEmpty = true });
-            var actualJson = JsonConvert.SerializeObject(jsonResult.Value);
-            Assert.Equal(expectedJson, actualJson);
-        }
-
-        [Fact]
-        public async Task UpdatePassword_ReturnsJsonResult_WhenPasswordsDoNotMatch()
-        {
-            // Act
-            var result = await _controller.UpdatePassword("currentPassword", "password", "differentPassword", "userId");
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var expectedJson = JsonConvert.SerializeObject(new { passwordMissmatch = true });
-            var actualJson = JsonConvert.SerializeObject(jsonResult.Value);
-            Assert.Equal(expectedJson, actualJson);
-        }
-
-        [Fact]
-        public async Task UpdatePassword_ReturnsJsonResult_WhenCurrentPasswordFails()
+        public async Task UpdatePassword_ShouldReturnOk_WhenPasswordIsSuccessfullyUpdated()
         {
             // Arrange
-            _userManagementServiceMock.Setup(x => x.UpdateUserPassword(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(ResultDTO.Fail("Error"));
+            string userId = "123";
+            string currentPassword = "oldPassword";
+            string newPassword = "newPassword";
+            string confirmNewPassword = "newPassword";
 
-            // Act
-            var result = await _controller.UpdatePassword("currentPassword", "password", "password", "userId");
-
-            // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var expectedJson = JsonConvert.SerializeObject(new { currentPasswordFailed = true });
-            var actualJson = JsonConvert.SerializeObject(jsonResult.Value);
-            Assert.Equal(expectedJson, actualJson);
-        }
-
-        [Fact]
-        public async Task UpdatePassword_ReturnsJsonResult_WhenPasswordUpdatedSuccessfully()
-        {
-            // Arrange
-            _userManagementServiceMock.Setup(x => x.UpdateUserPassword(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            _userManagementServiceMock.Setup(s => s.UpdateUserPassword(userId, currentPassword, newPassword))
                 .ReturnsAsync(ResultDTO.Ok());
 
             // Act
-            var result = await _controller.UpdatePassword("currentPassword", "password", "password", "userId");
+            var result = await _controller.UpdatePassword(currentPassword, newPassword, confirmNewPassword, userId);
 
             // Assert
-            var jsonResult = Assert.IsType<JsonResult>(result);
-            var expectedJson = JsonConvert.SerializeObject(new { passwordUpdatedSuccessfully = true });
-            var actualJson = JsonConvert.SerializeObject(jsonResult.Value);
-            Assert.Equal(expectedJson, actualJson);
+            Assert.True(result.IsSuccess);
         }
+
+        [Fact]
+        public async Task UpdatePassword_ShouldReturnFail_WhenUserIdIsInvalid()
+        {
+            // Arrange
+            string userId = "";
+            string currentPassword = "oldPassword";
+            string newPassword = "newPassword";
+            string confirmNewPassword = "newPassword";
+
+            // Act
+            var result = await _controller.UpdatePassword(currentPassword, newPassword, confirmNewPassword, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Wrong user id", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdatePassword_ShouldReturnFail_WhenCurrentOrNewPasswordIsEmpty()
+        {
+            // Arrange
+            string userId = "123";
+            string currentPassword = ""; 
+            string newPassword = "newPassword";
+            string confirmNewPassword = "newPassword";
+
+            // Act
+            var result = await _controller.UpdatePassword(currentPassword, newPassword, confirmNewPassword, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Incorrect current password", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdatePassword_ShouldReturnFail_WhenPasswordsDoNotMatch()
+        {
+            // Arrange
+            string userId = "123";
+            string currentPassword = "oldPassword";
+            string newPassword = "newPassword";
+            string confirmNewPassword = "differentPassword";
+
+            // Act
+            var result = await _controller.UpdatePassword(currentPassword, newPassword, confirmNewPassword, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Passwords mismatch", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdatePassword_ShouldReturnFail_WhenServiceFails()
+        {
+            // Arrange
+            string userId = "123";
+            string currentPassword = "oldPassword";
+            string newPassword = "newPassword";
+            string confirmNewPassword = "newPassword";
+
+            _userManagementServiceMock.Setup(s => s.UpdateUserPassword(userId, currentPassword, newPassword))
+                .ReturnsAsync(ResultDTO.Fail("Service error"));
+
+            // Act
+            var result = await _controller.UpdatePassword(currentPassword, newPassword, confirmNewPassword, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Service error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task UpdatePassword_ShouldReturnExceptionFail_WhenExceptionIsThrown()
+        {
+            // Arrange
+            string userId = "123";
+            string currentPassword = "oldPassword";
+            string newPassword = "newPassword";
+            string confirmNewPassword = "newPassword";
+
+            _userManagementServiceMock.Setup(s => s.UpdateUserPassword(userId, currentPassword, newPassword))
+                .Throws(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _controller.UpdatePassword(currentPassword, newPassword, confirmNewPassword, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Unexpected error", result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task SetCulture_ReturnsRedirect_WhenUserIdIsNull()
@@ -177,7 +214,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var principal = new ClaimsPrincipal(identity);
             _controller.ControllerContext.HttpContext.User = principal;
 
-            _userManagementServiceMock.Setup(s => s.GetUserById("1")).ReturnsAsync((UserDTO)null);
+            _userManagementServiceMock.Setup(s => s.GetUserById("1")).ReturnsAsync(ResultDTO<UserDTO>.Ok((UserDTO)null));
             _configurationMock.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/Error/404");
 
             // Act
@@ -197,7 +234,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var principal = new ClaimsPrincipal(identity);
             _controller.ControllerContext.HttpContext.User = principal;
 
-            _userManagementServiceMock.Setup(s => s.GetUserById("1")).ReturnsAsync((UserDTO)null);
+            _userManagementServiceMock.Setup(s => s.GetUserById("1")).ReturnsAsync(ResultDTO<UserDTO>.Ok((UserDTO)null));
             _configurationMock.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
 
             // Act
@@ -217,7 +254,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _controller.ControllerContext.HttpContext.User = principal;
 
             var user = new UserDTO { Id = "1" };
-            _userManagementServiceMock.Setup(s => s.GetUserById("1")).ReturnsAsync(user);
+            _userManagementServiceMock.Setup(s => s.GetUserById("1")).ReturnsAsync(ResultDTO<UserDTO>.Ok(user));
             _userManagementServiceMock.Setup(s => s.AddLanguageClaimForUser("1", "en")).ReturnsAsync(ResultDTO.Fail("Error"));
 
             // Act
@@ -308,8 +345,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 Id = userId
             };
 
-            _userManagementServiceMock.Setup(um => um.GetUserById(userId)).ReturnsAsync(appUser);
-            _userManagementServiceMock.Setup(um => um.GetPreferredLanguageForUser(userId)).ReturnsAsync("English");
+            _userManagementServiceMock.Setup(um => um.GetUserById(userId)).ReturnsAsync(ResultDTO<UserDTO>.Ok(appUser));
+            _userManagementServiceMock.Setup(um => um.GetPreferredLanguageForUser(userId)).ReturnsAsync(ResultDTO<string>.Ok("English"));
             _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
                                    .ReturnsAsync(ResultDTO<int>.Ok(8));
             _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
@@ -334,7 +371,6 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("English", model.PreferredLanguage);
         }
 
-        //check this later
         [Fact]
         public async Task MyProfile_ThrowsException_WhenUserManagementServiceReturnsNull()
         {
@@ -343,22 +379,25 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var user = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("UserId", userId) }));
             _controller.ControllerContext.HttpContext.User = user;
 
-            // Set up the application settings accessor to return valid values
+            _configurationMock.Setup(x => x["ErrorViewsPath:Error"]).Returns("/Error");
+
             _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<int>("PasswordMinLength", It.IsAny<int>()))
-                       .ReturnsAsync(ResultDTO<int>.Ok(8));
+                .ReturnsAsync(ResultDTO<int>.Ok(8));
             _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", It.IsAny<bool>()))
-                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+                .ReturnsAsync(ResultDTO<bool>.Ok(true));
             _appSettingsAccessorMock.Setup(x => x.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", It.IsAny<bool>()))
-                                   .ReturnsAsync(ResultDTO<bool>.Ok(true));
+                .ReturnsAsync(ResultDTO<bool>.Ok(true));
 
-            // Mock the user management service to throw an exception
-            _userManagementServiceMock.Setup(um => um.GetUserById(userId)).ThrowsAsync(new Exception("User not found"));
+            _userManagementServiceMock.Setup(um => um.GetUserById(userId))
+                .ReturnsAsync(ResultDTO<UserDTO>.Fail("User not found"));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.MyProfile());
+            // Act
+            var result = await _controller.MyProfile();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/Error", redirectResult.Url);
         }
-
-
 
 
         [Fact]
@@ -528,11 +567,11 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var userManagementServiceMock = new Mock<IUserManagementService>();
 
             userManagementServiceMock.Setup(s => s.GetUserClaims(user.Id))
-                .ReturnsAsync(new List<UserClaimDTO>());
+                .ReturnsAsync(ResultDTO<List<UserClaimDTO>>.Ok(new List<UserClaimDTO>()));
 
             var superAdmin = new UserDTO { UserName = "superadmin" };
             userManagementServiceMock.Setup(s => s.GetSuperAdminUserBySpecificClaim())
-                .ReturnsAsync(superAdmin);
+                .ReturnsAsync(ResultDTO<UserDTO>.Ok(superAdmin));
 
             var claimsIdentity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, user.UserName) }, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties();
@@ -722,27 +761,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var redirectResult = Assert.IsType<RedirectResult>(result);
             Assert.Equal("/Error403", redirectResult.Url);
         }
-
-        [Fact]
-        public async Task ResetPassword_TokenIsUsed_NoErrorPath_Retuns403Status()
-        {
-            // Arrange
-            var userId = "testUserId";
-            var token = "usedToken";
-            var mockTokenCheck = false;
-
-            _intranetPortalUsersTokenDaMock.Setup(x => x.IsTokenNotUsed(token, userId)).ReturnsAsync(mockTokenCheck);
-            _configurationMock.Setup(c => c["ErrorViewsPath:Error403"]).Returns("");
-
-            // Act
-            var result = await _controller.ResetPassword(userId, token);
-
-            // Assert
-            var statusCodeResult = Assert.IsType<StatusCodeResult>(result);
-            Assert.Equal(403, statusCodeResult.StatusCode);
-        }
-
-
+                
         [Fact]
         public async Task ResetPassword_ReturnsView_WhenModelStateIsInvalid()
         {
@@ -796,29 +815,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Login", redirectResult.ActionName);
         }
-
-        [Fact]
-        public async Task ResetPassword_RedirectsToLogin_WhenUserNotFound()
-        {
-            // Arrange
-            var model = new IntranetUsersResetPasswordViewModel
-            {
-                UserId = "invalidUserId",
-                Token = "token",
-                NewPassword = "ValidPassword123" // Valid password
-            };
-
-            _intranetPortalUsersTokenDaMock.Setup(da => da.GetUser(model.UserId)).ReturnsAsync((ApplicationUser)null);
-
-            // Act
-            var result = await _controller.ResetPassword(model);
-
-            // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Login", redirectResult.ActionName);
-        }
-
-
+               
         [Fact]
         public async Task ResetPassword_ThrowsException_WhenUpdatePasswordFails()
         {

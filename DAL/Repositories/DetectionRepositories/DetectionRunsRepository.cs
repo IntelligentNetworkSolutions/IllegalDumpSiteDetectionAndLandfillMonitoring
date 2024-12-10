@@ -3,6 +3,7 @@ using DAL.Interfaces.Repositories.DetectionRepositories;
 using Entities.DetectionEntities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,16 +21,15 @@ namespace DAL.Repositories.DetectionRepositories
             _logger = logger;
         }
 
-        public async Task<List<DetectionRun>> GetDetectionRunsWithClasses()
+        public async Task<ResultDTO<List<DetectionRun>>> GetDetectionRunsWithClasses()
         {
             try
             {
-                var list = await _db.DetectionRuns.Include(x => x.CreatedBy).Include(x => x.DetectionInputImage).Include(x => x.DetectedDumpSites).ThenInclude(x => x.DatasetClass).ToListAsync();
+                List<DetectionRun>? list = await _db.DetectionRuns.Include(x => x.CreatedBy).Include(x => x.DetectionInputImage).Include(x => x.DetectedDumpSites).ThenInclude(x => x.DatasetClass).ToListAsync();
                 if (list == null)
-                {
-                    return new List<DetectionRun>();
-                }
-                return list;
+                    return ResultDTO<List<DetectionRun>>.Fail("Failed to get detection runs from db");
+                
+                return ResultDTO<List<DetectionRun>>.Ok(list);
             }
             catch (Exception ex)
             {
@@ -39,16 +39,16 @@ namespace DAL.Repositories.DetectionRepositories
 
         }
 
-        public async Task<List<DetectionRun>> GetSelectedDetectionRunsWithClasses(List<Guid> selectedDetectionRunsIds)
+        public async Task<ResultDTO<List<DetectionRun>>> GetSelectedDetectionRunsWithClasses(List<Guid> selectedDetectionRunsIds)
         {
             try
             {
                 var list = await _db.DetectionRuns.Where(x => selectedDetectionRunsIds.Contains(x.Id)).Include(x => x.CreatedBy).Include(x => x.DetectedDumpSites).ThenInclude(x => x.DatasetClass).ToListAsync();
                 if (list == null)
                 {
-                    return new List<DetectionRun>();
+                    return ResultDTO<List<DetectionRun>>.Fail("Failed to get detection runs from db");
                 }
-                return list;
+                return ResultDTO<List<DetectionRun>>.Ok(list);
             }
             catch (Exception ex)
             {

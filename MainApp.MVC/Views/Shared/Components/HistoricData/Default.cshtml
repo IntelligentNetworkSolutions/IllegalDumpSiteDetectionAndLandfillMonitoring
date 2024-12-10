@@ -352,103 +352,125 @@
             type: "GET",
             url: "@Url.Action("GetAllDetectionRuns", "Detection", new { Area = "IntranetPortal" })",
             success: function (data) {
-                var detectionRunsTable = "";
-                if (data.length == 0) {
-                    detectionRunsTable +=
-                        `<table class='table table-striped table-bordered table-hover mt-4'>
-                        <thead>
-                            <tr>
-                                <th>@DbResHtml.T("Name", "Resources")</th>
-                                <th>@DbResHtml.T("Created By", "Resources")</th>
-                                <th>@DbResHtml.T("Created On", "Resources")</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                               <td colspan="4" class="text-center">@DbResHtml.T("No data available.", "Resources")</td>
-                            </tr>
-                        </tbody>
-                     </table>
-                    `
-                } else {
-                    detectionRunsTable +=
-                        `<table class='table table-striped table-bordered table-hover mt-4' id='historicDataDetectionRunsTable'>
-                        <thead>
-                            <tr>
-                                <th hidden></th>
-                                <th>@DbResHtml.T("Name", "Resources")</th>
-                                <th>@DbResHtml.T("Load detections above - confidence rate (%)", "Resources")</th>
-                                <th>@DbResHtml.T("Created On", "Resources")</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                    `;
-                    data.forEach(function (item) {
-                        var checked = item.id === '@Model' ? "checked" : "";
-                        detectionRunsTable +=
-                            `<tr>
-                            <td hidden>${item.id}</td>
-                               <td style="max-width: 200px; word-wrap: break-word; white-space: normal;">${item.name}</td>
-                            <td>
-                               <input class="conf_rate_slider" id="conf_rate_range_${item.id}" type="text" name="conf_rate_range_${item.id}" value="">
-                            </td>
-                                   <td>${new Date(item.createdOn).toLocaleDateString('en-GB').replace(/\//g, '.')}</td>
-                            <td>
-                               <div class="form-group clearfix">
-                                    <div class="icheck-dark mt-3 text-bold">
-                                        <input type="checkbox" id="editDatasetImageEnabledInput_${item.id}" name="editDatasetImageEnabledInput_${item.id}" ${checked}>
-                                        <label for="editDatasetImageEnabledInput_${item.id}"></label>
-                                    </div>
-                               </div>
-                            </td>
-                         </tr>
+                if (data != undefined || data != null) {
+                    if (data.isSuccess == false && data.errMsg != null) {
+                        Swal.fire({
+                            text: `${data.errMsg}`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                    else {
+                        var detectionRunsTable = "";
+                        if (data.data.length == 0) {
+                            detectionRunsTable +=
+                                `<table class='table table-striped table-bordered table-hover mt-4'>
+                            <thead>
+                                <tr>
+                                    <th>@DbResHtml.T("Name", "Resources")</th>
+                                    <th>@DbResHtml.T("Created By", "Resources")</th>
+                                    <th>@DbResHtml.T("Created On", "Resources")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                   <td colspan="4" class="text-center">@DbResHtml.T("No data available.", "Resources")</td>
+                                </tr>
+                            </tbody>
+                         </table>
                         `
-                    });
+                        } else {
+                            detectionRunsTable +=
+                                `<table class='table table-striped table-bordered table-hover mt-4' id='historicDataDetectionRunsTable'>
+                            <thead>
+                                <tr>
+                                    <th hidden></th>
+                                    <th>@DbResHtml.T("Name", "Resources")</th>
+                                    <th>@DbResHtml.T("Load detections above - confidence rate (%)", "Resources")</th>
+                                    <th>@DbResHtml.T("Created On", "Resources")</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                        `;
+                            data.data.forEach(function (item) {
+                                var checked = item.id === '@Model' ? "checked" : "";
+                                detectionRunsTable +=
+                                    `<tr>
+                                <td hidden>${item.id}</td>
+                                   <td style="max-width: 200px; word-wrap: break-word; white-space: normal;">${item.name}</td>
+                                <td>
+                                   <input class="conf_rate_slider" id="conf_rate_range_${item.id}" type="text" name="conf_rate_range_${item.id}" value="">
+                                </td>
+                                       <td>${new Date(item.createdOn).toLocaleDateString('en-GB').replace(/\//g, '.')}</td>
+                                <td>
+                                   <div class="form-group clearfix">
+                                        <div class="icheck-dark mt-3 text-bold">
+                                            <input type="checkbox" id="editDatasetImageEnabledInput_${item.id}" name="editDatasetImageEnabledInput_${item.id}" ${checked}>
+                                            <label for="editDatasetImageEnabledInput_${item.id}"></label>
+                                        </div>
+                                   </div>
+                                </td>
+                             </tr>
+                            `
+                            });
 
-                    detectionRunsTable += `</tbody></table>`;
-                    detectionRunsTable +=
-                        `<div class="text-center">
-                        <a onclick="triggerShowOnMap()" id="showOnMapBtn" class="mr-2 btn bg-gradient-success"  title="@DbResHtml.T("Show on map", "Resources")">@DbResHtml.T("Show on map", "Resources")</a>
-                        <div class="btn-group">
-                            <button type="button" class="btn  bg-gradient-info">Reports</button>
-                            <button type="button" class="btn  bg-gradient-info dropdown-toggle dropdown-icon" data-toggle="dropdown">
-                                 <span class="sr-only">Toggle Dropdown</span>
-                            </button>
-                            <div class="dropdown-menu" role="menu">
-                               <a onclick="triggerAreaComparisonAvgConfidenceRate()" id="showAreaComparisonAvgConfidenceRateModalBtn" class="dropdown-item btn">@DbResHtml.T("Area comparison", "Resources")</a>
+                            detectionRunsTable += `</tbody></table>`;
+                            detectionRunsTable +=
+                                `<div class="text-center">
+                            <a onclick="triggerShowOnMap()" id="showOnMapBtn" class="mr-2 btn bg-gradient-success"  title="@DbResHtml.T("Show on map", "Resources")">@DbResHtml.T("Show on map", "Resources")</a>
+                            <div class="btn-group">
+                                <button type="button" class="btn  bg-gradient-info">Reports</button>
+                                <button type="button" class="btn  bg-gradient-info dropdown-toggle dropdown-icon" data-toggle="dropdown">
+                                     <span class="sr-only">Toggle Dropdown</span>
+                                </button>
+                                <div class="dropdown-menu" role="menu">
+                                   <a onclick="triggerAreaComparisonAvgConfidenceRate()" id="showAreaComparisonAvgConfidenceRateModalBtn" class="dropdown-item btn">@DbResHtml.T("Area comparison", "Resources")</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    `;
-                }
-              
-                $("#map-sidebar-historicdatatable-tab-container").html(detectionRunsTable);
-                $('.conf_rate_slider').ionRangeSlider({
-                    min: 0,
-                    max: 100,
-                    from: 50,
-                    type: 'single',
-                    step: 1,
-                    postfix: '%',
-                    prettify: false,
-                    hasGrid: true
-                });
-
-                var modelId = '@Model';
-                if (modelId) {
-                    $('#historicDataDetectionRunsTable tbody tr').each(function () {
-                        var id = $(this).find('td:first').text().trim();
-                        if (id === modelId) {
-                            $(this).find('input[type="checkbox"]').prop('checked', true);
+                        `;
                         }
-                        triggerShowOnMap();
-                    });                  
-                }
+
+                        $("#map-sidebar-historicdatatable-tab-container").html(detectionRunsTable);
+                        $('.conf_rate_slider').ionRangeSlider({
+                            min: 0,
+                            max: 100,
+                            from: 50,
+                            type: 'single',
+                            step: 1,
+                            postfix: '%',
+                            prettify: false,
+                            hasGrid: true
+                        });
+
+                        var modelId = '@Model';
+                        if (modelId) {
+                            $('#historicDataDetectionRunsTable tbody tr').each(function () {
+                                var id = $(this).find('td:first').text().trim();
+                                if (id === modelId) {
+                                    $(this).find('input[type="checkbox"]').prop('checked', true);
+                                }
+                                triggerShowOnMap();
+                            });
+                        }
+                    }
+                } 
+                else {
+                    Swal.fire({
+                        text: `@DbResHtml.T("No data received", "Resources")`,
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                }                
             },
             error: function (req, status, error) {
                 Swal.fire({
                     text: '@DbResHtml.T("Error occured", "Resources")',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                    allowOutsideClick: false,
                     icon: "error"
                 });
             }

@@ -30,8 +30,12 @@ namespace MainApp.BL.Services.DetectionServices
 
                 if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
                     return ResultDTO<List<DetectionIgnoreZoneDTO>>.Fail(resultGetAllEntites.ErrMsg!);
+                if (resultGetAllEntites.Data == null)
+                    return ResultDTO<List<DetectionIgnoreZoneDTO>>.Fail("Detection ignore zone list not found");
 
-                List<DetectionIgnoreZoneDTO> dtos = _mapper.Map<List<DetectionIgnoreZoneDTO>>(resultGetAllEntites.Data);
+                List<DetectionIgnoreZoneDTO>? dtos = _mapper.Map<List<DetectionIgnoreZoneDTO>>(resultGetAllEntites.Data);
+                if (dtos == null)
+                    return ResultDTO<List<DetectionIgnoreZoneDTO>>.Fail("Mapping deteciton ignore zoen list failed");
 
                 return ResultDTO<List<DetectionIgnoreZoneDTO>>.Ok(dtos);
             }
@@ -47,12 +51,15 @@ namespace MainApp.BL.Services.DetectionServices
             try
             {
                 ResultDTO<DetectionIgnoreZone?> resultGetEntity = await _detectionIgnoreZonesRepository.GetById(id, includeProperties: "CreatedBy");
-                if(resultGetEntity.IsSuccess == false && !resultGetEntity.HandleError())
-                {
+                if(resultGetEntity.IsSuccess == false && !resultGetEntity.HandleError())                
                     return ResultDTO<DetectionIgnoreZoneDTO?>.Fail(resultGetEntity.ErrMsg!);
-                }
-
+                if (resultGetEntity.Data == null)
+                    return ResultDTO<DetectionIgnoreZoneDTO?>.Fail("Detection ignore zone not found");
+                
                 DetectionIgnoreZoneDTO dto = _mapper.Map<DetectionIgnoreZoneDTO>(resultGetEntity.Data);
+                if (dto == null)
+                    return ResultDTO<DetectionIgnoreZoneDTO?>.Fail("Mapping detection ingore zone failed");
+
                 return ResultDTO<DetectionIgnoreZoneDTO?>.Ok(dto);
             }
             catch (Exception ex)
@@ -73,8 +80,7 @@ namespace MainApp.BL.Services.DetectionServices
                 if (ignoreZone is null)
                     return ResultDTO.Fail("DTO not mapped");
 
-                ResultDTO resultCreate =
-                    await _detectionIgnoreZonesRepository.Create(ignoreZone);
+                ResultDTO resultCreate = await _detectionIgnoreZonesRepository.Create(ignoreZone);
                 if (resultCreate.IsSuccess == false && resultCreate.HandleError())
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
 
@@ -105,6 +111,8 @@ namespace MainApp.BL.Services.DetectionServices
                     await _detectionIgnoreZonesRepository.GetById(ignoreZone.Id, track: true);
                 if (resultGetById.IsSuccess == false && resultGetById.HandleError())
                     return ResultDTO.Fail(resultGetById.ErrMsg!);
+                if (resultGetById.Data == null)
+                    return ResultDTO.Fail("Detection ingore zone not found");
                    
                 if(dto.Geom == null)
                 {
@@ -145,6 +153,8 @@ namespace MainApp.BL.Services.DetectionServices
                     await _detectionIgnoreZonesRepository.GetById(ignoreZone.Id, track: true);
                 if (resultGetById.IsSuccess == false && resultGetById.HandleError())
                     return ResultDTO.Fail(resultGetById.ErrMsg!);
+                if (resultGetById.Data == null)
+                    return ResultDTO.Fail("Detection ingore zone not found");
 
                 ResultDTO resultDelete = await _detectionIgnoreZonesRepository.Delete(resultGetById.Data!);
                 if (resultDelete.IsSuccess == false && resultDelete.HandleError())

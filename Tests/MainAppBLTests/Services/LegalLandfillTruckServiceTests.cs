@@ -119,56 +119,97 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task CreateLegalLandfillTruck_WithNullDTO_ShouldReturnExceptionFail()
+        public async Task CreateLegalLandfillTruck_ShouldReturnOk_WhenCreationIsSuccessful()
         {
             // Arrange
-            LegalLandfillTruckDTO? dto = null;
+            var legalLandfillTruckDTO = new LegalLandfillTruckDTO();
+            var legalLandfillTruckEntity = new LegalLandfillTruck();
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(legalLandfillTruckDTO)).Returns(legalLandfillTruckEntity);
+            _mockTruckRepository.Setup(r => r.Create(legalLandfillTruckEntity,true,default))
+                           .ReturnsAsync(ResultDTO.Ok());
 
             // Act
-            var result = await _service.CreateLegalLandfillTruck(dto!);
+            var result = await _service.CreateLegalLandfillTruck(legalLandfillTruckDTO);
 
             // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Contains("Object reference not set to an instance", result.ErrMsg);
-            _mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => true),
-                    It.IsAny<Exception>(),
-                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
-                Times.Once);
+            Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg);
         }
 
         [Fact]
-        public async Task EditLegalLandfillTruck_ShouldUpdateTruck()
+        public async Task CreateLegalLandfillTruck_ShouldReturnFail_WhenMappingFails()
         {
             // Arrange
-            var dto = new LegalLandfillTruckDTO();
-            var entity = new LegalLandfillTruck();
-            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(dto)).Returns(entity);
-            _mockTruckRepository.Setup(r => r.Update(entity, true, default))
-                .ReturnsAsync(ResultDTO.Ok());
+            var legalLandfillTruckDTO = new LegalLandfillTruckDTO();
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(legalLandfillTruckDTO)).Returns((LegalLandfillTruck)null);
 
             // Act
-            var result = await _service.EditLegalLandfillTruck(dto);
+            var result = await _service.CreateLegalLandfillTruck(legalLandfillTruckDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Mapping landfill truck failed", result.ErrMsg);
+        }
+                
+        [Fact]
+        public async Task CreateLegalLandfillTruck_ShouldReturnExceptionFail_WhenExceptionOccurs()
+        {
+            // Arrange
+            var legalLandfillTruckDTO = new LegalLandfillTruckDTO();
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(legalLandfillTruckDTO)).Throws(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _service.CreateLegalLandfillTruck(legalLandfillTruckDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Unexpected error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillTruck_ShouldReturnOk_WhenUpdateIsSuccessful()
+        {
+            // Arrange
+            var legalLandfillTruckDTO = new LegalLandfillTruckDTO(); 
+            var legalLandfillTruckEntity = new LegalLandfillTruck(); 
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(legalLandfillTruckDTO)).Returns(legalLandfillTruckEntity);
+            _mockTruckRepository.Setup(r => r.Update(legalLandfillTruckEntity,true, default))
+                           .ReturnsAsync(ResultDTO.Ok());
+
+            // Act
+            var result = await _service.EditLegalLandfillTruck(legalLandfillTruckDTO);
 
             // Assert
             Assert.True(result.IsSuccess);
         }
 
         [Fact]
-        public async Task EditLegalLandfillTruck_WhenUpdateFails_ShouldReturnFailResult()
+        public async Task EditLegalLandfillTruck_ShouldReturnFail_WhenMappingFails()
         {
             // Arrange
-            var dto = new LegalLandfillTruckDTO();
-            var entity = new LegalLandfillTruck();
-            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(dto)).Returns(entity);
-            _mockTruckRepository.Setup(r => r.Update(entity, true, default))
-                .ReturnsAsync(ResultDTO.Fail("Update failed"));
+            var legalLandfillTruckDTO = new LegalLandfillTruckDTO(); 
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(legalLandfillTruckDTO)).Returns((LegalLandfillTruck)null);
 
             // Act
-            var result = await _service.EditLegalLandfillTruck(dto);
+            var result = await _service.EditLegalLandfillTruck(legalLandfillTruckDTO);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Mapping landfill truck failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditLegalLandfillTruck_ShouldReturnFail_WhenRepositoryUpdateFails()
+        {
+            // Arrange
+            var legalLandfillTruckDTO = new LegalLandfillTruckDTO();
+            var legalLandfillTruckEntity = new LegalLandfillTruck();
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(legalLandfillTruckDTO)).Returns(legalLandfillTruckEntity);
+            _mockTruckRepository.Setup(r => r.Update(legalLandfillTruckEntity, true, default))
+                           .ReturnsAsync(ResultDTO.Fail("Update failed"));
+
+            // Act
+            var result = await _service.EditLegalLandfillTruck(legalLandfillTruckDTO);
 
             // Assert
             Assert.False(result.IsSuccess);
@@ -176,83 +217,22 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task EditLegalLandfillTruck_WhenMappingFails_ShouldReturnExceptionFail()
+        public async Task EditLegalLandfillTruck_ShouldReturnExceptionFail_WhenExceptionOccurs()
         {
             // Arrange
-            var dto = new LegalLandfillTruckDTO
-            {
-                Id = Guid.NewGuid()
-            };
-            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(dto))
-                .Throws(new AutoMapperMappingException("Mapping failed"));
+            var legalLandfillTruckDTO = new LegalLandfillTruckDTO();
+            var legalLandfillTruckEntity = new LegalLandfillTruck(); 
+            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(legalLandfillTruckDTO)).Returns(legalLandfillTruckEntity);
+            _mockTruckRepository.Setup(r => r.Update(legalLandfillTruckEntity, true, default))
+                           .Throws(new Exception("Unexpected error"));
 
             // Act
-            var result = await _service.EditLegalLandfillTruck(dto);
+            var result = await _service.EditLegalLandfillTruck(legalLandfillTruckDTO);
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Contains("Mapping failed", result.ErrMsg);
-            _mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => true),
-                    It.IsAny<Exception>(),
-                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
-                Times.Once);
+            Assert.Equal("Unexpected error", result.ErrMsg);
         }
-
-        [Fact]
-        public async Task EditLegalLandfillTruck_WhenRepositoryThrowsException_ShouldReturnExceptionFail()
-        {
-            // Arrange
-            var dto = new LegalLandfillTruckDTO
-            {
-                Id = Guid.NewGuid()
-            };
-            var entity = new LegalLandfillTruck();
-            _mockMapper.Setup(m => m.Map<LegalLandfillTruck>(dto)).Returns(entity);
-            _mockTruckRepository.Setup(r => r.Update(entity, true, default))
-                .ThrowsAsync(new Exception("Database connection failed"));
-
-            // Act
-            var result = await _service.EditLegalLandfillTruck(dto);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Contains("Database connection failed", result.ErrMsg);
-            _mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => true),
-                    It.IsAny<Exception>(),
-                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
-                Times.Once);
-        }
-
-        [Fact]
-        public async Task EditLegalLandfillTruck_WithNullDTO_ShouldReturnExceptionFail()
-        {
-            // Arrange
-            LegalLandfillTruckDTO? dto = null;
-
-            // Act
-            var result = await _service.EditLegalLandfillTruck(dto!);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Contains("Object reference not set to an instance", result.ErrMsg);
-            _mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => true),
-                    It.IsAny<Exception>(),
-                    It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
-                Times.Once);
-        }
-
 
 
         [Fact]

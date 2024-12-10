@@ -29,12 +29,13 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
             try
             {
                 LegalLandfillTruck legalLandfillTruckEntity = _mapper.Map<LegalLandfillTruck>(legalLandfillTruckDTO);
+                if (legalLandfillTruckEntity == null)
+                    return ResultDTO.Fail("Mapping landfill truck failed");
 
                 ResultDTO resultCreate = await _legalLandfillTruckRepository.Create(legalLandfillTruckEntity);
-                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())                
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
@@ -51,14 +52,14 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
         {
             try
             {
-                LegalLandfillTruck legalLandfillTruckEntity = _mapper.Map<LegalLandfillTruck>(legalLandfillTruckDTO);
+                LegalLandfillTruck? legalLandfillTruckEntity = _mapper.Map<LegalLandfillTruck>(legalLandfillTruckDTO);
+                if (legalLandfillTruckEntity == null)
+                    return ResultDTO.Fail("Mapping landfill truck failed");
 
                 ResultDTO resultCreate = await _legalLandfillTruckRepository.Update(legalLandfillTruckEntity);
-                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())                
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
-
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
@@ -80,14 +81,14 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
                     return ResultDTO.Fail("Cannot delete this truck. It is being used in waste imports");
                 }
 
-                LegalLandfillTruck legalLandfillTruckEntity = _mapper.Map<LegalLandfillTruck>(legalLandfillTruckDTO);
+                LegalLandfillTruck? legalLandfillTruckEntity = _mapper.Map<LegalLandfillTruck>(legalLandfillTruckDTO);
+                if (legalLandfillTruckEntity == null)
+                    return ResultDTO.Fail("Mapping landfill truck failed");
 
                 ResultDTO resultCreate = await _legalLandfillTruckRepository.Delete(legalLandfillTruckEntity);
-                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())                
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
-
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
@@ -102,15 +103,14 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
             try
             {
                 LegalLandfillTruck legalLandfillTruckEntity = _mapper.Map<LegalLandfillTruck>(legalLandfillTruckDTO);
+                if (legalLandfillTruckEntity == null)
+                    return ResultDTO.Fail("Mapping landfill truck failed");
 
                 legalLandfillTruckEntity.IsEnabled = false;
 
                 ResultDTO resultUpdate = await _legalLandfillTruckRepository.Update(legalLandfillTruckEntity);
-
-                if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())
-                {
-                    return ResultDTO.Fail(resultUpdate.ErrMsg!);
-                }
+                if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())                
+                    return ResultDTO.Fail(resultUpdate.ErrMsg!);                
 
                 return ResultDTO.Ok();
             }
@@ -132,13 +132,15 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
                 Expression<Func<LegalLandfillTruck, bool>> filter = truck => truck.IsEnabled;
 
                 ResultDTO<IEnumerable<LegalLandfillTruck>> resultGetAllEntites = await _legalLandfillTruckRepository.GetAll(filter);
-
-                if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
-                {
+                if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())                
                     return ResultDTO<List<LegalLandfillTruckDTO>>.Fail(resultGetAllEntites.ErrMsg!);
-                }
+                if (resultGetAllEntites.Data == null)
+                    return ResultDTO<List<LegalLandfillTruckDTO>>.Fail("Landfill truck not found");                
 
                 List<LegalLandfillTruckDTO> dtos = _mapper.Map<List<LegalLandfillTruckDTO>>(resultGetAllEntites.Data);
+                if (dtos == null)
+                    return ResultDTO<List<LegalLandfillTruckDTO>>.Fail("Mapping landfill truck list failed");
+
                 return ResultDTO<List<LegalLandfillTruckDTO>>.Ok(dtos);
             }
             catch (Exception ex)
@@ -154,12 +156,15 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
             {
                 ResultDTO<LegalLandfillTruck?> resultGetEntity = await _legalLandfillTruckRepository.GetById(legalLandfillTruckId);
 
-                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
-                {
+                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())                
                     return ResultDTO<LegalLandfillTruckDTO>.Fail(resultGetEntity.ErrMsg!);
-                }
+                if (resultGetEntity.Data == null)
+                    return ResultDTO<LegalLandfillTruckDTO>.Fail("Legal landfill truck not found");                
 
-                LegalLandfillTruckDTO dto = _mapper.Map<LegalLandfillTruckDTO>(resultGetEntity.Data);
+                LegalLandfillTruckDTO? dto = _mapper.Map<LegalLandfillTruckDTO>(resultGetEntity.Data);
+                if (dto == null)
+                    return ResultDTO<LegalLandfillTruckDTO>.Fail("Mapping landfill truck failed");
+
                 return ResultDTO<LegalLandfillTruckDTO>.Ok(dto);
             }
             catch (Exception ex)

@@ -140,18 +140,18 @@ namespace Tests.MainAppBLTests.Services
         public async Task CreateLegalLandfill_ShouldReturnExceptionFail_WhenExceptionThrown()
         {
             // Arrange
-            var landfillDto = new LegalLandfillDTO { /* set necessary properties */ };
-            _mockRepository
-                .Setup(r => r.Create(It.IsAny<LegalLandfill>(), true, default))
-                .ThrowsAsync(new Exception("Create landfill failed"));
+            var landfillDto = new LegalLandfillDTO { };
+                       
+            _mockMapper.Setup(m => m.Map<LegalLandfill>(It.IsAny<LegalLandfillDTO>())).Returns((LegalLandfill)null);
 
             // Act
             var result = await _service.CreateLegalLandfill(landfillDto);
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal("Create landfill failed", result.ErrMsg);
+            Assert.Equal("Mapping legal landfill failed", result.ErrMsg); 
         }
+
 
 
         [Fact]

@@ -84,41 +84,88 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
         }
 
         [Fact]
-        public async Task GetTrainingRunById_ReturnsSuccess_WhenTrainingRunExists()
+        public async Task GetTrainingRunById_ShouldReturnOk_WhenRetrievingAndMappingIsSuccessful()
         {
             // Arrange
             var trainingRunId = Guid.NewGuid();
-            var trainingRun = new TrainingRun { Id = trainingRunId, Name = "Test Run" };
-            var trainingRunDTO = new TrainingRunDTO { Id = trainingRunId, Name = "Test Run" };
-
-            _mockTrainingRunsRepository.Setup(x => x.GetById(trainingRunId, false, "CreatedBy"))
-                .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(trainingRun));
-
-            _mockMapper.Setup(x => x.Map<TrainingRunDTO>(trainingRun))
-                .Returns(trainingRunDTO);
+            var trainingRun = new TrainingRun(); 
+            var trainingRunDTO = new TrainingRunDTO(); 
+            _mockTrainingRunsRepository.Setup(r => r.GetById(trainingRunId, false, "CreatedBy"))
+                           .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(trainingRun));
+            _mockMapper.Setup(m => m.Map<TrainingRunDTO>(trainingRun)).Returns(trainingRunDTO);
 
             // Act
             var result = await _service.GetTrainingRunById(trainingRunId);
 
             // Assert
             Assert.True(result.IsSuccess);
-            Assert.Equal(trainingRunDTO, result.Data);
+            Assert.NotNull(result.Data);
         }
 
         [Fact]
-        public async Task GetTrainingRunById_ReturnsFailure_WhenTrainingRunDoesNotExist()
+        public async Task GetTrainingRunById_ShouldReturnFail_WhenRepositoryFails()
         {
             // Arrange
             var trainingRunId = Guid.NewGuid();
-            _mockTrainingRunsRepository.Setup(x => x.GetById(trainingRunId, false, "CreatedBy"))
-                .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(null));
+            _mockTrainingRunsRepository.Setup(r => r.GetById(trainingRunId, false, "CreatedBy"))
+                           .ReturnsAsync(ResultDTO<TrainingRun?>.Fail("Repository error"));
 
             // Act
             var result = await _service.GetTrainingRunById(trainingRunId);
 
             // Assert
-            Assert.True(result.IsSuccess); // Note: The service returns success with null data in this case
-            Assert.Null(result.Data);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Repository error", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetTrainingRunById_ShouldReturnFail_WhenTrainingRunNotFound()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            _mockTrainingRunsRepository.Setup(r => r.GetById(trainingRunId, false, "CreatedBy"))
+                           .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(null));
+
+            // Act
+            var result = await _service.GetTrainingRunById(trainingRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Training run not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetTrainingRunById_ShouldReturnFail_WhenMappingFails()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            var trainingRun = new TrainingRun();
+            _mockTrainingRunsRepository.Setup(r => r.GetById(trainingRunId, false, "CreatedBy"))
+                           .ReturnsAsync(ResultDTO<TrainingRun?>.Ok(trainingRun));
+            _mockMapper.Setup(m => m.Map<TrainingRunDTO>(trainingRun)).Returns((TrainingRunDTO)null);
+
+            // Act
+            var result = await _service.GetTrainingRunById(trainingRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Mapping training run failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task GetTrainingRunById_ShouldReturnExceptionFail_WhenExceptionOccurs()
+        {
+            // Arrange
+            var trainingRunId = Guid.NewGuid();
+            _mockTrainingRunsRepository.Setup(r => r.GetById(trainingRunId, false, "CreatedBy"))
+                           .Throws(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _service.GetTrainingRunById(trainingRunId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Unexpected error", result.ErrMsg);
         }
 
         [Fact]

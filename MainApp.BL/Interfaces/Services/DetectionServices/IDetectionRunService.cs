@@ -19,7 +19,7 @@ namespace MainApp.BL.Interfaces.Services.DetectionServices
         Task<ResultDTO> UpdateStatus(Guid detectionRunId, string status);
         Task<ResultDTO<string>> GetRawDetectionRunResultPathsByRunId(Guid detectionRunId);
         Task<ResultDTO<DetectionRunFinishedResponse>> GetBBoxResultsDeserialized(string absBBoxResultsFilePath);
-        Task<List<DetectionRunDTO>> GetDetectionRunsWithClasses();
+        Task<ResultDTO<List<DetectionRunDTO>>> GetDetectionRunsWithClasses();
         Task<ResultDTO<DetectionRunFinishedResponse>> ConvertBBoxResultToImageProjection
             (string absoluteImagePath, DetectionRunFinishedResponse detectionRunFinishedResponse);
         Task<ResultDTO<List<DetectedDumpSite>>> CreateDetectedDumpsSitesFromDetectionRun

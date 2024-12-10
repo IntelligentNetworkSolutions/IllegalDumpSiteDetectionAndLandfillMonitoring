@@ -42,7 +42,7 @@ namespace MainApp.BL.Services.TrainingServices
                     TrainingRunId = trainingRunId
                 };
 
-                ResultDTO<TrainingRunTrainParams> createTrainingRunTrainParams = await _trainingRunTrainParamsRepository.CreateAndReturnEntity(trainingRunTrainParams);
+                ResultDTO<TrainingRunTrainParams>? createTrainingRunTrainParams = await _trainingRunTrainParamsRepository.CreateAndReturnEntity(trainingRunTrainParams);
                 if (createTrainingRunTrainParams.IsSuccess == false && createTrainingRunTrainParams.HandleError())
                     return ResultDTO<TrainingRunTrainParamsDTO>.Fail(createTrainingRunTrainParams.ErrMsg!);
                 if(createTrainingRunTrainParams.Data == null)                

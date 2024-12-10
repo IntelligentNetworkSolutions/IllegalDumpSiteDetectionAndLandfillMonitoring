@@ -398,7 +398,7 @@ namespace Tests.MainAppBLTests.Services.TrainingServices
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal("Trained model not found.", result.ErrMsg);
+            Assert.Equal($"No Trained Model found with ID: {trainedModelId}", result.ErrMsg);
         }
 
         [Fact]

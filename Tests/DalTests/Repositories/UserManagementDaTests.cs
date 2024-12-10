@@ -854,9 +854,9 @@ namespace Tests.DalTests.Repositories
             var result = await userManagementDa.AddRole(newRole);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(newRole.Name, result.Name);
-            Assert.Equal(newRole.NormalizedName, result.NormalizedName);
+            Assert.NotNull(result.Data);
+            Assert.Equal(newRole.Name, result.Data.Name);
+            Assert.Equal(newRole.NormalizedName, result.Data.NormalizedName);
 
             transaction.Rollback();
         }

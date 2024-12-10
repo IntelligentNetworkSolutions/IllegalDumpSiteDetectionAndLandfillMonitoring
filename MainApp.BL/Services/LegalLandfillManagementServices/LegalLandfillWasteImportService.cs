@@ -25,19 +25,15 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
         {
             try
             {
-                LegalLandfillWasteImport legalLandfillWasteImportEntity = _mapper.Map<LegalLandfillWasteImport>(legalLandfillWasteImportDTO);
+                LegalLandfillWasteImport? legalLandfillWasteImportEntity = _mapper.Map<LegalLandfillWasteImport>(legalLandfillWasteImportDTO);
+                if (legalLandfillWasteImportEntity == null)
+                    return ResultDTO.Fail("Mapping waste import failed");
 
-                ResultDTO resultCreate = await _legalLandfillWasteImportRepository.Create(legalLandfillWasteImportEntity);
-
-                if (resultCreate == null)
-                {
-                    return ResultDTO.Fail("Creation failed: Result is null.");
-                }
-
+                ResultDTO? resultCreate = await _legalLandfillWasteImportRepository.Create(legalLandfillWasteImportEntity);
                 if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
+                if (resultCreate == null)
+                    return ResultDTO.Fail("Failed to create waste import");
 
                 return ResultDTO.Ok();
             }
@@ -52,16 +48,17 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
         {
             try
             {
-                ResultDTO<IEnumerable<LegalLandfillWasteImport>> resultGetAllEntities = await _legalLandfillWasteImportRepository.GetAll(
-                    includeProperties: "LegalLandfillWasteType,LegalLandfillTruck,LegalLandfill,CreatedBy"
-                );
+                ResultDTO<IEnumerable<LegalLandfillWasteImport>> resultGetAllEntities = await _legalLandfillWasteImportRepository.GetAll(includeProperties: "LegalLandfillWasteType,LegalLandfillTruck,LegalLandfill,CreatedBy");
 
-                if (!resultGetAllEntities.IsSuccess && resultGetAllEntities.HandleError())
-                {
+                if (!resultGetAllEntities.IsSuccess && resultGetAllEntities.HandleError())                
                     return ResultDTO<List<LegalLandfillWasteImportDTO>>.Fail(resultGetAllEntities.ErrMsg!);
-                }
+                if (resultGetAllEntities.Data == null)
+                    return ResultDTO<List<LegalLandfillWasteImportDTO>>.Fail("Waste import not found");
+                
+                List<LegalLandfillWasteImportDTO>? dtos = _mapper.Map<List<LegalLandfillWasteImportDTO>>(resultGetAllEntities.Data);
+                if (dtos == null)
+                    return ResultDTO<List<LegalLandfillWasteImportDTO>>.Fail("Mapping waste import failed");
 
-                List<LegalLandfillWasteImportDTO> dtos = _mapper.Map<List<LegalLandfillWasteImportDTO>>(resultGetAllEntities.Data);
                 return ResultDTO<List<LegalLandfillWasteImportDTO>>.Ok(dtos);
             }
             catch (Exception ex)
@@ -70,7 +67,6 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
                 return ResultDTO<List<LegalLandfillWasteImportDTO>>.ExceptionFail(ex.Message, ex);
             }
         }
-
 
         public async Task<ResultDTO<LegalLandfillWasteImportDTO>> GetLegalLandfillWasteImportById(Guid legalLandfillWasteImportId)
         {
@@ -87,12 +83,15 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
                     ]
                 );
 
-                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
-                {
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())                
                     return ResultDTO<LegalLandfillWasteImportDTO>.Fail(resultGetEntity.ErrMsg!);
-                }
+                if (resultGetEntity.Data == null)
+                    return ResultDTO<LegalLandfillWasteImportDTO>.Fail("Waste import not found");                
 
-                LegalLandfillWasteImportDTO dto = _mapper.Map<LegalLandfillWasteImportDTO>(resultGetEntity.Data);
+                LegalLandfillWasteImportDTO? dto = _mapper.Map<LegalLandfillWasteImportDTO>(resultGetEntity.Data);
+                if(dto == null)
+                    return ResultDTO<LegalLandfillWasteImportDTO>.Fail("Mapping waste import failed");
+
                 return ResultDTO<LegalLandfillWasteImportDTO>.Ok(dto);
             }
             catch (Exception ex)
@@ -102,19 +101,18 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
             }
         }
 
-
         public async Task<ResultDTO> EditLegalLandfillWasteImport(LegalLandfillWasteImportDTO legalLandfillWasteImportDTO)
         {
             try
             {
                 LegalLandfillWasteImport legalLandfillWasteImportEntity = _mapper.Map<LegalLandfillWasteImport>(legalLandfillWasteImportDTO);
+                if (legalLandfillWasteImportEntity == null)
+                    return ResultDTO.Fail("Mapping waste import failed");
 
                 ResultDTO resultUpdate = await _legalLandfillWasteImportRepository.Update(legalLandfillWasteImportEntity);
-                if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())
-                {
+                if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())                
                     return ResultDTO.Fail(resultUpdate.ErrMsg!);
-                }
-
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
@@ -128,14 +126,14 @@ namespace MainApp.BL.Services.LegalLandfillManagementServices
         {
             try
             {
-                LegalLandfillWasteImport legalLandfillWasteImportEntity = _mapper.Map<LegalLandfillWasteImport>(legalLandfillWasteImportDTO);
+                LegalLandfillWasteImport? legalLandfillWasteImportEntity = _mapper.Map<LegalLandfillWasteImport>(legalLandfillWasteImportDTO);
+                if (legalLandfillWasteImportEntity == null)
+                    return ResultDTO.Fail("Mapping waste import failed");
 
                 ResultDTO resultDelete = await _legalLandfillWasteImportRepository.Delete(legalLandfillWasteImportEntity);
-                if (resultDelete.IsSuccess == false && resultDelete.HandleError())
-                {
+                if (resultDelete.IsSuccess == false && resultDelete.HandleError())                
                     return ResultDTO.Fail(resultDelete.ErrMsg!);
-                }
-
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)

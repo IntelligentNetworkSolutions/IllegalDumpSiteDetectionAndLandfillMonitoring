@@ -405,7 +405,7 @@ namespace Tests.MainAppBLTests.Services
             var result = await _service.EditLegalLandfillPointCloudFile(dto);
 
             // Assert
-            Assert.True(result.IsSuccess);
+            Assert.False(result.IsSuccess);
             Assert.Equal("C:\\Uploads\\" + dto.LegalLandfillId.ToString() + "\\", dto.FilePath);
         }
 

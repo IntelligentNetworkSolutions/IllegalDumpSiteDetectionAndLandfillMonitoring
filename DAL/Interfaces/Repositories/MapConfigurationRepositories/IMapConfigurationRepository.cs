@@ -1,4 +1,5 @@
 ﻿using Entities.MapConfigurationEntities;
+using SD;
 using System;
 using System.Threading.Tasks;
 
@@ -8,7 +9,7 @@ namespace DAL.Interfaces.Repositories.MapConfigurationRepositories
     {
         #region Read
         #region Get Datasetclass/es
-        Task<MapConfiguration> GetMapConfigurationByName(string mapName);
+        Task<ResultDTO<MapConfiguration>> GetMapConfigurationByName(string mapName);
         #endregion
         #endregion
 

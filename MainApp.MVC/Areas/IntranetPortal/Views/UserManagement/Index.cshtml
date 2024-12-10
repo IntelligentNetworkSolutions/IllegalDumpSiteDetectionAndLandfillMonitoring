@@ -238,15 +238,41 @@
                     id: userId
                 },
                 success: function (data) {
-                    $("#userTBody").html("");
-                    $("#userId").val(userId);
-                    $("#userTBody").append("<tr><td>" + data.userName + "</td>"
-                        + "<td>" + data.email + "</td>"
-                        + " <td> " + data.phoneNumber + "</td>"
-                        + "</tr >");
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        } 
+                        else {
+                            $("#userTBody").html("");
+                            $("#userId").val(userId);
+                            $("#userTBody").append("<tr><td>" + data.data.userName + "</td>"
+                                + "<td>" + data.data.email + "</td>"
+                                + " <td> " + data.data.phoneNumber + "</td>"
+                                + "</tr >");
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }                       
+                   
                 },
                 error: function (req, status, error) {
-                    ajaxErrorHandlingAlert("error", req.status);
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
                 }
             });
         }
@@ -259,7 +285,33 @@
                 data: {
                     id: userId
                 },
-                success: function (response) {
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {                            
+                                if (deleteBtn != null) {
+                                    deleteBtn.parentElement.parentElement.remove();
+                                }
+                                location.reload();                            
+                        }
+                    
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+
                     if (response.errorRetrievingData != null || response.errorRetrievingData != undefined) {
                         Swal.fire({
                             icon: "warning",
@@ -286,7 +338,12 @@
                    
                 },
                 error: function (req, status, error) {
-                    ajaxErrorHandlingAlert("error", req.status);
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
                 }
             });
         }
@@ -300,12 +357,38 @@
                     id: roleId
                 },
                 success: function (data) {
-                    $("#roleTBody").html("");
-                    $("#roleId").val(roleId);
-                    $("#roleTBody").append("<tr><td>" + data.name + "</td>" + "</tr >");
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#roleTBody").html("");
+                            $("#roleId").val(roleId);
+                            $("#roleTBody").append("<tr><td>" + data.data.name + "</td>" + "</tr >");
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                   
                 },
                 error: function (req, status, error) {
-                    ajaxErrorHandlingAlert("error", req.status);
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
                 }
             });
         }
@@ -319,12 +402,38 @@
                     id: roleId
                 },
                 success: function (data) {
-                    if (deleteBtn != null) {
-                        deleteBtn.parentElement.parentElement.remove();
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            if (deleteBtn != null) {
+                                deleteBtn.parentElement.parentElement.remove();
+                            }
+                            location.reload();
+                        }
                     }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }                    
                 },
                 error: function (req, status, error) {
-                    ajaxErrorHandlingAlert("error", req.status);
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
                 }
             });
         }
@@ -337,17 +446,43 @@
                     userId: userId
                 },
                 success: function (data) {
-                    $("#claimsTBody").html("");
-                    if (data.length === 0) {
-                        $("#claimsTBody").append("<tr><td class='text-center'><small>" + "No claims for this user" + "</small></td></tr>")
-                    } else {
-                        for (var i = 0; i < data.length; i++) {
-                            $("#claimsTBody").append("<tr><td>" + data[i].claimValue + "</td></tr>")
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#claimsTBody").html("");
+                            if (data.data.length === 0) {
+                                $("#claimsTBody").append("<tr><td class='text-center'><small>" + "No claims for this user" + "</small></td></tr>")
+                            } else {
+                                for (var i = 0; i < data.data.length; i++) {
+                                    $("#claimsTBody").append("<tr><td>" + data.data[i].claimValue + "</td></tr>")
+                                }
+                            }
                         }
                     }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                   
                 },
                 error: function (req, status, error) {
-                    ajaxErrorHandlingAlert("error", req.status);
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
                 }
             });
         }
@@ -360,17 +495,42 @@
                     userId: userId
                 },
                 success: function (data) {
-                    $("#rolesTBody").html("");
-                    if (data.length === 0) {
-                        $("#rolesTBody").append("<tr><td class='text-center'><small>" + "No roles for this user" + "</small></td></tr>")
-                    } else {
-                        for (var i = 0; i < data.length; i++) {
-                            $("#rolesTBody").append("<tr><td>" + data[i].name + "</td></tr>")
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
                         }
-                    }
+                        else {
+                            $("#rolesTBody").html("");
+                            if (data.length === 0) {
+                                $("#rolesTBody").append("<tr><td class='text-center'><small>" + "No roles for this user" + "</small></td></tr>")
+                            } else {
+                                for (var i = 0; i < data.data.length; i++) {
+                                    $("#rolesTBody").append("<tr><td>" + data.data[i].name + "</td></tr>")
+                                }
+                            }
+                        }
+                    } 
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }                   
                 },
                 error: function (req, status, error) {
-                    ajaxErrorHandlingAlert("error", req.status);
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
                 }
             });
         }
@@ -383,14 +543,35 @@
                     roleId: roleId
                 },
                 success: function (data) {
-                    $("#roleClaimsTBody").html("");
-                    if (data.length === 0) {
-                        $("#roleClaimsTBody").append("<tr><td class='text-center'><small>" + "No claims for this role" + "</small></td></tr>")
-                    } else {
-                        for (var i = 0; i < data.length; i++) {
-                            $("#roleClaimsTBody").append("<tr><td>" + data[i].claimValue + "</td></tr>")
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#roleClaimsTBody").html("");
+                            if (data.data.length === 0) {
+                                $("#roleClaimsTBody").append("<tr><td class='text-center'><small>" + "No claims for this role" + "</small></td></tr>")
+                            } else {
+                                for (var i = 0; i < data.data.length; i++) {
+                                    $("#roleClaimsTBody").append("<tr><td>" + data.data[i].claimValue + "</td></tr>")
+                                }
+                            }
                         }
                     }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                    
 
                 },
                 error: function (req, status, error) {
