@@ -30,41 +30,75 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _appSettingsAccessor = appSettingsAccessor;
             _mapper = mapper;
         }
-
+        
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
         public async Task<IActionResult> Index()
         {
-            UserManagementViewModel model = new UserManagementViewModel();
-            var users = await _userManagementService.GetAllIntanetPortalUsers() ?? throw new Exception("Users not found");
-            var roles = await _userManagementService.GetAllRoles() ?? throw new Exception("Roles not found");
-            var userRoles = await _userManagementService.GetAllUserRoles() ?? throw new Exception("User roles not found");
-
-            model.Users = _mapper.Map<List<UserManagementUserViewModel>>(users);
-
-            foreach (var user in model.Users)
+            try
             {
-                var userRole = userRoles.Where(z => z.UserId == user.Id).Select(z => z.RoleId).ToList();
-                user.Roles = roles.Where(z => userRole.Contains(z.Id)).ToList();
+                UserManagementViewModel model = new UserManagementViewModel();
+                ResultDTO<List<UserDTO>>? resultGetUsers = await _userManagementService.GetAllIntanetPortalUsers();
+                if (resultGetUsers.IsSuccess == false && resultGetUsers.HandleError())                
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                if (resultGetUsers.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                ResultDTO<List<RoleDTO>>? resultGetRoles = await _userManagementService.GetAllRoles();
+                if (resultGetRoles.IsSuccess == false && resultGetRoles.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+
+                if (resultGetRoles.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                ResultDTO<List<UserRoleDTO>>? resGetUserRoles = await _userManagementService.GetAllUserRoles();
+                if (resGetUserRoles.IsSuccess == false && resGetUserRoles.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                if (resGetUserRoles.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                List<UserManagementUserViewModel>? mappedList = _mapper.Map<List<UserManagementUserViewModel>>(resultGetUsers.Data);
+                if (mappedList == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                model.Users = mappedList;
+
+                foreach (var user in model.Users)
+                {
+                    List<string>? userRole = resGetUserRoles.Data.Where(z => z.UserId == user.Id).Select(z => z.RoleId).ToList();
+                    if (userRole == null)
+                        return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                    user.Roles = resultGetRoles.Data.Where(z => userRole.Contains(z.Id)).ToList();
+                }
+                model.Roles = resultGetRoles.Data.OrderBy(x => x.Name).ToList();
+                return View(model);
             }
-            model.Roles = roles.OrderBy(x => x.Name).ToList();
-            return View(model);
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         #region Create User
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementAddUsersAndRoles))]
         public async Task<ResultDTO<UserManagementCreateUserViewModel>> FillUserManagementCreateUserViewModel()
         {
             try
             {
-                ResultDTO<UserManagementDTO> resultFillDTO = await _userManagementService.FillUserManagementDto();
-                if (resultFillDTO.IsSuccess == false)
+                ResultDTO<UserManagementDTO>? resultFillDTO = await _userManagementService.FillUserManagementDto();
+                if (resultFillDTO.IsSuccess == false && resultFillDTO.HandleError())
                     return ResultDTO<UserManagementCreateUserViewModel>.Fail(resultFillDTO.ErrMsg!);
+                if (resultFillDTO.Data == null)
+                    return ResultDTO<UserManagementCreateUserViewModel>.Fail("User managment dto not found");
 
                 UserManagementDTO dto = resultFillDTO.Data!;
 
-                var model = _mapper.Map<UserManagementCreateUserViewModel>(dto);
+                UserManagementCreateUserViewModel? model = _mapper.Map<UserManagementCreateUserViewModel>(dto);
                 if (model is null)
                     return ResultDTO<UserManagementCreateUserViewModel>.Fail("Model not found");
+
                 model.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
 
                 return ResultDTO<UserManagementCreateUserViewModel>.Ok(model);
@@ -77,11 +111,19 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> GetViewWithUserManagementCreateVM(string? errMsg = null)
         {
-            ResultDTO<UserManagementCreateUserViewModel> resultFillModel = await FillUserManagementCreateUserViewModel();
-            if (resultFillModel.IsSuccess == false && ResultDTO<UserManagementCreateUserViewModel>.HandleError(resultFillModel))
-                ModelState.AddModelError("ModelOnly", resultFillModel.ErrMsg!);
+            try
+            {
+                ResultDTO<UserManagementCreateUserViewModel>? resultFillModel = await FillUserManagementCreateUserViewModel();
+                if (resultFillModel.IsSuccess == false && resultFillModel.HandleError())
+                    ModelState.AddModelError("ModelOnly", resultFillModel.ErrMsg!);
 
-            return View(resultFillModel.Data);
+                return View(resultFillModel.Data);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
+           
         }
 
         [HttpGet]
@@ -96,33 +138,44 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagementAddUsersAndRoles))]
         public async Task<IActionResult> CreateUser(UserManagementCreateUserViewModel viewModel)
         {
-            if (ModelState.IsValid == false)
-                return await GetViewWithUserManagementCreateVM();
+            try
+            {
+                if (ModelState.IsValid == false)
+                    return await GetViewWithUserManagementCreateVM();
 
-            var userManagementDTO = _mapper.Map<UserManagementDTO>(viewModel);
-            if (userManagementDTO is null)
-                return await GetViewWithUserManagementCreateVM("User management DTO not found");
+                UserManagementDTO? userManagementDTO = _mapper.Map<UserManagementDTO>(viewModel);
+                if (userManagementDTO is null)
+                    return await GetViewWithUserManagementCreateVM("User management DTO not found");
 
-            ResultDTO resultAdd = await _userManagementService.AddUser(userManagementDTO);
-            if (resultAdd.IsSuccess == false)
-                return await GetViewWithUserManagementCreateVM(resultAdd.ErrMsg);
+                ResultDTO? resultAdd = await _userManagementService.AddUser(userManagementDTO);
+                if (resultAdd.IsSuccess == false && resultAdd.HandleError())
+                    return await GetViewWithUserManagementCreateVM(resultAdd.ErrMsg);
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
         #endregion
 
         #region Edit User
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<ResultDTO<UserManagementEditUserViewModel>> FillUserManagementEditUserViewModelFromDto(UserManagementDTO dto)
         {
             try
             {
-                ResultDTO<UserManagementDTO> resultFillDTO = await _userManagementService.FillUserManagementDto(dto);
-                if (resultFillDTO.IsSuccess == false)
+                ResultDTO<UserManagementDTO>? resultFillDTO = await _userManagementService.FillUserManagementDto(dto);
+                if (resultFillDTO.IsSuccess == false && resultFillDTO.HandleError())
                     return ResultDTO<UserManagementEditUserViewModel>.Fail(resultFillDTO.ErrMsg!);
+                if (resultFillDTO.Data == null)
+                    return ResultDTO<UserManagementEditUserViewModel>.Fail("User managment dto not found");
 
-                dto = resultFillDTO.Data!;
+                dto = resultFillDTO.Data;
 
-                var model = _mapper.Map<UserManagementEditUserViewModel>(dto);
+                UserManagementEditUserViewModel? model = _mapper.Map<UserManagementEditUserViewModel>(dto);
                 if (model is null)
                     return ResultDTO<UserManagementEditUserViewModel>.Fail("Unable to map dto to model");
 
@@ -136,13 +189,24 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
         }
 
+        [HttpGet]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> GetViewWithUserManagementEditVM(UserManagementDTO dto, string? errMsg = null)
         {
-            ResultDTO<UserManagementEditUserViewModel> resultFillModel = await FillUserManagementEditUserViewModelFromDto(dto);
-            if (resultFillModel.IsSuccess == false && ResultDTO<UserManagementEditUserViewModel>.HandleError(resultFillModel))
-                ModelState.AddModelError("ModelOnly", resultFillModel.ErrMsg!);
+            try
+            {
+                ResultDTO<UserManagementEditUserViewModel>? resultFillModel = await FillUserManagementEditUserViewModelFromDto(dto);
+                if (resultFillModel.IsSuccess == false && resultFillModel.HandleError())
+                    ModelState.AddModelError("ModelOnly", resultFillModel.ErrMsg!);
+                if (resultFillModel.Data is null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            return View(resultFillModel.Data);
+                return View(resultFillModel.Data);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }           
         }
 
         [HttpGet]
@@ -150,7 +214,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         public async Task<IActionResult> EditUser(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
-                return NotFound();
+                return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
             UserManagementDTO dto = new() { Id = id! };
 
@@ -161,27 +225,35 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> EditUser(UserManagementEditUserViewModel viewModel)
         {
-            UserManagementDTO dto = new() { Id = viewModel.Id };
-            if (ModelState.IsValid == false)
-                return await GetViewWithUserManagementEditVM(dto);
+            try
+            {
+                UserManagementDTO dto = new() { Id = viewModel.Id };
+                if (ModelState.IsValid == false)
+                    return await GetViewWithUserManagementEditVM(dto);
 
-            var userManagementDTO = _mapper.Map<UserManagementDTO>(viewModel);
-            if (userManagementDTO is null)
+                UserManagementDTO? userManagementDTO = _mapper.Map<UserManagementDTO>(viewModel);
+                if (userManagementDTO is null)
                     return await GetViewWithUserManagementEditVM(dto, "User management DTO not found");
 
-            ResultDTO resultUpdate = await _userManagementService.UpdateUser(userManagementDTO);
-            if (resultUpdate.IsSuccess == false)
-                return await GetViewWithUserManagementEditVM(dto, resultUpdate.ErrMsg);
+                ResultDTO resultUpdate = await _userManagementService.UpdateUser(userManagementDTO);
+                if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())
+                    return await GetViewWithUserManagementEditVM(dto, resultUpdate.ErrMsg);
 
-            return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }            
         }
         #endregion
 
         #region Create Role
+        [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagementAddUsersAndRoles))]
         public async Task<IActionResult> CreateRole()
         {
-            var model = new UserManagementCreateRoleViewModel { Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims() };
+            UserManagementCreateRoleViewModel? model = new UserManagementCreateRoleViewModel { Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims() };
             return View(model);
         }
 
@@ -189,17 +261,29 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [ValidateAntiForgeryToken]
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagementAddUsersAndRoles))]
         public async Task<IActionResult> CreateRole(UserManagementCreateRoleViewModel viewModel)
-        {
-            if (ModelState.IsValid == false)
+        {            
+            try
             {
-                viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
-                return View(viewModel);
+                if (ModelState.IsValid == false)
+                {
+                    viewModel.Claims = await _modulesAndAuthClaimsHelper.GetAuthClaims();
+                    return View(viewModel);
+                }
+
+                RoleManagementDTO? roleManagementDTO = _mapper.Map<RoleManagementDTO>(viewModel);
+                if (roleManagementDTO == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                ResultDTO? resultRoleAdd = await _userManagementService.AddRole(roleManagementDTO);
+                if (resultRoleAdd.IsSuccess == false && resultRoleAdd.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+
+                return RedirectToAction(nameof(Index));
             }
-
-            var roleManagementDTO = _mapper.Map<RoleManagementDTO>(viewModel) ?? throw new Exception("Role Management DTO not found");
-            await _userManagementService.AddRole(roleManagementDTO);
-
-            return RedirectToAction(nameof(Index));
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
         #endregion
 
@@ -208,13 +292,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         {
             try
             {
-                ResultDTO<RoleManagementDTO> resultFillDTO = await _userManagementService.FillRoleManagementDto(dto);
-                if (resultFillDTO.IsSuccess == false)
+                ResultDTO<RoleManagementDTO>? resultFillDTO = await _userManagementService.FillRoleManagementDto(dto);
+                if (resultFillDTO.IsSuccess == false && resultFillDTO.HandleError())
                     return ResultDTO<UserManagementEditRoleViewModel>.Fail(resultFillDTO.ErrMsg!);
+                if (resultFillDTO.Data == null)
+                    return ResultDTO<UserManagementEditRoleViewModel>.Fail("Role managment dto not found");
 
                 dto = resultFillDTO.Data!;
 
-                var viewModel = _mapper.Map<UserManagementEditRoleViewModel>(dto);
+                UserManagementEditRoleViewModel? viewModel = _mapper.Map<UserManagementEditRoleViewModel>(dto);
                 if (viewModel is null)
                     return ResultDTO<UserManagementEditRoleViewModel>.Fail("Unable to map dto to model");
 
@@ -228,28 +314,28 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
         }
 
+        [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> EditRole(string id)
         {
-            if (id is null)
+            try
             {
-                // TODO
-                //var errorPath = _configuration["ErrorViewsPath:Error404"];
-                //if (!string.IsNullOrEmpty(errorPath))
-                //{
-                //    return Redirect(errorPath);
-                //}
-                //else
-                //{
-                //    return NotFound();
-                //}
-            }
-            RoleManagementDTO dto = new() { Id = id! };
-            ResultDTO<UserManagementEditRoleViewModel> resultFillModel = await FillUserManagementEditRoleViewModelFromDTO(dto);
-            if (resultFillModel.IsSuccess == false)
-                throw new Exception(resultFillModel.ErrMsg);
+                if (id is null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            return View(resultFillModel.Data);
+                RoleManagementDTO dto = new() { Id = id! };
+                ResultDTO<UserManagementEditRoleViewModel>? resultFillModel = await FillUserManagementEditRoleViewModelFromDTO(dto);
+                if (resultFillModel.IsSuccess == false && resultFillModel.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                if (resultFillModel.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                return View(resultFillModel.Data);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }            
         }
 
         [HttpPost]
@@ -257,100 +343,219 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> EditRole(UserManagementEditRoleViewModel viewModel)
         {
-            if (ModelState.IsValid == false)
+            try
             {
-                RoleManagementDTO dto = new() { Id = viewModel.Id };
-                ResultDTO<UserManagementEditRoleViewModel> resultFillModel = await FillUserManagementEditRoleViewModelFromDTO(dto);
-                if (resultFillModel.IsSuccess == false)
-                    throw new Exception(resultFillModel.ErrMsg);
+                if (ModelState.IsValid == false)
+                {
+                    RoleManagementDTO dto = new() { Id = viewModel.Id };
+                    ResultDTO<UserManagementEditRoleViewModel>? resultFillModel = await FillUserManagementEditRoleViewModelFromDTO(dto);
+                    if (resultFillModel.IsSuccess == false && resultFillModel.HandleError())
+                        return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                    if (resultFillModel.Data == null)
+                        return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-                return View(resultFillModel.Data);
+                    return View(resultFillModel.Data);
+                }
+
+                RoleManagementDTO? roleManagementDTO = _mapper.Map<RoleManagementDTO>(viewModel);
+                if (roleManagementDTO == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                ResultDTO? resultUpdate = await _userManagementService.UpdateRole(roleManagementDTO);
+                if (resultUpdate.IsSuccess == false)
+                {
+                    ModelState.AddModelError("ModelOnly", resultUpdate.ErrMsg!);
+                    RoleManagementDTO dto = new() { Id = viewModel.Id };
+                    ResultDTO<UserManagementEditRoleViewModel> resultFillModel = await FillUserManagementEditRoleViewModelFromDTO(dto);
+                    if (resultFillModel.IsSuccess == false && resultFillModel.HandleError())
+                        return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                    if (resultFillModel.Data == null)
+                        return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                    return View(resultFillModel.Data);
+                }
+
+                return RedirectToAction(nameof(Index));
             }
-
-            var roleManagementDTO = _mapper.Map<RoleManagementDTO>(viewModel) ?? throw new Exception("Role Management DTO not found");
-            
-            ResultDTO resultUpdate = await _userManagementService.UpdateRole(roleManagementDTO);
-            if (resultUpdate.IsSuccess == false)
+            catch (Exception)
             {
-                ModelState.AddModelError("ModelOnly", resultUpdate.ErrMsg!);
-                RoleManagementDTO dto = new() { Id = viewModel.Id };
-                ResultDTO<UserManagementEditRoleViewModel> resultFillModel = await FillUserManagementEditRoleViewModelFromDTO(dto);
-                if (resultFillModel.IsSuccess == false)
-                    throw new Exception(resultFillModel.ErrMsg);
-
-                return View(resultFillModel.Data);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
-
-            return RedirectToAction(nameof(Index));
         }
         #endregion
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
-        public async Task<RoleDTO?> DeleteRole(string id)
+        public async Task<ResultDTO<RoleDTO>> DeleteRole(string id)
         {
-            return await _userManagementService.GetRoleById(id);
-        }
-
-        [HttpPost]
-        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
-        public async Task<IActionResult> DeleteRoleConfirmed(string id)
-        {
-            await _userManagementService.DeleteRole(id);
-            return RedirectToAction(nameof(Index));
-        }
-
-        [HttpPost]
-        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
-        public async Task<UserDTO?> DeleteUser(string id)
-        {
-            return await _userManagementService.GetUserById(id);
-        }
-
-        [HttpPost]
-        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
-        public async Task<IActionResult> DeleteUserConfirmed(string id)
-        {
-            var hasUserEntry = await _userManagementService.CheckUserBeforeDelete(id);
-            if (hasUserEntry.IsSuccess == false && hasUserEntry.HandleError())
+            try
             {
-                return Json(new { errorRetrievingData = hasUserEntry.ErrMsg! });
+                ResultDTO<RoleDTO>? resultGetRole = await _userManagementService.GetRoleById(id);
+                if (resultGetRole.IsSuccess == false && resultGetRole.HandleError())
+                    return ResultDTO<RoleDTO>.Fail(resultGetRole.ErrMsg!);
+                if (resultGetRole.Data == null)
+                    return ResultDTO<RoleDTO>.Fail("Role not found");
+
+                return ResultDTO<RoleDTO>.Ok(resultGetRole.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<RoleDTO>.ExceptionFail(ex.Message, ex);
+            }            
+        }
+
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
+        public async Task<ResultDTO> DeleteRoleConfirmed(string id)
+        {
+            try
+            {
+                ResultDTO? resDeleteRole = await _userManagementService.DeleteRole(id);
+                if (resDeleteRole.IsSuccess != false && resDeleteRole.HandleError())
+                    return ResultDTO.Fail(resDeleteRole.ErrMsg!);
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }            
+        }
+
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
+        public async Task<ResultDTO<UserDTO>> DeleteUser(string id)
+        {
+            try
+            {
+                ResultDTO<UserDTO>? resultGetUser = await _userManagementService.GetUserById(id);
+                if (resultGetUser.IsSuccess == false && resultGetUser.HandleError())
+                    return ResultDTO<UserDTO>.Fail(resultGetUser.ErrMsg!);
+                if (resultGetUser.Data == null)
+                    return ResultDTO<UserDTO>.Fail("User not found");
+
+                return ResultDTO<UserDTO>.Ok(resultGetUser.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<UserDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementDeleteUsersAndRoles))]
+        public async Task<ResultDTO> DeleteUserConfirmed(string id)
+        {
+            try
+            {
+                ResultDTO<bool>? hasUserEntry = await _userManagementService.CheckUserBeforeDelete(id);
+                if (hasUserEntry.IsSuccess == false && hasUserEntry.HandleError())
+                    return ResultDTO.Fail(hasUserEntry.ErrMsg!);
+                if (hasUserEntry.Data == true)
+                    return ResultDTO.Fail("You can not delete this user because there are data entries connected with the same user!");
+
+                ResultDTO? resDeleteUsr = await _userManagementService.DeleteUser(id);
+                if (resDeleteUsr.IsSuccess == false && resDeleteUsr.HandleError())
+                    return ResultDTO.Fail(resDeleteUsr.ErrMsg!);
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
             
-            if(hasUserEntry.IsSuccess == true && hasUserEntry.Data == true)
+        }
+
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
+        public ResultDTO<List<RoleClaimDTO>> GetRoleClaims(string roleId)
+        {
+            try
             {
-                return Json(new { userHasEntry = hasUserEntry });
+                ResultDTO<List<RoleClaimDTO>>? resultRoleClaimsList = _userManagementService.GetRoleClaims(roleId).GetAwaiter().GetResult();
+                if (resultRoleClaimsList.IsSuccess == false && resultRoleClaimsList.HandleError())
+                    return ResultDTO<List<RoleClaimDTO>>.Fail(resultRoleClaimsList.ErrMsg!);
+                if (resultRoleClaimsList.Data == null)
+                    return ResultDTO<List<RoleClaimDTO>>.Fail("Role claims not found");
+
+                List<string?> roleClaims = resultRoleClaimsList.Data.Select(x => x.ClaimValue).ToList();
+                List<AuthClaim> listOfRoleAuthClaims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => roleClaims.Contains(z.Value)).ToList();
+                List<RoleClaimDTO>? dtoList = _mapper.Map<List<RoleClaimDTO>>(listOfRoleAuthClaims);
+                if (dtoList == null)
+                    return ResultDTO<List<RoleClaimDTO>>.Fail("Mapping failed");
+
+                return ResultDTO<List<RoleClaimDTO>>.Ok(dtoList);
             }
-
-            await _userManagementService.DeleteUser(id);
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                return ResultDTO<List<RoleClaimDTO>>.ExceptionFail(ex.Message, ex);
+            }            
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
-        public List<RoleClaimDTO> GetRoleClaims(string roleId)
+        public ResultDTO<List<UserClaimDTO>> GetUserClaims(string userId)
         {
-            var roleClaims = _userManagementService.GetRoleClaims(roleId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList() ?? throw new Exception("Role claims not found");
-            var listOfRoleAuthClaims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => roleClaims.Contains(z.Value)).ToList();
-            return _mapper.Map<List<RoleClaimDTO>>(listOfRoleAuthClaims);
+            try
+            {
+                ResultDTO<List<UserClaimDTO>>? resultUserClaimsList = _userManagementService.GetUserClaims(userId).GetAwaiter().GetResult();
+                if (resultUserClaimsList.IsSuccess == false && resultUserClaimsList.HandleError())
+                    return ResultDTO<List<UserClaimDTO>>.Fail(resultUserClaimsList.ErrMsg!);
+                if (resultUserClaimsList.Data == null)
+                    return ResultDTO<List<UserClaimDTO>>.Fail("User claims not found");
+
+
+                List<string?> userClaims = resultUserClaimsList.Data.Select(x => x.ClaimValue).ToList();
+                List<AuthClaim>? listOfAuthClaims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => userClaims.Contains(z.Value)).ToList();
+                List<UserClaimDTO>? dtoList = _mapper.Map<List<UserClaimDTO>>(listOfAuthClaims);
+                if (dtoList == null)
+                    return ResultDTO<List<UserClaimDTO>>.Fail("Mapping failed");
+
+                return ResultDTO<List<UserClaimDTO>>.Ok(dtoList);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<List<UserClaimDTO>>.ExceptionFail(ex.Message, ex);
+            }            
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
-        public List<UserClaimDTO> GetUserClaims(string userId)
+        public async Task<ResultDTO<List<RoleDTO>>> GetUserRoles(string userId)
         {
-            var userClaims = _userManagementService.GetUserClaims(userId).GetAwaiter().GetResult().Select(x => x.ClaimValue).ToList() ?? throw new Exception("User claims not found");
-            var listOfAuthClaims = _modulesAndAuthClaimsHelper.GetAuthClaims().Result.Where(z => userClaims.Contains(z.Value)).ToList();
-            return _mapper.Map<List<UserClaimDTO>>(listOfAuthClaims);
+            try
+            {
+                ResultDTO<List<RoleDTO>>? resultGetRoles = await _userManagementService.GetRolesForUser(userId);
+                if (resultGetRoles.IsSuccess == false && resultGetRoles.HandleError())
+                    return ResultDTO<List<RoleDTO>>.Fail(resultGetRoles.ErrMsg!);
+
+                if (resultGetRoles.Data == null)
+                    return ResultDTO<List<RoleDTO>>.Fail("No data found");
+
+                return ResultDTO<List<RoleDTO>>.Ok(resultGetRoles.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<List<RoleDTO>>.ExceptionFail(ex.Message, ex);
+            }           
         }
 
-        [HttpPost]
-        [HasAuthClaim(nameof(SD.AuthClaims.UserManagement))]
-        public async Task<List<RoleDTO>> GetUserRoles(string userId)
+        private IActionResult HandleErrorRedirect(string configKey, int statusCode)
         {
-            return await _userManagementService.GetRolesForUser(userId);
+            string? errorPath = _configuration[configKey];
+            if (string.IsNullOrEmpty(errorPath))
+            {
+                return statusCode switch
+                {
+                    404 => NotFound(),
+                    403 => Forbid(),
+                    405 => StatusCode(405),
+                    _ => BadRequest()
+                };
+            }
+            return Redirect(errorPath);
         }
-
         // POC:
         // TODO: maybe Clean up
         //[HttpGet]

@@ -6,6 +6,7 @@ using Entities;
 using Microsoft.AspNetCore.Identity;
 using SD;
 using Services.Interfaces.Services;
+using System.Collections.Generic;
 
 namespace Services
 {
@@ -32,26 +33,33 @@ namespace Services
             {
                 dto.TrimProperies();
 
-                ApplicationUser user = _mapper.Map<ApplicationUser>(dto);
+                ApplicationUser? user = _mapper.Map<ApplicationUser>(dto);
+                if (user == null)
+                    return ResultDTO.Fail("Mapping failed");
+
                 user.NormalizeUserNameAndEmail();
 
                 ResultDTO<string> resGetPassHash = await GetPasswordHashForAppUser(user, dto.ConfirmPassword);
-                if (resGetPassHash.IsSuccess == false)
-                    return ResultDTO.Fail(resGetPassHash.ErrMsg);
+                if (resGetPassHash.IsSuccess == false && resGetPassHash.HandleError())
+                    return ResultDTO.Fail(resGetPassHash.ErrMsg!);
+                if (resGetPassHash.Data == null)
+                    return ResultDTO.Fail("Password hash not found");
+
                 user.PasswordHash = resGetPassHash.Data;
 
-
-                ApplicationUser insertedUser = await _userManagementDa.AddUser(user);
+                ApplicationUser? insertedUser = await _userManagementDa.AddUser(user);
+                if (insertedUser == null)
+                    return ResultDTO.Fail("Inserted user not found");
 
                 // Add User Roles
                 ResultDTO resAddUserRoles = await AddUserRoles(insertedUser.Id, dto.RolesInsert);
-                if (resAddUserRoles.IsSuccess == false && ResultDTO.HandleError(resAddUserRoles))
-                    return ResultDTO.Fail(resAddUserRoles.ErrMsg);
+                if (resAddUserRoles.IsSuccess == false && resAddUserRoles.HandleError())
+                    return ResultDTO.Fail(resAddUserRoles.ErrMsg!);
 
                 // Add User Claims
                 ResultDTO resAddUserClaims = await AddUserClaims(insertedUser.Id, dto.ClaimsInsert, "AuthorizationClaim");
-                if (resAddUserClaims.IsSuccess == false && ResultDTO.HandleError(resAddUserClaims))
-                    return ResultDTO.Fail(resAddUserClaims.ErrMsg);
+                if (resAddUserClaims.IsSuccess == false && resAddUserClaims.HandleError())
+                    return ResultDTO.Fail(resAddUserClaims.ErrMsg!);
 
                 return ResultDTO.Ok();
             }
@@ -71,13 +79,23 @@ namespace Services
                 dto.Name = dto.Name.Trim();
                 dto.NormalizedName = dto.Name.ToUpper();
 
-                var role = _mapper.Map<IdentityRole>(dto) ?? throw new Exception("Role not mapped");
-                var addedRole = await _userManagementDa.AddRole(role) ?? throw new Exception("Role not added");
+                IdentityRole? role = _mapper.Map<IdentityRole>(dto);
+                if(role == null)
+                    return ResultDTO.Fail("Role mapping failed");
+
+                ResultDTO<IdentityRole>? resultAddedRole = await _userManagementDa.AddRole(role!);
+                if (resultAddedRole.IsSuccess == false && resultAddedRole.HandleError())
+                    return ResultDTO.Fail(resultAddedRole.ErrMsg!);
+                if (resultAddedRole.Data == null)
+                    return ResultDTO.Fail("Created role not found");
 
                 foreach (var claim in dto.ClaimsInsert)
                 {
-                    var forInsert = _mapper.Map<IdentityRoleClaim<string>>(claim);
-                    forInsert.RoleId = addedRole.Id;
+                    IdentityRoleClaim<string>? forInsert = _mapper.Map<IdentityRoleClaim<string>>(claim);
+                    if (forInsert == null)
+                        return ResultDTO.Fail("Role mapping failed");
+
+                    forInsert.RoleId = resultAddedRole.Data.Id;
                     await _userManagementDa.AddClaimForRole(forInsert);
                 }
 
@@ -99,7 +117,10 @@ namespace Services
                 // Add Claim
                 if (listClaimsDb is null || listClaimsDb.Count() == 0)
                 {
-                    var forInsert = _mapper.Map<IdentityUserClaim<string>>(culture);
+                    IdentityUserClaim<string>? forInsert = _mapper.Map<IdentityUserClaim<string>>(culture);
+                    if (forInsert == null)
+                        return ResultDTO.Fail("User claim mapping failed");
+
                     forInsert.ClaimType = "PreferedLanguageClaim";
                     forInsert.UserId = userId;
                     await _userManagementDa.AddLanguageClaimForUser(forInsert);
@@ -108,7 +129,10 @@ namespace Services
                 }
 
                 // Update Claim
-                var claimDb = listClaimsDb.First();
+                IdentityUserClaim<string>? claimDb = listClaimsDb.First();
+                if (claimDb == null)
+                    return ResultDTO.Fail("User claim mapping failed");
+
                 claimDb.ClaimValue = culture;
                 await _userManagementDa.UpdateLanguageClaimForUser(claimDb);
 
@@ -166,7 +190,7 @@ namespace Services
             if (hasMinLength == false || hasLetters == false || hasNumbers == false)
                 return ResultDTO<string>.Fail("Password does not meet requirements");
 
-            var passwordHasher = new PasswordHasher<ApplicationUser>();
+            PasswordHasher<ApplicationUser>? passwordHasher = new PasswordHasher<ApplicationUser>();
 
             string? hashedPasswordViewModel = passwordHasher.HashPassword(appUser, passwordNew);
             if (string.IsNullOrWhiteSpace(hashedPasswordViewModel))
@@ -185,11 +209,11 @@ namespace Services
                 if (claimsInsert.Count == 0)
                     return ResultDTO.Ok();
 
-                var userClaims = new List<IdentityUserClaim<string>>();
+                List<IdentityUserClaim<string>> userClaims = new List<IdentityUserClaim<string>>();
 
                 foreach (var claim in claimsInsert)
                 {
-                    var userClaim = new IdentityUserClaim<string>
+                    IdentityUserClaim<string> userClaim = new IdentityUserClaim<string>
                     {
                         UserId = appUserId,
                         ClaimType = claimsType,
@@ -220,11 +244,11 @@ namespace Services
                 if (rolesInsert.Count == 0)
                     return ResultDTO.Ok();
 
-                var userRoles = new List<IdentityUserRole<string>>();
+                List<IdentityUserRole<string>> userRoles = new List<IdentityUserRole<string>>();
 
                 foreach (var role in rolesInsert)
                 {
-                    var userRole = new IdentityUserRole<string>
+                    IdentityUserRole<string> userRole = new IdentityUserRole<string>
                     {
                         RoleId = role,
                         UserId = appUserId
@@ -257,16 +281,18 @@ namespace Services
                 if (userEntity is null)
                     return ResultDTO.Fail("User not found");
 
-                userEntity = _mapper.Map(dto, userEntity);      // Map properties from dto to entity
-                userEntity.NormalizeUserNameAndEmail();         // Normalize mapped props
+                userEntity = _mapper.Map(dto, userEntity); 
+                userEntity.NormalizeUserNameAndEmail(); 
 
                 if (string.IsNullOrEmpty(dto.ConfirmPassword) == false)
                 {
                     ResultDTO<string> resGetPass = await GetPasswordHashForAppUser(userEntity, dto.ConfirmPassword);
-                    if (resGetPass.IsSuccess == false)
+                    if (resGetPass.IsSuccess == false && resGetPass.HandleError())
                         return ResultDTO.Fail(resGetPass.ErrMsg!);
+                    if (resGetPass.Data == null)
+                        return ResultDTO.Fail("Password hash not found");
 
-                    userEntity.PasswordHash = resGetPass.Data;      // Set Hashed Password
+                    userEntity.PasswordHash = resGetPass.Data; 
                 }
 
                 // Update User Properties
@@ -285,13 +311,13 @@ namespace Services
 
                 // Add User Roles
                 ResultDTO resAddUserRoles = await AddUserRoles(userEntity.Id, dto.RolesInsert);
-                if (resAddUserRoles.IsSuccess == false && ResultDTO.HandleError(resAddUserRoles))
-                    return ResultDTO.Fail(resAddUserRoles.ErrMsg);
+                if (resAddUserRoles.IsSuccess == false && resAddUserRoles.HandleError())
+                    return ResultDTO.Fail(resAddUserRoles.ErrMsg!);
 
                 // Add User Claims
                 ResultDTO resAddUserClaims = await AddUserClaims(userEntity.Id, dto.ClaimsInsert, "AuthorizationClaim");
-                if (resAddUserClaims.IsSuccess == false && ResultDTO.HandleError(resAddUserClaims))
-                    return ResultDTO.Fail(resAddUserClaims.ErrMsg);
+                if (resAddUserClaims.IsSuccess == false && resAddUserClaims.HandleError())
+                    return ResultDTO.Fail(resAddUserClaims.ErrMsg!);
 
                 return ResultDTO.Ok();
             }
@@ -306,15 +332,21 @@ namespace Services
             if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(currentPassword) || string.IsNullOrEmpty(password))
                 return ResultDTO.Fail("All fields are required");
 
-            UserDTO? userDto = await GetUserById(userId);
-            if (userDto is null)
+            ResultDTO<UserDTO>? resultGetUser = await GetUserById(userId);
+            if(resultGetUser.IsSuccess == false && resultGetUser.HandleError())
+                return ResultDTO.Fail(resultGetUser.ErrMsg!);
+            if (resultGetUser.Data == null)
                 return ResultDTO.Fail("User Not Found");
 
-            ApplicationUser appUser = _mapper.Map<ApplicationUser>(userDto);
+            ApplicationUser? appUser = _mapper.Map<ApplicationUser>(resultGetUser.Data);
+            if (appUser == null)
+                return ResultDTO.Fail("Mapping for user falied");
 
-            ResultDTO<string> resGetPassHash = await GetPasswordHashForAppUser(appUser, userDto.PasswordHash);
-            if (resGetPassHash.IsSuccess == false)
-                return ResultDTO.Fail(resGetPassHash.ErrMsg);
+            ResultDTO<string> resGetPassHash = await GetPasswordHashForAppUser(appUser, resultGetUser.Data.PasswordHash!);
+            if (resGetPassHash.IsSuccess == false && resGetPassHash.HandleError())
+                return ResultDTO.Fail(resGetPassHash.ErrMsg!);
+            if (resGetPassHash.Data == null)
+                return ResultDTO.Fail("Password hash not found");
 
             appUser.PasswordHash = resGetPassHash.Data;
 
@@ -344,14 +376,17 @@ namespace Services
                     return ResultDTO.Fail("Role Not Updated");
 
                 // Get Existing Claims
-                List<IdentityRoleClaim<string>> roleClaims =
-                    await _userManagementDa.GetClaimsForRoleByRoleIdAndClaimType(roleEntity.Id, "AuthorizationClaim");
+                List<IdentityRoleClaim<string>>? roleClaims = await _userManagementDa.GetClaimsForRoleByRoleIdAndClaimType(roleEntity.Id, "AuthorizationClaim");
+                if (roleClaims is null)
+                    return ResultDTO.Fail("Role claims not found");
                 // Delete Existing Claims
                 await _userManagementDa.DeleteClaimsForRole(roleClaims);
 
                 foreach (var claim in dto.ClaimsInsert)
                 {
-                    var roleClaim = _mapper.Map<IdentityRoleClaim<string>>(claim);
+                    IdentityRoleClaim<string>? roleClaim = _mapper.Map<IdentityRoleClaim<string>>(claim);
+                    if (roleClaim == null)
+                        return ResultDTO.Fail("Mapping failed for role claim");
                     roleClaim.RoleId = roleEntity.Id;
                     roleClaim.ClaimType = "AuthorizationClaim";
                     await _userManagementDa.AddClaimForRole(roleClaim);
@@ -371,11 +406,11 @@ namespace Services
         {
             try
             {
-                var hasUserEntry = _userManagementDa.CheckUserBeforeDelete(userId);
-                if (hasUserEntry.HasValue)
-                    return ResultDTO<bool>.Ok(hasUserEntry.Value);
+                bool? hasUserEntry = _userManagementDa.CheckUserBeforeDelete(userId);
+                if (!hasUserEntry.HasValue)
+                    return ResultDTO<bool>.Fail("Error occured while retriving data");
 
-                return ResultDTO<bool>.Fail("Error occured while retriving data");
+                return ResultDTO<bool>.Ok(hasUserEntry.Value);
             }
             catch (Exception ex)
             {
@@ -386,7 +421,7 @@ namespace Services
         {
             try
             {
-                var user = await _userManagementDa.GetUserById(userId);
+                ApplicationUser? user = await _userManagementDa.GetUserById(userId);
                 if (user is null)
                     return ResultDTO.Fail("User not found");
 
@@ -452,7 +487,7 @@ namespace Services
                 List<ApplicationUser> allUsers = await _userManagementDa.GetAllIntanetPortalUsers();
                 dto.AllUsers = _mapper.Map<List<UserDTO>>(allUsers);
 
-                var roles = await _userManagementDa.GetAllRoles();
+                List<IdentityRole>? roles = await _userManagementDa.GetAllRoles();
                 dto.Roles = _mapper.Map<List<RoleDTO>>(roles);
 
                 List<IdentityRoleClaim<string>> roleClaims = await _userManagementDa.GetAllRoleClaims();
@@ -482,12 +517,14 @@ namespace Services
 
                 if (string.IsNullOrEmpty(dto.Id) == false)
                 {
-                    var role = await _userManagementDa.GetRole(dto.Id);
+                    IdentityRole? role = await _userManagementDa.GetRole(dto.Id);
                     if (role is null)
                         return ResultDTO<RoleManagementDTO>.Fail("Role not found");
 
                     dto = _mapper.Map<RoleManagementDTO>(role);
-                    var claims = await _userManagementDa.GetClaimsForRoleByRoleIdAndClaimType(role.Id, "AuthorizationClaim");
+                    List<IdentityRoleClaim<string>>? claims = await _userManagementDa.GetClaimsForRoleByRoleIdAndClaimType(role.Id, "AuthorizationClaim");
+                    if (claims is null)
+                        return ResultDTO<RoleManagementDTO>.Fail("Role claims not found");
                     dto.ClaimsInsert = claims.Select(z => z.ClaimValue).ToList();
                 }
 
@@ -499,96 +536,131 @@ namespace Services
             }
         }
 
-        public async Task<RoleDTO?> GetRoleById(string roleId)
+        public async Task<ResultDTO<RoleDTO>> GetRoleById(string roleId)
         {
-            // TODO: Review Error Throwing
-            var roleDb = await _userManagementDa.GetRole(roleId) ?? throw new Exception("Role not found");
-            var dto = _mapper.Map<RoleDTO>(roleDb) ?? throw new Exception("Role DTO not found");
-            return dto;
+            IdentityRole? roleDb = await _userManagementDa.GetRole(roleId);
+            if(roleDb is null)
+                return ResultDTO<RoleDTO>.Fail("Role not found");
+
+            RoleDTO? dto = _mapper.Map<RoleDTO>(roleDb);
+            if(dto == null)            
+                return ResultDTO<RoleDTO>.Fail("Mapping failed");
+            
+            return ResultDTO<RoleDTO>.Ok(dto);
         }
 
-        public async Task<UserDTO?> GetUserById(string userId)
+        public async Task<ResultDTO<UserDTO>> GetUserById(string userId)
         {
-            // TODO: Review Error Throwing
-            var userDb = await _userManagementDa.GetUserById(userId) ?? throw new Exception("User not found");
-            var dto = _mapper.Map<UserDTO>(userDb) ?? throw new Exception("User dto not found");
-            return dto;
+            ApplicationUser? userDb = await _userManagementDa.GetUserById(userId);
+            if (userDb is null)
+                return ResultDTO<UserDTO>.Fail("User not found");
+
+            UserDTO? dto = _mapper.Map<UserDTO>(userDb);
+            if (dto == null)
+                return ResultDTO<UserDTO>.Fail("Mapping failed");
+
+            return ResultDTO<UserDTO>.Ok(dto);
         }
 
-        public async Task<List<RoleClaimDTO>> GetRoleClaims(string roleId)
+        public async Task<ResultDTO<List<RoleClaimDTO>>> GetRoleClaims(string roleId)
         {
-            var roleClaims = await _userManagementDa.GetClaimsForRoleByRoleIdAndClaimType(roleId, "AuthorizationClaim") ?? throw new Exception("Role claims not found");
-            var roleClaimDTOs = _mapper.Map<List<RoleClaimDTO>>(roleClaims);
-            return roleClaimDTOs;
-        }
-        public async Task<List<UserClaimDTO>> GetUserClaims(string userId)
-        {
-            var userClaims =
-                await _userManagementDa.GetClaimsForUserByUserIdAndClaimType(userId, "AuthorizationClaim")
-                ?? throw new Exception("User claims not found");
-            var userClaimDTOs = _mapper.Map<List<UserClaimDTO>>(userClaims);
-            return userClaimDTOs;
-        }
+            List<IdentityRoleClaim<string>>? roleClaims = await _userManagementDa.GetClaimsForRoleByRoleIdAndClaimType(roleId, "AuthorizationClaim");
+            if (roleClaims == null)
+                return ResultDTO<List<RoleClaimDTO>>.Fail("Role claims not found");
 
-        public async Task<List<RoleDTO>> GetRolesForUser(string userId)
-        {
-            var roleIdsList = _userManagementDa.GetUserRolesByUserId(userId).GetAwaiter().GetResult().Select(x => x.RoleId).ToList() ?? throw new Exception("Role ids not found");
-            var userRoles = await _userManagementDa.GetRolesForUser(roleIdsList) ?? throw new Exception("User roles not found");
-            var userRolesDTOs = _mapper.Map<List<RoleDTO>>(userRoles);
-            return userRolesDTOs;
-        }
+            List<RoleClaimDTO>? roleClaimDTOs = _mapper.Map<List<RoleClaimDTO>>(roleClaims);
+            if (roleClaimDTOs == null)
+                return ResultDTO<List<RoleClaimDTO>>.Fail("Role claims mapping failed");
 
-        public async Task<UserDTO> GetSuperAdminUserBySpecificClaim()
-        {
-            var superAdmin = await _userManagementDa.GetUserBySpecificClaim();
-            return _mapper.Map<UserDTO>(superAdmin) ?? new UserDTO();
+            return ResultDTO<List<RoleClaimDTO>>.Ok(roleClaimDTOs);
         }
-        public async Task<ICollection<UserDTO>> GetAllIntanetPortalUsers()
+        public async Task<ResultDTO<List<UserClaimDTO>>> GetUserClaims(string userId)
         {
-            var allUsers = await _userManagementDa.GetAllIntanetPortalUsers();
-            return _mapper.Map<List<UserDTO>>(allUsers) ?? new List<UserDTO>();
+            List<IdentityUserClaim<string>>? userClaims = await _userManagementDa.GetClaimsForUserByUserIdAndClaimType(userId, "AuthorizationClaim");
+            if (userClaims == null)
+                return ResultDTO<List<UserClaimDTO>>.Fail("User claims not found");
+
+            List<UserClaimDTO>? userClaimDTOs = _mapper.Map<List<UserClaimDTO>>(userClaims);
+            if (userClaimDTOs == null)
+                return ResultDTO<List<UserClaimDTO>>.Fail("User claims mapping failed");
+
+            return ResultDTO<List<UserClaimDTO>>.Ok(userClaimDTOs);
         }
 
-        public async Task<ICollection<RoleDTO>> GetAllRoles()
+        public async Task<ResultDTO<List<RoleDTO>>> GetRolesForUser(string userId)
         {
-            var allRoles = await _userManagementDa.GetAllRoles();
-            return _mapper.Map<List<RoleDTO>>(allRoles) ?? new List<RoleDTO>();
+            List<string>? roleIdsList = _userManagementDa.GetUserRolesByUserId(userId).GetAwaiter().GetResult().Select(x => x.RoleId).ToList();
+            if (roleIdsList == null)
+                return ResultDTO<List<RoleDTO>>.Fail("Role ids list not found");
+
+            List<IdentityRole>? userRoles = await _userManagementDa.GetRolesForUser(roleIdsList);
+            if(userRoles == null)
+                return ResultDTO<List<RoleDTO>>.Fail("User roles not found");
+
+            List<RoleDTO>? userRolesDTOs = _mapper.Map<List<RoleDTO>>(userRoles);
+            if (userRolesDTOs == null)
+                return ResultDTO<List<RoleDTO>>.Fail("Mapping failed");
+
+            return ResultDTO<List<RoleDTO>>.Ok(userRolesDTOs);
         }
 
-        public async Task<ICollection<UserRoleDTO>> GetAllUserRoles()
+        public async Task<ResultDTO<UserDTO>> GetSuperAdminUserBySpecificClaim()
         {
-            var allUserRoles = await _userManagementDa.GetUserRoles();
-            return _mapper.Map<List<UserRoleDTO>>(allUserRoles) ?? new List<UserRoleDTO>();
+            ApplicationUser? superAdmin = await _userManagementDa.GetUserBySpecificClaim();
+            if (superAdmin == null)
+                return ResultDTO<UserDTO>.Fail("Super admin not found");
+
+            UserDTO? mappedUser = _mapper.Map<UserDTO>(superAdmin);
+            if (mappedUser == null)
+                return ResultDTO<UserDTO>.Fail("Mapping failed for super admin");
+
+            return ResultDTO<UserDTO>.Ok(mappedUser);
+        }
+        public async Task<ResultDTO<List<UserDTO>>> GetAllIntanetPortalUsers()
+        {
+            List<ApplicationUser>? allUsers = await _userManagementDa.GetAllIntanetPortalUsers();
+            if (allUsers == null)
+                return ResultDTO<List<UserDTO>>.Fail("Users not found");
+
+            List<UserDTO>? mappedUsers = _mapper.Map<List<UserDTO>>(allUsers);
+            if (mappedUsers == null)
+                return ResultDTO<List<UserDTO>>.Fail("Mapping failed for users");
+
+            return ResultDTO<List<UserDTO>>.Ok(mappedUsers);
         }
 
-        public async Task<List<ClaimDTO>> GetClaimsForUser(string userId)
+        public async Task<ResultDTO<List<RoleDTO>>> GetAllRoles()
         {
-            var roleIdsList = _userManagementDa.GetUserRolesByUserId(userId).GetAwaiter().GetResult().Select(x => x.RoleId).ToList() ?? throw new Exception("Role ids not found");
-            var userRolesDb = await _userManagementDa.GetRolesForUser(roleIdsList) ?? throw new Exception("User roles found");
+            List<IdentityRole>? allRoles = await _userManagementDa.GetAllRoles();
+            if (allRoles == null)
+                return ResultDTO<List<RoleDTO>>.Fail("Roles not found");
+            List<RoleDTO>? mappedRoles = _mapper.Map<List<RoleDTO>>(allRoles);
+            if (mappedRoles == null)
+                return ResultDTO<List<RoleDTO>>.Fail("Mapping failed for roles");
 
-            var userRoles = userRolesDb.Select(x => x.Id).ToList();
-            var roleClaims = new List<ClaimDTO>();
-
-            var allUserClaims = await _userManagementDa.GetClaimsForUserByUserIdAndClaimType(userId, "AuthorizationClaim");
-            var userClaims = allUserClaims.Select(x => new ClaimDTO() { ClaimType = x.ClaimType, ClaimValue = x.ClaimValue }).ToList();
-            foreach (var role in userRoles)
-            {
-                var claimForRoleDb = await _userManagementDa.GetClaimsForRoleByRoleIdAndClaimType(role, "AuthorizationClaim") ?? throw new Exception("Claims for role not found");
-                var claimsForRole = claimForRoleDb.Select(x => new ClaimDTO() { ClaimValue = x.ClaimValue, ClaimType = x.ClaimType }).ToList();
-                roleClaims.AddRange(claimsForRole);
-            }
-
-            List<ClaimDTO> claimsForAdd = new List<ClaimDTO>();
-            claimsForAdd.AddRange(roleClaims);
-            claimsForAdd.AddRange(userClaims);
-            var distinctedClaimsForAdd = claimsForAdd.Distinct().ToList();
-
-            return distinctedClaimsForAdd;
+            return ResultDTO<List<RoleDTO>>.Ok(mappedRoles);
         }
 
-        public async Task<string?> GetPreferredLanguageForUser(string userId)
+        public async Task<ResultDTO<List<UserRoleDTO>>> GetAllUserRoles()
         {
-            return await _userManagementDa.GetPreferredLanguage(userId);
+            List<IdentityUserRole<string>>? allUserRoles = await _userManagementDa.GetUserRoles();
+            if (allUserRoles == null)
+                return ResultDTO<List<UserRoleDTO>>.Fail("User roles not found");
+
+            List<UserRoleDTO>? mappedUserRoles = _mapper.Map<List<UserRoleDTO>>(allUserRoles);
+            if (mappedUserRoles == null)
+                return ResultDTO<List<UserRoleDTO>>.Fail("Mapping failed for user roles");
+
+            return ResultDTO<List<UserRoleDTO>>.Ok(mappedUserRoles);
+        }
+                
+        public async Task<ResultDTO<string>> GetPreferredLanguageForUser(string userId)
+        {
+            string? preffLang = await _userManagementDa.GetPreferredLanguage(userId);
+            if (string.IsNullOrEmpty(preffLang))
+                return ResultDTO<string>.Fail("Prefereed language not found");
+
+            return ResultDTO<string>.Ok(preffLang);
         }
         #endregion
 

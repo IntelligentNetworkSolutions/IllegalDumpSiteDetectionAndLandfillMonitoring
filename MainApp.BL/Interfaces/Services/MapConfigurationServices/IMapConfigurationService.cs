@@ -7,7 +7,7 @@ namespace MainApp.BL.Interfaces.Services.MapConfigurationServices
     {
         #region Read
         #region Get Mapconfig/es
-        Task<MapConfigurationDTO> GetMapConfigurationByName(string mapName);
+        Task<ResultDTO<MapConfigurationDTO>> GetMapConfigurationByName(string mapName);
         Task<ResultDTO<List<MapConfigurationDTO>>> GetAllMapConfigurations();
         Task<ResultDTO<MapConfigurationDTO>> GetMapConfigurationById(Guid mapConfigurationId);
         #endregion

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using SD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,7 +43,7 @@ namespace DAL.Repositories
         {
             try
             {
-                return await _db.Users.Where(u => _db.UserClaims.Any(c => c.UserId == u.Id && c.ClaimType == "SpecialAuthClaim" && c.ClaimValue == "superadmin")).FirstOrDefaultAsync();
+                return await _db.Users.Where(u => _db.UserClaims.Any(c => c.UserId == u.Id && c.ClaimType == "SpecialAuthClaim" && c.ClaimValue == "superadmin")).FirstOrDefaultAsync();                
             }
             catch (Exception ex)
             {
@@ -231,18 +232,18 @@ namespace DAL.Repositories
             }
         }
 
-        public async Task<IdentityRole> AddRole(IdentityRole role)
+        public async Task<ResultDTO<IdentityRole>> AddRole(IdentityRole role)
         {
             try
             {
                 _db.Add(role);
                 await _db.SaveChangesAsync();
-                return role;
+                return ResultDTO<IdentityRole>.Ok(role);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
-                throw;
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<IdentityRole>.ExceptionFail(ex.Message, ex);
             }
         }
 

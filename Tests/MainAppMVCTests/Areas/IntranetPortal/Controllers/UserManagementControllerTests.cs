@@ -54,9 +54,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var users = new List<UserDTO>() { new UserDTO() { Id = "123", UserName = "TestUser", Email = "testuser@gmail.com" } };
             var roles = new List<RoleDTO>();
             var userRoles = new List<UserRoleDTO>();
-            _mockUserManagementService.Setup(x => x.GetAllIntanetPortalUsers()).ReturnsAsync(users);
-            _mockUserManagementService.Setup(x => x.GetAllRoles()).ReturnsAsync(roles);
-            _mockUserManagementService.Setup(x => x.GetAllUserRoles()).ReturnsAsync(userRoles);
+            _mockUserManagementService.Setup(x => x.GetAllIntanetPortalUsers()).ReturnsAsync(ResultDTO<List<UserDTO>>.Ok(users));
+            _mockUserManagementService.Setup(x => x.GetAllRoles()).ReturnsAsync(ResultDTO<List<RoleDTO>>.Ok(roles));
+            _mockUserManagementService.Setup(x => x.GetAllUserRoles()).ReturnsAsync(ResultDTO<List<UserRoleDTO>>.Ok(userRoles));
 
             // Act
             var result = await _controller.Index();
@@ -403,15 +403,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             string roleId = "testRoleId";
             var expectedRole = new RoleDTO { Id = roleId, Name = "TestRole" };
             _mockUserManagementService.Setup(x => x.GetRoleById(roleId))
-                .ReturnsAsync(expectedRole);
+                .ReturnsAsync(ResultDTO<RoleDTO>.Ok(expectedRole));
 
             // Act
             var result = await _controller.DeleteRole(roleId);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal(expectedRole.Id, result.Id);
-            Assert.Equal(expectedRole.Name, result.Name);
+            Assert.Equal(expectedRole.Id, result.Data.Id);
+            Assert.Equal(expectedRole.Name, result.Data.Name);
         }
 
         [Fact]
@@ -455,21 +455,23 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.False(result);
         }
 
+       
         [Fact]
-        public async Task DeleteRoleConfirmed_CallsDeleteRoleAndRedirectsToIndex()
+        public async Task DeleteRoleConfirmed_ShouldReturnExceptionFail_WhenExceptionIsThrown()
         {
             // Arrange
-            var roleId = "testRoleId";
-            _mockUserManagementService.Setup(s => s.DeleteRole(roleId))
-                .ReturnsAsync(ResultDTO.Ok());
+            var roleId = "123";
+            var exceptionMessage = "Unexpected error";
+            _mockUserManagementService
+                .Setup(service => service.DeleteRole(roleId))
+                .ThrowsAsync(new Exception(exceptionMessage));
 
             // Act
             var result = await _controller.DeleteRoleConfirmed(roleId);
 
             // Assert
-            _mockUserManagementService.Verify(s => s.DeleteRole(roleId), Times.Once);
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
         }
 
         [Fact]
@@ -479,7 +481,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var userId = "testUserId";
             var expectedUser = new UserDTO { Id = userId, UserName = "TestUser", Email = "testuser@example.com" };
             _mockUserManagementService.Setup(s => s.GetUserById(userId))
-                .ReturnsAsync(expectedUser);
+                .ReturnsAsync(ResultDTO<UserDTO>.Ok(expectedUser));
 
             // Act
             var result = await _controller.DeleteUser(userId);
@@ -487,9 +489,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             _mockUserManagementService.Verify(s => s.GetUserById(userId), Times.Once);
             Assert.NotNull(result);
-            Assert.Equal(expectedUser.Id, result.Id);
-            Assert.Equal(expectedUser.UserName, result.UserName);
-            Assert.Equal(expectedUser.Email, result.Email);
+            Assert.Equal(expectedUser.Id, result.Data.Id);
+            Assert.Equal(expectedUser.UserName, result.Data.UserName);
+            Assert.Equal(expectedUser.Email, result.Data.Email);
         }
 
         [Fact]
@@ -498,85 +500,55 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             var userId = "nonexistentUserId";
             _mockUserManagementService.Setup(s => s.GetUserById(userId))
-                .ReturnsAsync((UserDTO?)null);
+                .ReturnsAsync(ResultDTO<UserDTO>.Ok((UserDTO ?)null));
 
             // Act
             var result = await _controller.DeleteUser(userId);
 
             // Assert
             _mockUserManagementService.Verify(s => s.GetUserById(userId), Times.Once);
-            Assert.Null(result);
+            Assert.False(result.IsSuccess);
         }
 
         [Fact]
-        public async Task DeleteUserConfirmed_WhenCheckUserBeforeDeleteFails_ShouldReturnJsonWithErrorMessage()
+        public async Task DeleteUserConfirmed_WhenCheckUserBeforeDeleteFails_ShouldReturnFailResultWithErrorMessage()
         {
             // Arrange
             string userId = "testUserId";
-            var errorMessage = "Error retrieving data";
+            string errorMessage = "Error retrieving data";
+
             _mockUserManagementService.Setup(x => x.CheckUserBeforeDelete(userId))
                 .ReturnsAsync(ResultDTO<bool>.Fail(errorMessage));
-
-            // Act
-            var result = await _controller.DeleteUserConfirmed(userId) as JsonResult;
-
-            // Assert
-            Assert.NotNull(result); // Ensure that the result is not null
-            var jsonData = JObject.FromObject(result.Value); // Convert to JObject for easy access
-
-            // Check for the error message in the JSON result
-            Assert.True(jsonData.ContainsKey("errorRetrievingData"));
-            Assert.Equal(errorMessage, (string)jsonData["errorRetrievingData"]); // Assert the error message matches
-        }
-
-        [Fact]
-        public async Task DeleteUserConfirmed_WhenUserHasEntry_ShouldReturnJsonWithUserHasEntry()
-        {
-            // Arrange
-            string userId = "testUserId";
-            var resultDTO = ResultDTO<bool>.Ok(true); // This represents the user having entries
-            _mockUserManagementService.Setup(x => x.CheckUserBeforeDelete(userId))
-                .ReturnsAsync(resultDTO);
-
-            // Act
-            var result = await _controller.DeleteUserConfirmed(userId) as JsonResult;
-
-            // Assert
-            Assert.NotNull(result); // Ensure that the result is not null
-            var jsonData = JObject.FromObject(result.Value);
-
-            // Check if the JSON contains the expected key and value
-            Assert.True(jsonData.ContainsKey("userHasEntry"));
-
-            // Access the nested properties
-            var userHasEntryData = jsonData["userHasEntry"] as JObject; // Cast to JObject to access properties
-            Assert.NotNull(userHasEntryData); // Ensure userHasEntry object is not null
-            Assert.True((bool)userHasEntryData["IsSuccess"]); // Check IsSuccess is true
-            Assert.True((bool)userHasEntryData["Data"]); // Check Data is true
-        }
-
-
-
-
-
-        [Fact]
-        public async Task DeleteUserConfirmed_WhenUserDeletedSuccessfully_ShouldRedirectToIndex()
-        {
-            // Arrange
-            string userId = "testUserId";
-            _mockUserManagementService.Setup(x => x.CheckUserBeforeDelete(userId))
-                .ReturnsAsync(ResultDTO<bool>.Ok(false));
-            _mockUserManagementService.Setup(x => x.DeleteUser(userId))
-                .ReturnsAsync(ResultDTO.Ok());
 
             // Act
             var result = await _controller.DeleteUserConfirmed(userId);
 
             // Assert
-            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(errorMessage, result.ErrMsg); 
         }
 
+        [Fact]
+        public async Task DeleteUserConfirmed_WhenUserHasEntry_ShouldReturnFailResultWithSpecificMessage()
+        {
+            // Arrange
+            string userId = "testUserId";
+            string expectedMessage = "You can not delete this user because there are data entries connected with the same user!";
+            var resultDTO = ResultDTO<bool>.Ok(true);
+
+            _mockUserManagementService.Setup(x => x.CheckUserBeforeDelete(userId))
+                .ReturnsAsync(resultDTO);
+
+            // Act
+            var result = await _controller.DeleteUserConfirmed(userId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal(expectedMessage, result.ErrMsg);
+        }
+               
         //[Fact]
         //public void GetRoleClaims_ShouldReturnRoleClaims_WhenRoleIdIsValid()
         //{
@@ -673,33 +645,78 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Arrange
             string userId = "validUserId";
             var roles = new List<RoleDTO>
-        {
-            new RoleDTO { Id = "role1", Name = "Admin" },
-            new RoleDTO { Id = "role2", Name = "User" }
-        };
+            {
+                new RoleDTO { Id = "role1", Name = "Admin" },
+                new RoleDTO { Id = "role2", Name = "User" }
+            };
 
-            _mockUserManagementService.Setup(x => x.GetRolesForUser(userId)).ReturnsAsync(roles);
+            _mockUserManagementService.Setup(x => x.GetRolesForUser(userId)).ReturnsAsync(ResultDTO<List<RoleDTO>>.Ok(roles));
 
             // Act
             var result = await _controller.GetUserRoles(userId);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(2, result.Count);
-            Assert.All(result, role => Assert.NotNull(role));
+            Assert.NotNull(result.Data);
+            Assert.Equal(2, result.Data.Count);
+            Assert.All(result.Data, role => Assert.NotNull(role));
+        }
+
+       
+        [Fact]
+        public async Task GetUserRoles_ShouldReturnFail_WhenDataIsNull()
+        {
+            // Arrange
+            var userId = "123";             
+            var resultDto = ResultDTO<List<RoleDTO>>.Ok(null);
+            _mockUserManagementService
+                .Setup(service => service.GetRolesForUser(userId))
+                .ReturnsAsync(resultDto);
+
+            // Act
+            var result = await _controller.GetUserRoles(userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("No data found", result.ErrMsg);
         }
 
         [Fact]
-        public async Task GetUserRoles_ShouldThrowException_WhenRoleIdsNotFound()
+        public async Task GetUserRoles_ShouldReturnOk_WhenDataIsNotNull()
         {
             // Arrange
-            string userId = "invalidUserId";
-            _mockUserManagementService.Setup(x => x.GetRolesForUser(userId)).ThrowsAsync(new Exception("Role ids not found"));
+            var userId = "123";
+            var rolesData = new List<RoleDTO>() {new RoleDTO() { Name="Role 1"},new RoleDTO() { Name = "Role 2"} };
+            var resultDto = ResultDTO<List<RoleDTO>>.Ok(rolesData);
+            _mockUserManagementService
+                .Setup(service => service.GetRolesForUser(userId))
+                .ReturnsAsync(resultDto);
 
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => _controller.GetUserRoles(userId));
-            Assert.Equal("Role ids not found", exception.Message);
+            // Act
+            var result = await _controller.GetUserRoles(userId);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            Assert.Equal(rolesData, result.Data);
         }
+
+        [Fact]
+        public async Task GetUserRoles_ShouldReturnExceptionFail_WhenExceptionIsThrown()
+        {
+            // Arrange
+            var userId = "123";
+            var exceptionMessage = "Unexpected error";
+            _mockUserManagementService
+                .Setup(service => service.GetRolesForUser(userId))
+                .ThrowsAsync(new Exception(exceptionMessage));
+
+            // Act
+            var result = await _controller.GetUserRoles(userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task FillUserManagementEditUserViewModelFromDto_ThrowsException_ReturnsFailureResult()

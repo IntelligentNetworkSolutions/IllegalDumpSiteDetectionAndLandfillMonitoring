@@ -7,6 +7,7 @@ using MainApp.MVC.ViewComponents.Map;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.Extensions.Configuration;
 using Moq;
+using SD;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -42,7 +43,7 @@ namespace Tests.MainAppMVCTests.ViewComponents.Map
 
             _mockMapConfigurationService
                 .Setup(s => s.GetMapConfigurationByName(mapToLoad))
-                .ReturnsAsync(mapConfigDTO);
+                .ReturnsAsync(ResultDTO<MapConfigurationDTO>.Ok(mapConfigDTO));
 
             _applicationSettingsServiceMock
                 .Setup(s => s.GetApplicationSettingByKey("MapOverviewUrl"))
@@ -68,7 +69,7 @@ namespace Tests.MainAppMVCTests.ViewComponents.Map
 
             _mockMapConfigurationService
                 .Setup(s => s.GetMapConfigurationByName(mapToLoad))
-                .ReturnsAsync(new MapConfigurationDTO { Id = Guid.Empty });
+                .ReturnsAsync(ResultDTO<MapConfigurationDTO>.Ok(new MapConfigurationDTO { Id = Guid.Empty }));
 
             // Act
             var result = await _mapViewComponent.InvokeAsync(mapDivId, mapToLoad) as ViewViewComponentResult;
@@ -88,7 +89,7 @@ namespace Tests.MainAppMVCTests.ViewComponents.Map
 
             _mockMapConfigurationService
                 .Setup(s => s.GetMapConfigurationByName(mapToLoad))
-                .ReturnsAsync(mapConfigDTO);
+                .ReturnsAsync(ResultDTO<MapConfigurationDTO>.Ok(mapConfigDTO));
 
             _applicationSettingsServiceMock
                 .Setup(s => s.GetApplicationSettingByKey("MapOverviewUrl"))
@@ -116,7 +117,7 @@ namespace Tests.MainAppMVCTests.ViewComponents.Map
 
             _mockMapConfigurationService
                 .Setup(s => s.GetMapConfigurationByName(mapToLoad))
-                .ReturnsAsync(mapConfigDTO);
+                .ReturnsAsync(ResultDTO<MapConfigurationDTO>.Ok(mapConfigDTO));
 
             _applicationSettingsServiceMock
                 .Setup(s => s.GetApplicationSettingByKey("MapOverviewUrl"))
@@ -145,7 +146,7 @@ namespace Tests.MainAppMVCTests.ViewComponents.Map
 
             _mockMapConfigurationService
                .Setup(s => s.GetMapConfigurationByName(mapToLoad))
-               .ReturnsAsync(mapConfigDTO);
+               .ReturnsAsync(ResultDTO<MapConfigurationDTO>.Ok(mapConfigDTO));
             _applicationSettingsServiceMock
                 .Setup(s => s.GetApplicationSettingByKey("MapOverviewUrl"))
                 .ReturnsAsync(new AppSettingDTO { Value = expectedMapOverviewUrl });

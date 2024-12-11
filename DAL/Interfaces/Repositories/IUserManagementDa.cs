@@ -1,6 +1,7 @@
 ﻿using Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Storage;
+using SD;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -47,7 +48,7 @@ namespace DAL.Interfaces.Repositories
         #region Create
         Task<ApplicationUser> AddUser(ApplicationUser user);
 
-        Task<IdentityRole> AddRole(IdentityRole role);
+        Task<ResultDTO<IdentityRole>> AddRole(IdentityRole role);
 
         Task AddClaimForRole(IdentityRoleClaim<string> forInsert);
 

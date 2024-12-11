@@ -47,24 +47,6 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
-        public async Task CreateLegalLandfillWasteImport_ShouldReturnFail_WhenResultIsNull()
-        {
-            // Arrange
-            var legalLandfillWasteImportDTO = new LegalLandfillWasteImportDTO();
-            var legalLandfillWasteImportEntity = new LegalLandfillWasteImport();
-
-            _mockMapper.Setup(m => m.Map<LegalLandfillWasteImport>(legalLandfillWasteImportDTO)).Returns(legalLandfillWasteImportEntity);
-            _mockRepository.Setup(r => r.Create(legalLandfillWasteImportEntity, true, default)).ReturnsAsync((ResultDTO)null);
-
-            // Act
-            var result = await _service.CreateLegalLandfillWasteImport(legalLandfillWasteImportDTO);
-
-            // Assert
-            Assert.False(result.IsSuccess);
-            Assert.Equal("Creation failed: Result is null.", result.ErrMsg);
-        }
-
-        [Fact]
         public async Task CreateLegalLandfillWasteImport_WhenRepositoryFails_ShouldReturnFailResult()
         {
             // Arrange

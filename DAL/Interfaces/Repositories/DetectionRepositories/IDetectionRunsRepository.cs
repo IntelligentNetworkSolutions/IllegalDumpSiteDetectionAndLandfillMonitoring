@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Entities.DetectionEntities;
+using SD;
 
 namespace DAL.Interfaces.Repositories.DetectionRepositories
 {
@@ -11,8 +12,8 @@ namespace DAL.Interfaces.Repositories.DetectionRepositories
     {
         #region Read
         #region Get DetectionRun/s
-        Task<List<DetectionRun>> GetDetectionRunsWithClasses();
-        Task<List<DetectionRun>> GetSelectedDetectionRunsWithClasses(List<Guid> selectedDetectionRunsIds);
+        Task<ResultDTO<List<DetectionRun>>> GetDetectionRunsWithClasses();
+        Task<ResultDTO<List<DetectionRun>>> GetSelectedDetectionRunsWithClasses(List<Guid> selectedDetectionRunsIds);
         #endregion
         #endregion
 

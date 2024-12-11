@@ -72,7 +72,12 @@ namespace MainApp.BL.Services.DetectionServices
                 if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
                     return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntites.ErrMsg!);
 
-                List<DetectionRunDTO> dtos = _mapper.Map<List<DetectionRunDTO>>(resultGetAllEntites.Data);
+                if (resultGetAllEntites.Data == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Detection runs not found");
+
+                List<DetectionRunDTO>? dtos = _mapper.Map<List<DetectionRunDTO>>(resultGetAllEntites.Data);
+                if (dtos == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Mapping failed for detection runs");
 
                 return ResultDTO<List<DetectionRunDTO>>.Ok(dtos);
             }
@@ -87,14 +92,17 @@ namespace MainApp.BL.Services.DetectionServices
         {
             try
             {
-                // DetectedDumpSites might throw error
                 ResultDTO<IEnumerable<DetectionRun>> resultGetAllEntites =
                     await _detectionRunRepository.GetAll(includeProperties: "CreatedBy,DetectedDumpSites");
 
                 if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
                     return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntites.ErrMsg!);
+                if (resultGetAllEntites.Data == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Detection runs not found");
 
-                List<DetectionRunDTO> dtos = _mapper.Map<List<DetectionRunDTO>>(resultGetAllEntites.Data);
+                List<DetectionRunDTO>? dtos = _mapper.Map<List<DetectionRunDTO>>(resultGetAllEntites.Data);
+                if (dtos == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Mapping failed for detection runs");
 
                 return ResultDTO<List<DetectionRunDTO>>.Ok(dtos);
             }
@@ -113,9 +121,13 @@ namespace MainApp.BL.Services.DetectionServices
                     .GetAll(filter: x => selectedDetectionRunIds.Contains(x.Id), includeProperties: "CreatedBy,DetectedDumpSites,DetectionInputImage");
                 if (!resultGetAllEntities.IsSuccess && resultGetAllEntities.HandleError())
                     return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntities.ErrMsg!);
+                if (resultGetAllEntities.Data == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Failed to get detection runs");
 
-                var detectionRuns = resultGetAllEntities.Data.ToList();
-                var confidenceRateDict = selectedConfidenceRates.ToDictionary(cr => cr.detectionRunId, cr => cr.confidenceRate);
+                List<DetectionRun> detectionRuns = resultGetAllEntities.Data.ToList();
+                Dictionary<Guid, double>? confidenceRateDict = selectedConfidenceRates.ToDictionary(cr => cr.detectionRunId, cr => cr.confidenceRate);
+                if (confidenceRateDict == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Failed to convert confidence rates to dictionary");
 
                 foreach (var detectionRun in detectionRuns)
                 {
@@ -138,11 +150,11 @@ namespace MainApp.BL.Services.DetectionServices
 
         public async Task<ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>> GenerateAreaComparisonAvgConfidenceRateData(List<Guid> selectedDetectionRunsIds, int selectedConfidenceRate)
         {
-            List<DetectionRun> list = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds);
-            if (list == null || !list.Any())
-            {
-                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail("No detection runs found.");
-            }
+            ResultDTO<List<DetectionRun>> resultGetDetectionRuns = await _detectionRunRepository.GetSelectedDetectionRunsWithClasses(selectedDetectionRunsIds);
+            if (resultGetDetectionRuns.IsSuccess == false && resultGetDetectionRuns.HandleError())
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail(resultGetDetectionRuns.ErrMsg!);
+            if (resultGetDetectionRuns.Data == null)            
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail("No detection runs found.");            
 
             ResultDTO<IEnumerable<DetectionIgnoreZone>> resultIgnoreZones = await _detectionIgnoreZoneRepository.GetAll();
             if (resultIgnoreZones.IsSuccess == false && resultIgnoreZones.HandleError())
@@ -150,7 +162,7 @@ namespace MainApp.BL.Services.DetectionServices
             if (resultIgnoreZones.Data == null)
                 return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail("Ignore zones not found");
 
-            var groupedDumpSites = list.Select(detectionRun => new
+            var groupedDumpSites = resultGetDetectionRuns.Data.Select(detectionRun => new
             {
                 DetectionRun = detectionRun,
                 GroupedDumpSites = detectionRun.DetectedDumpSites.Where(x => x.ConfidenceRate * 100 >= selectedConfidenceRate)
@@ -228,7 +240,12 @@ namespace MainApp.BL.Services.DetectionServices
                 if (resultGetAllEntites.IsSuccess == false && resultGetAllEntites.HandleError())
                     return ResultDTO<DetectionRunDTO>.Fail(resultGetAllEntites.ErrMsg!);
 
-                DetectionRunDTO dto = _mapper.Map<DetectionRunDTO>(resultGetAllEntites.Data);
+                if (resultGetAllEntites.Data == null)
+                    return ResultDTO<DetectionRunDTO>.Fail("Detection run not found");
+
+                DetectionRunDTO? dto = _mapper.Map<DetectionRunDTO>(resultGetAllEntites.Data);
+                if (dto == null)
+                    return ResultDTO<DetectionRunDTO>.Fail("Mapping failed for detection run");
 
                 return ResultDTO<DetectionRunDTO>.Ok(dto);
             }
@@ -344,13 +361,21 @@ namespace MainApp.BL.Services.DetectionServices
             }
         }
 
-        public async Task<List<DetectionRunDTO>> GetDetectionRunsWithClasses()
+        public async Task<ResultDTO<List<DetectionRunDTO>>> GetDetectionRunsWithClasses()
         {
             try
             {
-                var detectionRuns = await _detectionRunRepository.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");
-                var listDetectionRunsDTOs = _mapper.Map<List<DetectionRunDTO>>(detectionRuns) ?? throw new Exception("Object not found");
-                return listDetectionRunsDTOs;
+                ResultDTO<List<DetectionRun>>? resultGetDetectionRuns = await _detectionRunRepository.GetDetectionRunsWithClasses();
+                if (resultGetDetectionRuns.IsSuccess == false && resultGetDetectionRuns.HandleError())
+                    return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetDetectionRuns.ErrMsg!);
+                if (resultGetDetectionRuns.Data == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Detection runs not found");
+
+                List<DetectionRunDTO>? listDetectionRunsDTOs = _mapper.Map<List<DetectionRunDTO>>(resultGetDetectionRuns.Data);
+                if (listDetectionRunsDTOs == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Mapping to list of detection run dtos failed");
+
+                return ResultDTO<List<DetectionRunDTO>>.Ok(listDetectionRunsDTOs);
             }
             catch (Exception ex)
             {
@@ -520,6 +545,11 @@ namespace MainApp.BL.Services.DetectionServices
             ResultDTO<DetectionRunFinishedResponse> resultJsonDeserialization =
                 await NewtonsoftJsonHelper.ReadFromFileAsDeserializedJson<DetectionRunFinishedResponse>(absBBoxResultsFilePath);
 
+            if (resultJsonDeserialization.IsSuccess == false && resultJsonDeserialization.HandleError())
+                return ResultDTO<DetectionRunFinishedResponse>.Fail(resultJsonDeserialization.ErrMsg!);
+            if (resultJsonDeserialization.Data == null)
+                return ResultDTO<DetectionRunFinishedResponse>.Fail("BBoxes deserialization failed");
+
             return resultJsonDeserialization;
         }
 
@@ -660,10 +690,14 @@ namespace MainApp.BL.Services.DetectionServices
             {
                 ResultDTO<IEnumerable<DetectionInputImage>> resultGetEntities = await _detectionInputImageRepository.GetAll(includeProperties: "CreatedBy");
                 if (resultGetEntities.IsSuccess is false && resultGetEntities.HandleError())
-                {
                     return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
-                }
+                if (resultGetEntities.Data == null)
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images list not found");
+                
                 List<DetectionInputImageDTO> dtos = _mapper.Map<List<DetectionInputImageDTO>>(resultGetEntities.Data);
+                if (dtos == null)
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail("Mapping detection input images list failed");
+
                 return ResultDTO<List<DetectionInputImageDTO>>.Ok(dtos);
             }
             catch (Exception ex)
@@ -672,17 +706,20 @@ namespace MainApp.BL.Services.DetectionServices
                 return ResultDTO<List<DetectionInputImageDTO>>.ExceptionFail(ex.Message, ex);
             }
         }
-
         public async Task<ResultDTO<List<DetectionInputImageDTO>>> GetSelectedInputImagesById(List<Guid> selectedImagesIds)
         {
             try
             {
                 ResultDTO<IEnumerable<DetectionInputImage>> resultGetEntities = await _detectionInputImageRepository.GetAll(filter: x => selectedImagesIds.Contains(x.Id), includeProperties: "CreatedBy");
                 if (resultGetEntities.IsSuccess is false && resultGetEntities.HandleError())
-                {
                     return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
-                }
+                if (resultGetEntities.Data == null)
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images list not found");
+                
                 List<DetectionInputImageDTO> dtos = _mapper.Map<List<DetectionInputImageDTO>>(resultGetEntities.Data);
+                if (dtos == null)
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail("Mapping deteciton input images list failed");
+
                 return ResultDTO<List<DetectionInputImageDTO>>.Ok(dtos);
             }
             catch (Exception ex)
@@ -698,12 +735,15 @@ namespace MainApp.BL.Services.DetectionServices
             {
                 ResultDTO<DetectionInputImage?> resultGetEntity = await _detectionInputImageRepository.GetById(detectionInputImageId, includeProperties: "CreatedBy");
 
-                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
-                {
+                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())                
                     return ResultDTO<DetectionInputImageDTO>.Fail(resultGetEntity.ErrMsg!);
-                }
-
+                if (resultGetEntity.Data == null)
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Detection input image not found");
+                
                 DetectionInputImageDTO dto = _mapper.Map<DetectionInputImageDTO>(resultGetEntity.Data);
+                if (dto == null)
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Mapping detection input image failed");
+
                 return ResultDTO<DetectionInputImageDTO>.Ok(dto);
             }
             catch (Exception ex)
@@ -718,13 +758,19 @@ namespace MainApp.BL.Services.DetectionServices
             try
             {
                 DetectionInputImage detectionInputImageEntity = _mapper.Map<DetectionInputImage>(detectionInputImageDTO);
+                if (detectionInputImageEntity == null)
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Mapping detection input image failed");
 
                 ResultDTO<DetectionInputImage> resultCreate = await _detectionInputImageRepository.CreateAndReturnEntity(detectionInputImageEntity);
-                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())                
                     return ResultDTO<DetectionInputImageDTO>.Fail(resultCreate.ErrMsg!);
-                }
+                if (resultCreate.Data == null)
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Detection input image not found");
+                
                 DetectionInputImageDTO dto = _mapper.Map<DetectionInputImageDTO>(resultCreate.Data);
+                if (dto == null)
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Mapping detection input image failed");
+
                 return ResultDTO<DetectionInputImageDTO>.Ok(dto);
             }
             catch (Exception ex)
@@ -739,12 +785,12 @@ namespace MainApp.BL.Services.DetectionServices
             try
             {
                 DetectionInputImage detectionInputImageEntity = _mapper.Map<DetectionInputImage>(detectionInputImageDTO);
+                if(detectionInputImageEntity == null)
+                    return ResultDTO.Fail("Mapping detection input image failed");
 
                 ResultDTO resultCreate = await _detectionInputImageRepository.Delete(detectionInputImageEntity);
                 if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
-                    return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);                
 
                 return ResultDTO.Ok();
             }
@@ -760,13 +806,13 @@ namespace MainApp.BL.Services.DetectionServices
             try
             {
                 DetectionInputImage detectionInputImageEntity = _mapper.Map<DetectionInputImage>(detectionInputImageDTO);
+                if (detectionInputImageEntity == null)
+                    return ResultDTO.Fail("Mapping detection input image failed");
 
                 ResultDTO resultCreate = await _detectionInputImageRepository.Update(detectionInputImageEntity);
-                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())                
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
-
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
@@ -781,13 +827,15 @@ namespace MainApp.BL.Services.DetectionServices
             try
             {
                 ResultDTO<IEnumerable<DetectionRun>> resultGetAllEntites = await _detectionRunRepository.GetAll(filter: x => x.DetectionInputImageId == detectionInputImageId);
-
-                if (!resultGetAllEntites.IsSuccess && resultGetAllEntites.HandleError())
-                {
+                if (!resultGetAllEntites.IsSuccess && resultGetAllEntites.HandleError())                
                     return ResultDTO<List<DetectionRunDTO>>.Fail(resultGetAllEntites.ErrMsg!);
-                }
+                if (resultGetAllEntites.Data == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Detection run list not found");
 
                 List<DetectionRunDTO> dtos = _mapper.Map<List<DetectionRunDTO>>(resultGetAllEntites.Data);
+                if (dtos == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Mapping deteciton run list failed");
+
                 return ResultDTO<List<DetectionRunDTO>>.Ok(dtos);
             }
             catch (Exception ex)
@@ -796,7 +844,6 @@ namespace MainApp.BL.Services.DetectionServices
                 return ResultDTO<List<DetectionRunDTO>>.ExceptionFail(ex.Message, ex);
             }
         }
-
 
 
         #endregion

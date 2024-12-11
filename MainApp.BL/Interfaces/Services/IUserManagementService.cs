@@ -29,16 +29,15 @@ namespace Services.Interfaces.Services
         Task<ResultDTO<UserManagementDTO>> FillUserManagementDto(UserManagementDTO? dto = null);
         Task<ResultDTO<RoleManagementDTO>> FillRoleManagementDto(RoleManagementDTO? dto = null);
 
-        Task<ICollection<UserDTO>> GetAllIntanetPortalUsers();
-        Task<ICollection<RoleDTO>> GetAllRoles();
-        Task<UserDTO?> GetUserById(string userId);
-        Task<UserDTO> GetSuperAdminUserBySpecificClaim();
-        Task<RoleDTO?> GetRoleById(string roleId);
-        Task<List<RoleDTO>> GetRolesForUser(string userId);
-        Task<List<RoleClaimDTO>> GetRoleClaims(string roleId);
-        Task<List<UserClaimDTO>> GetUserClaims(string userId);
-        Task<ICollection<UserRoleDTO>> GetAllUserRoles();
-        Task<List<ClaimDTO>> GetClaimsForUser(string userId);
-        Task<string?> GetPreferredLanguageForUser(string userId);
+        Task<ResultDTO<List<UserDTO>>> GetAllIntanetPortalUsers();
+        Task<ResultDTO<List<RoleDTO>>> GetAllRoles();
+        Task<ResultDTO<UserDTO>> GetUserById(string userId);
+        Task<ResultDTO<UserDTO>> GetSuperAdminUserBySpecificClaim();
+        Task<ResultDTO<RoleDTO>> GetRoleById(string roleId);
+        Task<ResultDTO<List<RoleDTO>>> GetRolesForUser(string userId);
+        Task<ResultDTO<List<RoleClaimDTO>>> GetRoleClaims(string roleId);
+        Task<ResultDTO<List<UserClaimDTO>>> GetUserClaims(string userId);
+        Task<ResultDTO<List<UserRoleDTO>>> GetAllUserRoles();
+        Task<ResultDTO<string>> GetPreferredLanguageForUser(string userId);
     }
 }

@@ -21,11 +21,28 @@ namespace MainApp.BL.Services.MapConfigurationServices
         }
         #region Read
         #region Get Mapconfig/es
-        public async Task<MapConfigurationDTO> GetMapConfigurationByName(string mapName)
+        public async Task<ResultDTO<MapConfigurationDTO>> GetMapConfigurationByName(string mapName)
         {
-            var mapConfing = await _mapConfigRepository.GetMapConfigurationByName(mapName) ?? throw new Exception("Object not found");
-            var mapConfigDTOs = _mapper.Map<MapConfigurationDTO>(mapConfing) ?? throw new Exception("Object not found");
-            return mapConfigDTOs;
+            try
+            {
+                ResultDTO<MapConfiguration>? resultGetMapConfing = await _mapConfigRepository.GetMapConfigurationByName(mapName);
+                if (resultGetMapConfing.IsSuccess == false && resultGetMapConfing.HandleError())
+                    return ResultDTO<MapConfigurationDTO>.Fail(resultGetMapConfing.ErrMsg!);                
+                if(resultGetMapConfing.Data == null)
+                    return ResultDTO<MapConfigurationDTO>.Fail("Map Configuration not found");
+                
+                MapConfigurationDTO? mapConfigDTOs = _mapper.Map<MapConfigurationDTO>(resultGetMapConfing.Data);
+                if (mapConfigDTOs == null)
+                    return ResultDTO<MapConfigurationDTO>.Fail("Mapping to map configuration dto failed");
+                
+                return ResultDTO<MapConfigurationDTO>.Ok(mapConfigDTOs);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<MapConfigurationDTO>.ExceptionFail(ex.Message, ex);
+            }
+           
         }
 
         public async Task<ResultDTO<List<MapConfigurationDTO>>> GetAllMapConfigurations()
@@ -33,21 +50,20 @@ namespace MainApp.BL.Services.MapConfigurationServices
             try
             {
                 ResultDTO<IEnumerable<MapConfiguration>> resultGetAllEntities = await _mapConfigRepository.GetAll();
-
-                if (resultGetAllEntities.IsSuccess == false && resultGetAllEntities.HandleError())
-                {
+                if (resultGetAllEntities.IsSuccess == false && resultGetAllEntities.HandleError())                
                     return ResultDTO<List<MapConfigurationDTO>>.Fail(resultGetAllEntities.ErrMsg!);
-                }
+                if(resultGetAllEntities.Data == null)
+                    return ResultDTO<List<MapConfigurationDTO>>.Fail("Map configuration not found");
 
                 List<MapConfigurationDTO> dtos = _mapper.Map<List<MapConfigurationDTO>>(resultGetAllEntities.Data);
+                if(dtos == null)
+                    return ResultDTO<List<MapConfigurationDTO>>.Fail("Mapping map configuration failed");
 
                 return ResultDTO<List<MapConfigurationDTO>>.Ok(dtos);
             }
             catch (Exception ex)
             {
-
                 _logger.LogError(ex.Message, ex);
-
                 return ResultDTO<List<MapConfigurationDTO>>.ExceptionFail(ex.Message, ex);
             }
         }
@@ -57,13 +73,14 @@ namespace MainApp.BL.Services.MapConfigurationServices
             try
             {
                 ResultDTO<MapConfiguration?> resultGetEntity = await _mapConfigRepository.GetById(mapConfigurationId, false, "MapLayerConfigurations, MapLayerGroupConfigurations");
-
-                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
-                {
-                    return ResultDTO<MapConfigurationDTO>.Fail(resultGetEntity.ErrMsg!);
-                }
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())                
+                    return ResultDTO<MapConfigurationDTO>.Fail(resultGetEntity.ErrMsg!);  
+                if (resultGetEntity.Data == null)
+                    return ResultDTO<MapConfigurationDTO>.Fail("Map configuration not found");
 
                 MapConfigurationDTO dto = _mapper.Map<MapConfigurationDTO>(resultGetEntity.Data);
+                if (dto == null)
+                    return ResultDTO<MapConfigurationDTO>.Fail("Mapping map configuration failed");
 
                 return ResultDTO<MapConfigurationDTO>.Ok(dto);
             }
@@ -83,13 +100,13 @@ namespace MainApp.BL.Services.MapConfigurationServices
             try
             {
                 MapConfiguration entity = _mapper.Map<MapConfiguration>(mapConfigurationDTO);
+                if (entity == null)
+                    return ResultDTO.Fail("Mapping map configuration failed");
 
                 ResultDTO resultCreate = await _mapConfigRepository.Create(entity);
-                if (!resultCreate.IsSuccess && resultCreate.HandleError())
-                {
+                if (!resultCreate.IsSuccess && resultCreate.HandleError())                
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
-
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
@@ -106,13 +123,13 @@ namespace MainApp.BL.Services.MapConfigurationServices
             try
             {
                 MapConfiguration mapConfigurationEntity = _mapper.Map<MapConfiguration>(mapConfigurationDTO);
+                if (mapConfigurationEntity == null)
+                    return ResultDTO.Fail("Mapping map configuration failed");
 
                 ResultDTO resultCreate = await _mapConfigRepository.Update(mapConfigurationEntity);
-                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())                
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
-
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
@@ -129,13 +146,13 @@ namespace MainApp.BL.Services.MapConfigurationServices
             try
             {
                 MapConfiguration mapConfigurationEntity = _mapper.Map<MapConfiguration>(mapConfigurationDTO);
+                if (mapConfigurationEntity == null)
+                    return ResultDTO.Fail("Mapping map configuration failed");
 
                 ResultDTO resultCreate = await _mapConfigRepository.Delete(mapConfigurationEntity);
-                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                {
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())                
                     return ResultDTO.Fail(resultCreate.ErrMsg!);
-                }
-
+                
                 return ResultDTO.Ok();
             }
             catch (Exception ex)

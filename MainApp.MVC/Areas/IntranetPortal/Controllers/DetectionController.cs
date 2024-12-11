@@ -19,7 +19,9 @@ using MainApp.MVC.Filters;
 using MainApp.MVC.Helpers;
 using MainApp.MVC.ViewModels.IntranetPortal.Detection;
 using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 using SD;
 using SD.Enums;
 using Services.Interfaces.Services;
@@ -66,10 +68,25 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDetectedZones))]
         public async Task<IActionResult> DetectedZones()
         {
-            var detectionRunsListDTOs = await _detectionRunService.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");
-            var detectionRunsViewModelList = _mapper.Map<List<DetectionRunViewModel>>(detectionRunsListDTOs) ?? throw new Exception("Object not found");
-            detectionRunsViewModelList = detectionRunsViewModelList.Where(x => x.IsCompleted == true && x.Status == "Success").ToList();
-            return View(detectionRunsViewModelList);
+            try
+            {
+                ResultDTO<List<DetectionRunDTO>>? resultGetDetectionRuns = await _detectionRunService.GetDetectionRunsWithClasses();
+                if (resultGetDetectionRuns.IsSuccess == false && resultGetDetectionRuns.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                if (resultGetDetectionRuns.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                List<DetectionRunViewModel> detectionRunsViewModelList = _mapper.Map<List<DetectionRunViewModel>>(resultGetDetectionRuns.Data);
+                if (detectionRunsViewModelList == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                detectionRunsViewModelList = detectionRunsViewModelList.Where(x => x.IsCompleted == true && x.Status == "Success").ToList();
+                return View(detectionRunsViewModelList);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }            
         }
 
         [HttpGet]
@@ -83,68 +100,80 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ScheduleDetectionRun))]
         public async Task<ResultDTO> ScheduleDetectionRun(DetectionRunViewModel viewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                string error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
+                if (!ModelState.IsValid)
+                {
+                    string error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
+
+                //get selected image input from database
+                ResultDTO<DetectionInputImageDTO>? resultGetInputImage = await _detectionRunService.GetDetectionInputImageById(viewModel.SelectedInputImageId);
+                if (resultGetInputImage.IsSuccess == false && resultGetInputImage.HandleError())
+                    return ResultDTO.Fail(resultGetInputImage.ErrMsg!);
+                if (resultGetInputImage.Data == null)
+                    return ResultDTO.Fail("Image not found");
+
+                //find current user
+                string? userId = User.FindFirstValue("UserId");
+                if (userId is null)
+                    return ResultDTO.Fail("User id is null");
+
+                ResultDTO<UserDTO>? resutGetCurrUserDTO = await _userManagementService.GetUserById(userId);
+                if (resutGetCurrUserDTO.IsSuccess == false && resutGetCurrUserDTO.HandleError())
+                    return ResultDTO.Fail(resutGetCurrUserDTO.ErrMsg!);
+                if (resutGetCurrUserDTO.Data is null)
+                    return ResultDTO.Fail("User not found");
+
+                string absInputImgPath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, resultGetInputImage.Data.ImagePath!);
+                string inputImgExtension = System.IO.Path.GetExtension(resultGetInputImage.Data.ImageFileName!);
+
+                //get trained model
+                ResultDTO<TrainedModelDTO>? getTrainedModelResult = await _trainedModelService.GetTrainedModelById(viewModel.SelectedTrainedModelId);
+                if (getTrainedModelResult.IsSuccess == false && getTrainedModelResult.HandleError())
+                    return ResultDTO.Fail(getTrainedModelResult.ErrMsg!);
+                if (getTrainedModelResult.Data == null)
+                    return ResultDTO.Fail("Trained model not found");
+
+                DetectionRunDTO detectionRunDTO = new()
+                {
+                    Id = Guid.NewGuid(),
+                    Name = viewModel.Name,
+                    Description = viewModel.Description,
+
+                    DetectionInputImageId = viewModel.SelectedInputImageId,
+                    InputImgPath = absInputImgPath,
+
+                    IsCompleted = false,
+                    Status = nameof(ScheduleRunsStatus.Waiting),
+
+                    TrainedModelId = getTrainedModelResult.Data.Id,
+                    TrainedModel = null,
+
+                    CreatedOn = DateTime.UtcNow,
+                    CreatedById = resutGetCurrUserDTO.Data.Id,
+                    CreatedBy = resutGetCurrUserDTO.Data,
+                };
+                // Create Detection Run
+                ResultDTO? resultCreate = await _detectionRunService.CreateDetectionRun(detectionRunDTO);
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+
+                string? jobId = _backgroundJobClient.Enqueue(() => StartDetectionRun(detectionRunDTO));
+                if (jobId == null)
+                    return ResultDTO.Fail("Failed to enqueue the job, no job id returned");
+
+                using (IStorageConnection connection = JobStorage.Current.GetConnection())
+                    connection.SetJobParameter(jobId, "detectionRunId", detectionRunDTO.Id.Value.ToString());
+
+                return ResultDTO.Ok();
             }
-
-            //get selected image input from database
-            ResultDTO<DetectionInputImageDTO> resultGetInputImage =
-                await _detectionRunService.GetDetectionInputImageById(viewModel.SelectedInputImageId);
-            if (resultGetInputImage.IsSuccess == false && resultGetInputImage.HandleError())
-                return ResultDTO.Fail(resultGetInputImage.ErrMsg!);
-            if (resultGetInputImage.Data == null)
-                return ResultDTO.Fail("Image not found");
-
-            //find current user
-            string? userId = User.FindFirstValue("UserId");
-            if (userId is null)
-                return ResultDTO.Fail("User id is null");
-
-            var currUserDTO = await _userManagementService.GetUserById(userId);
-            if (currUserDTO is null)
-                return ResultDTO.Fail("User not found");
-
-            string absInputImgPath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, resultGetInputImage.Data.ImagePath!);
-            string inputImgExtension = System.IO.Path.GetExtension(resultGetInputImage.Data.ImageFileName!);
-
-            //get trained model
-            var getTrainedModelResult = await _trainedModelService.GetTrainedModelById(viewModel.SelectedTrainedModelId);
-            if (getTrainedModelResult.IsSuccess == false && getTrainedModelResult.HandleError())
-                return ResultDTO.Fail(getTrainedModelResult.ErrMsg!);
-            if (getTrainedModelResult.Data == null)
-                return ResultDTO.Fail("Trained model not found");
-
-            DetectionRunDTO detectionRunDTO = new()
+            catch (Exception ex)
             {
-                Id = Guid.NewGuid(),
-                Name = viewModel.Name,
-                Description = viewModel.Description,
-
-                DetectionInputImageId = viewModel.SelectedInputImageId,
-                InputImgPath = absInputImgPath,
-
-                IsCompleted = false,
-                Status = nameof(ScheduleRunsStatus.Waiting),
-
-                TrainedModelId = getTrainedModelResult.Data.Id,
-                TrainedModel = null,
-
-                CreatedOn = DateTime.UtcNow,
-                CreatedById = currUserDTO.Id,
-                CreatedBy = currUserDTO,
-            };
-            // Create Detection Run
-            ResultDTO resultCreate = await _detectionRunService.CreateDetectionRun(detectionRunDTO);
-            if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-                return ResultDTO.Fail(resultCreate.ErrMsg!);
-
-            string jobId = _backgroundJobClient.Enqueue(() => StartDetectionRun(detectionRunDTO));
-            using (IStorageConnection connection = JobStorage.Current.GetConnection())
-                connection.SetJobParameter(jobId, "detectionRunId", detectionRunDTO.Id.Value.ToString());
-
-            return ResultDTO.Ok();
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+            
         }
 
         [HttpPost]
@@ -156,46 +185,45 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             try
             {
                 //STATUS: PROCESSING
-                ResultDTO resultStatusUpdate = await _detectionRunService.UpdateStatus(detectionRunDTO.Id.Value, nameof(ScheduleRunsStatus.Processing));
+                ResultDTO? resultStatusUpdate = await _detectionRunService.UpdateStatus(detectionRunDTO.Id.Value, nameof(ScheduleRunsStatus.Processing));
                 if (resultStatusUpdate.IsSuccess == false && resultStatusUpdate.HandleError())
                 {
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultStatusUpdate.ErrMsg!);
                     return ResultDTO<string>.Fail(resHandleErrorProcess.Data!);
                 }
 
-                ResultDTO<DTOs.MainApp.BL.TrainingDTOs.TrainedModelDTO>? getTrainedModelResult =
-                    await _trainedModelService.GetTrainedModelById(detectionRunDTO.TrainedModelId.Value);
-                if (getTrainedModelResult is null && getTrainedModelResult.HandleError())
+                ResultDTO<TrainedModelDTO>? getTrainedModelResult = await _trainedModelService.GetTrainedModelById(detectionRunDTO.TrainedModelId.Value);
+                if (getTrainedModelResult.IsSuccess == false && getTrainedModelResult.HandleError())
                     return ResultDTO<string>.Fail(getTrainedModelResult.ErrMsg!);
 
                 detectionRunDTO.TrainedModel = getTrainedModelResult.Data;
 
                 // Start Detection Run SYNCHRONIZED WAITS FOR DETECTION RESULTS
-                ResultDTO resultDetection = await _detectionRunService.StartDetectionRun(detectionRunDTO);
+                ResultDTO? resultDetection = await _detectionRunService.StartDetectionRun(detectionRunDTO);
                 if (resultDetection.IsSuccess == false && resultDetection.HandleError())
                 {
-                    ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultDetection.ErrMsg!);
+                    ResultDTO<string>? resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultDetection.ErrMsg!);
                     return ResultDTO<string>.Fail(resHandleErrorProcess.Data!);
                 }
 
                 // Update Is Completed
-                ResultDTO resultIsCompletedUpdate = await _detectionRunService.IsCompleteUpdateDetectionRun(detectionRunDTO);
+                ResultDTO? resultIsCompletedUpdate = await _detectionRunService.IsCompleteUpdateDetectionRun(detectionRunDTO);
                 if (resultIsCompletedUpdate.IsSuccess == false && resultIsCompletedUpdate.HandleError())
                 {
-                    ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultIsCompletedUpdate.ErrMsg!);
+                    ResultDTO<string>? resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultIsCompletedUpdate.ErrMsg!);
                     return ResultDTO<string>.Fail(resHandleErrorProcess.Data!);
                 }
 
                 // Get and Check if Detection Run Success Output Files Exist
-                ResultDTO<string> resultGetDetectionResultFiles = await _detectionRunService.GetRawDetectionRunResultPathsByRunId(detectionRunDTO.Id.Value);
+                ResultDTO<string>? resultGetDetectionResultFiles = await _detectionRunService.GetRawDetectionRunResultPathsByRunId(detectionRunDTO.Id.Value);
                 if (resultGetDetectionResultFiles.IsSuccess == false && resultGetDetectionResultFiles.HandleError())
                 {
-                    ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultGetDetectionResultFiles.ErrMsg!);
+                    ResultDTO<string>? resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultGetDetectionResultFiles.ErrMsg!);
                     return ResultDTO<string>.Fail(resHandleErrorProcess.Data!);
                 }
 
                 // Get BBox Prediction Results from JSON as Deserialized DetectionRunFinishedResponse
-                ResultDTO<DetectionRunFinishedResponse> resultBBoxDeserialization = await _detectionRunService.GetBBoxResultsDeserialized(resultGetDetectionResultFiles.Data!);
+                ResultDTO<DetectionRunFinishedResponse>? resultBBoxDeserialization = await _detectionRunService.GetBBoxResultsDeserialized(resultGetDetectionResultFiles.Data!);
                 if (resultBBoxDeserialization.IsSuccess == false && resultBBoxDeserialization.HandleError())
                 {
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultBBoxDeserialization.ErrMsg!);
@@ -203,16 +231,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
 
                 //Convert BBoxes to Projection 
-                ResultDTO<DetectionRunFinishedResponse> resultBBoxConversionToProjection = await _detectionRunService.ConvertBBoxResultToImageProjection(detectionRunDTO.InputImgPath, resultBBoxDeserialization.Data!);
+                ResultDTO<DetectionRunFinishedResponse>? resultBBoxConversionToProjection = await _detectionRunService.ConvertBBoxResultToImageProjection(detectionRunDTO.InputImgPath, resultBBoxDeserialization.Data!);
                 if (resultBBoxConversionToProjection.IsSuccess == false && resultBBoxConversionToProjection.HandleError())
                 {
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultBBoxConversionToProjection.ErrMsg!);
                     return ResultDTO<string>.Fail(resHandleErrorProcess.Data!);
                 }
 
-
                 //Create detected dump sites in db
-                ResultDTO<List<DetectedDumpSite>> resultCreateDetectedDumpSites = await _detectionRunService.CreateDetectedDumpsSitesFromDetectionRun(detectionRunDTO.Id.Value, resultBBoxConversionToProjection.Data!);
+                ResultDTO<List<DetectedDumpSite>>? resultCreateDetectedDumpSites = await _detectionRunService.CreateDetectedDumpsSitesFromDetectionRun(detectionRunDTO.Id.Value, resultBBoxConversionToProjection.Data!);
                 if (resultCreateDetectedDumpSites.IsSuccess == false && resultCreateDetectedDumpSites.HandleError())
                 {
                     ResultDTO<string> resHandleErrorProcess = await HandleErrorProcess(detectionRunDTO.Id.Value, resultCreateDetectedDumpSites.ErrMsg!);
@@ -232,84 +259,95 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         private async Task<ResultDTO<string>> HandleErrorProcess(Guid detectionRunId, string inputErrMsg)
         {
-            StringBuilder errMsgBuilder = new();
-            errMsgBuilder.AppendLine(inputErrMsg);
-            //UPDATE STATUS: ERROR
-            ResultDTO resStatusUpdate = await _detectionRunService.UpdateStatus(detectionRunId, nameof(ScheduleRunsStatus.Error));
-            if (resStatusUpdate.IsSuccess == false && resStatusUpdate.HandleError())
-                errMsgBuilder.AppendLine(resStatusUpdate.ErrMsg!);
+            try
+            {
+                StringBuilder errMsgBuilder = new();
+                errMsgBuilder.AppendLine(inputErrMsg);
+                //UPDATE STATUS: ERROR
+                ResultDTO? resStatusUpdate = await _detectionRunService.UpdateStatus(detectionRunId, nameof(ScheduleRunsStatus.Error));
+                if (resStatusUpdate.IsSuccess == false && resStatusUpdate.HandleError())
+                    errMsgBuilder.AppendLine(resStatusUpdate.ErrMsg!);
 
-            //Create error file
-            ResultDTO resultFileCreating = await CreateErrMsgFile(detectionRunId, errMsgBuilder.ToString());
-            if (resultFileCreating.IsSuccess == false && resultFileCreating.HandleError())
-                errMsgBuilder.AppendLine(resultFileCreating.ErrMsg!);
+                //Create error file
+                ResultDTO? resultFileCreating = await CreateErrMsgFile(detectionRunId, errMsgBuilder.ToString());
+                if (resultFileCreating.IsSuccess == false && resultFileCreating.HandleError())
+                    errMsgBuilder.AppendLine(resultFileCreating.ErrMsg!);
 
-            //Mark job as failed
-            ResultDTO resMarkJobAsFailed = await MarkJobAsFailed(errMsgBuilder.ToString(), detectionRunId);
-            if (resMarkJobAsFailed.IsSuccess == false && resMarkJobAsFailed.HandleError())
-                errMsgBuilder.AppendLine(resMarkJobAsFailed.ErrMsg!);
+                //Mark job as failed
+                ResultDTO? resMarkJobAsFailed = await MarkJobAsFailed(errMsgBuilder.ToString(), detectionRunId);
+                if (resMarkJobAsFailed.IsSuccess == false && resMarkJobAsFailed.HandleError())
+                    errMsgBuilder.AppendLine(resMarkJobAsFailed.ErrMsg!);
 
-            return ResultDTO<string>.Ok(errMsgBuilder.ToString());
+                return ResultDTO<string>.Ok(errMsgBuilder.ToString());
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
+            }           
         }
         private async Task<ResultDTO> MarkJobAsFailed(string errorMessage, Guid detectionRunId)
         {
-            string jobId = string.Empty;
-            bool isStateChanged = false;
-
-            //Get the job
-            var monitoringApi = JobStorage.Current.GetMonitoringApi();
-            var processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
-
-            foreach (var job in processingJobs)
-            {
-                using (var connection = JobStorage.Current.GetConnection())
-                {
-                    var storedKey = connection.GetJobParameter(job.Key, "detectionRunId");
-                    if (storedKey == detectionRunId.ToString())
-                    {
-                        jobId = job.Key;
-                    }
-                }
-            }
-
-            if (!string.IsNullOrEmpty(jobId) && errorMessage != null)
-            {
-                //Set the job state to failed
-                Exception exception = new(errorMessage);
-                isStateChanged = _backgroundJobClient.ChangeState(jobId, new FailedState(exception)
-                {
-                    Reason = errorMessage
-                });
-            }
-
-            if (!isStateChanged)
-            {
-                return ResultDTO.Fail("Job is not transferred in failed jobs");
-            }
-
-            return ResultDTO.Ok();
-        }
-        private async Task<ResultDTO> CreateErrMsgFile(Guid detectionRunId, string errMsg)
-        {
-            var detectionRunsErrorLogsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", "Uploads\\DetectionUploads\\DetectionRunsErrorLogs");
-            if (!detectionRunsErrorLogsFolder.IsSuccess && detectionRunsErrorLogsFolder.HandleError())
-            {
-                return ResultDTO.Fail("Can not get the application settings");
-            }
-
-            if (string.IsNullOrEmpty(detectionRunsErrorLogsFolder.Data))
-            {
-                return ResultDTO.Fail("Directory path not found");
-            }
-
             try
             {
-                string filePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionRunsErrorLogsFolder.Data);
-                if (!Directory.Exists(filePath))
+                string jobId = string.Empty;
+                bool isStateChanged = false;
+
+                //Get the job
+                IMonitoringApi? monitoringApi = JobStorage.Current.GetMonitoringApi();
+                if (monitoringApi == null)
+                    return ResultDTO.Fail("Monitoring Api not found");
+
+                JobList<ProcessingJobDto>? processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
+                if (processingJobs == null)
+                    return ResultDTO.Fail("Processing jobs not found");
+
+                foreach (var job in processingJobs)
                 {
-                    Directory.CreateDirectory(filePath);
+                    using (var connection = JobStorage.Current.GetConnection())
+                    {
+                        string? storedKey = connection.GetJobParameter(job.Key, "detectionRunId");
+                        if (storedKey == detectionRunId.ToString())
+                        {
+                            jobId = job.Key;
+                        }
+                    }
                 }
 
+                if (!string.IsNullOrEmpty(jobId) && errorMessage != null)
+                {
+                    //Set the job state to failed
+                    Exception exception = new(errorMessage);
+                    isStateChanged = _backgroundJobClient.ChangeState(jobId, new FailedState(exception)
+                    {
+                        Reason = errorMessage
+                    });
+                }
+
+                if (!isStateChanged)
+                    return ResultDTO.Fail("Job is not transferred in failed jobs");
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
+        private async Task<ResultDTO> CreateErrMsgFile(Guid detectionRunId, string errMsg)
+        {                  
+            try
+            {
+                ResultDTO<string?>? detectionRunsErrorLogsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", "Uploads\\DetectionUploads\\DetectionRunsErrorLogs");
+                if (!detectionRunsErrorLogsFolder.IsSuccess && detectionRunsErrorLogsFolder.HandleError())
+                    return ResultDTO.Fail("Can not get the application settings");
+
+                if (string.IsNullOrEmpty(detectionRunsErrorLogsFolder.Data))
+                    return ResultDTO.Fail("Directory path not found");
+
+                string filePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionRunsErrorLogsFolder.Data);
+                if (!Directory.Exists(filePath))                
+                    Directory.CreateDirectory(filePath);
+                
                 string fileName = $"{detectionRunId}_errMsg.txt";
                 string fullFilePath = System.IO.Path.Combine(filePath, fileName);
 
@@ -319,7 +357,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             catch (Exception ex)
             {
-                return ResultDTO.Fail($"Failed to create the file: {ex.Message}");
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
 
@@ -327,79 +365,42 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDetectionRuns))]
         public async Task<ResultDTO<string>> GetDetectionRunErrorLogMessage(Guid detectionRunId)
         {
-            var detectionRunsErrorLogsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", "Uploads\\DetectionUploads\\DetectionRunsErrorLogs");
-            if (!detectionRunsErrorLogsFolder.IsSuccess && detectionRunsErrorLogsFolder.HandleError())
+            try
             {
-                return ResultDTO<string>.Fail("Can not get the application settings");
-            }
+                ResultDTO<string?>? detectionRunsErrorLogsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionRunsErrorLogsFolder", "Uploads\\DetectionUploads\\DetectionRunsErrorLogs");
+                if (!detectionRunsErrorLogsFolder.IsSuccess && detectionRunsErrorLogsFolder.HandleError())
+                    return ResultDTO<string>.Fail("Can not get the application settings");
+                if (string.IsNullOrEmpty(detectionRunsErrorLogsFolder.Data))
+                    return ResultDTO<string>.Fail("Directory path not found");
 
-            if (string.IsNullOrEmpty(detectionRunsErrorLogsFolder.Data))
-            {
-                return ResultDTO<string>.Fail("Directory path not found");
-            }
+                string filePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionRunsErrorLogsFolder.Data);
+                string fileName = $"{detectionRunId}_errMsg.txt";
+                string fullFilePath = System.IO.Path.Combine(filePath, fileName);
 
-            string filePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionRunsErrorLogsFolder.Data);
-            string fileName = $"{detectionRunId}_errMsg.txt";
-            string fullFilePath = System.IO.Path.Combine(filePath, fileName);
-
-            // If file exists, read the error message from the txt file
-            if (System.IO.File.Exists(fullFilePath))
-            {
-                string fileContent = await System.IO.File.ReadAllTextAsync(fullFilePath);
-                return ResultDTO<string>.Ok(fileContent);
-            }
-            else
-            {
-                string jobId = string.Empty;
-                StringBuilder errMsg = new();
-
-                var monitoringApi = JobStorage.Current.GetMonitoringApi();
-                var failedJobs = monitoringApi.FailedJobs(0, int.MaxValue);
-
-                // Check failed jobs first
-                foreach (var job in failedJobs)
+                // If file exists, read the error message from the txt file
+                if (System.IO.File.Exists(fullFilePath))
                 {
-                    using (var connection = JobStorage.Current.GetConnection())
-                    {
-                        var storedKey = connection.GetJobParameter(job.Key, "detectionRunId");
-                        if (storedKey == detectionRunId.ToString())
-                        {
-                            jobId = job.Key;
-                            break;
-                        }
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(jobId))
-                {
-                    var jobDetails = monitoringApi.JobDetails(jobId);
-                    var historyData = jobDetails?.History.FirstOrDefault()?.Data;
-                    if (historyData != null)
-                    {
-                        foreach (var data in historyData)
-                        {
-                            errMsg.Append(data.Value);
-                        }
-                    }
-                    else
-                    {
-                        errMsg.Append(jobDetails?.History.FirstOrDefault()?.Reason);
-                    }
-
-                    if (!string.IsNullOrEmpty(errMsg.ToString()))
-                    {
-                        return ResultDTO<string>.Ok(errMsg.ToString());
-                    }
+                    string fileContent = await System.IO.File.ReadAllTextAsync(fullFilePath);
+                    return ResultDTO<string>.Ok(fileContent);
                 }
                 else
                 {
-                    // If job is not found in failed jobs, check successful jobs
-                    var succeededJobs = monitoringApi.SucceededJobs(0, int.MaxValue);
-                    foreach (var job in succeededJobs)
+                    string jobId = string.Empty;
+                    StringBuilder errMsg = new();
+
+                    IMonitoringApi? monitoringApi = JobStorage.Current.GetMonitoringApi();
+                    if (monitoringApi == null)
+                        return ResultDTO<string>.Fail("Monitoring API not found");
+                    JobList<FailedJobDto>? failedJobs = monitoringApi.FailedJobs(0, int.MaxValue);
+                    if (failedJobs == null)
+                        return ResultDTO<string>.Fail("Failed jobs not found");
+
+                    // Check failed jobs first
+                    foreach (var job in failedJobs)
                     {
                         using (var connection = JobStorage.Current.GetConnection())
                         {
-                            var storedKey = connection.GetJobParameter(job.Key, "detectionRunId");
+                            string? storedKey = connection.GetJobParameter(job.Key, "detectionRunId");
                             if (storedKey == detectionRunId.ToString())
                             {
                                 jobId = job.Key;
@@ -410,8 +411,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                     if (!string.IsNullOrEmpty(jobId))
                     {
-                        var jobDetails = monitoringApi.JobDetails(jobId);
-                        var historyData = jobDetails?.History.FirstOrDefault()?.Data;
+                        JobDetailsDto? jobDetails = monitoringApi.JobDetails(jobId);
+                        IDictionary<string, string>? historyData = jobDetails?.History.FirstOrDefault()?.Data;
                         if (historyData != null)
                         {
                             foreach (var data in historyData)
@@ -425,129 +426,220 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                         }
 
                         if (!string.IsNullOrEmpty(errMsg.ToString()))
-                        {
                             return ResultDTO<string>.Ok(errMsg.ToString());
+
+                    }
+                    else
+                    {
+                        // If job is not found in failed jobs, check successful jobs
+                        JobList<SucceededJobDto>? succeededJobs = monitoringApi.SucceededJobs(0, int.MaxValue);
+                        if (succeededJobs == null)
+                            return ResultDTO<string>.Fail("Succeded jobs not found");
+
+                        foreach (var job in succeededJobs)
+                        {
+                            using (var connection = JobStorage.Current.GetConnection())
+                            {
+                                string? storedKey = connection.GetJobParameter(job.Key, "detectionRunId");
+                                if (storedKey == detectionRunId.ToString())
+                                {
+                                    jobId = job.Key;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(jobId))
+                        {
+                            JobDetailsDto? jobDetails = monitoringApi.JobDetails(jobId);
+                            IDictionary<string, string>? historyData = jobDetails?.History.FirstOrDefault()?.Data;
+                            if (historyData != null)
+                            {
+                                foreach (var data in historyData)
+                                {
+                                    errMsg.Append(data.Value);
+                                }
+                            }
+                            else
+                            {
+                                errMsg.Append(jobDetails?.History.FirstOrDefault()?.Reason);
+                            }
+
+                            if (!string.IsNullOrEmpty(errMsg.ToString()))
+                            {
+                                return ResultDTO<string>.Ok(errMsg.ToString());
+                            }
                         }
                     }
-                }
 
-                return ResultDTO<string>.Ok("File and background scheduled job not found. Cannot read the error message!");
+                    return ResultDTO<string>.Ok("File and background scheduled job not found. Cannot read the error message!");
+                }
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
             }
         }
 
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDetectionRuns))]
-        public async Task<List<DetectionRunViewModel>> GetAllDetectionRuns()
+        public async Task<ResultDTO<List<DetectionRunViewModel>>> GetAllDetectionRuns()
         {
-            List<DetectionRunDTO> detectionRunsListDTOs =
-                await _detectionRunService.GetDetectionRunsWithClasses() ?? throw new Exception("Object not found");
+            try
+            {
+                ResultDTO<List<DetectionRunDTO>>? resultGetDetectionRuns = await _detectionRunService.GetDetectionRunsWithClasses();
+                if (resultGetDetectionRuns.IsSuccess == false && resultGetDetectionRuns.HandleError())
+                    return ResultDTO<List<DetectionRunViewModel>>.Fail(resultGetDetectionRuns.ErrMsg!);
+                if (resultGetDetectionRuns.Data == null)
+                    return ResultDTO<List<DetectionRunViewModel>>.Fail("Detection run list not found");
 
-            List<DetectionRunViewModel> detectionRunsViewModelList =
-                _mapper.Map<List<DetectionRunViewModel>>(detectionRunsListDTOs) ?? throw new Exception("Object not found");
+                List<DetectionRunViewModel> detectionRunsViewModelList = _mapper.Map<List<DetectionRunViewModel>>(resultGetDetectionRuns.Data);
+                if (detectionRunsViewModelList == null)
+                    return ResultDTO<List<DetectionRunViewModel>>.Fail("Mapping to list of detection run view model failed");
 
-            detectionRunsViewModelList = detectionRunsViewModelList.Where(x => x.IsCompleted == true && x.Status == "Success").ToList();
+                detectionRunsViewModelList = detectionRunsViewModelList.Where(x => x.IsCompleted == true && x.Status == "Success").ToList();
 
-            return detectionRunsViewModelList;
+                return ResultDTO<List<DetectionRunViewModel>>.Ok(detectionRunsViewModelList);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<List<DetectionRunViewModel>>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteDetectionRun))]
         public async Task<ResultDTO> DeleteDetectionRun(Guid detectionRunId)
         {
-            if (detectionRunId == Guid.Empty)
-                return ResultDTO.Fail("Invalid detection run id");
-
-            IMonitoringApi monitoringApi = JobStorage.Current.GetMonitoringApi();
-            JobList<EnqueuedJobDto> enqueuedJobs = monitoringApi.EnqueuedJobs("default", 0, int.MaxValue);
-
-            foreach (KeyValuePair<string, EnqueuedJobDto> job in enqueuedJobs)
+            try
             {
-                string jobId = job.Key;
+                if (detectionRunId == Guid.Empty)
+                    return ResultDTO.Fail("Invalid detection run id");
 
-                using (IStorageConnection connection = JobStorage.Current.GetConnection())
+                IMonitoringApi monitoringApi = JobStorage.Current.GetMonitoringApi();
+                JobList<EnqueuedJobDto> enqueuedJobs = monitoringApi.EnqueuedJobs("default", 0, int.MaxValue);
+
+                foreach (KeyValuePair<string, EnqueuedJobDto> job in enqueuedJobs)
                 {
-                    string storedKey = connection.GetJobParameter(jobId, "detectionRunId");
-                    if (storedKey == detectionRunId.ToString())
-                        BackgroundJob.Delete(jobId);
+                    string jobId = job.Key;
+
+                    using (IStorageConnection connection = JobStorage.Current.GetConnection())
+                    {
+                        string storedKey = connection.GetJobParameter(jobId, "detectionRunId");
+                        if (storedKey == detectionRunId.ToString())
+                            BackgroundJob.Delete(jobId);
+                    }
                 }
+
+                ResultDTO resultDeleteEntity = await _detectionRunService.DeleteDetectionRun(detectionRunId, _webHostEnvironment.WebRootPath);
+                if (!resultDeleteEntity.IsSuccess && resultDeleteEntity.HandleError())
+                    return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
+
+                return ResultDTO.Ok();
             }
-
-            ResultDTO resultDeleteEntity = await _detectionRunService.DeleteDetectionRun(detectionRunId, _webHostEnvironment.WebRootPath);
-            if (!resultDeleteEntity.IsSuccess && resultDeleteEntity.HandleError())
-                return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
-
-            return ResultDTO.Ok();
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+           
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDetectionRuns))]
         public async Task<ResultDTO<DetectionRunDTO>> GetDetectionRunById(Guid detectionRunId)
         {
-            ResultDTO<DetectionRunDTO> resultGetEntity = await _detectionRunService.GetDetectionRunById(detectionRunId);
-            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
-                return ResultDTO<DetectionRunDTO>.Fail(resultGetEntity.ErrMsg!);
+            try
+            {
+                ResultDTO<DetectionRunDTO> resultGetEntity = await _detectionRunService.GetDetectionRunById(detectionRunId);
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                    return ResultDTO<DetectionRunDTO>.Fail(resultGetEntity.ErrMsg!);
 
-            if (resultGetEntity.Data == null)
-                return ResultDTO<DetectionRunDTO>.Fail("Detection run not found");
+                if (resultGetEntity.Data == null)
+                    return ResultDTO<DetectionRunDTO>.Fail("Detection run not found");
 
-            return ResultDTO<DetectionRunDTO>.Ok(resultGetEntity.Data);
+                return ResultDTO<DetectionRunDTO>.Ok(resultGetEntity.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<DetectionRunDTO>.ExceptionFail(ex.Message, ex);
+            }            
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDetectedZones))]
         public async Task<ResultDTO<List<DetectionRunDTO>>> ShowDumpSitesOnMap([FromBody] DetectionRunShowOnMapViewModel model)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                string error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO<List<DetectionRunDTO>>.Fail(error);
-            }
-
-            if (model.selectedDetectionRunsIds == null || model.selectedDetectionRunsIds.Count == 0)
-                return ResultDTO<List<DetectionRunDTO>>.Fail("No detection run selected");
-
-            if (model.selectedConfidenceRates == null || model.selectedConfidenceRates.Count == 0)
-                return ResultDTO<List<DetectionRunDTO>>.Fail("No confidence rates selected");
-
-            ResultDTO<List<DetectionRunDTO>> selectedDetectionRuns = await _detectionRunService.GetSelectedDetectionRunsIncludingDetectedDumpSites(model.selectedDetectionRunsIds, model.selectedConfidenceRates);
-            if (selectedDetectionRuns.IsSuccess == false && selectedDetectionRuns.HandleError())
-                return ResultDTO<List<DetectionRunDTO>>.Fail(selectedDetectionRuns.ErrMsg!);
-            if (selectedDetectionRuns.Data == null)
-                return ResultDTO<List<DetectionRunDTO>>.Fail("Data is null");
-
-            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
-
-            foreach (var item in selectedDetectionRuns.Data)
-            {
-                item.DetectionInputImage.ImagePath = $"{baseUrl}/{item.DetectionInputImage.ImagePath.Replace("\\", "/")}";
-            }
-
-            ResultDTO<List<DetectionIgnoreZoneDTO>> ignoreZones = await _detectionIgnoreZoneService.GetAllIgnoreZonesDTOs();
-            if (ignoreZones.IsSuccess == false && ignoreZones.HandleError())
-                return ResultDTO<List<DetectionRunDTO>>.Fail(ignoreZones.ErrMsg!);
-            if (ignoreZones.Data == null)
-                return ResultDTO<List<DetectionRunDTO>>.Fail("Ignore zones are null");
-
-            foreach (DetectionRunDTO detectionRun in selectedDetectionRuns.Data)
-            {
-                foreach (DetectedDumpSiteDTO dumpSite in detectionRun.DetectedDumpSites!)
+                if (!ModelState.IsValid)
                 {
-                    if (dumpSite.Geom != null)
+                    string error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO<List<DetectionRunDTO>>.Fail(error);
+                }
+
+                if (model.selectedDetectionRunsIds == null || model.selectedDetectionRunsIds.Count == 0)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("No detection run selected");
+
+                if (model.selectedConfidenceRates == null || model.selectedConfidenceRates.Count == 0)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("No confidence rates selected");
+
+                ResultDTO<List<DetectionRunDTO>> selectedDetectionRuns = await _detectionRunService.GetSelectedDetectionRunsIncludingDetectedDumpSites(model.selectedDetectionRunsIds, model.selectedConfidenceRates);
+                if (selectedDetectionRuns.IsSuccess == false && selectedDetectionRuns.HandleError())
+                    return ResultDTO<List<DetectionRunDTO>>.Fail(selectedDetectionRuns.ErrMsg!);
+                if (selectedDetectionRuns.Data == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Data is null");
+
+                string? baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
+
+                foreach (var item in selectedDetectionRuns.Data)
+                {
+                    item.DetectionInputImage.ImagePath = $"{baseUrl}/{item.DetectionInputImage.ImagePath.Replace("\\", "/")}";
+                }
+
+                ResultDTO<List<DetectionIgnoreZoneDTO>> ignoreZones = await _detectionIgnoreZoneService.GetAllIgnoreZonesDTOs();
+                if (ignoreZones.IsSuccess == false && ignoreZones.HandleError())
+                    return ResultDTO<List<DetectionRunDTO>>.Fail(ignoreZones.ErrMsg!);
+                if (ignoreZones.Data == null)
+                    return ResultDTO<List<DetectionRunDTO>>.Fail("Ignore zones are null");
+
+                foreach (DetectionRunDTO detectionRun in selectedDetectionRuns.Data)
+                {
+                    foreach (DetectedDumpSiteDTO dumpSite in detectionRun.DetectedDumpSites!)
                     {
-                        dumpSite.IsInsideIgnoreZone = ignoreZones.Data.Any(zone =>
-                            zone.Geom != null && zone.Geom.Intersects(dumpSite.Geom));
+                        if (dumpSite.Geom != null)
+                        {
+                            dumpSite.IsInsideIgnoreZone = ignoreZones.Data.Any(zone =>
+                                zone.Geom != null && zone.Geom.Intersects(dumpSite.Geom));
+                        }
                     }
                 }
-            }
 
-            return ResultDTO<List<DetectionRunDTO>>.Ok(selectedDetectionRuns.Data);
+                return ResultDTO<List<DetectionRunDTO>>.Ok(selectedDetectionRuns.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<List<DetectionRunDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDetectedZones))]
         public async Task<ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>> GenerateAreaComparisonAvgConfidenceRateReport(List<Guid> selectedDetectionRunsIds, int selectedConfidenceRate)
         {
-            return await _detectionRunService.GenerateAreaComparisonAvgConfidenceRateData(selectedDetectionRunsIds, selectedConfidenceRate);
+            try
+            {
+                ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>> resultGenerateReport = await _detectionRunService.GenerateAreaComparisonAvgConfidenceRateData(selectedDetectionRunsIds, selectedConfidenceRate);
+                if (resultGenerateReport.IsSuccess == false && resultGenerateReport.HandleError())
+                    return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail(resultGenerateReport.ErrMsg!);
+                if (resultGenerateReport.Data == null)
+                    return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Fail("Area comparison confidence rate report data not found");
+
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.Ok(resultGenerateReport.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<List<AreaComparisonAvgConfidenceRateReportDTO>>.ExceptionFail(ex.Message, ex);                
+            }            
         }
 
         //images
@@ -555,19 +647,22 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.PreviewDetectionInputImages))]
         public async Task<IActionResult> DetectionInputImages()
         {
-            ResultDTO<List<DetectionInputImageDTO>> resultDtoList = await _detectionRunService.GetAllImages();
-
-            if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+            try
             {
-                string? errorPath = _configuration["ErrorViewsPath:Error"];
-                if (errorPath == null)
-                    return BadRequest();
-                return Redirect(errorPath);
+                ResultDTO<List<DetectionInputImageDTO>> resultDtoList = await _detectionRunService.GetAllImages();
+                if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                List<DetectionInputImageViewModel>? vmList = _mapper.Map<List<DetectionInputImageViewModel>>(resultDtoList.Data);
+                if (vmList == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                return View(vmList);
             }
-
-            List<DetectionInputImageViewModel> vmList = _mapper.Map<List<DetectionInputImageViewModel>>(resultDtoList.Data);
-
-            return View(vmList);
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         [HttpPost]
@@ -576,63 +671,66 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue)]
         public async Task<ResultDTO<string>> AddImage(DetectionInputImageViewModel detectionInputImageViewModel, IFormFile? file)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                string error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO<string>.Fail(error);
-            }
-
-            ResultDTO<string?> detectionInputImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImagesFolder", "Uploads\\DetectionUploads\\InputImages");
-            if (!detectionInputImagesFolder.IsSuccess && detectionInputImagesFolder.HandleError())
-                return ResultDTO<string>.Fail("Can not get the application settings");
-
-            if (string.IsNullOrEmpty(detectionInputImagesFolder.Data))
-                return ResultDTO<string>.Fail("Image folder path not found");
-
-            // string saveDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "detection", "input-images");
-            string saveDirectory = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImagesFolder.Data);
-            if (!Directory.Exists(saveDirectory))
-                Directory.CreateDirectory(saveDirectory);
-
-            if (file != null)
-            {
-                string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(file.FileName);
-                string filePath = System.IO.Path.Combine(saveDirectory, fileName);
-
-                using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                if (!ModelState.IsValid)
                 {
-                    await file.CopyToAsync(stream);
+                    string error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO<string>.Fail(error);
                 }
 
-                detectionInputImageViewModel.ImageFileName = fileName;
-                //detectionInputImageViewModel.ImagePath = string.Format("{0}\\{1}", detectionInputImagesFolder.Data, fileName);
-                detectionInputImageViewModel.ImagePath = System.IO.Path.Combine(detectionInputImagesFolder.Data, fileName);
+                ResultDTO<string?> detectionInputImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImagesFolder", "Uploads\\DetectionUploads\\InputImages");
+                if (!detectionInputImagesFolder.IsSuccess && detectionInputImagesFolder.HandleError())
+                    return ResultDTO<string>.Fail("Can not get the application settings");
+
+                if (string.IsNullOrEmpty(detectionInputImagesFolder.Data))
+                    return ResultDTO<string>.Fail("Image folder path not found");
+
+                // string saveDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "detection", "input-images");
+                string saveDirectory = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImagesFolder.Data);
+                if (!Directory.Exists(saveDirectory))
+                    Directory.CreateDirectory(saveDirectory);
+
+                if (file != null)
+                {
+                    string fileName = Guid.NewGuid().ToString() + System.IO.Path.GetExtension(file.FileName);
+                    string filePath = System.IO.Path.Combine(saveDirectory, fileName);
+
+                    using (FileStream stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+
+                    detectionInputImageViewModel.ImageFileName = fileName;
+                    //detectionInputImageViewModel.ImagePath = string.Format("{0}\\{1}", detectionInputImagesFolder.Data, fileName);
+                    detectionInputImageViewModel.ImagePath = System.IO.Path.Combine(detectionInputImagesFolder.Data, fileName);
+                }
+
+                string? userId = User.FindFirstValue("UserId");
+                if (string.IsNullOrEmpty(userId))
+                    return ResultDTO<string>.Fail("User id not found");
+
+                detectionInputImageViewModel.CreatedById = userId;
+                detectionInputImageViewModel.UpdatedById = userId;
+
+                DetectionInputImageDTO? dto = _mapper.Map<DetectionInputImageDTO>(detectionInputImageViewModel);
+                if (dto == null)
+                {
+                    HtmlString error = DbResHtml.T("Mapping failed", "Resources");
+                    return ResultDTO<string>.Fail(error.ToString());
+                }
+
+                ResultDTO<DetectionInputImageDTO>? resultCreateAndReturnEntity = await _detectionRunService.CreateDetectionInputImage(dto);
+                if (!resultCreateAndReturnEntity.IsSuccess && resultCreateAndReturnEntity.HandleError())
+                    return ResultDTO<string>.Fail(resultCreateAndReturnEntity.ErrMsg!);
+
+                string absGeoTiffPath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, dto.ImagePath!);
+                return ResultDTO<string>.Ok(absGeoTiffPath);
             }
-
-            string? userId = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(userId))
-                return ResultDTO<string>.Fail("User id not found");
-
-            UserDTO? currUserDTO = await _userManagementService.GetUserById(userId);
-            if (currUserDTO is null)
-                return ResultDTO<string>.Fail("User is not found");
-
-            detectionInputImageViewModel.CreatedById = userId;
-            detectionInputImageViewModel.UpdatedById = userId;
-
-            DetectionInputImageDTO dto = _mapper.Map<DetectionInputImageDTO>(detectionInputImageViewModel);
-            if (dto == null)
+            catch (Exception ex)
             {
-                HtmlString error = DbResHtml.T("Mapping failed", "Resources");
-                return ResultDTO<string>.Fail(error.ToString());
-            }
-
-            ResultDTO<DetectionInputImageDTO> resultCreateAndReturnEntity = await _detectionRunService.CreateDetectionInputImage(dto);
-            if (!resultCreateAndReturnEntity.IsSuccess && resultCreateAndReturnEntity.HandleError())
-                return ResultDTO<string>.Fail(resultCreateAndReturnEntity.ErrMsg!);
-
-            string absGeoTiffPath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, dto.ImagePath!);
-            return ResultDTO<string>.Ok(absGeoTiffPath);
+                return ResultDTO<string>.ExceptionFail(ex.Message, ex);
+            }           
         }
 
         [HttpPost]
@@ -642,7 +740,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (string.IsNullOrEmpty(absGeoTiffPath))
                 return Json(new { isSuccess = false, errMsg = "Invalid image path." });
 
-            ResultDTO<string?> appSettingDetectionInputImageThumbnailsFolder =
+            ResultDTO<string?>? appSettingDetectionInputImageThumbnailsFolder =
                 await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder",
                                                                                     "Uploads\\DetectionUploads\\InputImageThumbnails");
             if (!appSettingDetectionInputImageThumbnailsFolder.IsSuccess && appSettingDetectionInputImageThumbnailsFolder.HandleError())
@@ -685,174 +783,215 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.EditDetectionInputImage))]
         public async Task<ResultDTO> EditDetectionImageInput(DetectionInputImageViewModel detectionInputImageViewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                string error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
+                if (!ModelState.IsValid)
+                {
+                    string error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
+
+                string? id = User.FindFirstValue("UserId");
+                if (string.IsNullOrEmpty(id))
+                    return ResultDTO.Fail("User id not found");
+
+                ResultDTO<UserDTO>? resultGetAppUser = await _userManagementService.GetUserById(id);
+                if (resultGetAppUser.IsSuccess == false && resultGetAppUser.HandleError())
+                    return ResultDTO.Fail(resultGetAppUser.ErrMsg!);
+                if (resultGetAppUser.Data == null)
+                {
+                    HtmlString error = DbResHtml.T("User not found", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
+
+                detectionInputImageViewModel.UpdatedById = resultGetAppUser.Data.Id;
+                detectionInputImageViewModel.UpdatedOn = DateTime.UtcNow;
+
+                DetectionInputImageDTO? dto = _mapper.Map<DetectionInputImageDTO>(detectionInputImageViewModel);
+                if (dto == null)
+                {
+                    HtmlString? error = DbResHtml.T("Mapping failed", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
+
+                ResultDTO? resultEdit = await _detectionRunService.EditDetectionInputImage(dto);
+                if (!resultEdit.IsSuccess && resultEdit.HandleError())
+                    return ResultDTO.Fail(resultEdit.ErrMsg!);
+
+                return ResultDTO.Ok();
             }
-
-            string? id = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(id))
-                return ResultDTO.Fail("User id not found");
-
-            UserDTO? appUser = await _userManagementService.GetUserById(id);
-            if (appUser == null)
+            catch (Exception ex)
             {
-                HtmlString error = DbResHtml.T("User not found", "Resources");
-                return ResultDTO.Fail(error.ToString());
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
-
-            detectionInputImageViewModel.UpdatedById = appUser.Id;
-            detectionInputImageViewModel.UpdatedOn = DateTime.UtcNow;
-
-            DetectionInputImageDTO dto = _mapper.Map<DetectionInputImageDTO>(detectionInputImageViewModel);
-            if (dto == null)
-            {
-                var error = DbResHtml.T("Mapping failed", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
-
-            ResultDTO resultEdit = await _detectionRunService.EditDetectionInputImage(dto);
-            if (!resultEdit.IsSuccess && resultEdit.HandleError())
-                return ResultDTO.Fail(resultEdit.ErrMsg!);
-
-            return ResultDTO.Ok();
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteDetectionInputImage))]
         public async Task<ResultDTO> DeleteDetectionImageInput(DetectionInputImageViewModel detectionInputImageViewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
-            }
-
-            ResultDTO<List<DetectionRunDTO>> resultCheckForFiles =
-                await _detectionRunService.GetDetectionInputImageByDetectionRunId(detectionInputImageViewModel.Id);
-            if (!resultCheckForFiles.IsSuccess && resultCheckForFiles.HandleError())
-                return ResultDTO.Fail(resultCheckForFiles.ErrMsg!);
-
-            if (resultCheckForFiles.Data == null)
-                return ResultDTO.Fail("Data is null");
-
-            if (resultCheckForFiles.Data.Count > 0)
-            {
-                HtmlString error = DbResHtml.T("This image is still used in the detection run. Delete the detection run first!", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
-
-            DetectionInputImageDTO dto = _mapper.Map<DetectionInputImageDTO>(detectionInputImageViewModel);
-            if (dto == null)
-            {
-                HtmlString error = DbResHtml.T("Mapping failed", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
-
-            ResultDTO resultDelete = await _detectionRunService.DeleteDetectionInputImage(dto);
-            if (!resultDelete.IsSuccess && resultDelete.HandleError())
-                return ResultDTO.Fail(resultDelete.ErrMsg!);
-
-            //string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", detectionInputImageViewModel.ImagePath ?? string.Empty);
-            string imagePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImageViewModel.ImagePath!);
-            if (System.IO.File.Exists(imagePath))
-            {
-                try
+                if (!ModelState.IsValid)
                 {
-                    System.IO.File.Delete(imagePath);
+                    string? error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
                 }
-                catch (Exception ex)
+
+                ResultDTO<List<DetectionRunDTO>>? resultCheckForFiles =
+                    await _detectionRunService.GetDetectionInputImageByDetectionRunId(detectionInputImageViewModel.Id);
+                if (!resultCheckForFiles.IsSuccess && resultCheckForFiles.HandleError())
+                    return ResultDTO.Fail(resultCheckForFiles.ErrMsg!);
+
+                if (resultCheckForFiles.Data == null)
+                    return ResultDTO.Fail("Data is null");
+
+                if (resultCheckForFiles.Data.Count > 0)
                 {
-                    HtmlString fileDeleteError = DbResHtml.T("Failed to delete the image file", "Resources");
-                    return ResultDTO.Fail($"{fileDeleteError}: {ex.Message}");
+                    HtmlString error = DbResHtml.T("This image is still used in the detection run. Delete the detection run first!", "Resources");
+                    return ResultDTO.Fail(error.ToString());
                 }
+
+                DetectionInputImageDTO? dto = _mapper.Map<DetectionInputImageDTO>(detectionInputImageViewModel);
+                if (dto == null)
+                {
+                    HtmlString error = DbResHtml.T("Mapping failed", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
+
+                ResultDTO? resultDelete = await _detectionRunService.DeleteDetectionInputImage(dto);
+                if (!resultDelete.IsSuccess && resultDelete.HandleError())
+                    return ResultDTO.Fail(resultDelete.ErrMsg!);
+
+                //string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", detectionInputImageViewModel.ImagePath ?? string.Empty);
+                string imagePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImageViewModel.ImagePath!);
+                if (System.IO.File.Exists(imagePath))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(imagePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        HtmlString fileDeleteError = DbResHtml.T("Failed to delete the image file", "Resources");
+                        return ResultDTO.Fail($"{fileDeleteError}: {ex.Message}");
+                    }
+                }
+
+                //delete thumbnail
+                ResultDTO<string?>? appSettingDetectionInputImageThumbnailsFolder =
+                    await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder",
+                                                                                        "Uploads\\DetectionUploads\\InputImageThumbnails");
+                if (!appSettingDetectionInputImageThumbnailsFolder.IsSuccess && appSettingDetectionInputImageThumbnailsFolder.HandleError())
+                    return ResultDTO.Fail("Cannot get the application setting for thumbnails folder");
+                if (appSettingDetectionInputImageThumbnailsFolder.Data == null)
+                    return ResultDTO.Fail("Detection input image thumbnails folder value is null");
+
+                string imgFileNameWithoutExtension =
+                    System.IO.Path.GetFileNameWithoutExtension(detectionInputImageViewModel.ImageFileName!);
+                string thumbnailPath =
+                    System.IO.Path.Combine(_webHostEnvironment.WebRootPath,
+                                            appSettingDetectionInputImageThumbnailsFolder.Data!,
+                                            imgFileNameWithoutExtension + "_thumbnail.jpg");
+                if (System.IO.File.Exists(thumbnailPath))
+                    System.IO.File.Delete(thumbnailPath);
+
+                return ResultDTO.Ok();
             }
-
-            //delete thumbnail
-            ResultDTO<string?> appSettingDetectionInputImageThumbnailsFolder =
-                await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder",
-                                                                                    "Uploads\\DetectionUploads\\InputImageThumbnails");
-            if (!appSettingDetectionInputImageThumbnailsFolder.IsSuccess && appSettingDetectionInputImageThumbnailsFolder.HandleError())
-                return ResultDTO.Fail("Cannot get the application setting for thumbnails folder");
-            if (appSettingDetectionInputImageThumbnailsFolder.Data == null)
-                return ResultDTO.Fail("Detection input image thumbnails folder value is null");
-
-            string imgFileNameWithoutExtension =
-                System.IO.Path.GetFileNameWithoutExtension(detectionInputImageViewModel.ImageFileName!);
-            string thumbnailPath =
-                System.IO.Path.Combine(_webHostEnvironment.WebRootPath,
-                                        appSettingDetectionInputImageThumbnailsFolder.Data!,
-                                        imgFileNameWithoutExtension + "_thumbnail.jpg");
-            if (System.IO.File.Exists(thumbnailPath))
-                System.IO.File.Delete(thumbnailPath);
-
-            return ResultDTO.Ok();
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.PreviewDetectionInputImages))]
         public async Task<ResultDTO<DetectionInputImageDTO>> GetDetectionInputImageById(Guid detectionInputImageId)
         {
-            ResultDTO<DetectionInputImageDTO> resultGetEntity = await _detectionRunService.GetDetectionInputImageById(detectionInputImageId);
-            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
-                return ResultDTO<DetectionInputImageDTO>.Fail(resultGetEntity.ErrMsg!);
+            try
+            {
+                ResultDTO<DetectionInputImageDTO>? resultGetEntity = await _detectionRunService.GetDetectionInputImageById(detectionInputImageId);
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                    return ResultDTO<DetectionInputImageDTO>.Fail(resultGetEntity.ErrMsg!);
+                if (resultGetEntity.Data == null)
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Image Input is null");
 
-            if (resultGetEntity.Data == null)
-                return ResultDTO<DetectionInputImageDTO>.Fail("Image Input is null");
+                ResultDTO<string?>? appSettingDetectionInputImageThumbnailsFolder =
+                    await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder",
+                                                                                        "Uploads\\DetectionUploads\\InputImageThumbnails");
+                if (!appSettingDetectionInputImageThumbnailsFolder.IsSuccess && appSettingDetectionInputImageThumbnailsFolder.HandleError())
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Cannot get the application setting for thumbnails folder");
+                if (appSettingDetectionInputImageThumbnailsFolder.Data == null)
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Detection input image thumbnails folder value is null");
 
-            ResultDTO<string?> appSettingDetectionInputImageThumbnailsFolder =
-                await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder",
-                                                                                    "Uploads\\DetectionUploads\\InputImageThumbnails");
-            if (!appSettingDetectionInputImageThumbnailsFolder.IsSuccess && appSettingDetectionInputImageThumbnailsFolder.HandleError())
-                return ResultDTO<DetectionInputImageDTO>.Fail("Cannot get the application setting for thumbnails folder");
-            if (appSettingDetectionInputImageThumbnailsFolder.Data == null)
-                return ResultDTO<DetectionInputImageDTO>.Fail("Detection input image thumbnails folder value is null");
+                string? imageFileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(resultGetEntity.Data.ImageFileName);
+                if (string.IsNullOrEmpty(imageFileNameWithoutExtension))
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Image file name not found");
 
-            var imageFileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(resultGetEntity.Data.ImageFileName);
+                string? baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
+                if (string.IsNullOrEmpty(baseUrl))
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Base url not found");
 
-            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
-            var thumbnailPath = System.IO.Path.Combine("/", appSettingDetectionInputImageThumbnailsFolder.Data, imageFileNameWithoutExtension + "_thumbnail.jpg").Replace("\\", "/");
+                string? thumbnailPath = System.IO.Path.Combine("/", appSettingDetectionInputImageThumbnailsFolder.Data, imageFileNameWithoutExtension + "_thumbnail.jpg").Replace("\\", "/");
+                if (string.IsNullOrEmpty(thumbnailPath))
+                    return ResultDTO<DetectionInputImageDTO>.Fail("Thumbnail path not found");
 
-            thumbnailPath = $"{baseUrl}/{thumbnailPath}";
-            resultGetEntity.Data.ThumbnailFilePath = thumbnailPath;
-            return ResultDTO<DetectionInputImageDTO>.Ok(resultGetEntity.Data);
+                thumbnailPath = $"{baseUrl}/{thumbnailPath}";
+                resultGetEntity.Data.ThumbnailFilePath = thumbnailPath;
+                return ResultDTO<DetectionInputImageDTO>.Ok(resultGetEntity.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<DetectionInputImageDTO>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.PreviewDetectionInputImages))]
         public async Task<ResultDTO<List<DetectionInputImageDTO>>> GetAllDetectionInputImages()
         {
-            ResultDTO<List<DetectionInputImageDTO>> resultGetEntities = await _detectionRunService.GetAllImages();
+            try
+            {
+                ResultDTO<List<DetectionInputImageDTO>>? resultGetEntities = await _detectionRunService.GetAllImages();
+                if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
+                if (resultGetEntities.Data == null)
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images are not found");
 
-            if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
-                return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
-
-            if (resultGetEntities.Data == null)
-                return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images are not found");
-
-            return ResultDTO<List<DetectionInputImageDTO>>.Ok(resultGetEntities.Data);
+                return ResultDTO<List<DetectionInputImageDTO>>.Ok(resultGetEntities.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<List<DetectionInputImageDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.PreviewDetectionInputImages))]
         public async Task<ResultDTO<List<DetectionInputImageDTO>>> GetSelectedDetectionInputImages(List<Guid> selectedImagesIds)
         {
-            ResultDTO<List<DetectionInputImageDTO>> resultGetEntities = await _detectionRunService.GetSelectedInputImagesById(selectedImagesIds);
-
-            if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
-                return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
-
-            if (resultGetEntities.Data == null)
-                return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images are not found");
-
-            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
-
-            foreach (var item in resultGetEntities.Data)
+            try
             {
-                item.ImagePath = $"{baseUrl}/{item.ImagePath?.Replace("\\", "/")}";
+                ResultDTO<List<DetectionInputImageDTO>>? resultGetEntities = await _detectionRunService.GetSelectedInputImagesById(selectedImagesIds);
+                if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail(resultGetEntities.ErrMsg!);
+                if (resultGetEntities.Data == null)
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail("Detection input images are not found");
+
+                string? baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}{HttpContext.Request.PathBase}";
+                if (string.IsNullOrEmpty(baseUrl))
+                    return ResultDTO<List<DetectionInputImageDTO>>.Fail("Base url not found");
+
+                foreach (var item in resultGetEntities.Data)
+                {
+                    item.ImagePath = $"{baseUrl}/{item.ImagePath?.Replace("\\", "/")}";
+                }
+                return ResultDTO<List<DetectionInputImageDTO>>.Ok(resultGetEntities.Data);
             }
-            return ResultDTO<List<DetectionInputImageDTO>>.Ok(resultGetEntities.Data);
+            catch (Exception ex)
+            {
+                return ResultDTO<List<DetectionInputImageDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpGet]
@@ -861,10 +1000,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         {
             try
             {
-                ResultDTO<List<TrainedModelDTO>> getPublishedTrainedModelsResult =
+                ResultDTO<List<TrainedModelDTO>>? getPublishedTrainedModelsResult =
                     await _trainedModelService.GetPublishedTrainedModelsIncludingTrainRuns();
                 if (getPublishedTrainedModelsResult.IsSuccess == false && getPublishedTrainedModelsResult.HandleError())
                     ResultDTO<List<TrainedModelDTO>>.Fail(getPublishedTrainedModelsResult.ErrMsg!);
+                if (getPublishedTrainedModelsResult.Data == null)
+                    return ResultDTO<List<TrainedModelDTO>>.Fail("Trained model list not found");
 
                 return ResultDTO<List<TrainedModelDTO>>.Ok(getPublishedTrainedModelsResult.Data!);
             }
@@ -872,6 +1013,22 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 return ResultDTO<List<TrainedModelDTO>>.ExceptionFail(ex.Message, ex);
             }
+        }
+
+        private IActionResult HandleErrorRedirect(string configKey, int statusCode)
+        {
+            string? errorPath = _configuration[configKey];
+            if (string.IsNullOrEmpty(errorPath))
+            {
+                return statusCode switch
+                {
+                    404 => NotFound(),
+                    403 => Forbid(),
+                    405 => StatusCode(405),
+                    _ => BadRequest()
+                };
+            }
+            return Redirect(errorPath);
         }
     }
 }

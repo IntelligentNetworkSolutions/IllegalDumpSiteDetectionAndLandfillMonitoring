@@ -25,8 +25,8 @@ namespace Tests.DalTests.Repositories.MapConfigurationRepositories
             var repository = new MapConfigurationRepository(dbContext, logger);
 
             var result = await repository.GetMapConfigurationByName("test map name");
-            Assert.NotNull(result);
-            Assert.Equal("test map name", result.MapName);
+            Assert.NotNull(result.Data);
+            Assert.Equal("test map name", result.Data.MapName);
 
             transaction.Rollback();
 
@@ -43,8 +43,8 @@ namespace Tests.DalTests.Repositories.MapConfigurationRepositories
             var repository = new MapConfigurationRepository(dbContext, logger);
 
             var result = await repository.GetMapConfigurationByName("non-existent map name");
-            Assert.NotNull(result);
-            Assert.Null(result.MapName);
+            Assert.NotNull(result.Data);
+            Assert.Null(result.Data.MapName);
 
             transaction.Rollback();
         }
@@ -82,8 +82,8 @@ namespace Tests.DalTests.Repositories.MapConfigurationRepositories
             var result = await repository.GetMapConfigurationByName("test map name");
 
             Assert.NotNull(result);
-            Assert.Equal("test map name", result.MapName);
-            Assert.NotEmpty(result.MapLayerConfigurations);
+            Assert.Equal("test map name", result.Data.MapName);
+            Assert.NotEmpty(result.Data.MapLayerConfigurations);
 
             transaction.Rollback();
         }

@@ -327,16 +327,42 @@
                     },
                     dataType: "json",
                     success: function (data) {
-                        $('.roleClaims').each(function () {
-                            var sThisVal = $(this).val();
-                            for (var i = 0; i < data.length; i++) {
-                                if (data[i].claimType == sThisVal) { $(this).prop("checked", true); }
+                        if (data != undefined || data != null) {
+                            if (data.isSuccess == false && data.errMsg != null) {
+                                Swal.fire({
+                                    text: `${data.errMsg}`,
+                                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                    allowOutsideClick: false,
+                                    icon: "error"
+                                });
                             }
-                            $(this).prop("disabled", true);
-                        });
+                            else {
+                                $('.roleClaims').each(function () {
+                                    var sThisVal = $(this).val();
+                                    for (var i = 0; i < data.data.length; i++) {
+                                        if (data.data[i].claimType == sThisVal) { $(this).prop("checked", true); }
+                                    }
+                                    $(this).prop("disabled", true);
+                                });
+                            }
+                        }
+                        else {
+                            Swal.fire({
+                                text: `@DbResHtml.T("No data received", "Resources")`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        
                     },
                     error: function (req, status, error) {
-                        ajaxErrorHandlingAlert("error", req.status);
+                        Swal.fire({
+                            text: '@DbResHtml.T("Error occured", "Resources")',
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
                     }
                 });
             }

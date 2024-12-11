@@ -1,5 +1,7 @@
 ﻿using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories;
+using DTOs.MainApp.BL;
+using DTOs.MainApp.BL.TrainingDTOs;
 using Entities;
 using MainApp.MVC.Helpers;
 using MainApp.MVC.ViewModels.IntranetPortal.Account;
@@ -67,76 +69,94 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password, bool remember, string returnUrl)
         {
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            try
             {
-                ViewData["MessageError"] = DbResHtml.T("All fields are required", "Resources");
-                ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
-                return View();
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                {
+                    ViewData["MessageError"] = DbResHtml.T("All fields are required", "Resources");
+                    ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
+                    return View();
+                }
+
+                ApplicationUser? user = await _userManager.FindByNameAsync(username);
+                if (user is null)
+                {
+                    ViewData["MessageError"] = DbResHtml.T("Wrong username", "Resources");
+                    ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
+                    return View();
+                }
+
+                bool passwordCheck = await _userManager.CheckPasswordAsync(user, password);
+                if (passwordCheck == false)
+                {
+                    ViewData["MessageError"] = DbResHtml.T("Wrong password", "Resources");
+                    ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
+                    return View();
+                }
+
+                if (user.IsActive == false)
+                {
+                    ViewData["MessageError"] = DbRes.T("Unable to log in because this user account is currently disabled!", "Resources");
+                    ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
+                    return View();
+                }
+
+                var claims = new List<Claim>();
+                List<Claim> userIdentityClaims = GetUserIdentityClaims(user);
+                claims.AddRange(userIdentityClaims);
+
+                ResultDTO<List<UserClaimDTO>>? resultGetUserClaims = await _userManagementService.GetUserClaims(user.Id);
+                if (resultGetUserClaims.IsSuccess == false && resultGetUserClaims.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                if (resultGetUserClaims.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+
+                foreach (var item in resultGetUserClaims.Data)
+                    claims.Add(new Claim(item.ClaimType, item.ClaimValue));
+
+                // TODO: look over
+                //if (user.UserName == "superadmin")
+                //    claims.Add(new Claim("SpecialAuthClaim", "superadmin"));
+                ResultDTO<UserDTO>? resultGetSuperAdmin = await _userManagementService.GetSuperAdminUserBySpecificClaim();
+                if (resultGetSuperAdmin.IsSuccess == false && resultGetSuperAdmin.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                if (resultGetSuperAdmin.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                if (user.UserName == resultGetSuperAdmin.Data.UserName)
+                    claims.Add(new Claim("SpecialAuthClaim", "superadmin"));
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    //AllowRefresh = <bool>, Refreshing the authentication session should be allowed.
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14), // The time at which the authentication ticket expires.
+                                                                    // A value set here overrides the ExpireTimeSpan option of CookieAuthenticationOptions set with AddCookie.
+
+                    IsPersistent = remember, // Whether the authentication session is persisted across multiple requests.
+                                             // When used with cookies, controls whether the cookie's lifetime is absolute
+                                             // (matching the lifetime of the authentication ticket) or session-based.
+
+                    IssuedUtc = DateTimeOffset.UtcNow // The time at which the authentication ticket was issued.
+
+                    //RedirectUri = <string> The full path or absolute URI to be used as an http redirect response value.
+                };
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
+
+                if (!string.IsNullOrEmpty(returnUrl))
+                    return Redirect(returnUrl);
+
+                return RedirectToAction("Index", "Home", new { area = "Common" });
             }
-
-            ApplicationUser user = await _userManager.FindByNameAsync(username);
-            if (user is null)
+            catch (Exception)
             {
-                ViewData["MessageError"] = DbResHtml.T("Wrong username", "Resources");
-                ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
-                return View();
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
-
-            bool passwordCheck = await _userManager.CheckPasswordAsync(user, password);
-            if (passwordCheck == false)
-            {
-                ViewData["MessageError"] = DbResHtml.T("Wrong password", "Resources");
-                ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
-                return View();
-            }
-
-            if (user.IsActive == false)
-            {
-                ViewData["MessageError"] = DbRes.T("Unable to log in because this user account is currently disabled!", "Resources");
-                ModelState.AddModelError("msgError", ViewData["MessageError"].ToString());
-                return View();
-            }
-
-            var claims = new List<Claim>();
-            List<Claim> userIdentityClaims = GetUserIdentityClaims(user);
-            claims.AddRange(userIdentityClaims);
-
-            var userClaimsDb = await _userManagementService.GetUserClaims(user.Id);
-            foreach (var item in userClaimsDb)
-                claims.Add(new Claim(item.ClaimType, item.ClaimValue));
-
-            // TODO: look over
-            //if (user.UserName == "superadmin")
-            //    claims.Add(new Claim("SpecialAuthClaim", "superadmin"));
-            var superAdmin = await _userManagementService.GetSuperAdminUserBySpecificClaim();
-            if (user.UserName == superAdmin.UserName)
-                claims.Add(new Claim("SpecialAuthClaim", "superadmin"));
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                //AllowRefresh = <bool>, Refreshing the authentication session should be allowed.
-                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(14), // The time at which the authentication ticket expires.
-                                                                // A value set here overrides the ExpireTimeSpan option of CookieAuthenticationOptions set with AddCookie.
-
-                IsPersistent = remember, // Whether the authentication session is persisted across multiple requests.
-                                         // When used with cookies, controls whether the cookie's lifetime is absolute
-                                         // (matching the lifetime of the authentication ticket) or session-based.
-
-                IssuedUtc = DateTimeOffset.UtcNow // The time at which the authentication ticket was issued.
-
-                //RedirectUri = <string> The full path or absolute URI to be used as an http redirect response value.
-            };
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
-
-            if (!string.IsNullOrEmpty(returnUrl))
-                return Redirect(returnUrl);
-
-            return RedirectToAction("Index", "Home", new { area = "Common" });
         }
 
         // TODO: In BL
@@ -176,8 +196,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             string? token = Guid.NewGuid().ToString();
             bool isEmailSend;
 
-            var userByEmail = await _userManager.FindByEmailAsync(model.UsernameOrEmail);
-            var userByUsername = await _userManager.FindByNameAsync(model.UsernameOrEmail);
+            ApplicationUser? userByEmail = await _userManager.FindByEmailAsync(model.UsernameOrEmail);
+            ApplicationUser? userByUsername = await _userManager.FindByNameAsync(model.UsernameOrEmail);
 
             if (userByEmail != null)
             {
@@ -186,12 +206,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 isEmailSend = await _forgotResetPasswordService.SendPasswordResetEmail(userByEmail.Email, userByEmail.UserName, url, webRootPath);
                 if (isEmailSend)
                     return View("ResetPasswordConfirmation");
+                else
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
 
-                var errorPath = _configuration["ErrorViewsPath:Error"];
-                if (!string.IsNullOrEmpty(errorPath))
-                    return Redirect(errorPath);
-
-                return BadRequest();
             }
             else if (userByUsername != null)
             {
@@ -200,32 +217,24 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 isEmailSend = await _forgotResetPasswordService.SendPasswordResetEmail(userByUsername.Email, userByUsername.UserName, url, webRootPath);
                 if (isEmailSend)
                     return View("ResetPasswordConfirmation");
-
-                var errorPath = _configuration["ErrorViewsPath:Error"];
-                if (!string.IsNullOrEmpty(errorPath))
-                    return Redirect(errorPath);
-
-                return BadRequest();
+                else
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
 
             }
             else
             {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (!string.IsNullOrEmpty(errorPath))
-                    return Redirect(errorPath);
-
-                return NotFound();
+                return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
             }
         }
 
         private async Task<(int minLength, bool mustLetters, bool mustNumbers)> GetBasicPasswordRequirements
             (int defultPassMinLength, bool defaultMustHaveLetters, bool defaultMustHaveNumbers)
         {
-            ResultDTO<int> resPassMinLength =
+            ResultDTO<int>? resPassMinLength =
                     await _appSettingsAccessor.GetApplicationSettingValueByKey<int>("PasswordMinLength", defultPassMinLength);
-            ResultDTO<bool> resPassHasLetters =
+            ResultDTO<bool>? resPassHasLetters =
                 await _appSettingsAccessor.GetApplicationSettingValueByKey<bool>("PasswordMustHaveLetters", defaultMustHaveLetters);
-            ResultDTO<bool> resPassHasNumbers =
+            ResultDTO<bool>? resPassHasNumbers =
                 await _appSettingsAccessor.GetApplicationSettingValueByKey<bool>("PasswordMustHaveNumbers", defaultMustHaveNumbers);
 
             int resMinLength = resPassMinLength.IsSuccess ? resPassMinLength.Data : defultPassMinLength;
@@ -238,7 +247,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ResetPassword(string userId, string token)
         {
-            var tokenIsNotUsed = await _intranetPortalUsersTokenDa.IsTokenNotUsed(token, userId);
+            bool tokenIsNotUsed = await _intranetPortalUsersTokenDa.IsTokenNotUsed(token, userId);
             if (tokenIsNotUsed)
             {
                 (int passMinLength, bool passMustLetters, bool passMustNumbers) =
@@ -256,11 +265,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return View(model);
             }
 
-            var errorPath = _configuration["ErrorViewsPath:Error403"];
-            if (!string.IsNullOrEmpty(errorPath))
-                return Redirect(errorPath);
-
-            return StatusCode(403);
+            return HandleErrorRedirect("ErrorViewsPath:Error403", 403);
         }
 
         [HttpPost]
@@ -279,7 +284,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return View(model);
             }
 
-            var user = await _intranetPortalUsersTokenDa.GetUser(model.UserId);
+            ApplicationUser? user = await _intranetPortalUsersTokenDa.GetUser(model.UserId);
+            if (user == null)
+                return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
             await _intranetPortalUsersTokenDa.UpdateAndHashUserPassword(user, model.NewPassword);
             await _intranetPortalUsersTokenDa.UpdateIsTokenUsedForUser(model.Token, model.UserId);
@@ -289,41 +296,53 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
         public async Task<IActionResult> MyProfile()
         {
-            var id = User.FindFirstValue("UserId");
-
-            if (string.IsNullOrWhiteSpace(id))
+            try
             {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (!string.IsNullOrEmpty(errorPath))
-                    return Redirect(errorPath);
-                else
-                    return NotFound();
+                string? id = User.FindFirstValue("UserId");
+
+                if (string.IsNullOrWhiteSpace(id))
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                ResultDTO<UserDTO>? resultGetAppUser = await _userManagementService.GetUserById(id);
+                if (resultGetAppUser.IsSuccess == false && resultGetAppUser.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+
+                if (resultGetAppUser.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+
+                (int passMinLength, bool passMustLetters, bool passMustNumbers) =
+                        await GetBasicPasswordRequirements(10, true, true);
+
+                ResultDTO<string>? resGetPrefLang = await _userManagementService.GetPreferredLanguageForUser(resultGetAppUser.Data.Id);
+                if (resGetPrefLang.IsSuccess == false && resGetPrefLang.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                if (resGetPrefLang.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                MyProfileViewModel model = new MyProfileViewModel()
+                {
+                    FirstName = resultGetAppUser.Data.FirstName!,
+                    LastName = resultGetAppUser.Data.LastName!,
+                    Email = resultGetAppUser.Data.Email!,
+                    Username = resultGetAppUser.Data.UserName!,
+                    UserId = resultGetAppUser.Data.Id,
+                    PasswordMinLength = passMinLength,
+                    PasswordMustHaveLetters = passMustLetters,
+                    PasswordMustHaveNumbers = passMustNumbers,
+                    PreferredLanguage = resGetPrefLang.Data
+                };
+                return View(model);
             }
-
-            var appUser = await _userManagementService.GetUserById(id);
-
-            (int passMinLength, bool passMustLetters, bool passMustNumbers) =
-                    await GetBasicPasswordRequirements(10, true, true);
-
-            MyProfileViewModel model = new MyProfileViewModel()
+            catch (Exception)
             {
-                FirstName = appUser.FirstName,
-                LastName = appUser.LastName,
-                Email = appUser.Email,
-                Username = appUser.UserName,
-                UserId = appUser.Id,
-                PasswordMinLength = passMinLength,
-                PasswordMustHaveLetters = passMustLetters,
-                PasswordMustHaveNumbers = passMustNumbers,
-                PreferredLanguage = await _userManagementService.GetPreferredLanguageForUser(appUser.Id)
-            };
-            return View(model);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         public async Task<string?> GetAllLanguages()
         {
-            ResultDTO<string?> resGetMainAppLangs =
-                await _appSettingsAccessor.GetApplicationSettingValueByKey<string?>("MainApplicationLanguages");
+            ResultDTO<string?> resGetMainAppLangs = await _appSettingsAccessor.GetApplicationSettingValueByKey<string?>("MainApplicationLanguages");
 
             return resGetMainAppLangs.IsSuccess ? resGetMainAppLangs.Data : null;
         }
@@ -331,57 +350,80 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         public async Task<IActionResult> SetCulture(string culture, string returnUrl)
         {
-            var id = User.FindFirstValue("UserId");
-            if (id == null)
+            try
             {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (!string.IsNullOrEmpty(errorPath))
-                    return Redirect(errorPath);
-                else
-                    return NotFound();
-            }
+                string? id = User.FindFirstValue("UserId");
 
-            var appUser = await _userManagementService.GetUserById(id);
-            if (appUser == null)
+                if (string.IsNullOrWhiteSpace(id))
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+
+                ResultDTO<UserDTO>? resultGetAppUser = await _userManagementService.GetUserById(id);
+                if (resultGetAppUser.IsSuccess == false && resultGetAppUser.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+
+                if (resultGetAppUser.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                await _userManagementService.AddLanguageClaimForUser(resultGetAppUser.Data.Id, culture);
+
+                HttpContext.Response.Cookies.Append(
+                    CookieRequestCultureProvider.DefaultCookieName,
+                    CookieRequestCultureProvider.MakeCookieValue(new RequestCulture("en", culture)),
+                    new CookieOptions
+                    {
+                        Expires = DateTimeOffset.UtcNow.AddYears(1),
+                        SameSite = SameSiteMode.Strict
+                    });
+
+                return Redirect(returnUrl);
+            }
+            catch (Exception)
             {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (!string.IsNullOrEmpty(errorPath))
-                    return Redirect(errorPath);
-                else
-                    return NotFound();
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
-
-            await _userManagementService.AddLanguageClaimForUser(appUser.Id, culture);
-
-            HttpContext.Response.Cookies.Append(
-                CookieRequestCultureProvider.DefaultCookieName,
-                CookieRequestCultureProvider.MakeCookieValue(new RequestCulture("en", culture)),
-                new CookieOptions
-                {
-                    Expires = DateTimeOffset.UtcNow.AddYears(1),
-                    SameSite = SameSiteMode.Strict
-                });
-
-            return Redirect(returnUrl);
         }
 
         [HttpPost]
-        public async Task<IActionResult> UpdatePassword(string currentPassword, string password, string confirmNewPassword, string userId)
+        public async Task<ResultDTO> UpdatePassword(string currentPassword, string password, string confirmNewPassword, string userId)
         {
-            if (string.IsNullOrWhiteSpace(userId))
-                return Json(new { wrongUserId = true });
+            try
+            {
+                if (string.IsNullOrWhiteSpace(userId))
+                    return ResultDTO.Fail("Wrong user id");
 
-            if (string.IsNullOrEmpty(currentPassword) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmNewPassword))
-                return Json(new { passwordFieldsEmpty = true });
+                if (string.IsNullOrEmpty(currentPassword) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmNewPassword))
+                    return ResultDTO.Fail("Incorrect current password");
 
-            if (!password.Equals(confirmNewPassword))
-                return Json(new { passwordMissmatch = true });
+                if (!password.Equals(confirmNewPassword))
+                    return ResultDTO.Fail("Passwords mismatch");
 
-            ResultDTO result = await _userManagementService.UpdateUserPassword(userId, currentPassword, password);
-            if (!result.IsSuccess && ResultDTO.HandleError(result))
-                return Json(new { currentPasswordFailed = true });
+                ResultDTO? result = await _userManagementService.UpdateUserPassword(userId, currentPassword, password);
+                if (!result.IsSuccess && result.HandleError())
+                    return ResultDTO.Fail(result.ErrMsg!);
 
-            return Json(new { passwordUpdatedSuccessfully = true });
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        private IActionResult HandleErrorRedirect(string configKey, int statusCode)
+        {
+            string? errorPath = _configuration[configKey];
+            if (string.IsNullOrEmpty(errorPath))
+            {
+                return statusCode switch
+                {
+                    404 => NotFound(),
+                    403 => Forbid(),
+                    405 => StatusCode(405),
+                    _ => BadRequest()
+                };
+            }
+            return Redirect(errorPath);
         }
     }
 }

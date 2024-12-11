@@ -6,6 +6,7 @@ using Entities.DatasetEntities;
 using Entities.MapConfigurationEntities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SD;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,21 +28,20 @@ namespace DAL.Repositories.MapConfigurationRepositories
 
         #region Read
         #region Get MapConfig/es 
-        public async Task<MapConfiguration> GetMapConfigurationByName(string mapName)
+        public async Task<ResultDTO<MapConfiguration>> GetMapConfigurationByName(string mapName)
         {
             try
             {
-                var list = await _db.MapConfigurations.Where(x => x.MapName.Equals(mapName)).Include(x => x.MapLayerConfigurations).Include(x => x.MapLayerGroupConfigurations).ThenInclude(x => x.MapLayerConfigurations).FirstOrDefaultAsync();
-                if(list == null)
-                {
-                    return new MapConfiguration();
-                }
-                return list;
+                MapConfiguration? mapConfig = await _db.MapConfigurations.Where(x => x.MapName.Equals(mapName)).Include(x => x.MapLayerConfigurations).Include(x => x.MapLayerGroupConfigurations).ThenInclude(x => x.MapLayerConfigurations).FirstOrDefaultAsync();
+                if(mapConfig == null)
+                    return ResultDTO<MapConfiguration>.Fail("Failed to get map configuration from db");
+                
+                return ResultDTO<MapConfiguration>.Ok(mapConfig);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message);
-                throw;
+                _logger.LogError(ex.Message, ex);
+                return ResultDTO<MapConfiguration>.ExceptionFail(ex.Message, ex);
             }
             
         }
