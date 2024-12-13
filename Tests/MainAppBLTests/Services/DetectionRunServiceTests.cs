@@ -54,7 +54,6 @@ namespace Tests.MainAppBLTests.Services
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:WorkingMMDetectionDirectoryAbsPath"]).Returns("working_detection_directory_abs_path");
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:TrainedModelConfigFileRelPath"]).Returns("trained_model_config_file_rel_path");
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:TrainedModelModelFileRelPath"]).Returns("trained_model_model_file_rel_path");
-            _mockConfiguration.Setup(x => x["AppSettings:MMDetection:DetectionResultDummyDatasetClassId"]).Returns("detection_result_dummy_dataset_class_id");
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:OpenMMLabAbsPath"]).Returns("OpenMMLabAbsPath");
             _mockConfiguration.Setup(x => x["AppSettings:MMDetection:HasGPU"]).Returns("false");
 

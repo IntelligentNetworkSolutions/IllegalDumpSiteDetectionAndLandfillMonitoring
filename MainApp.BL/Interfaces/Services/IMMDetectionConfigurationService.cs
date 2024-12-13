@@ -11,7 +11,9 @@ namespace MainApp.BL.Interfaces.Services
         string GetCondaExeAbsPath();
         string GetScriptsDirAbsPath();
         string GetOpenMMLabAbsPath();
-     
+        string GetHasGPU();
+
+
 
 
         string GetBackboneCheckpointAbsPath();

@@ -33,8 +33,9 @@ namespace Tests.DalTests.Repositories.MapConfigurationRepositories
         }
 
         [Fact]
-        public async Task GetMapConfigurationByName_ShouldReturnEmptyMap_WhenMapDoesNotExist()
+        public async Task GetMapConfigurationByName_ShouldReturnFailure_WhenMapDoesNotExist()
         {
+            // Arrange
             using ApplicationDbContext dbContext = _fixture.CreateDbContext();
             dbContext.AuditDisabled = true;
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
@@ -42,15 +43,19 @@ namespace Tests.DalTests.Repositories.MapConfigurationRepositories
             ILogger<MapConfigurationRepository> logger = loggerFactory.CreateLogger<MapConfigurationRepository>();
             var repository = new MapConfigurationRepository(dbContext, logger);
 
+            // Act
             var result = await repository.GetMapConfigurationByName("non-existent map name");
-            Assert.NotNull(result.Data);
-            Assert.Null(result.Data.MapName);
 
+            // Assert
+            Assert.NotNull(result);
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to get map configuration from db", result.ErrMsg);
+            Assert.Null(result.Data);
             transaction.Rollback();
         }
 
         [Fact]
-        public async Task GetMapConfigurationByName_ShouldLogError_WhenExceptionOccurs()
+        public async Task GetMapConfigurationByName_ShouldReturnExceptionFailure_WhenExceptionOccurs()
         {
             // Arrange
             using ApplicationDbContext dbContext = _fixture.CreateDbContext();
@@ -63,9 +68,16 @@ namespace Tests.DalTests.Repositories.MapConfigurationRepositories
 
             transaction.Rollback();
             dbContext.Dispose();
-            // Act & Assert
-            await Assert.ThrowsAsync<ObjectDisposedException>(async () => await repository.GetMapConfigurationByName("test map name"));
+
+            // Act
+            var exceptionResult = await repository.GetMapConfigurationByName("test map name");
+
+            // Assert
+            Assert.NotNull(exceptionResult);
+            Assert.False(exceptionResult.IsSuccess);
+            Assert.Null(exceptionResult.Data);
         }
+
 
         [Fact]
         public async Task GetMapConfigurationByName_ShouldReturnMapWithLayerConfigurations()
