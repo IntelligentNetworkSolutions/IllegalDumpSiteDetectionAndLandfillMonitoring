@@ -23,7 +23,8 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
                     section["Base:CondaExeAbsPath"],
                     section["Base:RootDirAbsPath"],
                     section["Base:ScriptsDirRelPath"],
-                    section["Base:OpenMMLabAbsPath"]
+                    section["Base:OpenMMLabAbsPath"], 
+                    section["Base:HasGPU"] 
                 ),
                 new MMDetectionTrainingConfiguration(
                     section["Training:DatasetsDirRelPath"],
@@ -48,7 +49,10 @@ public class MMDetectionConfigurationService : IMMDetectionConfigurationService
 
     public string GetOpenMMLabAbsPath()
         => CommonHelper.PathToLinuxRegexSlashReplace(
-            _MMDetectionConfiguration.Base.OpenMMLabAbsPath);    
+            _MMDetectionConfiguration.Base.OpenMMLabAbsPath);
+
+    public string GetHasGPU()
+    =>  _MMDetectionConfiguration.Base.HasGPU;
 
     public string GetCondaExeAbsPath()
         => CommonHelper.PathToLinuxRegexSlashReplace(

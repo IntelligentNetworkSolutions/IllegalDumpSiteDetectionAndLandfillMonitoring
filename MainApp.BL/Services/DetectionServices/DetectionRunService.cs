@@ -33,10 +33,7 @@ namespace MainApp.BL.Services.DetectionServices
         private readonly IConfiguration _configuration;
         private readonly IAppSettingsAccessor _appSettingsAccessor;
 
-        // TODO: Think Refactoring
-        private string DetectionResultDummyDatasetClassId = string.Empty;
-        private string HasGPU = string.Empty;
-
+       
         public DetectionRunService(IDetectionRunsRepository detectionRunRepository, IMapper mapper, ILogger<DetectionRunService> logger, IConfiguration configuration, IDetectedDumpSitesRepository detectedDumpSitesRepository, IDetectionInputImageRepository detectionInputImageRepository, IMMDetectionConfigurationService mMDetectionConfiguration, IDetectionIgnoreZonesRepository detectionIgnoreZoneRepository, IAppSettingsAccessor appSettingsAccessor)
         {
             _detectionRunRepository = detectionRunRepository;
@@ -45,20 +42,8 @@ namespace MainApp.BL.Services.DetectionServices
             _logger = logger;
             _configuration = configuration;
             _detectionIgnoreZoneRepository = detectionIgnoreZoneRepository;
-            _appSettingsAccessor = appSettingsAccessor;
-
-
-            string? hasGPU = _configuration["AppSettings:MMDetection:HasGPU"];
-            if (string.IsNullOrEmpty(hasGPU))
-                throw new Exception($"{nameof(hasGPU)} is missing");
-
-            string? detectionResultDummyDatasetClassId = _configuration["AppSettings:MMDetection:DetectionResultDummyDatasetClassId"];
-            if (string.IsNullOrEmpty(detectionResultDummyDatasetClassId))
-                throw new Exception($"{nameof(detectionResultDummyDatasetClassId)} is missing");
-
-            HasGPU = hasGPU;
+            _appSettingsAccessor = appSettingsAccessor;                      
             _detectedDumpSitesRepository = detectedDumpSitesRepository;
-            DetectionResultDummyDatasetClassId = detectionResultDummyDatasetClassId;
             _MMDetectionConfiguration = mMDetectionConfiguration;
         }
 
@@ -496,7 +481,7 @@ namespace MainApp.BL.Services.DetectionServices
                     return ResultDTO.Fail($"Trained Model config or file is null or empty for Detection Run with id {detectionRunDTO.Id}");
 
                 bool hasGPU = false;
-                string hasGPUStrAppSetting = HasGPU;
+                string? hasGPUStrAppSetting = _MMDetectionConfiguration.GetHasGPU();
                 if (hasGPUStrAppSetting == "true")
                     hasGPU = true;
 
@@ -620,9 +605,6 @@ namespace MainApp.BL.Services.DetectionServices
         public async Task<ResultDTO<List<DetectedDumpSite>>> CreateDetectedDumpsSitesFromDetectionRun
             (Guid detectionRunId, DetectionRunFinishedResponse detectedDumpSitesProjectedResponse)
         {
-            string detectedZonesDatasetClassIdStr = DetectionResultDummyDatasetClassId;
-            Guid detectedZonesDatasetClassId = Guid.Parse(detectedZonesDatasetClassIdStr);
-
             ResultDTO<DetectionRun?> getDetectionRunIncluded =
                 await _detectionRunRepository.GetByIdIncludeThenAll(detectionRunId, track: false,
                 includeProperties:
@@ -671,7 +653,10 @@ namespace MainApp.BL.Services.DetectionServices
                 });
             }
 
-            List<DetectedDumpSite> detectedDumpSitesEntities = _mapper.Map<List<DetectedDumpSite>>(detectedDumpSites);
+            List<DetectedDumpSite>? detectedDumpSitesEntities = _mapper.Map<List<DetectedDumpSite>>(detectedDumpSites);
+            if (detectedDumpSitesEntities == null)
+                return ResultDTO<List<DetectedDumpSite>>.Fail("Mapping for detected dump sites failed");
+
             foreach (DetectedDumpSite detectedDumpSite in detectedDumpSitesEntities)
             {
                 ResultDTO resultCreate = await _detectedDumpSitesRepository.Create(detectedDumpSite);

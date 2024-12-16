@@ -16,7 +16,7 @@
         }
     }
 
-    public record MMDetectionBaseConfiguration(string CondaExeAbsPath, string RootDirAbsPath, string ScriptsDirRelPath, string OpenMMLabAbsPath);
+    public record MMDetectionBaseConfiguration(string CondaExeAbsPath, string RootDirAbsPath, string ScriptsDirRelPath, string OpenMMLabAbsPath, string HasGPU);
 
     public record MMDetectionTrainingConfiguration(string DatasetsDirRelPath, string ConfigsDirRelPath, 
         string OutputDirRelPath, string BackboneCheckpointAbsPath, string CliLogsAbsPath);

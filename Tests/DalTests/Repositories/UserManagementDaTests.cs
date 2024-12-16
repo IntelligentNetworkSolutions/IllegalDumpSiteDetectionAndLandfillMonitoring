@@ -862,19 +862,24 @@ namespace Tests.DalTests.Repositories
         }
 
         [Fact]
-        public async Task AddRole_NullRole_ThrowsArgumentNullException()
+        public async Task AddRole_NullRole_ReturnsFailureResult()
         {
             // Arrange
             using ApplicationDbContext dbContext = _fixture.CreateDbContext();
             dbContext.AuditDisabled = true;
             using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
-
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             ILogger<UserManagementDa> logger = loggerFactory.CreateLogger<UserManagementDa>();
             var userManagementDa = new UserManagementDa(dbContext, logger);
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(async () => await userManagementDa.AddRole(null));
+            // Act
+            var result = await userManagementDa.AddRole(null);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.NotNull(result.ErrMsg);
+            Assert.Contains("Value cannot be null", result.ErrMsg);
 
             transaction.Rollback();
         }
