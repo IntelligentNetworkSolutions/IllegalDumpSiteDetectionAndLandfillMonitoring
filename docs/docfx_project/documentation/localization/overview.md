@@ -9,7 +9,7 @@
 > - Westwind Localizaton UI _(Localization Admin)_  
 > - Might not be available on Linux  
 
-> [!NOTE]  
+> [!WARNING]  
 > The Localization Admin page can be accessed at the following url pattern depending on your set-up.  
 > {BaseApplicationUrl}/LocalizationAdmin/index.html  
 > 
