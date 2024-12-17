@@ -24,7 +24,6 @@ namespace MainApp.BL.Services.DatasetServices
         }
 
         #region Read
-
         public async Task<ResultDTO<List<DatasetClassDTO>>> GetAllDatasetClasses()
         {
             var resultGetEntity = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets");
@@ -68,7 +67,6 @@ namespace MainApp.BL.Services.DatasetServices
 
             return ResultDTO<DatasetClassDTO>.Ok(model);
         }
-
         #endregion
 
         #region Create
@@ -102,48 +100,9 @@ namespace MainApp.BL.Services.DatasetServices
                 ? new ResultDTO<int>(IsSuccess: true, Data: 1, ErrMsg: null, null)
                 : new ResultDTO<int>(IsSuccess: false, Data: 3, ErrMsg: isAdded.ErrMsg, null);
         }
-
         #endregion
 
         #region Update
-        //public async Task<ResultDTO<int>> EditDatasetClass(EditDatasetClassDTO dto)
-        //{
-        //    var datasetClassDb = await _datasetClassesRepository.GetById(dto.Id, track: true, includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
-        //    var allClasses = await _datasetClassesRepository.GetAll(includeProperties: "CreatedBy,ParentClass,Datasets") ?? throw new Exception("Object not found");
-        //    var childrenClassesList = allClasses.Data?.Where(x => x.ParentClassId == datasetClassDb.Data?.Id).ToList() ?? throw new Exception("Object not found");
-        //    var all_dataset_datasetClasses = await _datasetDatasetClassRepository.GetAll(includeProperties: "DatasetClass,Dataset") ?? throw new Exception("Object not found");
-        //    var all_dataset_datasetClasses_data = all_dataset_datasetClasses.Data ?? throw new Exception("Object not found");
-        //    var dataset_datasetClasses = all_dataset_datasetClasses_data.Where(x => x.DatasetClassId == dto.Id).ToList();
-
-        //    if (childrenClassesList.Count > 0 && dto.ParentClassId != null)
-        //    {
-        //        return new ResultDTO<int>(IsSuccess: false, 2, "This dataset class has subclasses and can not be set as a subclass too!", null);
-        //    }
-        //    if (dataset_datasetClasses.Count > 0)
-        //    {
-        //        return new ResultDTO<int>(IsSuccess: false, 3, "The selected class is already in use in dataset/s, you can only change the class name!", null);
-        //    }
-        //    if (dto.ParentClassId != null)
-        //    {
-        //        var parentClassDb = await _datasetClassesRepository.GetById(dto.ParentClassId.Value, includeProperties: "CreatedBy,ParentClass") ?? throw new Exception("Model not found");
-        //        if (parentClassDb.Data?.ParentClassId != null)
-        //        {
-        //            return new ResultDTO<int>(IsSuccess: false, 4, "You can not add this class as a subclass because the selected parent class is already set as subclass!", null);
-        //        }
-        //    }
-
-        //    var mappedClass = _mapper.Map(dto, datasetClassDb.Data) ?? throw new Exception("Object not found");
-        //    var isUpdated = await _datasetClassesRepository.Update(mappedClass);
-        //    if (isUpdated.IsSuccess == true)
-        //    {
-        //        return new ResultDTO<int>(IsSuccess: true, 1, null, null);
-        //    }
-        //    else
-        //    {
-        //        return new ResultDTO<int>(IsSuccess: false, 5, isUpdated.ErrMsg, null);
-        //    }
-        //}
-
         public async Task<ResultDTO<int>> EditDatasetClass(EditDatasetClassDTO dto)
         {
             var datasetClassDb = await _datasetClassesRepository.GetById(dto.Id, track: true, includeProperties: "CreatedBy,ParentClass");
@@ -204,8 +163,6 @@ namespace MainApp.BL.Services.DatasetServices
                 ? new ResultDTO<int>(true, 1, null, null)
                 : new ResultDTO<int>(false, 5, isUpdated.ErrMsg, null);
         }
-
-
         #endregion
 
         #region Delete
@@ -276,7 +233,6 @@ namespace MainApp.BL.Services.DatasetServices
             return new ResultDTO<int>(IsSuccess: true, 1, "Dataset class deleted successfully.", null);
 
         }
-
         #endregion
     }
 }
