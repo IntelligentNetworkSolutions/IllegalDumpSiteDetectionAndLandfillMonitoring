@@ -1,6 +1,8 @@
 # About
 
-A comprehensive platform for detecting illegal dump sites and monitoring landfills using drone imagery and AI-powered object detection.
+The Raven Scan platform harnesses advanced drone and satellite imagery to revolutionize waste management and environmental monitoring.  
+
+By integrating high-resolution imagery with precision image annotation, AI-powered object detection models, and geospatial analysis, our solution delivers powerful tools for identifying illegal dump sites and optimizing the management of regulated landfills.  
 
 ## Project Charter  
 
