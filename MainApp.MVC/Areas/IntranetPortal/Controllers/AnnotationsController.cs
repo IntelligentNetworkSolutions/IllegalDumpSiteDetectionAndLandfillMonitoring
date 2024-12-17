@@ -40,7 +40,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _datasetClassesService = datasetClassesService;
         }
 
-
         public IActionResult Index()
         {
             return View();
@@ -51,44 +50,38 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             try
             {
                 if (datasetImageId == Guid.Empty)
-                {
                     return Json(new { responseSuccess = false, responseError = "Invalid dataset image ID." });
-                }
 
-                var datasetImage = await _datasetImagesService.GetDatasetImageById(datasetImageId);
+                ResultDTO<DatasetImageDTO> datasetImage = 
+                    await _datasetImagesService.GetDatasetImageById(datasetImageId);
                 if (datasetImage.IsSuccess == false && datasetImage.HandleError())
-                {
                     return Json(new { responseSuccess = false, responseError = "An error occurred. Could not retrieve dataset image." });
-                }
 
-                var datasetAllImagesResult = await _datasetImagesService.GetImagesForDataset((Guid)datasetImage.Data.DatasetId);
+                ResultDTO<List<DatasetImageDTO>> datasetAllImagesResult = 
+                    await _datasetImagesService.GetImagesForDataset((Guid)datasetImage.Data.DatasetId);
                 if (datasetAllImagesResult.IsSuccess == false && datasetAllImagesResult.HandleError())
-                {
                     return Json(new { responseSuccess = false, responseError = "An error occurred. Could not retrieve dataset images." });
-                }
 
-                var dataset = await _datasetService.GetDatasetById(datasetImage.Data.DatasetId.GetValueOrDefault());
+                ResultDTO<DatasetDTO> dataset = await _datasetService.GetDatasetById(datasetImage.Data.DatasetId.GetValueOrDefault());
                 if (dataset.IsSuccess == false && dataset.HandleError())
-                {
                     return Json(new { responseSuccess = false, responseError = "An error occurred. Could not retrieve dataset." });
-                }
 
-                var datasetClasses = await _datasetClassesService.GetAllDatasetClassesByDatasetId(dataset.Data.Id);
+                ResultDTO<List<DatasetClassDTO>> datasetClasses = await _datasetClassesService.GetAllDatasetClassesByDatasetId(dataset.Data.Id);
                 if (datasetClasses.IsSuccess == false && datasetClasses.HandleError())
-                {
                     return Json(new { responseSuccess = false, responseError = "An error occurred. Could not retrieve dataset classes." });
-                }
 
-                var currentImagePositionInDataset = datasetAllImagesResult
-                    .Data.IndexOf(datasetAllImagesResult.Data.First(x => x.Id == datasetImage.Data.Id));
+                int currentImagePositionInDataset = 
+                    datasetAllImagesResult.Data.IndexOf(datasetAllImagesResult.Data.First(x => x.Id == datasetImage.Data.Id));
 
-                var nextImage = (currentImagePositionInDataset + 1) < datasetAllImagesResult.Data.Count
-                                ? datasetAllImagesResult.Data[currentImagePositionInDataset + 1]
-                                : datasetAllImagesResult.Data.First();
+                DatasetImageDTO nextImage = 
+                    (currentImagePositionInDataset + 1) < datasetAllImagesResult.Data.Count
+                        ? datasetAllImagesResult.Data[currentImagePositionInDataset + 1]
+                        : datasetAllImagesResult.Data.First();
 
-                var previousImage = (currentImagePositionInDataset > 0)
-                                    ? datasetAllImagesResult.Data[currentImagePositionInDataset - 1]
-                                    : datasetAllImagesResult.Data.Last();
+                DatasetImageDTO previousImage = 
+                    (currentImagePositionInDataset > 0)
+                        ? datasetAllImagesResult.Data[currentImagePositionInDataset - 1]
+                        : datasetAllImagesResult.Data.Last();
 
                 AnnotateViewModel model = new AnnotateViewModel
                 {
@@ -104,9 +97,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 bool isAjaxRequest = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
 
                 if (isAjaxRequest)
-                {
                     return Json(new { responseSuccess = true, model });
-                }
 
                 return View(model);
             }
@@ -115,7 +106,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 return Json(new { responseSuccess = false, responseError = "An unexpected error occurred: " + ex.Message });
             }
         }
-
 
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewDatasetImageAnnotations))]

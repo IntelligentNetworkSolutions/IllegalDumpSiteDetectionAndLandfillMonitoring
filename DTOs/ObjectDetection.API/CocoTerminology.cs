@@ -19,6 +19,8 @@ namespace DTOs.ObjectDetection.API
         public const string testingCocoFormatDirName = "testing";
 
         public const string allowedImageFormatsConcatenated = ".jpg, .jpeg, .png, .tiff, .tif";
-        public const string allowedAnnotationsFileNamesConcatenated = "annotations, annotations_coco, coco_annotations";
+        public const string allowedAnnotationsFileNamesConcatenated = "annotations, annotations_coco, coco_annotations, _annotations.coco";
+        public static readonly List<string> allowedAnnotationsFileNamesList = 
+            ["annotations.json", "annotations_coco.json", "coco_annotations.json", "_annotations.coco.json"];
     }
 }

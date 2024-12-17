@@ -30,11 +30,11 @@ div.show-image {
         }
         div.show-image input.editAnnotation {
             top: 3px;
-            left: 50%;
+            right: 4px;
         }
         div.show-image a.editAnnotation {
             top: 3px;
-            left: 50%;
+            right: 4px;
             
         }
 .pagination-container ul{
