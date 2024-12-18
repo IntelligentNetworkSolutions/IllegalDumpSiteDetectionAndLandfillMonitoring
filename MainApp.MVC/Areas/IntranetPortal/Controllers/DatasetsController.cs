@@ -2,6 +2,7 @@
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
+using DTOs.ObjectDetection.API;
 using ImageMagick;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.MVC.Filters;
@@ -679,9 +680,11 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 string folderPath = Path.Combine(extractDir, folder);
                 if (Directory.Exists(folderPath))
                 {
-                    string jsonFilePath = Path.Combine(folderPath, "_annotations.coco.json");
-                    if (System.IO.File.Exists(jsonFilePath))
+                    string? jsonFileName = 
+                        CocoTerminology.allowedAnnotationsFileNamesList.FirstOrDefault(fileName => System.IO.File.Exists(Path.Combine(folderPath, fileName)));
+                    if (string.IsNullOrEmpty(jsonFileName) == false)
                     {
+                        string jsonFilePath = Path.Combine(folderPath, jsonFileName);
                         JObject jsonData = JObject.Parse(System.IO.File.ReadAllText(jsonFilePath));
 
                         if (info == null && licenses == null && categories == null)

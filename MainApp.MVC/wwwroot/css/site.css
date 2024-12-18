@@ -71,6 +71,26 @@ html {
     gap: 5rem;
 }
 
+.flex-basis-18 {
+    flex-basis: 18%;
+}
+
+.flex-basis-19 {
+    flex-basis: 19%;
+}
+
+.flex-basis-20 {
+    flex-basis: 20%;
+}
+
+.bg-green-success {
+    background: var(--green-success);
+}
+
+.bg-green-active {
+    background: var(--green-active);
+}
+
 /* ------------------------------------------------------------------------------------------------------------------------- */
 /* Custom File Input Upload/Browse */
 .custom-file-upload-wrapper {

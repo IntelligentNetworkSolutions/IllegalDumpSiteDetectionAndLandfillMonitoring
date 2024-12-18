@@ -11,9 +11,9 @@
 
 ## Overview  
 
-The Raven Scan platform leverages advanced drone and satellite imagery to enhance waste management and environmental monitoring through cutting-edge technology.  
+The Raven Scan platform harnesses advanced drone and satellite imagery to revolutionize waste management and environmental monitoring.
 
-Utilizing high-resolution images combined with sophisticated image annotation, object detection models, and geospatial analysis, our system offers robust tools to identify illegal dump sites and effectively manage regulated landfills.  
+By integrating high-resolution imagery with precision image annotation, AI-powered object detection models, and geospatial analysis, our solution delivers powerful tools for identifying illegal dump sites and optimizing the management of regulated landfills.
 
 ## User Guides and Documentation
 
@@ -235,6 +235,11 @@ This license allows for a great deal of freedom in both academic and commercial 
 ## Open-Sourced
 
 ### Collected Dataset  
+
+Contains 2115 drone images of illegal waste dumpsites
+
+- 1280 x 1280 px resolution
+- Nadir perspective (camera pointing straight down at a 90-degree angle to the ground)
 
 - <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 576 512"><path d="M384 480l48 0c11.4 0 21.9-6 27.6-15.9l112-192c5.8-9.9 5.8-22.1 .1-32.1S555.5 224 544 224l-400 0c-11.4 0-21.9 6-27.6 15.9L48 357.1 48 96c0-8.8 7.2-16 16-16l117.5 0c4.2 0 8.3 1.7 11.3 4.7l26.5 26.5c21 21 49.5 32.8 79.2 32.8L416 144c8.8 0 16 7.2 16 16l0 32 48 0 0-32c0-35.3-28.7-64-64-64L298.5 96c-17 0-33.3-6.7-45.3-18.7L226.7 50.7c-12-12-28.3-18.7-45.3-18.7L64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l23.7 0L384 480z"/></svg> <svg xmlns="http://www.w3.org/2000/svg"  width=18 viewBox="0 0 576 512"><path d="M160 80l352 0c8.8 0 16 7.2 16 16l0 224c0 8.8-7.2 16-16 16l-21.2 0L388.1 178.9c-4.4-6.8-12-10.9-20.1-10.9s-15.7 4.1-20.1 10.9l-52.2 79.8-12.4-16.9c-4.5-6.2-11.7-9.8-19.4-9.8s-14.8 3.6-19.4 9.8L175.6 336 160 336c-8.8 0-16-7.2-16-16l0-224c0-8.8 7.2-16 16-16zM96 96l0 224c0 35.3 28.7 64 64 64l352 0c35.3 0 64-28.7 64-64l0-224c0-35.3-28.7-64-64-64L160 32c-35.3 0-64 28.7-64 64zM48 120c0-13.3-10.7-24-24-24S0 106.7 0 120L0 344c0 75.1 60.9 136 136 136l320 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-320 0c-48.6 0-88-39.4-88-88l0-224zm208 24a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"/></svg> [Hugging Face Dataset](https://huggingface.co/datasets/INS-IntelligentNetworkSolutions/Waste-Dumpsites-DroneImagery)  
 

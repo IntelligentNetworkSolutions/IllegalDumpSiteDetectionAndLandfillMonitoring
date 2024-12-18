@@ -40,7 +40,7 @@ namespace MainApp.BL.Services.DatasetServices
                 return ResultDTO.Fail("Upload Directory is Empty");
 
             // Is Only Files
-            if (IsOnlyFilesCocoDatasetDirectory(uploadDirPath, false))
+            if (IsOnlyFilesCocoDatasetDirectory(uploadDirPath, mustHaveAnnotations))
             {
                 ResultDTO isValidCocoFormatDirectoryResult = IsValidCocoFormatedSplitDirectory(uploadDirPath, mustHaveAnnotations);
                 if (isValidCocoFormatDirectoryResult.IsSuccess == false)
@@ -128,7 +128,7 @@ namespace MainApp.BL.Services.DatasetServices
 
                 string[] filePaths = Directory.GetFiles(uploadDirPath);
 
-                if (IsOnlyFilesCocoDatasetDirectory(uploadDirPath, true) == false)
+                if (IsOnlyFilesCocoDatasetDirectory(uploadDirPath, allowUnannotatedImages) == false)
                     return ResultDTO<CocoDatasetDTO>.Fail($"Invalid Directory Structure, only image files and an annotation file can be present in directory: {uploadDirPath}");
 
                 string[] imagePaths = GetImagePaths(filePaths);
@@ -202,16 +202,9 @@ namespace MainApp.BL.Services.DatasetServices
                 return false;
 
             bool hasAnnotationsFile = false;
-            foreach (var filePath in filePaths)
-            {
-                if (Path.GetExtension(filePath) != ".json")
-                    break;
-
-                if (!CocoTerminology.allowedAnnotationsFileNamesConcatenated.Contains(Path.GetFileNameWithoutExtension(filePath)))
-                    break;
-
-                hasAnnotationsFile = true;
-            }
+            hasAnnotationsFile =
+                filePaths.Any(path => Path.GetExtension(path) == ".json"
+                                && CocoTerminology.allowedAnnotationsFileNamesList.Contains(Path.GetFileName(path)) == true);
 
             if (mustHaveAnnotations)
                 return hasAnnotationsFile;

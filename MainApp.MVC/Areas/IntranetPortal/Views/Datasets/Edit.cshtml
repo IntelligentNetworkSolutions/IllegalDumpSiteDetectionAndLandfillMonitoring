@@ -100,11 +100,15 @@
                                 {
                                     if (Model.CurrentDataset.IsPublished)
                                     {
-                                        <button class="mt-3 mr-3 float-right btn btn-sm bg-gradient-primary" disabled>@DbResHtml.T("Choose Class Type", "Resources")</button>
+                                        <button class="mt-3 mr-3 float-right btn btn-sm btn-outline-primary" disabled>
+                                            @DbResHtml.T("Choose Class Type", "Resources")
+                                        </button>
                                     }
                                     else
                                     {
-                                    <button class="mt-3 mr-3 float-right btn btn-sm bg-gradient-primary" data-toggle="modal" data-target="#chooseDatasetClassTypeModal">@DbResHtml.T("Choose Class Type", "Resources")</button>
+                                        <button class="mt-3 mr-3 float-right btn btn-sm btn-outline-primary" data-toggle="modal" data-target="#chooseDatasetClassTypeModal">
+                                            @DbResHtml.T("Choose Class Type", "Resources")
+                                        </button>
                                     }
                                 }
                             }
@@ -280,16 +284,6 @@
                     </button>
                     }
                 }
-                <!-- Export Btn TODO: Change Auth Claim-->
-@*                 @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
-                {
-                    <button class="btn btn-outline-dark btn-block" onclick="exportDatasetAnnotationsToCOCO()">
-                        <span>
-                            @DbResHtml.T("Export Annotations", "Resources") <small>@DbResHtml.T("to COCO Format", "Resources")</small>
-                        </span>
-                        <i class=" mx-1 fas fa-file-export"></i>
-                    </button>
-                } *@
                 @if (User.HasAuthClaim(SD.AuthClaims.PublishDataset))
                 {
                     <button class="btn btn-outline-dark btn-block" data-toggle="modal" data-target="#exportModal">
@@ -372,7 +366,8 @@
                         </a>
                     </div>
                 </form>
-                <div class="row">
+                <!-- Images -->
+                <div class="row d-flex flex-wrap gap-1 mb-2">
                     @if (Model.PagedImagesList?.Count < 1)
                     {
                         <div class="col-md-6 offset-md-3 text-center mb-3">
@@ -389,12 +384,11 @@
 
                             bool isAnnotated = item.IsAnnotated; // Use the DTO property
 
-                            <div class="col-md-3">
-                                <div class="card shadow">
+                            <div class="card d-flex flex-basis-18 shadow p-0 m-0">
                                     @{
-                                        string cardHeaderClass = (item.IsEnabled && isAnnotated) ? "bg-gradient-olive" :
-                                        (item.IsEnabled || isAnnotated) ? "bg-gradient-gray-dark" :
-                                        "bg-gradient-danger";
+                                    string cardHeaderClass = (item.IsEnabled && isAnnotated) ? "bg-green-success" :
+                                        (item.IsEnabled || isAnnotated) ? "bg-gray-dark" :
+                                        "bg-danger";
 
                                         string cardBodyClass = (item.IsEnabled && isAnnotated) ? "border-success" :
                                         (item.IsEnabled || isAnnotated) ? "border-dark" :
@@ -419,14 +413,14 @@
                                             }
                                         }
                                     </div>
-                                    <div class="card-body border border-top-0 d-flex flex-column align-items-center @cardBodyClass">
-                                        <div class="show-image position-relative">
-                                            <img id="@item.Id" class="rounded" src="@Url.Content("~" + thumbPath)" />
+                                    <div class="card-body border border-top-0 d-flex flex-column align-items-center p-0 m-0 @cardBodyClass">
+                                        <div class="show-image d-flex position-relative m-0">
+                                            <img id="@item.Id" class="d-flex w-100" src="@Url.Content("~" + thumbPath)" />
                                             @if (User.HasAuthClaim(SD.AuthClaims.EditDatasetImage))
                                             {
                                                 if (Model.CurrentDataset.IsPublished)
                                                 {
-                                                    <input class="editImage btn btn-xs bg-gradient-warning text-white" type="button" value="Edit image" disabled readonly />
+                                                    <input class="editImage btn btn-xs bg-gray text-white" type="button" value="Edit image" disabled readonly />
 
                                                 }
                                                 else
@@ -438,23 +432,22 @@
                                             {
                                                 if (Model.CurrentDataset.IsPublished)
                                                 {
-                                                    <input class="editAnnotation btn btn-xs bg-gradient-orange text-white" type="button" value="Edit annotations" disabled readonly />
+                                                    <a id="@($"{item.Id}_editImageAnnotation")" href="@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = item.Id })" class="editAnnotation btn btn-xs bg-gray-dark text-white">
+                                                        Annotations</a>
                                                 }
                                                 else
                                                 {
-                                                    <a id="@($"{item.Id}_editImageAnnotation")" href="javascript:void(0);"
-                                                       class="editAnnotation btn btn-xs bg-gradient-orange text-white"
-                                                       data-dataset-image-id="@item.Id">Edit annotations</a>
+                                                    <a id="@($"{item.Id}_editImageAnnotation")" href="@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal", datasetImageId = item.Id })" class="editAnnotation btn btn-xs bg-gradient-orange text-white">
+                                                        Annotate</a>
                                                 }
                                             }
                                             <input type="hidden" id="annotationStatus_@item.Id" value="@isAnnotated" />
 
-                                            @Html.Raw(item.IsEnabled ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Enabled\"><i class=\"fas fa-check-circle\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Disabled\"><i class=\"fas fa-times-circle\"></i></span>")
-                                            @Html.Raw(isAnnotated ? "<span class=\"badge bg-gradient-olive p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Annotated\"><i class=\"fas fa-map-marked-alt\"></i></span>" : "<span class=\"badge bg-gradient-danger p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Not Annotated\"><i class=\"fas fa-map-marked\"></i></span>")
+                                        @Html.Raw(item.IsEnabled ? "<span class=\"badge bg-green-success text-white p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Enabled\"><i class=\"fas fa-check-circle\"></i></span>" : "<span class=\"badge bg-danger p-2\" style=\"position: absolute; bottom: 0; left: 0;\" title=\"Disabled\"><i class=\"fas fa-times-circle\"></i></span>")
+                                        @Html.Raw(isAnnotated ? "<span class=\"badge bg-green-success text-white p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Annotated\"><i class=\"fas fa-map-marked-alt\"></i></span>" : "<span class=\"badge bg-danger p-2\" style=\"position: absolute; bottom: 0; right: 0;\" title=\"Not Annotated\"><i class=\"fas fa-map-marked\"></i></span>")
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                         }
 
                     }
@@ -621,38 +614,6 @@
             });
         });
 
-        $(document).ready(function () {
-            $('.editAnnotation').on('click', function () {
-                var datasetImageId = $(this).data('dataset-image-id');
-                $.ajax({
-                    url: '@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal" })',
-                    type: 'GET',
-                    data: { datasetImageId: datasetImageId },
-                    success: function (response) {
-                        if (response.responseSuccess) {
-                            // Redirect to the annotate page
-                            window.location.href = '@Url.Action("Annotate", "Annotations", new { Area = "IntranetPortal" })' + '?datasetImageId=' + datasetImageId;
-                        } else {
-                            // Show error message using SweetAlert
-                            console.log(response.responseError);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: `${response.responseError}`,
-                            });
-                        }
-                    },
-                    error: function () {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'An unexpected error occurred.',
-                        });
-                    }
-                });
-            });
-        });
-
         document.addEventListener('DOMContentLoaded', function () {
             // Select all elements with the 'item-name' class
             const itemNameElements = document.querySelectorAll('.item-name');
@@ -660,8 +621,8 @@
             itemNameElements.forEach(function (itemNameElement) {
                 const fullName = itemNameElement.textContent;
 
-                if (fullName.length > 20) {
-                    itemNameElement.textContent = fullName.substring(0, 20) + "...";
+                if (fullName.length > 15) {
+                    itemNameElement.textContent = fullName.substring(0, 15) + "...";
                     itemNameElement.setAttribute("title", fullName);
                 } else {
                     itemNameElement.setAttribute("title", fullName);
