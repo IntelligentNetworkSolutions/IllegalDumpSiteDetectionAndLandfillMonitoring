@@ -666,13 +666,11 @@ namespace MainApp.BL.Services.DatasetServices
                     "AllImages" => includeDisabledImages
                         ? datasetIncluded.DatasetImages.OrderBy(x => x.CreatedOn).ToList()
                         : datasetIncluded.DatasetImages.Where(x => x.IsEnabled).OrderBy(x => x.CreatedOn).ToList(),
-                    "AnnotatedImages" => includeDisabledImages
-                        ? datasetIncluded.DatasetImages.Where(x => x.ImageAnnotations.Any()).OrderBy(x => x.CreatedOn).ToList()
-                        : datasetIncluded.DatasetImages.Where(x => x.IsEnabled && x.ImageAnnotations.Any()).OrderBy(x => x.CreatedOn).ToList(),
                     "EnabledImages" => datasetIncluded.DatasetImages.Where(x => x.IsEnabled).OrderBy(x => x.CreatedOn).ToList(),
-                    "UnannotatedImages" => includeDisabledImages
-                        ? datasetIncluded.DatasetImages.Where(x => !x.ImageAnnotations.Any()).OrderBy(x => x.CreatedOn).ToList()
-                        : datasetIncluded.DatasetImages.Where(x => x.IsEnabled && !x.ImageAnnotations.Any()).OrderBy(x => x.CreatedOn).ToList(),
+                    "EnabledAndAnnotated" => datasetIncluded.DatasetImages
+                        .Where(x => x.IsEnabled && x.ImageAnnotations.Any())
+                        .OrderBy(x => x.CreatedOn)
+                        .ToList(),
                     _ => includeDisabledImages
                         ? datasetIncluded.DatasetImages.OrderBy(x => x.CreatedOn).ToList()
                         : datasetIncluded.DatasetImages.Where(x => x.IsEnabled).OrderBy(x => x.CreatedOn).ToList()

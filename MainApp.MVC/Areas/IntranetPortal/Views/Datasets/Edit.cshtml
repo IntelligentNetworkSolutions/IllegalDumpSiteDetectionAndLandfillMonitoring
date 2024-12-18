@@ -133,28 +133,43 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var item in Model.ClassesByDatasetId)
-                                        {
-                                            <tr>
-                                                <td class="font-weight-bold">@item.ClassName</td>
-                                                <td class="text-right py-0 align-middle">
-                                                    @if (User.HasAuthClaim(SD.AuthClaims.DeleteDatasetClass))
-                                                    {
-                                                        if (Model.CurrentDataset.IsPublished)
-                                                        {
-                                                        }
-                                                        else
-                                                        {
-                                                        <div class="btn-group btn-group-sm">
-                                                            <a class="btn btn-outline-danger" data-toggle="modal" data-target="#deleteDatasetClassModal_@item.Id" title="@DbResHtml.T("Delete Class", "Resources")"><i class="fas fa-trash"></i></a>
-                                                        </div>
-                                                        }
-                                                    }
-                                                </td>
-                                            </tr>
-                                        }
+                                        <tr>
+                                            <td colspan="2">
+                                                <!-- Scrollable container for class names -->
+                                                <div style="max-height: 200px; overflow-y: auto;">
+                                                    <table class="table mb-0">
+                                                        <tbody>
+                                                            @foreach (var item in Model.ClassesByDatasetId)
+                                                            {
+                                                                <tr>
+                                                                    <td class="font-weight-bold">@item.ClassName</td>
+                                                                    <td class="text-right py-0 align-middle">
+                                                                        @if (User.HasAuthClaim(SD.AuthClaims.DeleteDatasetClass))
+                                                                        {
+                                                                            if (Model.CurrentDataset.IsPublished)
+                                                                            {
+                                                                                <!-- Add logic for published dataset -->
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <div class="btn-group btn-group-sm">
+                                                                                    <a class="btn btn-outline-danger" data-toggle="modal" data-target="#deleteDatasetClassModal_@item.Id" title="@DbResHtml.T("Delete Class", "Resources")">
+                                                                                        <i class="fas fa-trash"></i>
+                                                                                    </a>
+                                                                                </div>
+                                                                            }
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
+
                             }
 
                         </div>
@@ -171,15 +186,14 @@
                         </button>
                     }
                     else{
-                    <button type="submit" class="btn btn-success btn-block mb-3 sticky-top" data-toggle="modal" data-target="#addNewDatasetImageModal">
-                        <span>@DbResHtml.T("Add new dataset image", "Resources")</span>
-                        <i class="fas fa-image ml-1"></i>
-                    </button>
+                        <button type="submit" class="btn btn-success btn-block mb-3 sticky-top" data-toggle="modal" data-target="#addNewDatasetImageModal">
+                            <span>@DbResHtml.T("Add new dataset image", "Resources")</span>
+                            <i class="fas fa-image ml-1"></i>
+                        </button>
                         <button type="button" class="btn btn-success btn-block mb-3" onclick="enableAllImagesConfirmed('@Model.CurrentDataset.Id')">
                             <span>@DbResHtml.T("Enable all dataset images", "Resources")</span>
                             <i class="fas fa-image ml-1"></i>
                         </button>
-
                     }
                 }
                 <!-- General Statistics -->
@@ -387,7 +401,7 @@
                                         "border-danger";
                                     }
                                     <div class="card-header text-center p-1 @cardHeaderClass">
-                                        <h5 class="text-center text-white d-inline pl-3">@item.Name</h5>
+                                        <h5 class="text-center text-white d-inline pl-3 item-name">@item.Name</h5>
                                         @if (User.HasAuthClaim(SD.AuthClaims.DeleteDatasetImage))
                                         {
                                             if (Model.CurrentDataset.IsPublished)
@@ -638,6 +652,24 @@
                 });
             });
         });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Select all elements with the 'item-name' class
+            const itemNameElements = document.querySelectorAll('.item-name');
+
+            itemNameElements.forEach(function (itemNameElement) {
+                const fullName = itemNameElement.textContent;
+
+                if (fullName.length > 20) {
+                    itemNameElement.textContent = fullName.substring(0, 20) + "...";
+                    itemNameElement.setAttribute("title", fullName);
+                } else {
+                    itemNameElement.setAttribute("title", fullName);
+                }
+            });
+        });
+
+
 
         function deleteDatasetImage(datasetImageId, datasetImageFileName) {
             var datasetId = '@Model.CurrentDataset.Id';
@@ -1089,17 +1121,10 @@
             });
         }
 
-        function startExport() {
-            const toggleAllImages = document.getElementById('toggleAllImages').checked;
-            const asSplit = $('#toggleExportStatus').is(':checked');
-            let exportOption = '';
-
-            if (toggleAllImages) {
-                const imageType = document.getElementById('imageTypeDropdown').value;
-                exportOption = imageType;
-            } else {
-                exportOption = 'EnabledImages';
-            }
+        function exportDatasetAnnotationsToCOCO() {
+            const datasetId = '@Model.CurrentDataset.Id';
+            const exportOption = document.getElementById('exportOptionDropdown').value;
+            const asSplit = document.getElementById('toggleExportStatus').checked;
 
             $('#exportModal').modal('hide');
 
@@ -1110,12 +1135,6 @@
                 showConfirmButton: false
             });
 
-            exportDatasetAnnotationsToCOCO(exportOption, asSplit);
-        }
-
-        function exportDatasetAnnotationsToCOCO(exportOption, asSplit) {
-            const datasetId = '@Model.CurrentDataset.Id';
-
             $.ajax({
                 type: "GET",
                 url: '@Url.Action("ExportDataset", "Datasets", new { area = "IntranetPortal" })',
@@ -1124,7 +1143,7 @@
                     responseType: 'blob'
                 },
                 success: function (data, status, xhr) {
-                    Swal.close(); 
+                    Swal.close();
 
                     const contentDisposition = xhr.getResponseHeader('Content-Disposition');
                     const downloadDisposition = xhr.getResponseHeader('Download-Disposition');
@@ -1150,7 +1169,7 @@
                     });
                 },
                 error: function (req, status, error) {
-                    Swal.close(); 
+                    Swal.close();
 
                     Swal.fire({
                         text: 'An error occurred while processing your request.',
@@ -1161,25 +1180,6 @@
             });
         }
 
-
-
-
-        function handleSwitchChange() {
-            const toggleAllImages = document.getElementById('toggleAllImages').checked;
-            const imageTypeDropdown = document.getElementById('imageTypeDropdown');
-            const allImagesLabel = document.getElementById('allImagesLabel');
-            const enabledImagesLabel = document.getElementById('enabledImagesLabel');
-
-            if (toggleAllImages) {
-                imageTypeDropdown.disabled = false;
-                allImagesLabel.style.display = "inline";
-                enabledImagesLabel.style.display = "none";
-            } else {
-                imageTypeDropdown.disabled = true;
-                allImagesLabel.style.display = "none";
-                enabledImagesLabel.style.display = "inline";
-            }
-        }
         function updateImageStatusLabels() {
             const toggleStatus = document.getElementById('toggleExportStatus');
             const enabledLabel = document.getElementById('enabledExportLabel');
@@ -1197,56 +1197,56 @@
                 toggleLabel.classList.remove('text-success');
             }
         }
-        function initializeExportOptions() {
-            const toggleAllImages = document.getElementById('toggleAllImages');
-            const imageTypeDropdown = document.getElementById('imageTypeDropdown');
-            const allImagesLabel = document.getElementById('allImagesLabel');
-            const enabledImagesLabel = document.getElementById('enabledImagesLabel');
 
-            toggleAllImages.checked = false;
-            imageTypeDropdown.disabled = true;
-            allImagesLabel.style.display = "none";
-            enabledImagesLabel.style.display = "inline";
-        }
-
+        // On Document Ready
         $(document).ready(function () {
-            initializeExportOptions();
-                    handleSwitchChange();
-        updateImageStatusLabels();
+            updateImageStatusLabels();
         });
 
         function enableAllImagesConfirmed(datasetId) {
-            $.ajax({
-                type: "POST",
-                url: '@Url.Action("EnableAllImages", "Datasets", new { area = "IntranetPortal" })', 
-                data: {
-                    datasetId: datasetId
-                },
-                success: function (data) {
-                    if (data.responseError) {
-                        Swal.fire({
-                            text: data.responseError.value,
-                            icon: "error"
-                        });
-                    } else {
-                        Swal.fire({
-                            text: data.responseSuccess.value,
-                            icon: "success"
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                location.reload();
+            Swal.fire({
+                title: "Are you sure?",
+                text: "Do you want to enable all images for this dataset?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, enable them!",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("EnableAllImages", "Datasets", new { area = "IntranetPortal" })',
+                        data: {
+                            datasetId: datasetId
+                        },
+                        success: function (data) {
+                            if (data.responseError) {
+                                Swal.fire({
+                                    text: data.responseError.value,
+                                    icon: "error"
+                                });
+                            } else {
+                                Swal.fire({
+                                    text: data.responseSuccess.value,
+                                    icon: "success"
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        location.reload();
+                                    }
+                                });
                             }
-                        });
-                    }
-                },
-                error: function (req, status, error) {
-                    Swal.fire({
-                        text: "An error occurred",
-                        icon: "error"
+                        },
+                        error: function (req, status, error) {
+                            Swal.fire({
+                                text: "An error occurred",
+                                icon: "error"
+                            });
+                        }
                     });
                 }
             });
         }
+
 
 
     </script>
@@ -1522,48 +1522,31 @@
         </div>
     </div>
 
-<div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-gradient-lightblue">
-                <h5 class="modal-title" id="exportModalLabel">@DbResHtml.T("Choose configuration for exporting the dataset", "Resources")</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
+    <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-lightblue">
+                    <h5 class="modal-title" id="exportModalLabel">@DbResHtml.T("Choose configuration for exporting the dataset", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
                 <div class="modal-body">
                     <form id="exportConfigForm">
-                        <h5 class="mb-4">Export options for dataset</h5>
-                            <div class="form-group row mb-3">
-                                <label class="col-12 col-md-4 col-form-label">Export Option</label>
-                                <div class="col-12 col-md-8 d-flex justify-content-center align-items-center">
-                                    <div class="custom-control custom-switch">
-                                        <input type="checkbox"
-                                               class="custom-control-input"
-                                               id="toggleAllImages"
-                                               onchange="handleSwitchChange()">
-                                        <label class="custom-control-label" for="toggleAllImages">
-                                            <span id="allImagesLabel" style="display: none;">
-                                                <i class="fas fa-images"></i> All Images
-                                            </span>
-                                            <span id="enabledImagesLabel">
-                                                <i class="fas fa-image"></i> Enabled Images
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Export Option Dropdown -->
                         <div class="form-group row mb-3">
-                            <label class="col-12 col-md-4 col-form-label">Image Type</label>
+                            <label class="col-12 col-md-4 col-form-label">Export Option</label>
                             <div class="col-12 col-md-8">
-                                <select class="form-control" id="imageTypeDropdown" disabled>
-                                    <option value="AnnotatedImages">Annotated Images</option>
-                                    <option value="UnannotatedImages">Unannotated Images</option>
+                                <select class="form-control" id="exportOptionDropdown">
+                                    <option value="EnabledAndAnnotated">Enabled and Annotated</option>
+                                    <option value="AllImages">All Images (regardless of annotation status)</option>
+                                    <option value="EnabledImages">Enabled Images (regardless of annotation status)</option>
                                 </select>
                             </div>
                         </div>
+                        <!-- Export as Split Dataset -->
                         <div class="form-group row mb-3">
-                            <label class="col-12 col-md-4 col-form-label">Export as Split dataset</label>
+                            <label class="col-12 col-md-4 col-form-label">Export as Split Dataset</label>
                             <div class="col-12 col-md-8 d-flex justify-content-center align-items-center">
                                 <div class="custom-control custom-switch">
                                     <input type="checkbox"
@@ -1581,17 +1564,16 @@
                                 </div>
                             </div>
                         </div>
-
-
                     </form>
                 </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="startExport()">
-                    <span>@DbResHtml.T("Download Now", "Resources")</span>
-                </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="exportDatasetAnnotationsToCOCO()">
+                        <span>@DbResHtml.T("Download Now", "Resources")</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+
 }

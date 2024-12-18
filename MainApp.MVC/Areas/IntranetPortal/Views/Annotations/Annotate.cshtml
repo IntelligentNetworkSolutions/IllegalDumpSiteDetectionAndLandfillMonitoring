@@ -178,13 +178,12 @@
                     <div class="card-body">
                         <h5>Class</h5>
                         <div class="form-group" id="annotatorToolbarClassesList">
-                            @foreach (var datasetClass in Model.DatasetClasses)
-                            {
-                                <div class="custom-control custom-radio">
-                                    <input class="custom-control-input custom-control-input-dark" type="radio" id="input-@datasetClass.Id" name="datasetClasses" value="@datasetClass.Id">
-                                    <label for="input-@datasetClass.Id" class="custom-control-label">@datasetClass.ClassName</label>
-                                </div>
-                            }
+                                <select class="form-control custom-select custom-select-dark" id="datasetClassSelect" name="datasetClasses">
+                                    @foreach (var datasetClass in Model.DatasetClasses)
+                                    {
+                                        <option value="@datasetClass.Id">@datasetClass.ClassName</option>
+                                    }
+                                </select>
                         </div>
                         <h5>@DbResHtml.T("Status", "Resources")</h5>
                         <div class="form-group" id="annotatorToolbarStatus">
@@ -445,23 +444,23 @@ $.ajax({
             var datasetClassId = feature.get("datasetClassId");
             var isEnabled = feature.get("isEnabled");
 
-            $('#annotatorToolbarClassesList input').prop('disabled', false);
-            $(`#annotatorToolbarClassesList input[value='${datasetClassId}']`).prop('checked', true);
+            $('#datasetClassSelect').prop('disabled', false);
+            $('#datasetClassSelect').val(datasetClassId);
 
             $('#annotatorToolbarStatus input').prop('disabled', false);
             $(`#annotatorToolbarStatus input[value='${isEnabled}']`).prop('checked', true);
+
             $('#btnDeleteAnnotation').removeClass('disabled');
         }
 
         function featureDeselected() {
-            $('#annotatorToolbarClassesList input').prop('checked', false);
-            $('#annotatorToolbarClassesList input').prop('disabled', true);
+            $('#datasetClassSelect').val("").prop('disabled', true);
 
-            $('#annotatorToolbarStatus input').prop('checked', false);
-            $('#annotatorToolbarStatus input').prop('disabled', true);
+            $('#annotatorToolbarStatus input').prop('checked', false).prop('disabled', true);
 
             $('#btnDeleteAnnotation').addClass('disabled');
         }
+
 
         function changeFeatureClass(obj) {
             if (annotatorVars.selectedFeature) {
@@ -469,11 +468,12 @@ $.ajax({
                 annotatorVars.redoList = [];
                 annotatorVars.hasUnsavedChanges = true;
 
-                var classId = $(obj.target).attr("value");
+                var classId = $(obj.target).val();
                 annotatorVars.selectedFeature.set("datasetClassId", classId);
                 annotatorVars.lastUsedClass = classId;
             }
         }
+
 
         function changeFeatureIsEnabled(obj) {
             if (annotatorVars.selectedFeature) {
@@ -487,7 +487,7 @@ $.ajax({
             }
         }
 
-        $("#annotatorToolbarClassesList input").click(changeFeatureClass);
+        $("#datasetClassSelect").change(changeFeatureClass);
         $("#annotatorToolbarStatus input").click(changeFeatureIsEnabled);
         $("#btnDeleteAnnotation").click(deleteSelectedFeature);
         $("#saveToolBtn").click(saveAnnotations);
@@ -554,23 +554,22 @@ $.ajax({
             });
 
             drawBboxInteraction.on('drawend', function (evt) {
-                //console.log(evt);
-                //console.log(getAnnotationsGeoJsonFromLayer());
-
                 evt.feature.set("isEnabled", true);
+
                 let datasetClassId = "";
                 if (annotatorVars.lastUsedClass) {
                     datasetClassId = annotatorVars.lastUsedClass;
+                } else {
+                    datasetClassId = $("#datasetClassSelect").val();  
                 }
-                else {
-                    datasetClassId = $("#annotatorToolbarClassesList input").first().attr("value");
-                }
+
                 evt.feature.set("datasetClassId", datasetClassId);
 
                 annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
                 annotatorVars.redoList = [];
                 annotatorVars.hasUnsavedChanges = true;
             });
+
 
             annotator.addInteraction(drawBboxInteraction);
         }
@@ -738,7 +737,6 @@ $.ajax({
                 url: "@Url.Action("SaveImageAnnotations", "Annotations", new { Area = "IntranetPortal" })",
                 data: { editImageAnnotations: editImageAnnotations },
                 success: function (data) {
-                    console.log(data);
                     if (data.isSuccess) {
                         annotatorVars.hasUnsavedChanges = false;
                         Toast.fire({
