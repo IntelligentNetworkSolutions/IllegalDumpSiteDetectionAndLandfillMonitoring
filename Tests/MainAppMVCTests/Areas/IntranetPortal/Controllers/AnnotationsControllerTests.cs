@@ -110,6 +110,145 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
+        public async Task Annotate_InvalidDatasetImageId_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var datasetImageId = Guid.Empty;
+
+            // Act
+            var result = await _controller.Annotate(datasetImageId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JObject.FromObject(jsonResult.Value);
+            Assert.False(json["responseSuccess"]?.Value<bool>());
+            Assert.Equal("Invalid dataset image ID.", json["responseError"]);
+        }
+
+        [Fact]
+        public async Task Annotate_FailToRetrieveDatasetImages_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var datasetImage = new DatasetImageDTO { Id = datasetImageId, DatasetId = datasetId };
+
+            _mockDatasetImagesService.Setup(service => service.GetDatasetImageById(datasetImageId))
+                .ReturnsAsync(ResultDTO<DatasetImageDTO>.Ok(datasetImage));
+
+            _mockDatasetImagesService.Setup(service => service.GetImagesForDataset(datasetId))
+                .ReturnsAsync(ResultDTO<List<DatasetImageDTO>>.Fail("Error retrieving dataset images"));
+
+            // Act
+            var result = await _controller.Annotate(datasetImageId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JObject.FromObject(jsonResult.Value);
+            Assert.False(json["responseSuccess"]?.Value<bool>());
+            Assert.Equal("Error retrieving dataset images", json["responseError"]);
+        }
+
+        [Fact]
+        public async Task Annotate_FailToRetrieveDataset_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var datasetImage = new DatasetImageDTO { Id = datasetImageId, DatasetId = datasetId };
+            var datasetAllImages = new List<DatasetImageDTO> { datasetImage };
+
+            _mockDatasetImagesService.Setup(service => service.GetDatasetImageById(datasetImageId))
+                .ReturnsAsync(ResultDTO<DatasetImageDTO>.Ok(datasetImage));
+
+            _mockDatasetImagesService.Setup(service => service.GetImagesForDataset(datasetId))
+                .ReturnsAsync(ResultDTO<List<DatasetImageDTO>>.Ok(datasetAllImages));
+
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId))
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Fail("An error occurred. Could not retrieve dataset images."));
+
+            // Act
+            var result = await _controller.Annotate(datasetImageId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JObject.FromObject(jsonResult.Value);
+            Assert.False(json["responseSuccess"]?.Value<bool>());
+            Assert.Equal("An error occurred. Could not retrieve dataset images.", json["responseError"]);
+        }
+
+        [Fact]
+        public async Task Annotate_FailToRetrieveDatasetClasses_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var datasetImage = new DatasetImageDTO { Id = datasetImageId, DatasetId = datasetId };
+            var datasetAllImages = new List<DatasetImageDTO> { datasetImage };
+            var dataset = new DatasetDTO { Id = datasetId };
+
+            _mockDatasetImagesService.Setup(service => service.GetDatasetImageById(datasetImageId))
+                .ReturnsAsync(ResultDTO<DatasetImageDTO>.Ok(datasetImage));
+
+            _mockDatasetImagesService.Setup(service => service.GetImagesForDataset(datasetId))
+                .ReturnsAsync(ResultDTO<List<DatasetImageDTO>>.Ok(datasetAllImages));
+
+            _mockDatasetService.Setup(service => service.GetDatasetById(datasetId))
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(dataset));
+
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClassesByDatasetId(datasetId))
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Fail("Error retrieving dataset classes"));
+
+            // Act
+            var result = await _controller.Annotate(datasetImageId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JObject.FromObject(jsonResult.Value);
+            Assert.False(json["responseSuccess"]?.Value<bool>());
+            Assert.Equal("Error retrieving dataset classes", json["responseError"]);
+        }
+
+        [Fact]
+        public async Task Annotate_UnexpectedException_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+
+            _mockDatasetImagesService.Setup(service => service.GetDatasetImageById(datasetImageId))
+                .ThrowsAsync(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _controller.Annotate(datasetImageId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JObject.FromObject(jsonResult.Value);
+            Assert.False(json["responseSuccess"]?.Value<bool>());
+            Assert.Equal("Unexpected error", json["responseError"]);
+        }
+        [Fact]
+        public async Task GetImageAnnotations_UnexpectedException_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            _mockImageAnnotationsService
+                .Setup(service => service.GetImageAnnotationsByImageId(datasetImageId))
+                .ThrowsAsync(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _controller.GetImageAnnotations(datasetImageId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JObject.FromObject(jsonResult.Value);
+            Assert.False(json["responseSuccess"]?.Value<bool>());
+            Assert.Equal("An unexpected error occurred: Unexpected error", json["responseError"]);
+        }
+
+
+
+        [Fact]
         public async Task GetImageAnnotations_InvalidDatasetImageId_ReturnsJsonError()
         {
             // Arrange
@@ -219,6 +358,87 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var json = JObject.FromObject(responseObject);
             Assert.True(json["isSuccess"]?.Value<bool>());
             Assert.NotNull(json["data"]);
+        }
+
+        [Fact]
+        public async Task SaveImageAnnotations_BulkUpdateFails_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var userId = "test-user-id";
+            var imageAnnotations = new List<ImageAnnotationDTO>
+    {
+        new ImageAnnotationDTO { Id = null, AnnotationJson = "{}", DatasetImageId = datasetImageId },
+        new ImageAnnotationDTO { Id = Guid.NewGuid(), AnnotationJson = "{}", DatasetImageId = datasetImageId }
+    };
+
+            var editImageAnnotations = new EditImageAnnotationsDTO
+            {
+                DatasetImageId = datasetImageId,
+                ImageAnnotations = imageAnnotations
+            };
+
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
+            var resultDto = new ResultDTO<bool>(false, false, "Bulk update failed", null);
+            _mockImageAnnotationsService.Setup(service => service.BulkUpdateImageAnnotations(It.IsAny<EditImageAnnotationsDTO>()))
+                .ReturnsAsync(resultDto);
+
+            // Act
+            var result = await _controller.SaveImageAnnotations(editImageAnnotations);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JObject.FromObject(jsonResult.Value);
+            Assert.False(json["isSuccess"]?.Value<bool>());
+            Assert.Equal("Bulk update failed", json["errMsg"]);
+        }
+
+        [Fact]
+        public async Task SaveImageAnnotations_UnexpectedException_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var userId = "test-user-id";
+            var imageAnnotations = new List<ImageAnnotationDTO>
+    {
+        new ImageAnnotationDTO { Id = null, AnnotationJson = "{}", DatasetImageId = datasetImageId },
+        new ImageAnnotationDTO { Id = Guid.NewGuid(), AnnotationJson = "{}", DatasetImageId = datasetImageId }
+    };
+
+            var editImageAnnotations = new EditImageAnnotationsDTO
+            {
+                DatasetImageId = datasetImageId,
+                ImageAnnotations = imageAnnotations
+            };
+
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
+            _mockImageAnnotationsService.Setup(service => service.BulkUpdateImageAnnotations(It.IsAny<EditImageAnnotationsDTO>()))
+                .ThrowsAsync(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _controller.SaveImageAnnotations(editImageAnnotations);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var json = JObject.FromObject(jsonResult.Value);
+            Assert.False(json["isSuccess"]?.Value<bool>());
+            Assert.Equal("An unexpected error occurred: Unexpected error", json["errMsg"]);
         }
 
 

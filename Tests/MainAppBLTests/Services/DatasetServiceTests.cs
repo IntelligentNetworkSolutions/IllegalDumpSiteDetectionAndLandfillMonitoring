@@ -83,6 +83,26 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task GetDatasetById_ShouldReturnFailResult_WhenDatasetNotFound()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, null))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(null));
+
+            // Act
+            var result = await _datasetService.GetDatasetById(datasetId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal($"Dataset not found, for id: {datasetId}", result.ErrMsg);
+        }
+
+
+        [Fact]
         public async Task GetDatasetById_ReturnsErrorResult_WhenDatasetNotFound()
         {
             // Arrange
@@ -148,6 +168,44 @@ namespace Tests.MainAppBLTests.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal(datasetDto.Id, result.Data.Id);
+        }
+
+        [Fact]
+        public async Task CreateDataset_ShouldReturnFail_WhenCreatedDatasetIsNull()
+        {
+            // Arrange
+            var datasetDto = new DatasetDTO { Id = Guid.NewGuid() };
+            var dataset = new Dataset { Id = datasetDto.Id };
+
+            _mockMapper.Setup(mapper => mapper.Map<Dataset>(It.IsAny<DatasetDTO>())).Returns(dataset);
+            _mockDatasetRepository.Setup(repo => repo.CreateAndReturnEntity(It.IsAny<Dataset>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(null));
+
+            // Act
+            var result = await _datasetService.CreateDataset(datasetDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to create dataset. Dataset is null.", result.ErrMsg);
+        }
+        [Fact]
+        public async Task CreateDataset_ShouldReturnFail_WhenMappingFails()
+        {
+            // Arrange
+            var datasetDto = new DatasetDTO { Id = Guid.NewGuid() };
+            var dataset = new Dataset { Id = datasetDto.Id };
+
+            _mockMapper.Setup(mapper => mapper.Map<Dataset>(It.IsAny<DatasetDTO>())).Returns(dataset);
+            _mockDatasetRepository.Setup(repo => repo.CreateAndReturnEntity(It.IsAny<Dataset>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
+            _mockMapper.Setup(mapper => mapper.Map<DatasetDTO>(It.IsAny<Dataset>())).Returns((DatasetDTO)null);
+
+            // Act
+            var result = await _datasetService.CreateDataset(datasetDto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Mapping failed", result.ErrMsg);
         }
 
         [Fact]
@@ -284,6 +342,39 @@ namespace Tests.MainAppBLTests.Services
             Assert.Null(result.ErrMsg);
         }
 
+        [Fact]
+        public async Task AddDatasetClassForDataset_ShouldReturnFailure_WhenClassIsNotAddedSuccessfully()
+        {
+            // Arrange
+            var selectedClassId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var userId = "user-id";
+
+            var datasetDb = new Dataset
+            {
+                Id = datasetId,
+                UpdatedById = null,
+                CreatedById = "creator-id"
+            };
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.Create(It.IsAny<Dataset_DatasetClass>(), true, default))
+                .ReturnsAsync(ResultDTO.Fail("Dataset class was not added"));
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(datasetDb));
+
+            // Act
+            var result = await _datasetService.AddDatasetClassForDataset(selectedClassId, datasetId, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(2, result.Data);
+            Assert.Equal("Dataset class was not added", result.ErrMsg);
+        }
+
+
 
         [Fact]
         public async Task AddInheritedParentClasses_ShouldReturnFailResult_WhenParentClassesNotFound()
@@ -419,6 +510,24 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task GetAllPublishedDatasets_ShouldReturnFailResult_WhenNoDatasetFound()
+        {
+            // Arrange
+            _mockDatasetRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<Dataset, bool>>>(), null, false, "CreatedBy,ParentDataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset>>.Ok(null));
+
+            // Act
+            var result = await _datasetService.GetAllPublishedDatasets();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal("Training runs not found", result.ErrMsg);
+        }
+
+
+        [Fact]
         public async Task GetAllPublishedDatasets_ShouldReturnFailResult_WhenNoPublishedDatasetsFound()
         {
             // Arrange
@@ -485,6 +594,29 @@ namespace Tests.MainAppBLTests.Services
             Assert.True(result.IsSuccess);
             Assert.Equal(datasetId, result.Data.Id);
         }
+
+        [Fact]
+        public async Task GetDatasetDTOFullyIncluded_ShouldReturnFailResult_WhenDatasetNotFound()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetByIdIncludeThenAll(
+                    datasetId,
+                    It.IsAny<bool>(),
+                    It.IsAny<(Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]>()))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(null));
+
+            // Act
+            var result = await _datasetService.GetDatasetDTOFullyIncluded(datasetId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Data);
+            Assert.Equal($"Dataset not found, for id: {datasetId}", result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task GetDatasetDTOFullyIncluded_ShouldReturnFail_WhenDatasetNotFound()
@@ -1141,6 +1273,163 @@ namespace Tests.MainAppBLTests.Services
             Assert.True(result.IsSuccess);
             Assert.Equal(1, result.Data);
         }
+        [Fact]
+        public async Task PublishDataset_ShouldReturnFailure_WhenDatasetNotFound()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var userId = "user-id";
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(null));
+
+            // Act
+            var result = await _datasetService.PublishDataset(datasetId, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(3, result.Data);
+            Assert.Equal("Dataset data could not be retrived", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task PublishDataset_ShouldReturnFailure_WhenNoDatasetImages()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var userId = "user-id";
+            var dataset = new Dataset { Id = datasetId };
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(new List<Dataset_DatasetClass>()));
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetImage, bool>>>(), null, false, "ImageAnnotations", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetImage>>.Ok(new List<DatasetImage>()));
+
+            // Act
+            var result = await _datasetService.PublishDataset(datasetId, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(3, result.Data);
+            Assert.Equal("Dataset images could not be retrived", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task PublishDataset_ShouldReturnFailure_WhenNoEnabledImages()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var userId = "user-id";
+            var dataset = new Dataset { Id = datasetId };
+            var datasetImages = new List<DatasetImage> { new DatasetImage { IsEnabled = false }, new DatasetImage { IsEnabled = false } };
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(new List<Dataset_DatasetClass>()));
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetImage, bool>>>(), null, false, "ImageAnnotations", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetImage>>.Ok(datasetImages));
+
+            // Act
+            var result = await _datasetService.PublishDataset(datasetId, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(2, result.Data);
+            Assert.Null(result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task PublishDataset_ShouldReturnFailure_WhenNoInsertedClasses()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var userId = "user-id";
+            var dataset = new Dataset { Id = datasetId };
+            var datasetImages = new List<DatasetImage> { new DatasetImage { IsEnabled = true, Id = Guid.NewGuid() } };
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(new List<Dataset_DatasetClass>()));
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetImage, bool>>>(), null, false, "ImageAnnotations", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetImage>>.Ok(datasetImages));
+
+            _mockImageAnnotationsRepository
+                .Setup(repo => repo.GetAll(null, null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<ImageAnnotation>>.Ok(new List<ImageAnnotation> { new ImageAnnotation { DatasetImageId = datasetImages[0].Id } }));
+
+            // Act
+            var result = await _datasetService.PublishDataset(datasetId, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(3, result.Data);
+            Assert.Equal("No inserted classes were found", result.ErrMsg);
+        }
+
+
+        [Fact]
+        public async Task PublishDataset_ShouldReturnFailure_WhenDataIsInsufficientClassesOrImages()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var userId = "user-id";
+            var dataset = new Dataset { Id = datasetId };
+            var datasetImages = new List<DatasetImage> { new DatasetImage { IsEnabled = true }, new DatasetImage { IsEnabled = true }, new DatasetImage { IsEnabled = true } };
+            var datasetClasses = new List<Dataset_DatasetClass> { new Dataset_DatasetClass { DatasetId = datasetId, DatasetClass = new DatasetClass() }, new Dataset_DatasetClass { DatasetId = datasetId, DatasetClass = new DatasetClass() } };
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(datasetClasses));
+
+            _mockDatasetImagesRepository
+                .Setup(repo => repo.GetAll(It.IsAny<Expression<Func<DatasetImage, bool>>>(), null, false, "ImageAnnotations", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetImage>>.Ok(datasetImages));
+
+            _mockImageAnnotationsRepository
+                .Setup(repo => repo.GetAll(null, null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<ImageAnnotation>>.Ok(new List<ImageAnnotation> { new ImageAnnotation() }));
+
+            _mockAppSettingsAccessor
+                .Setup(accessor => accessor.GetApplicationSettingValueByKey<int>("NumberOfImagesNeededToPublishDataset", 100))
+                .ReturnsAsync(ResultDTO<int>.Ok(50));
+
+            _mockAppSettingsAccessor
+                .Setup(accessor => accessor.GetApplicationSettingValueByKey<int>("NumberOfClassesNeededToPublishDataset", 1))
+                .ReturnsAsync(ResultDTO<int>.Ok(5));
+
+            // Act
+            var result = await _datasetService.PublishDataset(datasetId, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(2, result.Data);
+            Assert.Null(result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task PublishDataset_ReturnsFailResult_WhenDatasetNotFound()
@@ -1394,6 +1683,28 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task SetAnnotationsPerSubclass_ShouldReturnFailure_WhenDatasetIsNull()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var userId = "test-user-id";
+            var annotationsPerSubclass = true;
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset>.Ok(null));
+
+            // Act
+            var result = await _datasetService.SetAnnotationsPerSubclass(datasetId, annotationsPerSubclass, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(3, result.Data);
+            Assert.Equal("Dataset data could not be retrived", result.ErrMsg);
+        }
+
+
+        [Fact]
         public async Task SetAnnotationsPerSubclass_ShouldReturnFailureResult_WhenDatasetNotFound()
         {
             // Arrange
@@ -1539,6 +1850,53 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(result.IsSuccess);
             Assert.Equal("Object not found", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task DeleteDatasetClassForDataset_ShouldReturnFailure_WhenDatasetClassDataIsNull()
+        {
+            // Arrange
+            var selectedClassId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var userId = "test-user-id";
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetFirstOrDefault(It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(), false, null))
+                .ReturnsAsync(ResultDTO<Dataset_DatasetClass?>.Ok(null));
+
+            // Act
+            var result = await _datasetService.DeleteDatasetClassForDataset(selectedClassId, datasetId, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(2, result.Data);
+            Assert.Equal("Unable to retrieve data for the specified dataset class.", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClassForDataset_ShouldReturnFailure_WhenDatasetDataIsNull()
+        {
+            // Arrange
+            var selectedClassId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var userId = "test-user-id";
+
+            _mockDatasetDatasetClassRepository
+                .Setup(repo => repo.GetFirstOrDefault(It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(), false, null))
+                .ReturnsAsync(ResultDTO<Dataset_DatasetClass?>.Ok(new Dataset_DatasetClass { DatasetId = datasetId, DatasetClassId = selectedClassId }));
+
+            _mockDatasetRepository
+                .Setup(repo => repo.GetById(datasetId, It.IsAny<bool>(), "CreatedBy,UpdatedBy,ParentDataset"))
+                .ReturnsAsync(ResultDTO<Dataset?>.Ok(null));
+
+            // Act
+            var result = await _datasetService.DeleteDatasetClassForDataset(selectedClassId, datasetId, userId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(2, result.Data);
+            Assert.Equal("Unable to retrieve data for the specified dataset class.", result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task DeleteDatasetClassForDataset_ShouldReturnFailure_WhenDatasetClassDeletionFails()
@@ -2071,87 +2429,6 @@ namespace Tests.MainAppBLTests.Services
             Assert.False(result.IsSuccess);
             Assert.Equal("Error getting Dataset", result.ErrMsg);
         }
-
-        //[Fact]
-        //public async Task ExportDatasetAsCOCOFormat_ShouldReturnSuccess_WhenExportedWithoutSplit()
-        //{
-        //    // Arrange
-        //    var datasetId = Guid.NewGuid();
-        //    var dataset = new Dataset
-        //    {
-        //        Id = datasetId,
-        //        DatasetImages =
-        //        {
-        //            new DatasetImage { Id = Guid.NewGuid(), DatasetId = datasetId ,ImageAnnotations = new List<ImageAnnotation> { new ImageAnnotation { Id = Guid.NewGuid() } } },
-        //            new DatasetImage { Id = Guid.NewGuid(), DatasetId = datasetId ,ImageAnnotations = new List<ImageAnnotation> { new ImageAnnotation { Id = Guid.NewGuid() } } },
-        //        }
-        //    };
-
-        //    _mockDatasetRepository
-        //        .Setup(repo => repo.GetByIdIncludeThenAll(datasetId, false, It.IsAny<(Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]>()))
-        //        .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
-
-        //    // Act
-        //    var result = await _datasetService.ExportDatasetAsCOCOFormat(datasetId, "option", "location", false);
-
-        //    // Assert
-        //    Assert.True(result.IsSuccess);
-        //    Assert.Equal("Exported path", result.Data);
-        //}
-
-        //[Fact]
-        //public async Task ExportDatasetAsCOCOFormat_ShouldReturnSuccess_WhenExportedWithSplit()
-        //{
-        //    // Arrange
-        //    var datasetId = Guid.NewGuid();
-        //    var dataset = new Dataset
-        //    {
-        //        Id = datasetId,
-        //        DatasetImages =
-        //        {
-        //            new DatasetImage { Id = Guid.NewGuid(), DatasetId = datasetId ,ImageAnnotations = new List<ImageAnnotation> { new ImageAnnotation { Id = Guid.NewGuid() } } },
-        //            new DatasetImage { Id = Guid.NewGuid(), DatasetId = datasetId ,ImageAnnotations = new List<ImageAnnotation> { new ImageAnnotation { Id = Guid.NewGuid() } } }
-        //        }
-        //    };
-
-        //    _mockDatasetRepository
-        //        .Setup(repo => repo.GetByIdIncludeThenAll(datasetId, false, It.IsAny<(Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]>()))
-        //        .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
-
-        //    // Act
-        //    var result = await _datasetService.ExportDatasetAsCOCOFormat(datasetId, "option", "location", true);
-
-        //    // Assert
-        //    Assert.True(result.IsSuccess);
-        //    Assert.Equal("Exported split path", result.Data);
-        //}
-
-        //[Fact]
-        //public async Task ExportDatasetAsCOCOFormat_ShouldReturnFailure_WhenConversionFails()
-        //{
-        //    // Arrange
-        //    var datasetId = Guid.NewGuid();
-        //    var dataset = new Dataset
-        //    {
-        //        Id = datasetId,
-        //        DatasetImages =
-        //        {
-        //            new DatasetImage { Id = Guid.NewGuid(), DatasetId = datasetId ,ImageAnnotations = new List<ImageAnnotation> { new ImageAnnotation { Id = Guid.NewGuid() } } },
-        //            new DatasetImage { Id = Guid.NewGuid(), DatasetId = datasetId ,ImageAnnotations = new List<ImageAnnotation> { new ImageAnnotation { Id = Guid.NewGuid() } } },
-        //        }
-        //    };
-
-        //    _mockDatasetRepository
-        //        .Setup(repo => repo.GetByIdIncludeThenAll(datasetId, false, It.IsAny<(Expression<Func<Dataset, object>>, Expression<Func<object, object>>[]?)[]>()))
-        //        .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
-
-        //    // Act
-        //    var result = await _datasetService.ExportDatasetAsCOCOFormat(datasetId, "option", "location", false);
-
-        //    // Assert
-        //    Assert.False(result.IsSuccess);
-        //    Assert.Equal("Conversion failed", result.ErrMsg);
-        //}
 
         [Fact]
         public async Task DeleteAllFilesInDatasetDirectoryAtWwwRoot_ShouldReturnFail_WhenPathIsNullOrEmpty()

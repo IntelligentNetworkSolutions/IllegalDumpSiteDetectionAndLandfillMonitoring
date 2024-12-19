@@ -187,13 +187,12 @@
                     <div class="card-body">
                         <h5>Class</h5>
                         <div class="form-group" id="annotatorToolbarClassesList">
-                            @foreach (var datasetClass in Model.DatasetClasses)
-                            {
-                                <div class="custom-control custom-radio">
-                                    <input class="custom-control-input custom-control-input-dark" type="radio" id="input-@datasetClass.Id" name="datasetClasses" value="@datasetClass.Id">
-                                    <label for="input-@datasetClass.Id" class="custom-control-label">@datasetClass.ClassName</label>
-                                </div>
-                            }
+                                <select class="form-control custom-select custom-select-dark" id="datasetClassSelect" name="datasetClasses">
+                                    @foreach (var datasetClass in Model.DatasetClasses)
+                                    {
+                                        <option value="@datasetClass.Id">@datasetClass.ClassName</option>
+                                    }
+                                </select>
                         </div>
                         <h5>@DbResHtml.T("Status", "Resources")</h5>
                         <div class="form-group" id="annotatorToolbarStatus">
@@ -282,11 +281,19 @@
 
             // Map views always need a projection.  Here we just want to map image coordinates directly to map coordinates, so we create a projection that uses the image extent in pixels.
             // the image is also moved on the Y axis by 1280 towards the bottom so it is aligned with the positive side of the inverted coordinate system
-            let imageDimensions = await getImageDimensions('@Url.Content("~/DatasetImages/" + Model.Dataset.Id + "/" + Model.DatasetImage.Id + ".jpg")');
+            // let imageDimensions = await getImageDimensions('@Url.Content("~/DatasetImages/" + Model.Dataset.Id + "/" + Model.DatasetImage.Id + ".jpg")');
             // const extent = [0, -1280, 1280, 0];
             // const worldExtent = [0, -1280, 1280, 0];
-            const extent = [0, -1 * imageDimensions.height, imageDimensions.width, 0];
-            const worldExtent = [0, -1 * imageDimensions.height, imageDimensions.width, 0];
+
+            const imageWidth = @(Model.DatasetImage.Width > 0 ? Model.DatasetImage.Width : 1280);
+            const imageHeight = @(Model.DatasetImage.Height > 0 ? Model.DatasetImage.Height : 1280);
+            const extent = [0, -1 * imageHeight, imageWidth, 0];
+            const worldExtent = [0, -1 * imageHeight, imageWidth, 0];
+
+            console.log(extent);
+            console.log(worldExtent);
+            
+
 
             const imageProjection = new ol.proj.Projection({
                 code: 'static-image-projection', units: 'pixels',
@@ -425,51 +432,53 @@
                 var datasetClassId = feature.get("datasetClassId");
                 var isEnabled = feature.get("isEnabled");
 
-                $('#annotatorToolbarClassesList input').prop('disabled', false);
-                $(`#annotatorToolbarClassesList input[value='${datasetClassId}']`).prop('checked', true);
+            $('#datasetClassSelect').prop('disabled', false);
+            $('#datasetClassSelect').val(datasetClassId);
 
-                $('#annotatorToolbarStatus input').prop('disabled', false);
-                $(`#annotatorToolbarStatus input[value='${isEnabled}']`).prop('checked', true);
-                $('#btnDeleteAnnotation').removeClass('disabled');
-            }
+            $('#annotatorToolbarStatus input').prop('disabled', false);
+            $(`#annotatorToolbarStatus input[value='${isEnabled}']`).prop('checked', true);
 
-            function featureDeselected() {
-                $('#annotatorToolbarClassesList input').prop('checked', false);
-                $('#annotatorToolbarClassesList input').prop('disabled', true);
+            $('#btnDeleteAnnotation').removeClass('disabled');
+        }
 
-                $('#annotatorToolbarStatus input').prop('checked', false);
-                $('#annotatorToolbarStatus input').prop('disabled', true);
+        function featureDeselected() {
+            $('#datasetClassSelect').val("").prop('disabled', true);
+
+            $('#annotatorToolbarStatus input').prop('checked', false).prop('disabled', true);
 
                 $('#btnDeleteAnnotation').addClass('disabled');
             }
 
-            function changeFeatureClass(obj) {
-                if (annotatorVars.selectedFeature) {
-                    annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
-                    annotatorVars.redoList = [];
-                    annotatorVars.hasUnsavedChanges = true;
 
-                    var classId = $(obj.target).attr("value");
-                    annotatorVars.selectedFeature.set("datasetClassId", classId);
-                    annotatorVars.lastUsedClass = classId;
-                }
+        function changeFeatureClass(obj) {
+            if (annotatorVars.selectedFeature) {
+                annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+                annotatorVars.redoList = [];
+                annotatorVars.hasUnsavedChanges = true;
+
+                var classId = $(obj.target).val();
+                annotatorVars.selectedFeature.set("datasetClassId", classId);
+                annotatorVars.lastUsedClass = classId;
             }
+        }
 
-            function changeFeatureIsEnabled(obj) {
-                if (annotatorVars.selectedFeature) {
-                    annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
-                    annotatorVars.redoList = [];
-                    annotatorVars.hasUnsavedChanges = true;
+
+        function changeFeatureIsEnabled(obj) {
+            if (annotatorVars.selectedFeature) {
+
+                annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
+                annotatorVars.redoList = [];
+                annotatorVars.hasUnsavedChanges = true;
 
                     var isEnabled = $(obj.target).attr("value") == 'true';
                     annotatorVars.selectedFeature.set("isEnabled", isEnabled);
                 }
             }
 
-            $("#annotatorToolbarClassesList input").click(changeFeatureClass);
-            $("#annotatorToolbarStatus input").click(changeFeatureIsEnabled);
-            $("#btnDeleteAnnotation").click(deleteSelectedFeature);
-            $("#saveToolBtn").click(saveAnnotations);
+        $("#datasetClassSelect").change(changeFeatureClass);
+        $("#annotatorToolbarStatus input").click(changeFeatureIsEnabled);
+        $("#btnDeleteAnnotation").click(deleteSelectedFeature);
+        $("#saveToolBtn").click(saveAnnotations);
 
             function AddImageAnnotationsToAnnotator(imageAnnotations) {
                 var jsonReader = new ol.format.GeoJSON();
@@ -524,24 +533,26 @@
                     }
                 });
 
-                drawBboxInteraction.on('drawend', function (evt) {
-                    evt.feature.set("isEnabled", true);
-                    let datasetClassId = "";
-                    if (annotatorVars.lastUsedClass) {
-                        datasetClassId = annotatorVars.lastUsedClass;
-                    }
-                    else {
-                        datasetClassId = $("#annotatorToolbarClassesList input").first().attr("value");
-                    }
-                    evt.feature.set("datasetClassId", datasetClassId);
+            drawBboxInteraction.on('drawend', function (evt) {
+                evt.feature.set("isEnabled", true);
+
+                let datasetClassId = "";
+                if (annotatorVars.lastUsedClass) {
+                    datasetClassId = annotatorVars.lastUsedClass;
+                } else {
+                    datasetClassId = $("#datasetClassSelect").val();  
+                }
+
+                evt.feature.set("datasetClassId", datasetClassId);
 
                     annotatorVars.undoList.push(getAnnotationsGeoJsonFromLayer());
                     annotatorVars.redoList = [];
                     annotatorVars.hasUnsavedChanges = true;
                 });
 
-                annotator.addInteraction(drawBboxInteraction);
-            }
+
+            annotator.addInteraction(drawBboxInteraction);
+        }
 
             // global so we can remove it later
             let selectInteraction;
@@ -662,45 +673,52 @@
                 featureDeselected();
             }
 
-            function saveAnnotations() {
-                let geoJSONFormat = new ol.format.GeoJSON();
-                let annotationsList = [];
-                annotatorVars.annotationsVectorSource.getFeatures().forEach(function (feature) {
-                    let annotation = {
-                        datasetClassId: feature.get("datasetClassId"),
-                        id: feature.get("id"),
-                        isEnabled: feature.get("isEnabled"),
-                        annotationJson: geoJSONFormat.writeFeature(feature, { dataProjection: annotationsProjection, featureProjection: imageProjection })
-                    };
-                    annotationsList.push(annotation);
-                });
+        function saveAnnotations() {
 
-                let editImageAnnotations = {
-                    datasetImageId: "@Model.DatasetImage.Id",
-                    imageAnnotations: annotationsList
-                }
+            let geoJSONFormat = new ol.format.GeoJSON();
+            let annotationsList = [];
+            annotatorVars.annotationsVectorSource.getFeatures().forEach(function (feature) {
+                let annotation = {
+                    datasetClassId: feature.get("datasetClassId"),
+                    id: feature.get("id"),
+                    isEnabled: feature.get("isEnabled"),
+                    annotationJson: geoJSONFormat.writeFeature(feature, { dataProjection: annotationsProjection, featureProjection: imageProjection })
+                };
+                annotationsList.push(annotation);
+            });
 
-                $.ajax({
-                    type: "POST",
-                    url: "@Url.Action("SaveImageAnnotations", "Annotations", new { Area = "IntranetPortal" })",
-                    data: { editImageAnnotations: editImageAnnotations },
-                    success: function (data) {
-                        if (data.isSuccess) {
-                            annotatorVars.hasUnsavedChanges = false;
-                            Toast.fire({ icon: 'success', title: `@DbResHtml.T("Annotations Saved!", "Resources")` })
-                        }
-                        else {
-                            Swal.fire({ icon: 'error', text: `@DbResHtml.T("Something went wrong!", "Resources") - ${data.errMsg}` })
-                        }
-                    },
-                    error: function (req, status, error) {
-                        Swal.fire({
-                            icon: 'error',
-                            text: `@DbResHtml.T("Something went wrong!", "Resources") - ${req.status}`
+            let editImageAnnotations = {
+                datasetImageId: "@Model.DatasetImage.Id",
+                imageAnnotations: annotationsList
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("SaveImageAnnotations", "Annotations", new { Area = "IntranetPortal" })",
+                data: { editImageAnnotations: editImageAnnotations },
+                success: function (data) {
+                    if (data.isSuccess) {
+                        annotatorVars.hasUnsavedChanges = false;
+                        Toast.fire({
+                            icon: 'success',
+                            title: `@DbResHtml.T("Annotations Saved!", "Resources")`
                         })
                     }
-                });
-            }
+                    else {
+                        Swal.fire({
+                            icon: 'error',
+                            text: `@DbResHtml.T("Something went wrong!", "Resources") - ${data.errMsg}`
+                        })
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        icon: 'error',
+                        text: `@DbResHtml.T("Something went wrong!", "Resources") - ${req.status}`
+                    })
+                }
+            });
+        }
 
             // Register Annotator keyboard shortcuts
             function pushbtn(event) {

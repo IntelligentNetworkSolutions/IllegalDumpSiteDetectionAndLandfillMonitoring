@@ -11,6 +11,8 @@ namespace DAL.EnitityConfigurations
             builder.Property(di => di.FileName).IsRequired();
             builder.Property(di => di.ImagePath).IsRequired();
             builder.Property(di => di.IsEnabled).HasDefaultValue(false);
+            builder.Property(di => di.Width).IsRequired();
+            builder.Property(di => di.Height).IsRequired();
 
             builder.HasOne(di => di.Dataset)
                 .WithMany(ds => ds.DatasetImages)
