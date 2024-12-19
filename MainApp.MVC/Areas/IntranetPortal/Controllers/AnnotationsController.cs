@@ -52,12 +52,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 if (datasetImageId == Guid.Empty)
                     return Json(new { responseSuccess = false, responseError = "Invalid dataset image ID." });
 
-                ResultDTO<DatasetImageDTO> datasetImage = 
+                ResultDTO<DatasetImageDTO> datasetImage =
                     await _datasetImagesService.GetDatasetImageById(datasetImageId);
                 if (datasetImage.IsSuccess == false && datasetImage.HandleError())
                     return Json(new { responseSuccess = false, responseError = "An error occurred. Could not retrieve dataset image." });
 
-                ResultDTO<List<DatasetImageDTO>> datasetAllImagesResult = 
+                ResultDTO<List<DatasetImageDTO>> datasetAllImagesResult =
                     await _datasetImagesService.GetImagesForDataset((Guid)datasetImage.Data.DatasetId);
                 if (datasetAllImagesResult.IsSuccess == false && datasetAllImagesResult.HandleError())
                     return Json(new { responseSuccess = false, responseError = "An error occurred. Could not retrieve dataset images." });
@@ -70,15 +70,15 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 if (datasetClasses.IsSuccess == false && datasetClasses.HandleError())
                     return Json(new { responseSuccess = false, responseError = "An error occurred. Could not retrieve dataset classes." });
 
-                int currentImagePositionInDataset = 
+                int currentImagePositionInDataset =
                     datasetAllImagesResult.Data.IndexOf(datasetAllImagesResult.Data.First(x => x.Id == datasetImage.Data.Id));
 
-                DatasetImageDTO nextImage = 
+                DatasetImageDTO nextImage =
                     (currentImagePositionInDataset + 1) < datasetAllImagesResult.Data.Count
                         ? datasetAllImagesResult.Data[currentImagePositionInDataset + 1]
                         : datasetAllImagesResult.Data.First();
 
-                DatasetImageDTO previousImage = 
+                DatasetImageDTO previousImage =
                     (currentImagePositionInDataset > 0)
                         ? datasetAllImagesResult.Data[currentImagePositionInDataset - 1]
                         : datasetAllImagesResult.Data.Last();
@@ -93,11 +93,6 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     PreviousImage = previousImage,
                     TotalImagesCount = datasetAllImagesResult.Data.Count
                 };
-
-                bool isAjaxRequest = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
-
-                if (isAjaxRequest)
-                    return Json(new { responseSuccess = true, model });
 
                 return View(model);
             }

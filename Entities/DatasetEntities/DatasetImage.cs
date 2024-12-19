@@ -9,6 +9,9 @@ namespace Entities.DatasetEntities
         public string ImagePath { get; set; }
         public string? ThumbnailPath { get; set; }
 
+        public int Width { get; set; }
+        public int Height { get; set; }
+
         public bool IsEnabled { get; set; } = false;
 
         public Guid? DatasetId { get; set; }
