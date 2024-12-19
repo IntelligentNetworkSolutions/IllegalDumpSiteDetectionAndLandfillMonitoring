@@ -1087,7 +1087,7 @@
             const exportOption = document.getElementById('exportOptionDropdown').value;
             const asSplit = document.getElementById('toggleExportStatus').checked;
 
-            $('#exportModal').modal('hide');
+            $('#exportModal').modal('hide');  // Hide modal immediately
 
             Swal.fire({
                 icon: 'info',
@@ -1128,9 +1128,14 @@
                         icon: 'success',
                         confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
                     });
+
+                    // Call the reset function after success
+                    resetImageStatusLabels();  // Reset the form status here
                 },
                 error: function (req, status, error) {
                     Swal.close();
+            
+                    resetImageStatusLabels();  // Ensure this is called to reset state if there's an error
 
                     Swal.fire({
                         text: 'An error occurred while processing your request.',
@@ -1140,6 +1145,8 @@
                 }
             });
         }
+
+
 
         function updateImageStatusLabels() {
             const toggleStatus = document.getElementById('toggleExportStatus');
@@ -1158,10 +1165,28 @@
                 toggleLabel.classList.remove('text-success');
             }
         }
+        function resetImageStatusLabels() {
+            const toggleStatus = document.getElementById('toggleExportStatus');
+            const enabledLabel = document.getElementById('enabledExportLabel');
+            const disabledLabel = document.getElementById('disabledExportLabel');
+            const toggleLabel = document.getElementById('toggleExportLabel');
+            const exportOptionDropdown = document.getElementById('exportOptionDropdown');
+
+            toggleStatus.checked = false;
+
+            enabledLabel.style.display = 'none';
+            disabledLabel.style.display = 'inline';
+            toggleLabel.classList.remove('text-success', 'text-danger');
+
+            exportOptionDropdown.value = 'EnabledAndAnnotated';
+        }
+
+
 
         // On Document Ready
         $(document).ready(function () {
             updateImageStatusLabels();
+            resetImageStatusLabels()
         });
 
         function enableAllImagesConfirmed(datasetId) {

@@ -823,8 +823,8 @@ namespace MainApp.BL.Services.DatasetServices
                     {
                         Id = (i < trainCount) ? trainImageId++ : (i < trainCount + valCount) ? valImageId++ : testImageId++,
                         FileName = fullImageName,
-                        Width = 1280,
-                        Height = 1280,
+                        Width = image.Width,
+                        Height = image.Height,
                         DateCaptured = DateTime.Now.ToString("yyyy-MM-dd"),
                         License = 1
                     };
@@ -926,8 +926,8 @@ namespace MainApp.BL.Services.DatasetServices
                                 {
                                     Id = x.IdInt,
                                     FileName = x.Id.ToString() + ".jpg",
-                                    Width = 1280,
-                                    Height = 1280
+                                    Width = x.Width,
+                                    Height = x.Height
                                 }).ToList(),
                     Annotations = datasetExtClassesImagesAnnotations.ImageAnnotations
                                 .Select(x => new CocoAnnotationDTO
@@ -1125,6 +1125,8 @@ namespace MainApp.BL.Services.DatasetServices
                         CreatedOn = DateTime.UtcNow,
                         UpdatedById = userId,
                         UpdatedOn = DateTime.UtcNow,
+                        Width = img.Width,
+                        Height = img.Height
                     };
 
                     cocoImagesToDatasetImagesDict.Add(img.Id, datasetImage.Id);

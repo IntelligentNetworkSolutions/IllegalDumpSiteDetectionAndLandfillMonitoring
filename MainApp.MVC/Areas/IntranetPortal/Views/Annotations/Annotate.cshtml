@@ -281,11 +281,19 @@
 
             // Map views always need a projection.  Here we just want to map image coordinates directly to map coordinates, so we create a projection that uses the image extent in pixels.
             // the image is also moved on the Y axis by 1280 towards the bottom so it is aligned with the positive side of the inverted coordinate system
-            let imageDimensions = await getImageDimensions('@Url.Content("~/DatasetImages/" + Model.Dataset.Id + "/" + Model.DatasetImage.Id + ".jpg")');
+            // let imageDimensions = await getImageDimensions('@Url.Content("~/DatasetImages/" + Model.Dataset.Id + "/" + Model.DatasetImage.Id + ".jpg")');
             // const extent = [0, -1280, 1280, 0];
             // const worldExtent = [0, -1280, 1280, 0];
-            const extent = [0, -1 * imageDimensions.height, imageDimensions.width, 0];
-            const worldExtent = [0, -1 * imageDimensions.height, imageDimensions.width, 0];
+
+            const imageWidth = @(Model.DatasetImage.Width > 0 ? Model.DatasetImage.Width : 1280);
+            const imageHeight = @(Model.DatasetImage.Height > 0 ? Model.DatasetImage.Height : 1280);
+            const extent = [0, -1 * imageHeight, imageWidth, 0];
+            const worldExtent = [0, -1 * imageHeight, imageWidth, 0];
+
+            console.log(extent);
+            console.log(worldExtent);
+            
+
 
             const imageProjection = new ol.proj.Projection({
                 code: 'static-image-projection', units: 'pixels',

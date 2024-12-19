@@ -176,6 +176,17 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data, datasetDb.Data.Id.ToString());
                 if (!Directory.Exists(uploadsFolder))
                     Directory.CreateDirectory(uploadsFolder);
+                // Extract image width and height
+                int imageWidth = 0;
+                int imageHeight = 0;
+                using (var ms = new MemoryStream(Convert.FromBase64String(imageCropped.Split(',')[1])))
+                {
+                    using (var image = new MagickImage(ms))
+                    {
+                        imageWidth = image.Width;
+                        imageHeight = image.Height;
+                    }
+                }
 
                 DatasetImageDTO dto = new()
                 {
@@ -187,6 +198,8 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     CreatedById = userId,
                     ImagePath = Path.Combine(datasetImagesFolder.Data, datasetDb.Data.Id.ToString()),
                     ThumbnailPath = Path.Combine(datasetThumbnailsFolder.Data, datasetDb.Data.Id.ToString()),
+                    Width = imageWidth,
+                    Height = imageHeight
                 };
 
                 ResultDTO<Guid> resultImageAdd = await _datasetImagesService.AddDatasetImage(dto);
