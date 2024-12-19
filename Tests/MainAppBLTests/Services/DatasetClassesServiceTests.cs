@@ -257,6 +257,39 @@ namespace Tests.MainAppBLTests.Services
         }
 
         [Fact]
+        public async Task GetAllDatasetClassesByDatasetId_ReturnsFalseResult_WhenDatasetRepositoryFails()
+        {
+            // Arange
+            var datasetsRepositoryMock = new Mock<IDatasetsRepository>();
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
+            var mapperMock = new Mock<IMapper>();
+            var datasetId = Guid.NewGuid();
+
+            datasetDatasetClassRepositoryMock.Setup(repo => repo.GetAll(
+            It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(),
+            It.IsAny<Func<IQueryable<Dataset_DatasetClass>, IOrderedQueryable<Dataset_DatasetClass>>>(),
+            It.IsAny<bool>(),
+            It.IsAny<string>(),
+            It.IsAny<int?>()
+            )).ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Fail("Failed to retrive dataset"));
+
+            var service = new DatasetClassesService(
+            datasetsRepositoryMock.Object,
+            datasetClassesRepositoryMock.Object,
+            datasetDatasetClassRepositoryMock.Object,
+            mapperMock.Object
+            );
+
+            // Act
+            var result = await service.GetAllDatasetClassesByDatasetId(datasetId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrive dataset", result.ErrMsg);
+        }
+
+        [Fact]
         public async Task GetDatasetClassById_Returns_Correct_DatasetClassDTO()
         {
             // Arrange
@@ -287,6 +320,61 @@ namespace Tests.MainAppBLTests.Services
             Assert.NotNull(result);
             Assert.Equal(expectedDto.Id, result.Data.Id);
             Assert.Equal(expectedDto.ClassName, result.Data.ClassName);
+        }
+        [Fact]
+        public async Task GetDatasetClassById_ReturnsFailResult_WhenRepositoryFails()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+
+            // Mocking repositories and mapper
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<string>()))
+                                         .ReturnsAsync(ResultDTO<DatasetClass>.Fail("Dataset not found"));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: null,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.GetDatasetClassById(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset not found", result.ErrMsg);
+        }
+        [Fact]
+        public async Task GetDatasetClassById_ReturnsFailResult_WhenMappingFails()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var datasetClass = new DatasetClass { };
+
+            // Mocking repositories and mapper
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<string>()))
+                                         .ReturnsAsync(ResultDTO<DatasetClass>.Ok(datasetClass));
+
+            var mapperMock = new Mock<IMapper>();
+            mapperMock.Setup(mapper => mapper.Map<DatasetClassDTO>(datasetClass))
+                      .Returns((DatasetClassDTO)null);
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: null,
+                mapper: mapperMock.Object
+            );
+
+            // Act
+            var result = await service.GetDatasetClassById(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to map dataset class", result.ErrMsg);
         }
 
         [Fact]
@@ -370,6 +458,44 @@ namespace Tests.MainAppBLTests.Services
 
             // Assert
             Assert.True(result.IsSuccess);
+        }
+
+        [Fact]
+        public async Task AddDatasetClass_ReturnsFailResult_WhenMappingFails()
+        {
+            // Arrange
+            var dto = new CreateDatasetClassDTO
+            {
+                ClassName = "NewClass"
+            };
+
+            var newClass = new DatasetClass
+            {
+                Id = Guid.NewGuid(),
+                ClassName = "NewClass"
+            };
+
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.Create(It.IsAny<DatasetClass>(), It.IsAny<bool>(), default))
+                                         .ReturnsAsync(ResultDTO.Ok());
+
+            var mapperMock = new Mock<IMapper>();
+            mapperMock.Setup(mapper => mapper.Map<DatasetClass>(dto))
+                      .Returns((DatasetClass)null);
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: null,
+                mapper: mapperMock.Object
+            );
+
+            // Act
+            var result = await service.AddDatasetClass(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to map the new dataset class", result.ErrMsg);
         }
 
         [Fact]
@@ -627,6 +753,183 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal(2, result.Data);
             Assert.Equal("This dataset class has subclasses and cannot be set as a subclass too!", result.ErrMsg);
         }
+        [Fact]
+        public async Task EditDatasetClass_Returns_Error_When_DatasetClass_NotFound()
+        {
+            // Arrange
+            var dto = new EditDatasetClassDTO
+            {
+                Id = Guid.NewGuid(),
+                ClassName = "EditedClass"
+            };
+
+            var mockDatasetClassesRepository = new Mock<IDatasetClassesRepository>();
+            mockDatasetClassesRepository.Setup(repo => repo.GetById(dto.Id, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Fail("Not found"));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: mockDatasetClassesRepository.Object,
+                datasetDatasetClassRepository: null,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.EditDatasetClass(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(0, result.Data);
+            Assert.Equal("Dataset class not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetClass_Returns_Error_When_FailedToRetrieveDatasetClasses()
+        {
+            // Arrange
+            var dto = new EditDatasetClassDTO
+            {
+                Id = Guid.NewGuid(),
+                ClassName = "EditedClass"
+            };
+
+            var mockDatasetClassesRepository = new Mock<IDatasetClassesRepository>();
+            mockDatasetClassesRepository.Setup(repo => repo.GetById(dto.Id, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Ok(new DatasetClass()));
+            mockDatasetClassesRepository.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Fail("Failed to retrieve"));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: mockDatasetClassesRepository.Object,
+                datasetDatasetClassRepository: null,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.EditDatasetClass(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(0, result.Data);
+            Assert.Equal("Failed to retrieve dataset classes", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetClass_Returns_Error_When_FailedToRetrieveDatasetDatasetClassMappings()
+        {
+            // Arrange
+            var dto = new EditDatasetClassDTO
+            {
+                Id = Guid.NewGuid(),
+                ClassName = "EditedClass"
+            };
+
+            var mockDatasetClassesRepository = new Mock<IDatasetClassesRepository>();
+            mockDatasetClassesRepository.Setup(repo => repo.GetById(dto.Id, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Ok(new DatasetClass()));
+            mockDatasetClassesRepository.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(new List<DatasetClass>()));
+
+            var mockDatasetDatasetClassRepository = new Mock<IDataset_DatasetClassRepository>();
+            mockDatasetDatasetClassRepository.Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Fail("Failed to retrieve"));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: mockDatasetClassesRepository.Object,
+                datasetDatasetClassRepository: mockDatasetDatasetClassRepository.Object,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.EditDatasetClass(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(0, result.Data);
+            Assert.Equal("Failed to retrieve dataset-dataset class mappings", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetClass_Returns_Error_When_ParentClassNotFound()
+        {
+            // Arrange
+            var dto = new EditDatasetClassDTO
+            {
+                Id = Guid.NewGuid(),
+                ClassName = "EditedClass",
+                ParentClassId = Guid.NewGuid()
+            };
+
+            var mockDatasetClassesRepository = new Mock<IDatasetClassesRepository>();
+            mockDatasetClassesRepository.Setup(repo => repo.GetById(dto.Id, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Ok(new DatasetClass()));
+            mockDatasetClassesRepository.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(new List<DatasetClass>()));
+            mockDatasetClassesRepository.Setup(repo => repo.GetById(dto.ParentClassId.Value, false, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Fail("Not found"));
+
+            var mockDatasetDatasetClassRepository = new Mock<IDataset_DatasetClassRepository>();
+            mockDatasetDatasetClassRepository.Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(new List<Dataset_DatasetClass>()));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: mockDatasetClassesRepository.Object,
+                datasetDatasetClassRepository: mockDatasetDatasetClassRepository.Object,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.EditDatasetClass(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(0, result.Data);
+            Assert.Equal("Parent class not found", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task EditDatasetClass_Returns_Error_When_FailedToMapDatasetClass()
+        {
+            // Arrange
+            var dto = new EditDatasetClassDTO
+            {
+                Id = Guid.NewGuid(),
+                ClassName = "EditedClass"
+            };
+
+            var mockDatasetClassesRepository = new Mock<IDatasetClassesRepository>();
+            mockDatasetClassesRepository.Setup(repo => repo.GetById(dto.Id, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Ok(new DatasetClass()));
+            mockDatasetClassesRepository.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(new List<DatasetClass>()));
+
+            var mockDatasetDatasetClassRepository = new Mock<IDataset_DatasetClassRepository>();
+            mockDatasetDatasetClassRepository.Setup(repo => repo.GetAll(null, null, false, "DatasetClass,Dataset", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(new List<Dataset_DatasetClass>()));
+
+            var mockMapper = new Mock<IMapper>();
+            mockMapper.Setup(m => m.Map<EditDatasetClassDTO, DatasetClass>(dto, It.IsAny<DatasetClass>()))
+                .Returns((DatasetClass)null);
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: mockDatasetClassesRepository.Object,
+                datasetDatasetClassRepository: mockDatasetDatasetClassRepository.Object,
+                mapper: mockMapper.Object
+            );
+
+            // Act
+            var result = await service.EditDatasetClass(dto);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(0, result.Data);
+            Assert.Equal("Failed to map dataset class", result.ErrMsg);
+        }
+
 
         [Fact]
         public async Task EditDatasetClass_Should_Return_Error_When_Child_Classes_Exist_And_ParentClassId_Is_Set()
@@ -1060,6 +1363,125 @@ namespace Tests.MainAppBLTests.Services
             Assert.Equal(4, result.Data); // Assuming 4 is the error code for deletion failure
             Assert.Equal("Delete failed", result.ErrMsg);
         }
+
+        [Fact]
+        public async Task DeleteDatasetClass_ReturnsError_WhenDatasetClassNotFound()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(classId, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Fail("Not found"));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: null,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Dataset class not found.", result.ErrMsg);
+            Assert.Equal(0, result.Data);
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClass_ReturnsError_WhenFailedToRetrieveDatasetClasses()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(classId, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Ok(new DatasetClass()));
+            datasetClassesRepositoryMock.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Fail("Failed to retrieve"));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: null,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve dataset classes.", result.ErrMsg);
+            Assert.Equal(0, result.Data);
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClass_ReturnsError_WhenFailedToRetrieveDatasetDatasetClassRelationships()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(classId, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Ok(new DatasetClass()));
+            datasetClassesRepositoryMock.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(new List<DatasetClass>()));
+
+            var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
+            datasetDatasetClassRepositoryMock.Setup(repo => repo.GetAll(null, null, false, It.IsAny<string>(), null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Fail("Failed to retrieve"));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: datasetDatasetClassRepositoryMock.Object,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to retrieve dataset-dataset class relationships.", result.ErrMsg);
+            Assert.Equal(0, result.Data);
+        }
+
+        [Fact]
+        public async Task DeleteDatasetClass_ReturnsError_WhenFailedToDeleteAssociatedRelationships()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var datasetClassesRepositoryMock = new Mock<IDatasetClassesRepository>();
+            datasetClassesRepositoryMock.Setup(repo => repo.GetById(classId, true, "CreatedBy,ParentClass"))
+                .ReturnsAsync(ResultDTO<DatasetClass>.Ok(new DatasetClass()));
+            datasetClassesRepositoryMock.Setup(repo => repo.GetAll(null, null, false, "CreatedBy,ParentClass,Datasets", null))
+                .ReturnsAsync(ResultDTO<IEnumerable<DatasetClass>>.Ok(new List<DatasetClass>()));
+
+            var datasetDatasetClassRepositoryMock = new Mock<IDataset_DatasetClassRepository>();
+            datasetDatasetClassRepositoryMock.Setup(repo => repo.GetAll(null, null, false, It.IsAny<string>(), null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(new List<Dataset_DatasetClass>()));
+            datasetDatasetClassRepositoryMock.Setup(repo => repo.GetAll(It.IsAny<Expression<Func<Dataset_DatasetClass, bool>>>(), null, false, null, null))
+                .ReturnsAsync(ResultDTO<IEnumerable<Dataset_DatasetClass>>.Ok(new List<Dataset_DatasetClass> { new Dataset_DatasetClass() }));
+            datasetDatasetClassRepositoryMock.Setup(repo => repo.DeleteRange(It.IsAny<IEnumerable<Dataset_DatasetClass>>(), true, default))
+                .ReturnsAsync(ResultDTO.Fail("Failed to delete"));
+
+            var service = new DatasetClassesService(
+                datasetsRepository: null,
+                datasetClassesRepository: datasetClassesRepositoryMock.Object,
+                datasetDatasetClassRepository: datasetDatasetClassRepositoryMock.Object,
+                mapper: null
+            );
+
+            // Act
+            var result = await service.DeleteDatasetClass(classId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Failed to delete associated dataset-dataset class relationships.", result.ErrMsg);
+            Assert.Equal(0, result.Data);
+        }
+
 
     }
 }
