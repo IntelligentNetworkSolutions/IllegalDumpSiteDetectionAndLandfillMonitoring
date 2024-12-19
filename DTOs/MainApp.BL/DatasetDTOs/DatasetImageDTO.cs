@@ -13,6 +13,9 @@ namespace DTOs.MainApp.BL.DatasetDTOs
         public string ImagePath { get; init; }
         public string? ThumbnailPath { get; init; }
 
+        public int Width { get; set; }
+        public int Height { get; set; }
+
         public bool IsEnabled { get; set; } = false;
 
         public Guid? DatasetId { get; init; }
