@@ -301,6 +301,77 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
+        public async Task EditDatasetImage_ShouldReturnFailure_WhenGetDatasetByIdFails()
+        {
+            // Arrange
+            var editDto = new EditDatasetImageDTO
+            {
+                DatasetId = Guid.NewGuid(),
+                Id = Guid.NewGuid(),
+                IsEnabled = false,
+                UpdatedById = Guid.NewGuid().ToString()
+            };
+
+            var userId = "test-user-id";
+
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
+            _mockDatasetService.Setup(x => x.GetDatasetById(editDto.DatasetId))
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Fail("Error retrieving dataset"));
+
+            // Act
+            var result = await _controller.EditDatasetImage(editDto);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Error retrieving dataset", data["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task EditDatasetImage_ShouldReturnFailure_WhenUnexpectedExceptionOccurs()
+        {
+            // Arrange
+            var editDto = new EditDatasetImageDTO
+            {
+                DatasetId = Guid.NewGuid(),
+                Id = Guid.NewGuid(),
+                IsEnabled = false,
+                UpdatedById = Guid.NewGuid().ToString()
+            };
+
+            var userId = "test-user-id";
+
+            var claims = new List<Claim> { new Claim("UserId", userId) };
+            var identity = new ClaimsIdentity(claims, "TestAuthType");
+            var claimsPrincipal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            };
+
+            _mockDatasetService.Setup(x => x.GetDatasetById(editDto.DatasetId))
+                .ThrowsAsync(new Exception("An unexpected error occurred: Unexpected error"));
+
+            // Act
+            var result = await _controller.EditDatasetImage(editDto);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("An unexpected error occurred: An unexpected error occurred: Unexpected error", data["responseError"]["Value"].ToString());
+        }
+
+
+        [Fact]
         public async Task EditDatasetImage_ReturnsError_WhenDatasetNotFound()
         {
             // Arrange
@@ -545,6 +616,25 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.Equal("Successfully deleted dataset image", data["responseSuccess"]["Value"].ToString());
         }
 
+        [Fact]
+        public async Task DeleteDatasetImage_ReturnsError_WhenGetDatasetByIdFails()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId))
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Fail("Error retrieving dataset"));
+
+            // Act
+            var result = await _controller.DeleteDatasetImage(datasetImageId, datasetId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Error retrieving dataset", data["responseError"]["Value"].ToString());
+        }
+
+
 
         [Fact]
         public async Task DeleteDatasetImage_ReturnsError_WhenImageHasActiveAnnotations()
@@ -568,6 +658,47 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var data = JObject.FromObject(jsonResult.Value);
             Assert.Equal("This image has active annotations. Do you want to continue anyway?", data["responseError"]["Value"].ToString());
         }
+
+        [Fact]
+        public async Task DeleteDatasetImage_ReturnsError_WhenGetImageAnnotationsFails()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            var datasetDto = new DatasetDTO { IsPublished = false };
+            var datasetImageDto = new DatasetImageDTO { Id = datasetImageId };
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(datasetDto));
+            _mockDatasetImagesService.Setup(s => s.GetDatasetImageById(datasetImageId)).ReturnsAsync(ResultDTO<DatasetImageDTO>.Ok(datasetImageDto));
+            _mockImageAnnotationsService.Setup(s => s.GetImageAnnotationsByImageId(datasetImageId))
+                .ReturnsAsync(ResultDTO<List<ImageAnnotationDTO>>.Fail("Error retrieving annotations"));
+
+            // Act
+            var result = await _controller.DeleteDatasetImage(datasetImageId, datasetId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Failed to retrive annotations.Error retrieving annotations", data["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task DeleteDatasetImage_ReturnsError_WhenExceptionOccurs()
+        {
+            // Arrange
+            var datasetImageId = Guid.NewGuid();
+            var datasetId = Guid.NewGuid();
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId))
+                .ThrowsAsync(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _controller.DeleteDatasetImage(datasetImageId, datasetId);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var data = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("Error occurred while deleting the image. Unexpected error", data["responseError"]["Value"].ToString());
+        }
+
 
         [Fact]
         public async Task DeleteDatasetImage_DeletesWithAnnotations_WhenFlagSet()

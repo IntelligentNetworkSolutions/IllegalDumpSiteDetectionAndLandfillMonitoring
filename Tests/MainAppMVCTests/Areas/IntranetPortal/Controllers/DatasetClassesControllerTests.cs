@@ -69,6 +69,73 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
+        public async Task Index_RedirectsToError_WhenGetAllDatasetClassesFails()
+        {
+            // Arrange
+            var resultDto = ResultDTO<List<DatasetClassDTO>>.Fail("Error occurred");
+            _mockDatasetClassesService.Setup(s => s.GetAllDatasetClasses()).ReturnsAsync(resultDto);
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns("/Error");
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/Error", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task Index_RedirectsToNotFound_WhenGetAllDatasetClassesReturnsNull()
+        {
+            // Arrange
+            var resultDto = ResultDTO<List<DatasetClassDTO>>.Ok(null);
+            _mockDatasetClassesService.Setup(s => s.GetAllDatasetClasses()).ReturnsAsync(resultDto);
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/NotFound");
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/NotFound", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task Index_RedirectsToNotFound_WhenMapperReturnsNull()
+        {
+            // Arrange
+            var datasetClasses = new List<DatasetClassDTO> { new DatasetClassDTO() };
+            var resultDto = ResultDTO<List<DatasetClassDTO>>.Ok(datasetClasses);
+            _mockDatasetClassesService.Setup(s => s.GetAllDatasetClasses()).ReturnsAsync(resultDto);
+            _mockMapper.Setup(m => m.Map<List<DatasetClassViewModel>>(It.IsAny<List<DatasetClassDTO>>()))
+                       .Returns((List<DatasetClassViewModel>)null);
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/NotFound");
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/NotFound", redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task Index_RedirectsToError_WhenExceptionOccurs()
+        {
+            // Arrange
+            _mockDatasetClassesService.Setup(s => s.GetAllDatasetClasses()).ThrowsAsync(new Exception("Test exception"));
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns("/Error");
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal("/Error", redirectResult.Url);
+        }
+
+
+        [Fact]
         public async Task CreateClass_ModelStateIsInvalid_ReturnsErrorJson()
         {
             // Arrange
@@ -166,6 +233,26 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonData = JObject.FromObject(jsonResult.Value);
             Assert.Equal("An error occurred. Dataset class was not added.", jsonData["responseError"]["Value"].ToString());
         }
+
+        [Fact]
+        public async Task CreateClass_UnexpectedException_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            SetupUser("validUserId");
+
+            var model = new CreateDatasetClassDTO();
+            _mockDatasetClassesService.Setup(service => service.AddDatasetClass(It.IsAny<CreateDatasetClassDTO>()))
+                                       .ThrowsAsync(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _controller.CreateClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("An unexpected error occurred. Please try again later.", jsonData["responseError"]["Value"].ToString());
+        }
+
 
         [Fact]
         public async Task GetClassById_ClassIdIsEmpty_ReturnsNewDatasetClassDTO()
@@ -534,6 +621,76 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var jsonData = JObject.FromObject(jsonResult.Value);
             Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
         }
+
+        [Fact]
+        public async Task EditClass_FailToRetrieveAllClasses_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var model = new EditDatasetClassDTO { Id = classId };
+            var errorMessage = "Failed to retrieve all classes";
+
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                .ReturnsAsync(new ResultDTO<int>(false, 3, "Edit failed", null));
+
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Fail(errorMessage));
+
+            // Act
+            var result = await _controller.EditClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task EditClass_FailToRetrieveAllDatasets_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var classId = Guid.NewGuid();
+            var model = new EditDatasetClassDTO { Id = classId };
+            var errorMessage = "Failed to retrieve all datasets";
+
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                .ReturnsAsync(new ResultDTO<int>(false, 3, "Edit failed", null));
+
+            _mockDatasetClassesService.Setup(service => service.GetAllDatasetClasses())
+                .ReturnsAsync(ResultDTO<List<DatasetClassDTO>>.Ok(new List<DatasetClassDTO>()));
+
+            _mockDatasetDatasetClassService.Setup(service => service.GetDataset_DatasetClassByClassId(classId))
+                .ReturnsAsync(ResultDTO<List<Dataset_DatasetClassDTO>>.Ok(new List<Dataset_DatasetClassDTO>()));
+
+            _mockDatasetService.Setup(service => service.GetAllDatasets())
+                .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Fail(errorMessage));
+
+            // Act
+            var result = await _controller.EditClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal(errorMessage, jsonData["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task EditClass_UnexpectedException_ReturnsJsonResultWithError()
+        {
+            // Arrange
+            var model = new EditDatasetClassDTO { Id = Guid.NewGuid() };
+            _mockDatasetClassesService.Setup(service => service.EditDatasetClass(model))
+                .ThrowsAsync(new Exception("Unexpected error"));
+
+            // Act
+            var result = await _controller.EditClass(model);
+
+            // Assert
+            var jsonResult = Assert.IsType<JsonResult>(result);
+            var jsonData = JObject.FromObject(jsonResult.Value);
+            Assert.Equal("An unexpected error occurred. Please try again later.", jsonData["responseError"]["Value"].ToString());
+        }
+
 
         [Fact]
         public async Task DeleteClass_HasSubclasses_ReturnsErrorJsonWithChildrenClasses()
