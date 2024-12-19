@@ -92,7 +92,7 @@ namespace MainApp.BL.Services.DatasetServices
 
         public async Task<ResultDTO<DatasetDTO>> GetDatasetById(Guid datasetId)
         {
-            ResultDTO<Dataset?> datasetDb = await _datasetsRepository.GetById(datasetId);
+            ResultDTO<Dataset?> datasetDb = await _datasetsRepository.GetById(datasetId, includeProperties:"CreatedBy");
 
             if (datasetDb.IsSuccess == false && datasetDb.HandleError())
             {
@@ -762,10 +762,33 @@ namespace MainApp.BL.Services.DatasetServices
                     .ToList();
 
                 // Create directories for train, val, test
-                string tempDirectory = downloadLocation ?? Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-                string trainDir = Path.Combine(tempDirectory, "train");
-                string valDir = Path.Combine(tempDirectory, "valid");
-                string testDir = Path.Combine(tempDirectory, "test");
+                string? tempDirectory = downloadLocation ?? Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+                if (string.IsNullOrWhiteSpace(tempDirectory))
+                    return ResultDTO<string>.Fail($"Invalid temp directory: {tempDirectory}");
+
+                string? trainDir = Path.Combine(tempDirectory, "train");
+                if (string.IsNullOrWhiteSpace(trainDir))
+                    return ResultDTO<string>.Fail($"Invalid train directory {trainDir}");
+                if (!trainDir.StartsWith(tempDirectory, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid train directory {trainDir}");
+                if (!trainDir.Contains("train", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid train directory {trainDir}");
+
+                string? valDir = Path.Combine(tempDirectory, "valid");
+                if (string.IsNullOrWhiteSpace(valDir))
+                    return ResultDTO<string>.Fail($"Invalid validations directory {valDir}");
+                if (!valDir.StartsWith(tempDirectory, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid validations directory {valDir}");
+                if (!valDir.Contains("valid", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid validations directory {valDir}");
+
+                string? testDir = Path.Combine(tempDirectory, "test");
+                if (string.IsNullOrWhiteSpace(testDir))
+                    return ResultDTO<string>.Fail($"Invalid test directory {testDir}");
+                if (!testDir.StartsWith(tempDirectory, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid test directory {testDir}");
+                if (!testDir.Contains("test", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid test directory {testDir}");
 
                 Directory.CreateDirectory(trainDir);
                 Directory.CreateDirectory(valDir);
@@ -880,9 +903,33 @@ namespace MainApp.BL.Services.DatasetServices
                 string valJson = NewtonsoftJsonHelper.Serialize(valCocoDataset);
                 string testJson = NewtonsoftJsonHelper.Serialize(testCocoDataset);
 
-                await File.WriteAllTextAsync(Path.Combine(trainDir, "annotations_coco.json"), trainJson);
-                await File.WriteAllTextAsync(Path.Combine(valDir, "annotations_coco.json"), valJson);
-                await File.WriteAllTextAsync(Path.Combine(testDir, "annotations_coco.json"), testJson);
+                string? trainPath = Path.Combine(trainDir, "annotations_coco.json");
+                if (string.IsNullOrWhiteSpace(trainPath))
+                    return ResultDTO<string>.Fail($"Invalid train path {trainPath}");
+                if (!trainPath.StartsWith(trainDir, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid train path {trainPath}");
+                if (!trainPath.Contains("annotations_coco.json", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid train path {trainPath}");
+
+                string? valPath = Path.Combine(valDir, "annotations_coco.json");
+                if (string.IsNullOrWhiteSpace(valPath))
+                    return ResultDTO<string>.Fail($"Invalid val path {valPath}");
+                if (!valPath.StartsWith(valDir, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid val path {valPath}");
+                if (!valPath.Contains("annotations_coco.json", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid val path {valPath}");
+
+                string? testPath = Path.Combine(testDir, "annotations_coco.json");
+                if (string.IsNullOrWhiteSpace(testPath))
+                    return ResultDTO<string>.Fail($"Invalid test path {testPath}");
+                if (!testPath.StartsWith(testDir, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid test path {testPath}");
+                if (!testPath.Contains("annotations_coco.json", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid test path {testPath}");
+
+                await File.WriteAllTextAsync(trainPath, trainJson);
+                await File.WriteAllTextAsync(valPath, valJson);
+                await File.WriteAllTextAsync(testPath, testJson);
 
                 // Zip the directories
                 string zipFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.zip");
@@ -892,7 +939,10 @@ namespace MainApp.BL.Services.DatasetServices
                 ZipFile.CreateFromDirectory(tempDirectory, zipFilePath);
 
                 if (downloadLocation == null)
-                    Directory.Delete(tempDirectory, true);
+                {
+                    if (Directory.Exists(tempDirectory))
+                        Directory.Delete(tempDirectory, true);
+                }
 
                 return ResultDTO<string>.Ok(zipFilePath);
             }
@@ -960,10 +1010,20 @@ namespace MainApp.BL.Services.DatasetServices
 
                 string cocoJson = JsonConvert.SerializeObject(cocoDatasetDTO, Formatting.Indented);
 
-                string tempDirectory = downloadLocation ?? Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+                string? tempDirectory = downloadLocation ?? Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+                if (string.IsNullOrWhiteSpace(tempDirectory))
+                    return ResultDTO<string>.Fail($"Invalid temp directory: {tempDirectory}" );
+
                 Directory.CreateDirectory(tempDirectory);
 
                 string jsonFilePath = Path.Combine(tempDirectory, "coco_dataset.json");
+                if (string.IsNullOrWhiteSpace(jsonFilePath))
+                    return ResultDTO<string>.Fail($"Invalid json file path: {jsonFilePath}");
+                if (!jsonFilePath.StartsWith(tempDirectory, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid json file path: {jsonFilePath}");
+                if (!string.Equals(Path.GetExtension(jsonFilePath), ".json", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO<string>.Fail($"Invalid file extension {Path.GetExtension(jsonFilePath)}");
+
                 await File.WriteAllTextAsync(jsonFilePath, cocoJson);
 
                 foreach (var image in datasetExtClassesImagesAnnotations.DatasetImages)
@@ -977,12 +1037,23 @@ namespace MainApp.BL.Services.DatasetServices
                 if (downloadLocation == null)
                 {
                     string zipFilePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.zip");
+                    if (string.IsNullOrWhiteSpace(zipFilePath))
+                        return ResultDTO<string>.Fail($"Invalid zip file path {zipFilePath}");
+                    if (!zipFilePath.StartsWith(Path.GetTempPath(), StringComparison.OrdinalIgnoreCase))
+                        return ResultDTO<string>.Fail($"Invalid zip file path {zipFilePath}");
+                    if (!string.Equals(Path.GetExtension(zipFilePath), ".zip", StringComparison.OrdinalIgnoreCase))
+                        return ResultDTO<string>.Fail($"Invalid file extension {Path.GetExtension(zipFilePath)}");
+
+                    if (!tempDirectory.StartsWith(Path.GetTempPath(), StringComparison.OrdinalIgnoreCase))
+                        return ResultDTO<string>.Fail($"Invalid temp directory: {tempDirectory}");
+
                     if (File.Exists(zipFilePath))
                         File.Delete(zipFilePath);
 
                     ZipFile.CreateFromDirectory(tempDirectory, zipFilePath);
 
-                    Directory.Delete(tempDirectory, true);
+                    if(Directory.Exists(tempDirectory))
+                        Directory.Delete(tempDirectory, true);
 
                     return ResultDTO<string>.Ok(zipFilePath);
 

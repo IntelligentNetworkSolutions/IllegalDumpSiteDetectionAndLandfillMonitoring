@@ -22,8 +22,8 @@
                 </li>
                 @if (User.HasAuthClaim(SD.AuthClaims.ViewDatasets) && User.HasAuthClaim(SD.AuthClaims.ViewDatasetClasses))
                 {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkClasses">
+                    <li class="nav-item @Html.IsActive(controllers: "Datasets,DatasetClasses",cssClass: "menu-open")">
+                        <a href="#" class="nav-link @Html.IsActive(controllers: "Datasets,DatasetClasses")" id="NavlinkClasses">
                             <i class="fas fa-boxes"></i> &nbsp;&nbsp;
                             <p>
                                 @DbResHtml.T("Datasets", "Resources")
@@ -32,7 +32,7 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="Index" asp-controller="DatasetClasses" asp-area="IntranetPortal" class="nav-link" id="NavlinkDatasetClasses"
+                                <a asp-action="Index" asp-controller="DatasetClasses" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers:"DatasetClasses", actions: "Index")" id="NavlinkDatasetClasses"
                                    title="@DbResHtml.T("Dataset classes", "Resources")">
                                     <i class="fas fa-cubes"></i> &nbsp;&nbsp;
                                     <p>
@@ -43,7 +43,7 @@
                         </ul>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="Index" asp-controller="Datasets" asp-area="IntranetPortal" class="nav-link" id="NavlinkDatasets"
+                                <a asp-action="Index" asp-controller="Datasets" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers:"Datasets", actions: "Index")" id="NavlinkDatasets"
                                    title="@DbResHtml.T("Datasets list", "Resources")">
                                     <i class="fas fa-coins"></i> &nbsp;&nbsp;
                                     <p>
@@ -56,8 +56,8 @@
                 }
                 @if (User.HasAuthClaim(SD.AuthClaims.ViewTrainingRuns) && User.HasAuthClaim(SD.AuthClaims.CreateTrainingRun))
                 {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkTraining">
+                    <li class="nav-item @Html.IsActive(controllers: "TrainingRuns,TrainedModels",cssClass: "menu-open")">
+                        <a href="#" class="nav-link @Html.IsActive(controllers: "TrainingRuns,TrainedModels")" id="NavlinkTraining">
                             <i class="fas fa-dumbbell"></i> &nbsp;&nbsp;
                             <p>
                                 @DbResHtml.T("Training", "Resources")
@@ -66,7 +66,7 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="Index" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
+                                <a asp-action="Index" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers:"TrainingRuns", actions: "Index")" id="NavlinkTrainingRuns"
                                    title="@DbResHtml.T("View Training Runs", "Resources")">
                                     <i class="fas fa-tasks"></i> &nbsp;&nbsp;
                                     <p>
@@ -77,7 +77,7 @@
                         </ul>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="CreateTrainingRun" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
+                                <a asp-action="CreateTrainingRun" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers:"TrainingRuns", actions: "CreateTrainingRun")" id="NavlinkCreateTrainingRun"
                                    title="@DbResHtml.T("Create Training Run", "Resources")">
                                     <i class="fas fa-paper-plane"></i> &nbsp;&nbsp;
                                     <p>
@@ -88,7 +88,7 @@
                         </ul>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="Index" asp-controller="TrainedModels" asp-area="IntranetPortal" class="nav-link" id="NavlinkTrainingRuns"
+                                <a asp-action="Index" asp-controller="TrainedModels" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers:"TrainedModels", actions: "Index")" id="NavlinkTrainedModels"
                                    title="@DbResHtml.T("View Trained Models", "Resources")">
                                     <i class="fas fa-database"></i> &nbsp;&nbsp;
                                     <p>
@@ -101,8 +101,8 @@
                 }
                 @if (User.HasAuthClaim(SD.AuthClaims.ManageDetectionRuns))
                 {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkDetection" >
+                    <li class="nav-item @Html.IsActive(controllers: "Detection",cssClass: "menu-open")">
+                        <a href="#" class="nav-link  @Html.IsActive(controllers: "Detection")" id="NavlinkDetection">
                             <i class="fas fa-search-location"></i> &nbsp;&nbsp;
                             <p>
                                 @DbResHtml.T("Detection", "Resources")
@@ -113,7 +113,7 @@
                             @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectionInputImages))
                             {
                                 <li class="nav-item">
-                                    <a asp-action="DetectionInputImages" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionInputImages"
+                                    <a asp-action="DetectionInputImages" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "Detection", actions: "DetectionInputImages")" id="NavlinkDetectionInputImages"
                                        title="@DbResHtml.T("Detection Input Images", "Resources")">
                                         <i class="far fa-file-image"></i> &nbsp;&nbsp;
                                         <p>
@@ -125,7 +125,7 @@
                             @if (User.HasAuthClaim(SD.AuthClaims.CreateDetectionRun))
                             {
                                 <li class="nav-item">
-                                    <a asp-action="CreateDetectionRun" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                    <a asp-action="CreateDetectionRun" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "Detection", actions: "CreateDetectionRun")" id="NavlinkDetectionRun"
                                        title="@DbResHtml.T("Create Detection Run", "Resources")">
                                         <i class="fas fa-search-plus"></i> &nbsp;&nbsp;
                                         <p>
@@ -137,7 +137,7 @@
                             @if (User.HasAuthClaim(SD.AuthClaims.ViewDetectedZones))
                             {
                                 <li class="nav-item">
-                                    <a asp-action="DetectedZones" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionZones"
+                                    <a asp-action="DetectedZones" asp-controller="Detection" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "Detection", actions: "DetectedZones")" id="NavlinkDetectionZones"
                                        title="@DbResHtml.T("Detected Zones", "Resources")">
                                         <i class="fas fa-map-marked-alt"></i> &nbsp;&nbsp;
                                         <p>
@@ -152,8 +152,8 @@
 
                 @if (User.HasAuthClaim(SD.AuthClaims.ManageScheduledRuns))
                 {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkScheduleRunJobs">
+                    <li class="nav-item @Html.IsActive(controllers: "ScheduleRuns",cssClass: "menu-open")">
+                        <a href="#" class="nav-link  @Html.IsActive(controllers: "ScheduleRuns")" id="NavlinkScheduleRunJobs">
                             <i class="fas fa-clipboard-list"></i> &nbsp;&nbsp;
                             <p>
                                 @DbResHtml.T("Scheduled Runs", "Resources")
@@ -162,7 +162,7 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="ViewScheduledRuns" asp-controller="ScheduleRuns" asp-area="IntranetPortal" class="nav-link" id="NavlinkScheduleRunJobsView"
+                                <a asp-action="ViewScheduledRuns" asp-controller="ScheduleRuns" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "ScheduleRuns", actions: "ViewScheduledRuns")" id="NavlinkScheduleRunJobsView"
                                    title="@DbResHtml.T("Check Status", "Resources")">
                                     <i class="fas fa-tasks"></i> &nbsp;&nbsp;
                                     <p>
@@ -176,8 +176,8 @@
 
                 @if (User.HasAuthClaim(SD.AuthClaims.ViewLegalLandfillsManagement))
                 {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkDetection">
+                    <li class="nav-item @Html.IsActive(controllers: "LegalLandfillsManagement,LegalLandfillsWasteManagement",cssClass: "menu-open")">
+                        <a href="#" class="nav-link @Html.IsActive(controllers: "LegalLandfillsManagement,LegalLandfillsWasteManagement")" id="NavlinkLegalLandfillManagement">
                             <i class="fas fa-truck-loading"></i> &nbsp;&nbsp;
                             <p>
                                 @DbResHtml.T("Landfills management", "Resources")
@@ -186,7 +186,7 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-action="ViewLegalLandfills" asp-controller="LegalLandfillsManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                <a asp-action="ViewLegalLandfills" asp-controller="LegalLandfillsManagement" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "LegalLandfillsManagement", actions: "ViewLegalLandfills")" id="NavlinkLegalLandfillsView"
                                    title="@DbResHtml.T("Legal Landfills", "Resources")">
                                     <i class="fas fa-industry"></i> &nbsp;&nbsp;
                                     <p>
@@ -195,7 +195,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a asp-action="ViewLegalLandfillWasteTypes" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                <a asp-action="ViewLegalLandfillWasteTypes" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "LegalLandfillsWasteManagement", actions: "ViewLegalLandfillWasteTypes")" id="NavlinkLegalLandfillWasteTypes"
                                    title="@DbResHtml.T("Legal Landfill Landfill Waste Types", "Resources")">
                                     <i class="fas fa-trash"></i> &nbsp;&nbsp;
                                     <p>
@@ -204,8 +204,8 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a asp-action="ViewLegalLandfillTrucks" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
-                                   title="@DbResHtml.T("Legal Landfill Landfill Trucks", "Resources")">
+                                <a asp-action="ViewLegalLandfillTrucks" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "LegalLandfillsWasteManagement", actions: "ViewLegalLandfillTrucks")" id="NavlinkLegalLandfillTrucks"
+                                   title="@DbResHtml.T("Legal Landfill Trucks", "Resources")">
                                     <i class="fas fa-truck"></i> &nbsp;&nbsp;
                                     <p>
                                         @DbResHtml.T("Legal Landfill Trucks", "Resources")
@@ -213,7 +213,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a asp-action="ViewLegalLandfillWasteImports" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                <a asp-action="ViewLegalLandfillWasteImports" asp-controller="LegalLandfillsWasteManagement" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "LegalLandfillsWasteManagement", actions: "ViewLegalLandfillWasteImports")" id="NavlinkLegalLandfillWasteImports"
                                    title="@DbResHtml.T("Legal Landfill Landfill Waste Imports", "Resources")">
                                     <i class="fas fa-dolly"></i> &nbsp;&nbsp;
                                     <p>
@@ -222,7 +222,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a asp-action="ViewPointCloudFiles" asp-controller="LegalLandfillsManagement" asp-area="IntranetPortal" class="nav-link" id="NavlinkDetectionRun"
+                                <a asp-action="ViewPointCloudFiles" asp-controller="LegalLandfillsManagement" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "LegalLandfillsManagement", actions: "ViewPointCloudFiles")" id="NavlinkLegalLandfillPointCloudsFiles"
                                    title="@DbResHtml.T("Legal Landfill Point Cloud Files", "Resources")">
                                     <i class="fas fa-file-contract"></i> &nbsp;&nbsp;
                                     <p>
@@ -235,8 +235,8 @@
                 }
                 @if (User.HasAuthClaim(SD.AuthClaims.Admin))
                 {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkAdmin" title="@DbResHtml.T("Admin", "Resources")">
+                    <li class="nav-item @Html.IsActive(controllers: "UserManagement,AuditLogs,SpecialActions", cssClass: "menu-open")">
+                        <a href="#" class="nav-link @Html.IsActive(controllers: "UserManagement,AuditLogs,SpecialActions")" id="NavlinkAdmin" title="@DbResHtml.T("Admin", "Resources")">
                             <i class="fas fa-user-alt"></i> &nbsp;&nbsp;
                             <p>
                                 @DbResHtml.T("Admin", "Resources")
@@ -247,7 +247,7 @@
                             @if (User.HasAuthClaim(SD.AuthClaims.UserManagement) && modulesAndAuthClaims.HasModule(SD.Modules.UserManagement))
                             {
                                 <li class="nav-item">
-                                    <a asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="Index" title="@DbResHtml.T("User management", "Resources")" class="nav-link" id="NavlinkUserManagement">
+                                    <a asp-area="IntranetPortal" asp-controller="UserManagement" asp-action="Index" title="@DbResHtml.T("User management", "Resources")" class="nav-link @Html.IsActive(controllers: "UserManagement", actions: "Index")" id="NavlinkUserManagement">
                                         <i class="fas fa-users"></i>
                                         <p><small> @DbResHtml.T("User management", "Resources")</small></p>
                                     </a>
@@ -256,7 +256,7 @@
                             @if (User.HasAuthClaim(SD.AuthClaims.AuditLog) && modulesAndAuthClaims.HasModule(SD.Modules.AuditLog))
                             {
                                 <li class="nav-item">
-                                    <a asp-area="IntranetPortal" asp-controller="AuditLogs" asp-action="Index" title=" @DbResHtml.T("Audit logs", "Resources")" class="nav-link" id="NavlinkAuditLogs">
+                                    <a asp-area="IntranetPortal" asp-controller="AuditLogs" asp-action="Index" title=" @DbResHtml.T("Audit logs", "Resources")" class="nav-link @Html.IsActive(controllers: "AuditLogs", actions: "Index")" id="NavlinkAuditLogs">
                                         <i class="fas fa-chart-line"></i>
                                         <p><small> @DbResHtml.T("Audit logs", "Resources")</small></p>
                                     </a>
@@ -265,7 +265,7 @@
                             @if (User.HasAuthClaim(SD.AuthClaims.SpecialActions) && modulesAndAuthClaims.HasModule(SD.Modules.SpecialActions))
                             {
                                 <li class="nav-item">
-                                    <a asp-area="IntranetPortal" asp-controller="SpecialActions" asp-action="Index" title="@DbResHtml.T("Special actions", "Resources")" class="nav-link" id="NavlinkSpecialActions">
+                                    <a asp-area="IntranetPortal" asp-controller="SpecialActions" asp-action="Index" title="@DbResHtml.T("Special actions", "Resources")" class="nav-link @Html.IsActive(controllers: "SpecialActions", actions: "Index")" id="NavlinkSpecialActions">
                                         <i class="fas fa-rocket"></i>
                                         <p><small> @DbResHtml.T("Special actions", "Resources")</small></p>
                                     </a>
@@ -276,8 +276,8 @@
                 }
                 @if (User.HasCustomClaim("SpecialAuthClaim", "superadmin"))
                 {
-                    <li class="nav-item">
-                        <a href="#" class="nav-link" id="NavlinkSuperAdmin" title="@DbResHtml.T("Super admin", "Resources")">
+                    <li class="nav-item @Html.IsActive(controllers: "ApplicationSettings,MapConfiguration", cssClass: "menu-open")">
+                        <a href="#" class="nav-link @Html.IsActive(controllers: "ApplicationSettings,MapConfiguration")" id="NavlinkSuperAdmin" title="@DbResHtml.T("Super admin", "Resources")">
                             <i class="fas fa-user-tie"></i> &nbsp;&nbsp;
                             <p>
                                 @DbResHtml.T("Super admin", "Resources")
@@ -286,13 +286,13 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Index" title="@DbResHtml.T("Application settings", "Resources")" class="nav-link" id="NavlinkApplicationSettings">
+                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="Index" title="@DbResHtml.T("Application settings", "Resources")" class="nav-link @Html.IsActive(controllers: "ApplicationSettings", actions: "Index")" id="NavlinkApplicationSettings">
                                     <i class="fas fa-sm fa-cogs"></i>
                                     <p><small> @DbResHtml.T("Application settings", "Resources")</small></p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="/mainapp/LocalizationAdmin" title="@DbResHtml.T("Localization", "Resources")" class="nav-link">
+                                <a href="/mainapp/LocalizationAdmin" title="@DbResHtml.T("Localization", "Resources")" class="nav-link @Html.IsActive("LocalizationAdministration")">
                                     <i class="fas fa-sm fa-globe"></i>
                                     <p><small> @DbResHtml.T("Localization", "Resources")</small></p>
                                 </a>
@@ -304,7 +304,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a asp-area="IntranetPortal" asp-controller="MapConfiguration" asp-action="Index" title="@DbResHtml.T("Map Configurations", "Resources")" class="nav-link">
+                                <a asp-area="IntranetPortal" asp-controller="MapConfiguration" asp-action="Index" title="@DbResHtml.T("Map Configurations", "Resources")" class="nav-link @Html.IsActive(controllers: "MapConfiguration", actions: "Index")">
                                     <i class="fas fa-sm fa-map"></i>
                                     <p><small> @DbResHtml.T("Map Configurations", "Resources")</small></p>
                                 </a>

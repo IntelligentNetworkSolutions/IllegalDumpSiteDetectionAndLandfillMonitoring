@@ -131,11 +131,6 @@
         </div>
     </div>
 </div>
-<script>
-    $(document).ready(function () {
-        $("#NavlinkDatasets").addClass("active");
-    });
-</script>
 @section Scripts {
     <script>
         @{
@@ -416,6 +411,13 @@
 
 
         function deleteDatasetConfirmed(datasetId) {
+            $(`#deleteDatasetModal_${datasetId}`).modal('hide');
+            Swal.fire({
+                icon: "warning",
+                text: "Deleting dataset in progress...",
+                allowOutsideClick: false,
+                showConfirmButton: false
+            });
             $.ajax({
                 type: "POST",
                 url: "@Url.Action("DeleteDatasetConfirmed", "Datasets", new { Area = "IntranetPortal" })",
@@ -423,7 +425,7 @@
                     datasetId: datasetId
                 },
                 success: function (data) {
-                    $(`#deleteDatasetModal_${datasetId}`).modal('hide');
+                    
                     if (data.responseSuccess != null || data.responseSuccess != undefined) {
                         Swal.fire({
                             text: `${data.responseSuccess.value}`,
@@ -471,7 +473,6 @@
                     });
                 }
             });
-
         }
     </script>
     @if (TempData["ErrorDatasetIsPublished"] != null)

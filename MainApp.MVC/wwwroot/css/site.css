@@ -4,6 +4,7 @@
     --green-active: #06D001;
     --dark-green: #059212;
     --white: #f2f2f2;
+    --gray-active: #dfdfdf;
 }
 
 html {
@@ -184,11 +185,15 @@ html {
     }
 
 /* Sidebar Menu */
-.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active, .sidebar-light-primary .nav-sidebar > .nav-item > .nav-link.active {
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active, .sidebar-light-primary .nav-sidebar > .nav-item.active > .nav-link.active {
     background: var(--green-active);
     color: var(--white) !important;
 }
 
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-treeview > .nav-item > .nav-link.active {
+    color: var(--green-active) !important;
+    background-color: var(--gray-active);
+}
 
 .custom-responsive-table{
     width: 100% !important;

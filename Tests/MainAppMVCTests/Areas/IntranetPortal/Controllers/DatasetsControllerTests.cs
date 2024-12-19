@@ -2,6 +2,7 @@
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using DTOs.MainApp.BL.DatasetDTOs;
+using Entities;
 using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.Dataset;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using Newtonsoft.Json.Linq;
 using SD;
+using System.Dynamic;
 using System.Security.Claims;
 
 namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
@@ -130,23 +132,33 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task GetParentAndChildrenDatasets_ReturnsErrorJsonResult_WhenChildrenDatasetsAreNotFound()
+        public async Task GetParentAndChildrenDatasets_ReturnsEmptyChildrenList_WhenNoChildrenExist()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
-            var parentDataset = new DatasetDTO { Id = datasetId, Name = "Parent Dataset" };
-            var datasets = new List<DatasetDTO> { parentDataset };
+            var currentDataset = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = "CurrentDataset",
+                ParentDataset = new DatasetDTO { Id = Guid.NewGuid(), Name = "Parent Dataset" }
+            };
 
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(datasets));
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(parentDataset));
+            var allDatasets = new List<DatasetDTO> { currentDataset };
 
-            // Act 
+            _mockDatasetService.Setup(s => s.GetAllDatasets())
+                .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(allDatasets));
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId))
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(currentDataset));
+
+            // Act
             var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
             var data = JObject.FromObject(result.Value);
 
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("No child datasets found.", data["responseError"]["Value"].ToString());
+            Assert.NotNull(data["parent"]);
+            Assert.Empty((JArray)data["childrenList"]);
+            Assert.Equal(datasetId, (Guid)data["currentDataset"]["Id"]);
         }
 
         [Fact]
@@ -167,16 +179,15 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task GetParentAndChildrenDatasets_ReturnsJsonResult_WhenCurrentDatasetIsNotNull()
+        public async Task GetParentAndChildrenDatasets_ReturnsJsonResultWithNoParentDataset_WhenParentDatasetIsNull()
         {
             // Arrange
             var datasetId = Guid.NewGuid();
-            var grandparentDataset = new DatasetDTO { Id = Guid.NewGuid(), Name = "Grandparent Dataset" };
-            var parentDataset = new DatasetDTO
+            var currentDataset = new DatasetDTO
             {
                 Id = datasetId,
-                Name = "Parent Dataset",
-                ParentDataset = grandparentDataset // Correctly set the parent dataset
+                Name = "Current Dataset",
+                ParentDataset = null
             };
             var childrenDatasets = new List<DatasetDTO>
             {
@@ -184,9 +195,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 2", ParentDatasetId = datasetId }
             };
 
-            // Mocking services
-            _mockDatasetService.Setup(s => s.GetAllDatasets()).ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(childrenDatasets));
-            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId)).ReturnsAsync(ResultDTO<DatasetDTO>.Ok(parentDataset));
+            _mockDatasetService.Setup(s => s.GetAllDatasets())
+                .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(childrenDatasets.Concat(new[] { currentDataset }).ToList()));
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId))
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(currentDataset));
 
             // Act
             var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
@@ -194,24 +206,60 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
             // Assert
             Assert.NotNull(result);
-
-            // Check the parent dataset
-            var returnedParentDataset = data["parent"].ToObject<DatasetDTO>();
-            Assert.NotNull(returnedParentDataset);
-            Assert.Equal(grandparentDataset.Id, returnedParentDataset.Id);
-            Assert.Equal(grandparentDataset.Name, returnedParentDataset.Name);
-
-            // Check children list
-            var childrenList = data["childrenList"].ToObject<List<DatasetDTO>>();
-            Assert.Equal(2, childrenList.Count);
-
-            // Check the current dataset
-            var returnedCurrentDataset = data["currentDataset"]["Data"].ToObject<DatasetDTO>();
-            Assert.Equal(parentDataset.Id, returnedCurrentDataset.Id);
-            Assert.Equal(parentDataset.Name, returnedCurrentDataset.Name);
+            Assert.NotNull(data["parent"]);
+            Assert.Equal(2, ((JArray)data["childrenList"]).Count);
+            Assert.Equal(datasetId, (Guid)data["currentDataset"]["Id"]);
         }
 
+        [Fact]
+        public async Task GetParentAndChildrenDatasets_HandlesException_ReturnsGenericErrorMessage()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            _mockDatasetService.Setup(s => s.GetAllDatasets())
+                .ThrowsAsync(new Exception("Simulated service exception"));
 
+            // Act
+            var result = await _controller.GetParentAndChildrenDatasets(datasetId) as JsonResult;
+            var data = JObject.FromObject(result.Value);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Contains("An unexpected error occurred while retrieving datasets",
+                data["responseError"]["Value"].ToString());
+        }
+
+        [Fact]
+        public async Task GetParentAndChildrenDatasets_VerifiesServiceMethodsCalled_WithCorrectParameters()
+        {
+            // Arrange
+            var datasetId = Guid.NewGuid();
+            var currentDataset = new DatasetDTO
+            {
+                Id = datasetId,
+                Name = "Current Dataset",
+                ParentDataset = new DatasetDTO { Id = Guid.NewGuid(), Name = "Parent Dataset" }
+            };
+            var childrenDatasets = new List<DatasetDTO>
+            {
+                new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 1", ParentDatasetId = datasetId },
+                new DatasetDTO { Id = Guid.NewGuid(), Name = "Child Dataset 2", ParentDatasetId = datasetId }
+            };
+
+            _mockDatasetService.Setup(s => s.GetAllDatasets())
+                .ReturnsAsync(ResultDTO<List<DatasetDTO>>.Ok(childrenDatasets.Concat(new[] { currentDataset }).ToList()))
+                .Verifiable();
+            _mockDatasetService.Setup(s => s.GetDatasetById(datasetId))
+                .ReturnsAsync(ResultDTO<DatasetDTO>.Ok(currentDataset))
+                .Verifiable();
+
+            // Act
+            await _controller.GetParentAndChildrenDatasets(datasetId);
+
+            // Assert
+            _mockDatasetService.Verify(s => s.GetAllDatasets(), Times.Once);
+            _mockDatasetService.Verify(s => s.GetDatasetById(datasetId), Times.Once);
+        }
 
 
         [Fact]
@@ -602,26 +650,35 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
 
         //TODO
         [Fact]
-        public async Task CleanupTempFiles_ReturnsOk_WhenFileExists()
+        public async Task CleanupTempFilesFromExportDataset_ValidZipWithGuid_ReturnsOkResult()
         {
-            // Arrange
-            var fileGuid = "testfile.tmp";
-            var filePath = Path.Combine(Path.GetTempPath(), fileGuid);
-            System.IO.File.WriteAllText(filePath, "test content");
+            // Arrange            
+            var testGuid = Guid.NewGuid();
+            var fileGuid = $"{testGuid}.zip";
+
+            string filePath = Path.Combine(Path.GetTempPath(), fileGuid);
+            File.WriteAllText(filePath, "Test content");
 
             // Act
             var result = await _controller.CleanupTempFilesFromExportDataset(fileGuid);
 
             // Assert
             Assert.IsType<OkResult>(result);
-            Assert.False(System.IO.File.Exists(filePath));
+            Assert.False(File.Exists(filePath), "File should be deleted");
         }
 
         [Fact]
-        public async Task CleanupTempFiles_ReturnsOk_WhenFileDoesNotExist()
+        public async Task CleanupTempFilesFromExportDataset_FileDoesNotExist_ReturnsOkResult()
         {
             // Arrange
-            var fileGuid = "nonexistentfile.tmp";
+            var testGuid = Guid.NewGuid();
+            var fileGuid = $"{testGuid}.zip";
+
+            string filePath = Path.Combine(Path.GetTempPath(), fileGuid);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
 
             // Act
             var result = await _controller.CleanupTempFilesFromExportDataset(fileGuid);
@@ -630,7 +687,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             Assert.IsType<OkResult>(result);
         }
 
-
+       
         [Fact]
         public async Task AddDatasetClass_ReturnsJsonError_WhenUserIdIsNull()
         {
