@@ -131,18 +131,18 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 if (currentDatasetDb.IsSuccess == false && currentDatasetDb.HandleError() || currentDatasetDb == null)
                     return Json(new { responseError = DbResHtml.T("Invalid current dataset", "Resources") });
 
-                List<DatasetDTO> childrenDatasets = allDatasetsDb.Data.Where(x => x.ParentDatasetId == currentDatasetId).ToList();
-                if (!childrenDatasets.Any())
+                List<DatasetDTO>? childrenDatasets = allDatasetsDb.Data.Where(x => x.ParentDatasetId == currentDatasetId).ToList();
+                if (childrenDatasets == null)
                     return Json(new { responseError = DbResHtml.T("No child datasets found.", "Resources") });
 
                 DatasetDTO? parentDataset = currentDatasetDb.Data.ParentDataset;
                 if (parentDataset == null)
                 {
                     DatasetDTO datasetDTO = new();
-                    return Json(new { parent = datasetDTO, childrenList = childrenDatasets, currentDataset = currentDatasetDb });
+                    return Json(new { parent = datasetDTO, childrenList = childrenDatasets, currentDataset = currentDatasetDb.Data });
                 }
 
-                return Json(new { parent = parentDataset, childrenList = childrenDatasets, currentDataset = currentDatasetDb });
+                return Json(new { parent = parentDataset, childrenList = childrenDatasets, currentDataset = currentDatasetDb.Data });
             }
             catch (Exception ex)
             {
@@ -439,7 +439,18 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         {
             try
             {
-                var filePath = Path.Combine(Path.GetTempPath(), fileGuid);
+                if (string.IsNullOrWhiteSpace(fileGuid))
+                    return Json(new { responseError = "Invalid file name provided" });
+
+                string? checkExtension = Path.GetExtension(fileGuid);
+                if (!string.Equals(checkExtension, ".zip", StringComparison.OrdinalIgnoreCase))
+                    return Json(new { responseError = $"Invalid file format {checkExtension}" });
+
+                string? checkGuid = Path.GetFileNameWithoutExtension(fileGuid);
+                if (!Guid.TryParse(checkGuid, out Guid parsedGuid))                
+                    return Json(new { responseError = "Invalid GUID provided" });
+                               
+                string? filePath = Path.Combine(Path.GetTempPath(), fileGuid);
 
                 if (System.IO.File.Exists(filePath))
                 {

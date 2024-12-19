@@ -13,6 +13,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
     public class TrainedModelsControllerTests
     {
         private readonly Mock<ITrainedModelService> _trainedModelServiceMock;
+        private readonly Mock<ITrainingRunService> _trainingRunServiceMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly Mock<IConfiguration> _configurationMock;
         private readonly TrainedModelsController _controller;
@@ -20,11 +21,13 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public TrainedModelsControllerTests()
         {
             _trainedModelServiceMock = new Mock<ITrainedModelService>();
+            _trainingRunServiceMock = new Mock<ITrainingRunService>();
             _mapperMock = new Mock<IMapper>();
             _configurationMock = new Mock<IConfiguration>();
 
             _controller = new TrainedModelsController(
                 _trainedModelServiceMock.Object,
+                _trainingRunServiceMock.Object,
                 _mapperMock.Object,
                 _configurationMock.Object
             );

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DTOs.MainApp.BL.TrainingDTOs;
 using MainApp.BL.Interfaces.Services.TrainingServices;
+using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Filters;
 using MainApp.MVC.ViewModels.IntranetPortal.Training;
 using Microsoft.AspNetCore.Mvc;
@@ -13,11 +14,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
     {
 
         private readonly ITrainedModelService _trainedModelService;
+        private readonly ITrainingRunService _trainingRunService;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
-        public TrainedModelsController(ITrainedModelService trainedModelService, IMapper mapper, IConfiguration configuration)
+        public TrainedModelsController(ITrainedModelService trainedModelService, ITrainingRunService trainingRunService, IMapper mapper, IConfiguration configuration)
         {
             _trainedModelService = trainedModelService;
+            _trainingRunService = trainingRunService;
             _mapper = mapper;
             _configuration = configuration;
         }
@@ -126,6 +129,32 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
             return ResultDTO.Ok();
 
+        }
+
+        [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainedModelStatistics))]
+        public async Task<ResultDTO<TrainingRunResultsDTO>> GetTrainedModelStatistics(Guid trainedModelId)
+        {
+            try
+            {
+                ResultDTO<TrainedModelDTO>? resultGetTrainedModel = await _trainedModelService.GetTrainedModelById(trainedModelId);
+                if (resultGetTrainedModel.IsSuccess == false && resultGetTrainedModel.HandleError())
+                    return ResultDTO<TrainingRunResultsDTO>.Fail(resultGetTrainedModel.ErrMsg!);
+                if (resultGetTrainedModel.Data == null)
+                    return ResultDTO<TrainingRunResultsDTO>.Fail("Trained model not found");
+
+                ResultDTO<TrainingRunResultsDTO>? resultGetBestEpoch = _trainingRunService.GetBestEpochForTrainingRun(resultGetTrainedModel.Data.TrainingRunId.Value);
+                if (resultGetBestEpoch.IsSuccess == false && resultGetBestEpoch.HandleError())
+                    return ResultDTO<TrainingRunResultsDTO>.Fail(resultGetBestEpoch.ErrMsg!);
+                if (resultGetBestEpoch.Data == null)
+                    return ResultDTO<TrainingRunResultsDTO>.Fail("Failed to get training run statistics");
+
+                return ResultDTO<TrainingRunResultsDTO>.Ok(resultGetBestEpoch.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<TrainingRunResultsDTO>.ExceptionFail(ex.Message, ex);
+            }
         }
     }
 }

@@ -67,7 +67,7 @@ namespace Tests.MainAppBLTests.Services
             var datasetDto = new DatasetDTO { Id = datasetId };
 
             _mockDatasetRepository
-                .Setup(repo => repo.GetById(datasetId, false, null))
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy"))
                 .ReturnsAsync(ResultDTO<Dataset?>.Ok(dataset));
 
             _mockMapper
@@ -110,7 +110,7 @@ namespace Tests.MainAppBLTests.Services
 
 
             _mockDatasetRepository
-                .Setup(repo => repo.GetById(datasetId, false, null))
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy"))
                 .ReturnsAsync(ResultDTO<Dataset>.Fail("Failed to retrieve dataset."));
 
             // Act
@@ -128,7 +128,7 @@ namespace Tests.MainAppBLTests.Services
             var dataset = new Dataset { Id = datasetId };
 
             _mockDatasetRepository
-                .Setup(repo => repo.GetById(datasetId, false, null))
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy"))
                 .ReturnsAsync(ResultDTO<Dataset>.Ok(dataset));
 
             _mockMapper

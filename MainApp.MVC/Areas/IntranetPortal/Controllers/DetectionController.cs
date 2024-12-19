@@ -753,7 +753,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             if (Directory.Exists(thumbnailsFolder) == false)
                 Directory.CreateDirectory(thumbnailsFolder);
 
-            string thumbnailPath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, appSettingDetectionInputImageThumbnailsFolder.Data, System.IO.Path.GetFileNameWithoutExtension(absGeoTiffPath) + "_thumbnail.jpg");
+            string? thumbnailPath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, appSettingDetectionInputImageThumbnailsFolder.Data, System.IO.Path.GetFileNameWithoutExtension(absGeoTiffPath) + "_thumbnail.jpg");
+            if (string.IsNullOrWhiteSpace(thumbnailPath))
+                return Json(new { isSuccess = false, errMsg = $"Invalid thumbnail path: {thumbnailPath}"});
+            if (!thumbnailPath.StartsWith(_webHostEnvironment.WebRootPath, StringComparison.OrdinalIgnoreCase))
+                return Json(new { isSuccess = false, errMsg = $"Invalid thumbnail path: {thumbnailPath}"});
+            if (!string.Equals(Path.GetExtension(thumbnailPath), ".jpg", StringComparison.OrdinalIgnoreCase))
+                return Json(new { isSuccess = false, errMsg = $"Invalid thumbnail extension: {thumbnailPath}" });
+
             try
             {
                 BufferedCommandResult result = await Cli.Wrap("gdal_translate")
@@ -767,7 +774,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 if (!System.IO.File.Exists(thumbnailPath))
                     return Json(new { isSuccess = false, errMsg = "Thumbnail was not created." });
 
-                string xmlFilePath = System.IO.Path.ChangeExtension(thumbnailPath, ".jpg.aux.xml");
+                string? xmlFilePath = System.IO.Path.ChangeExtension(thumbnailPath, ".jpg.aux.xml");
+                if (string.IsNullOrWhiteSpace(xmlFilePath))
+                    return Json(new { isSuccess = false, errMsg = $"File not found: {xmlFilePath}" });
+                if (!xmlFilePath.StartsWith(_webHostEnvironment.WebRootPath, StringComparison.OrdinalIgnoreCase))
+                    return Json(new { isSuccess = false, errMsg = $"Wrong file path: {xmlFilePath}" });
+                if (!string.Equals(Path.GetExtension(xmlFilePath), ".xml", StringComparison.OrdinalIgnoreCase))
+                    return Json(new { isSuccess = false, errMsg = $"Invalid file extension: {xmlFilePath}" });
+
                 if (System.IO.File.Exists(xmlFilePath))
                     System.IO.File.Delete(xmlFilePath);
 
@@ -838,6 +852,10 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     return ResultDTO.Fail(error);
                 }
 
+                string? imgExtension = Path.GetExtension(detectionInputImageViewModel.ImageFileName);
+                if (!string.Equals(imgExtension, ".tif", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO.Fail($"Invalid image extension {imgExtension}");
+
                 ResultDTO<List<DetectionRunDTO>>? resultCheckForFiles =
                     await _detectionRunService.GetDetectionInputImageByDetectionRunId(detectionInputImageViewModel.Id);
                 if (!resultCheckForFiles.IsSuccess && resultCheckForFiles.HandleError())
@@ -864,7 +882,16 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     return ResultDTO.Fail(resultDelete.ErrMsg!);
 
                 //string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", detectionInputImageViewModel.ImagePath ?? string.Empty);
-                string imagePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImageViewModel.ImagePath!);
+                if (string.IsNullOrWhiteSpace(detectionInputImageViewModel.ImagePath))
+                    return ResultDTO.Fail($"Invalid file path provided: {detectionInputImageViewModel.ImagePath}");
+                string? imagePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImageViewModel.ImagePath);
+                if (string.IsNullOrWhiteSpace(imagePath))
+                    return ResultDTO.Fail($"Invalid file path provided: {imagePath}");
+                if (!imagePath.StartsWith(_webHostEnvironment.WebRootPath, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO.Fail($"Invalid file path provided: {imagePath}");
+                if (!string.Equals(Path.GetExtension(imagePath), ".tif", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO.Fail($"Invalid file extension {imagePath}");
+
                 if (System.IO.File.Exists(imagePath))
                 {
                     try
@@ -880,19 +907,25 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 
                 //delete thumbnail
                 ResultDTO<string?>? appSettingDetectionInputImageThumbnailsFolder =
-                    await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder",
-                                                                                        "Uploads\\DetectionUploads\\InputImageThumbnails");
+                    await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder","Uploads\\DetectionUploads\\InputImageThumbnails");
                 if (!appSettingDetectionInputImageThumbnailsFolder.IsSuccess && appSettingDetectionInputImageThumbnailsFolder.HandleError())
                     return ResultDTO.Fail("Cannot get the application setting for thumbnails folder");
                 if (appSettingDetectionInputImageThumbnailsFolder.Data == null)
                     return ResultDTO.Fail("Detection input image thumbnails folder value is null");
 
-                string imgFileNameWithoutExtension =
-                    System.IO.Path.GetFileNameWithoutExtension(detectionInputImageViewModel.ImageFileName!);
-                string thumbnailPath =
-                    System.IO.Path.Combine(_webHostEnvironment.WebRootPath,
-                                            appSettingDetectionInputImageThumbnailsFolder.Data!,
-                                            imgFileNameWithoutExtension + "_thumbnail.jpg");
+                string? imgFileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(detectionInputImageViewModel.ImageFileName!);
+                if (string.IsNullOrWhiteSpace(imgFileNameWithoutExtension))
+                    return ResultDTO.Fail($"Invalid image name provided: {imgFileNameWithoutExtension}");
+                               
+                string? thumbnailPath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, appSettingDetectionInputImageThumbnailsFolder.Data, imgFileNameWithoutExtension + "_thumbnail.jpg");
+                if (string.IsNullOrWhiteSpace(thumbnailPath))
+                    return ResultDTO.Fail($"Invalid thumbnail path provided: {thumbnailPath}");
+                if (!thumbnailPath.StartsWith(_webHostEnvironment.WebRootPath, StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO.Fail($"Invalid thumbnail path provided: {thumbnailPath}");
+                if (!string.Equals(Path.GetExtension(thumbnailPath), ".jpg", StringComparison.OrdinalIgnoreCase))
+                    return ResultDTO.Fail($"Invalid image extension {thumbnailPath}");
+
+
                 if (System.IO.File.Exists(thumbnailPath))
                     System.IO.File.Delete(thumbnailPath);
 

@@ -1669,7 +1669,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task DeleteDetectionImageInput_GetDetectionRunsFails_ReturnsFailResult()
         {
             // Arrange
-            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid(), ImageFileName = "image.tif" };
             _mockDetectionRunService
                 .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
                 .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Fail("Failed to get detection runs"));
@@ -1686,7 +1686,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task DeleteDetectionImageInput_DetectionRunDataNull_ReturnsFailResult()
         {
             // Arrange
-            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid(), ImageFileName = "image.tif" };
             _mockDetectionRunService
                 .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
                 .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(null!));
@@ -1703,7 +1703,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task DeleteDetectionImageInput_ImageStillInUse_ReturnsFailResult()
         {
             // Arrange
-            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid(), ImageFileName = "image.tif" };
             var detectionRuns = new List<DetectionRunDTO> { new DetectionRunDTO() };
             _mockDetectionRunService
                 .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
@@ -1721,7 +1721,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task DeleteDetectionImageInput_MappingFails_ReturnsFailResult()
         {
             // Arrange
-            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid(), ImageFileName = "image.tif" };
             _mockDetectionRunService
                 .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
                 .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(new List<DetectionRunDTO>()));
@@ -1741,7 +1741,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task DeleteDetectionImageInput_DeleteServiceFails_ReturnsFailResult()
         {
             // Arrange
-            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid() };
+            var viewModel = new DetectionInputImageViewModel { Id = Guid.NewGuid(), ImageFileName = "image.tif" };
             var dto = new DetectionInputImageDTO();
 
             _mockDetectionRunService
@@ -1760,6 +1760,49 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             // Assert
             Assert.False(result.IsSuccess);
             Assert.Equal("Delete failed", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_InvalidFileExtension_ReturnsFailResult()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel
+            {
+                Id = Guid.NewGuid(),
+                ImageFileName = "invalid_image.jpg"
+            };
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal("Invalid image extension .jpg", result.ErrMsg);
+        }
+
+        [Fact]
+        public async Task DeleteDetectionImageInput_ValidFilePathAndExtension_ProceedsWithNextSteps()
+        {
+            // Arrange
+            var viewModel = new DetectionInputImageViewModel
+            {
+                ImagePath = "uploads/valid_image.tif", 
+                ImageFileName = "valid_image.tif"
+            };
+
+            _mockWebHostEnvironment
+                .Setup(env => env.WebRootPath)
+                .Returns("/var/www/app_root");
+
+            _mockDetectionRunService
+                .Setup(x => x.GetDetectionInputImageByDetectionRunId(It.IsAny<Guid>()))
+                .ReturnsAsync(ResultDTO<List<DetectionRunDTO>>.Ok(new List<DetectionRunDTO>()));
+
+            // Act
+            var result = await _controller.DeleteDetectionImageInput(viewModel);
+
+            // Assert
+            Assert.NotNull(result);
         }
 
         [Fact]
