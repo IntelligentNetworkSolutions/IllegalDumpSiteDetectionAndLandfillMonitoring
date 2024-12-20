@@ -70,7 +70,6 @@ namespace MainApp.BL.Services.DatasetServices
         #region Create
         public async Task<ResultDTO<Guid>> AddDatasetImage(DatasetImageDTO datasetImageDto)
         {
-            // TODO: Refactor to not throw exceptions 
             Guid datasetId = datasetImageDto.DatasetId ?? Guid.Empty; // To handle since it is Guid?  will be handled on first if clause
 
             if (datasetId == Guid.Empty)

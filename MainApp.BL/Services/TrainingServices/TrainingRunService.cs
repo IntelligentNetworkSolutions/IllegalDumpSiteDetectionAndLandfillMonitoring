@@ -249,8 +249,6 @@ namespace MainApp.BL.Services.TrainingServices
                 string scriptFileAbsPath =
                     CommonHelper.PathToLinuxRegexSlashReplace(
                         Path.Combine(_MMDetectionConfiguration.GetRootDirAbsPath(), scriptName));
-                // TODO: Update Script with INS script
-                //string scriptFileAbsPath = Path.Combine(_MMDetectionConfiguration.GetScriptsDirAbsPath(), scriptName);
 
                 string trainingConfigDirAbsPath =
                     CommonHelper.PathToLinuxRegexSlashReplace(
@@ -375,7 +373,6 @@ namespace MainApp.BL.Services.TrainingServices
                 TrainingConfigGenerator.GenerateConfigOverrideStr(
                     backboneCheckpointAbsPath: backboneCheckpointAbsPath,
                     dataRootAbsPath: _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRunId),
-                    //dataRootAbsPath: datasetRootPath, // TODO: Return previous line once Export is available
                     classNames: classNames,
                     baseModelConfigFilePath: baseTrainedModel.ModelConfigPath,
                     baseModelFileAbsPath: baseTrainedModel.ModelFilePath,

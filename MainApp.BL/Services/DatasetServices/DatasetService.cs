@@ -731,8 +731,6 @@ namespace MainApp.BL.Services.DatasetServices
 
         public async Task<ResultDTO<string>> ConvertDatasetEntityToCocoDatasetWithAssignedIdIntsAsSplitDataset(Dataset dataset, string exportOption, string? downloadLocation)
         {
-
-            // TODO: Implement for multiple classes
             if (dataset == null)
                 return ResultDTO<string>.Fail("Dataset is null");
 
