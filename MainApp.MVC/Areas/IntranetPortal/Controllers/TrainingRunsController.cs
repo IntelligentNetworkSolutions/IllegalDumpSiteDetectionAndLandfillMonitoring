@@ -58,7 +58,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _configuration = configuration;
             _mapper = mapper;
         }
-        
+
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
         public async Task<IActionResult> Index()
@@ -81,7 +81,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
-           
+
         }
 
         [HttpGet]
@@ -181,6 +181,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ScheduleTrainingRun))]
         public async Task<ResultDTO> ExecuteTrainingRunProcess(TrainingRunDTO trainingRunDTO, TrainingRunTrainParamsDTO trainingRunTrainParamsDTO)
         {
+            bool result = false;
             try
             {
                 //int numEpochs = 1;
@@ -238,6 +239,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 if (updateTrainRunResultSuccess.IsSuccess == false && updateTrainRunResultSuccess.HandleError())
                     return ResultDTO.Fail(updateTrainRunResultSuccess.ErrMsg!);
 
+                result = true;
                 return ResultDTO.Ok();
             }
             catch (Exception ex)
@@ -246,7 +248,67 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             finally
             {
-                // TODO: Clean Up Training Run Files, Later
+                //Clean Up Training Run Files
+
+                //1. delete data folder for training run
+                string? datasetTrainingRunFolder = _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRunDTO.Id!.Value);
+                if (Directory.Exists(datasetTrainingRunFolder))
+                    Directory.Delete(datasetTrainingRunFolder, recursive: true);
+
+                //2. delete config folder for training run from mmdetection
+                string? configTrainingRunFolder = _MMDetectionConfiguration.GetTrainingRunConfigDirAbsPathByRunId(trainingRunDTO.Id!.Value);
+                if (Directory.Exists(configTrainingRunFolder))
+                    Directory.Delete(configTrainingRunFolder, recursive: true);
+
+                //3. delete epoches all if failed, except best if successfull (.pth only)
+                string? trainingRunFolderPath = Path.Combine(_MMDetectionConfiguration.GetTrainingRunsBaseOutDirAbsPath(), trainingRunDTO.Id!.Value.ToString());
+                if (Directory.Exists(trainingRunFolderPath))
+                {
+                    //get all .pth files
+                    string[]? pthFiles = Directory.GetFiles(trainingRunFolderPath, "*.pth", SearchOption.TopDirectoryOnly);
+                    if (pthFiles != null && pthFiles.Length > 0)
+                    {
+                        //check the result of try catch block
+                        if (result)
+                        {
+                            //get best epoch
+                            ResultDTO<TrainingRunResultsDTO>? resultGetBestEpoch = _trainingRunService.GetBestEpochForTrainingRun(trainingRunDTO.Id!.Value);
+                            if (resultGetBestEpoch.IsSuccess && resultGetBestEpoch.Data != null)
+                            {
+                                int bestEpoch = resultGetBestEpoch.Data.BestEpochMetrics.Epoch;
+                                foreach (string? file in pthFiles)
+                                {
+                                    if (file != null)
+                                    {
+                                        string? fileName = Path.GetFileNameWithoutExtension(file);
+                                        if (fileName != null && fileName.StartsWith("epoch_"))
+                                        {
+                                            string? numberPart = fileName.Substring("epoch_".Length);
+                                            if (numberPart != null && int.TryParse(numberPart, out int epochNumber))
+                                            {
+                                                //delete all .pth files except best epoch
+                                                if (epochNumber != bestEpoch && System.IO.File.Exists(file))
+                                                {
+                                                    System.IO.File.Delete(file);
+                                                }
+                                            }
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //result is failed so delete all .pth files
+                            foreach (string? file in pthFiles)
+                            {
+                                if (System.IO.File.Exists(file))
+                                    System.IO.File.Delete(file);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -418,6 +480,21 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     }
                 }
 
+                JobList<ProcessingJobDto>? processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
+                if (processingJobs == null)
+                    return ResultDTO.Fail("Processing jobs not found");
+
+                foreach (KeyValuePair<string, ProcessingJobDto> job in processingJobs)
+                {
+                    string jobId = job.Key;
+                    using (IStorageConnection connection = JobStorage.Current.GetConnection())
+                    {
+                        string storedKey = connection.GetJobParameter(jobId, "trainingRunId");
+                        if (storedKey == trainingRunId.ToString())
+                            return ResultDTO.Fail("Can not delete training run because it is in process");
+                    }
+                }
+
                 ResultDTO? resultDeleteEntity = await _trainingRunService.DeleteTrainingRun(trainingRunId, _webHostEnvironment.WebRootPath);
                 if (!resultDeleteEntity.IsSuccess && resultDeleteEntity.HandleError())
                     return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
@@ -513,9 +590,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     return ResultDTO.Fail("Directory path not found");
 
                 string? filePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, trainingRunsErrorLogsFolder.Data);
-                if (!Directory.Exists(filePath))                
+                if (!Directory.Exists(filePath))
                     Directory.CreateDirectory(filePath);
-                
+
                 string fileName = $"{trainingRunId}_errMsg.txt";
                 string? fullFilePath = System.IO.Path.Combine(filePath, fileName);
                 if (fullFilePath == null)
