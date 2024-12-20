@@ -531,6 +531,21 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     }
                 }
 
+                JobList<ProcessingJobDto>? processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
+                if (processingJobs == null)
+                    return ResultDTO.Fail("Processing jobs not found");
+
+                foreach (KeyValuePair<string, ProcessingJobDto> job in processingJobs)
+                {
+                    string jobId = job.Key;
+                    using (IStorageConnection connection = JobStorage.Current.GetConnection())
+                    {
+                        string storedKey = connection.GetJobParameter(jobId, "detectionRunId");
+                        if (storedKey == detectionRunId.ToString())
+                            return ResultDTO.Fail("Can not delete detection run because it is in process");
+                    }
+                }
+
                 ResultDTO resultDeleteEntity = await _detectionRunService.DeleteDetectionRun(detectionRunId, _webHostEnvironment.WebRootPath);
                 if (!resultDeleteEntity.IsSuccess && resultDeleteEntity.HandleError())
                     return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);

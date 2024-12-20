@@ -811,7 +811,9 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var trainingRunId = Guid.NewGuid();
             var enqueuedJobs = new JobList<EnqueuedJobDto>(new List<KeyValuePair<string, EnqueuedJobDto>>());
             Mock<IMonitoringApi> mockMonitoringApi = new Mock<IMonitoringApi>();
+
             mockMonitoringApi.Setup(api => api.EnqueuedJobs("default", 0, int.MaxValue)).Returns(enqueuedJobs);
+            mockMonitoringApi.Setup(api => api.ProcessingJobs(0, int.MaxValue)).Returns(new JobList<ProcessingJobDto>(new List<KeyValuePair<string, ProcessingJobDto>>()));
 
             JobStorage.Current = Mock.Of<JobStorage>(storage => storage.GetMonitoringApi() == mockMonitoringApi.Object);
 
@@ -836,6 +838,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             mockMonitoringApi
                 .Setup(api => api.EnqueuedJobs("default", 0, int.MaxValue))
                 .Returns(new JobList<EnqueuedJobDto>(new List<KeyValuePair<string, EnqueuedJobDto>>()));
+
+            mockMonitoringApi
+              .Setup(api => api.ProcessingJobs(0, int.MaxValue))
+              .Returns(new JobList<ProcessingJobDto>(new List<KeyValuePair<string, ProcessingJobDto>>()));
 
             var mockJobStorage = new Mock<JobStorage>();
             mockJobStorage.Setup(js => js.GetMonitoringApi()).Returns(mockMonitoringApi.Object);
@@ -864,6 +870,10 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .Setup(api => api.EnqueuedJobs("default", 0, int.MaxValue))
                 .Returns(new JobList<EnqueuedJobDto>(new List<KeyValuePair<string, EnqueuedJobDto>>()));
 
+            mockMonitoringApi
+               .Setup(api => api.ProcessingJobs(0, int.MaxValue))
+               .Returns(new JobList<ProcessingJobDto>(new List<KeyValuePair<string, ProcessingJobDto>>()));
+
             var mockJobStorage = new Mock<JobStorage>();
             mockJobStorage.Setup(js => js.GetMonitoringApi()).Returns(mockMonitoringApi.Object);
             JobStorage.Current = mockJobStorage.Object;
@@ -890,6 +900,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                 .Setup(service => service.UpdateTrainingRunEntity(trainingRunDTO.Id.Value, null, nameof(ScheduleRunsStatus.Processing), false,null))
                 .Throws(new Exception("Unexpected error"));
 
+            _mockMMDetectionConfiguration.Setup(s => s.GetTrainingRunsBaseOutDirAbsPath()).Returns("TrainingRunsBaseOytDirAbsPath");
+
             // Act
             var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
@@ -906,6 +918,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var trainingRunDTO = new TrainingRunDTO { Id = Guid.NewGuid(), DatasetId = Guid.NewGuid() };
             _mockTrainingRunService.Setup(s => s.UpdateTrainingRunEntity(It.IsAny<Guid>(), null, nameof(ScheduleRunsStatus.Processing), null, null))
                 .ReturnsAsync(ResultDTO.Fail("Object reference not set to an instance of an object."));
+
+            _mockMMDetectionConfiguration.Setup(s => s.GetTrainingRunsBaseOutDirAbsPath()).Returns("TrainingRunsBaseOytDirAbsPath");
 
             // Act
             var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
@@ -926,6 +940,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockDatasetService.Setup(s => s.GetDatasetDTOFullyIncluded(It.IsAny<Guid>(), false))
                 .ReturnsAsync(ResultDTO<DatasetDTO>.Fail("Object reference not set to an instance of an object."));
 
+            _mockMMDetectionConfiguration.Setup(s => s.GetTrainingRunsBaseOutDirAbsPath()).Returns("TrainingRunsBaseOytDirAbsPath");
+
             // Act
             var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
@@ -945,6 +961,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockTrainingRunService.Setup(s => s.UpdateTrainingRunEntity(It.IsAny<Guid>(), null, nameof(ScheduleRunsStatus.Processing), null, null))
                 .ThrowsAsync(new NullReferenceException("Object reference not set to an instance of an object"));
 
+            _mockMMDetectionConfiguration.Setup(s => s.GetTrainingRunsBaseOutDirAbsPath()).Returns("TrainingRunsBaseOytDirAbsPath");
             // Act
             var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
@@ -1029,6 +1046,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
                     It.IsAny<string>()))
                 .ReturnsAsync(ResultDTO.Ok());
 
+            _mockMMDetectionConfiguration.Setup(s => s.GetTrainingRunsBaseOutDirAbsPath()).Returns("TrainingRunsBaseOytDirAbsPath");
             // Act
             var result = await _controller.ExecuteTrainingRunProcess(trainingRunDTO, paramsDTO);
 
