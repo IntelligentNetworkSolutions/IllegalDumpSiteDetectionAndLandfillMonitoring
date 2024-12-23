@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Entities;
+﻿using Entities;
 using Entities.DatasetEntities;
 using Entities.TrainingEntities;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -14,6 +7,13 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SD;
 using SD.Helpers;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
 {
@@ -134,7 +134,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 if (File.Exists(seedTrainingAndDetectionProcessFile) == false)
                     return ResultDTO.Fail($"JSON File does not exist: {seedTrainingAndDetectionProcessFile}");
 
-                
+
                 string seedTrainingAndDetectionProcessData = File.ReadAllText(seedTrainingAndDetectionProcessFile);
                 JObject jsonObj = JObject.Parse(seedTrainingAndDetectionProcessData);
                 List<SeedCopyScripts>? copyScriptsObjs =
@@ -162,7 +162,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
 
                 return ResultDTO.Ok();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
@@ -173,9 +173,9 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
             IDbContextTransaction? dbTransaction = dbContextTransaction;
             try
             {
-                if (_db.TrainedModels.Count() > 0)
+                if (_db.TrainedModels.Any())
                 {
-                    Console.WriteLine("Trained Models have Already been Seeded");
+                    Console.WriteLine("Trained Models have already been seeded.");
                     return ResultDTO.Ok();
                 }
 
@@ -183,7 +183,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 if (string.IsNullOrEmpty(seedTrainingAndDetectionProcessFile))
                     return ResultDTO.Fail("Null Seed File in Config for SeedDatabaseFilePaths:SeedTrainingAndDetectionProcess");
 
-                if (File.Exists(seedTrainingAndDetectionProcessFile) == false)
+                if (!File.Exists(seedTrainingAndDetectionProcessFile))
                     return ResultDTO.Fail($"JSON File does not exist: {seedTrainingAndDetectionProcessFile}");
 
                 string seedTrainingAndDetectionProcessData = File.ReadAllText(seedTrainingAndDetectionProcessFile);
@@ -191,20 +191,15 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 JToken jsonTraining = jsonObj["Training"];
                 List<SeedTrainedModel>? initialBaseModels =
                     JsonConvert.DeserializeObject<List<SeedTrainedModel>>(jsonTraining["InitialBaseModels"].ToString());
+
                 if (initialBaseModels is null)
-                    return ResultDTO.Fail("Failed to Deserialize Object Trained Models to <List<(string name, string config, string model)>");
+                    return ResultDTO.Fail("Failed to deserialize object Trained Models to List<SeedTrainedModel>");
 
                 ApplicationUser? applicationUser = _db.Users.FirstOrDefault();
                 if (applicationUser is null)
-                    return ResultDTO.Fail("Failed to find a User");
+                    return ResultDTO.Fail("Failed to find a user.");
 
-                DatasetClass? datasetClassEntity = null;
-                if (_db.DatasetClasses.Where(x => x.ClassName.ToLower() == "waste") != null
-                    && _db.DatasetClasses.Where(x => x.ClassName.ToLower() == "waste").Count() > 0)
-                {
-                    datasetClassEntity = _db.DatasetClasses.Where(x => x.ClassName.ToLower() == "waste").First();
-                }
-
+                DatasetClass? datasetClassEntity = _db.DatasetClasses.FirstOrDefault(x => x.ClassName.ToLower() == "waste");
                 if (datasetClassEntity is null)
                 {
                     datasetClassEntity = new DatasetClass
@@ -220,8 +215,9 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 Console.WriteLine("Dataset Class: " + datasetClassEntity.Id);
 
                 List<TrainedModel> trainedModels = new();
-                if(dbContextTransaction is null)
+                if (dbContextTransaction is null)
                     dbTransaction = _db.Database.BeginTransaction();
+
                 foreach (SeedTrainedModel model in initialBaseModels)
                 {
                     Console.WriteLine("name: " + model.Name);
@@ -250,26 +246,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                     Console.WriteLine($"App User: {applicationUser}");
                     Console.WriteLine($"App User Id: {applicationUser.Id}");
 
-                    Dataset dummyBaseTrainedModelDataset = new Dataset()
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = $"DummyDataset{model.Name}",
-                        Description = $"Dummy Dataset for Trained Model: {model.Name}",
-                        IsPublished = false,
-                        CreatedById = applicationUser.Id,
-                        CreatedBy = null,
-                        CreatedOn = DateTime.UtcNow,
-                    };
-                    Console.WriteLine($"Added DatasetId: {dummyBaseTrainedModelDataset.Id}");
-                    Dataset_DatasetClass dataset_DatasetClass = new Dataset_DatasetClass
-                    {
-                        Id = Guid.NewGuid(),
-                        DatasetId = dummyBaseTrainedModelDataset.Id,
-                        DatasetClassId = datasetClassEntity.Id,
-                        DatasetClassValue = 1
-                    };
-                    Console.WriteLine($"Added Dataset Dataset Class Id: {dataset_DatasetClass.Id}");
-                    dummyBaseTrainedModelDataset.DatasetClasses = [dataset_DatasetClass];
+                    Console.WriteLine($"Config File Path: {downloadConfigResult.Data}, Model File Path: {downloadModelResult.Data}");
 
                     TrainedModel baseTrainedModel = new TrainedModel
                     {
@@ -278,11 +255,11 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                         ModelConfigPath = downloadConfigResult.Data!,
                         ModelFilePath = downloadModelResult.Data!,
                         IsPublished = true,
-                        DatasetId = dummyBaseTrainedModelDataset.Id,
-                        Dataset = dummyBaseTrainedModelDataset,
+                        DatasetId = null, // No dummy dataset created
                         CreatedById = applicationUser.Id,
                         CreatedOn = DateTime.UtcNow,
                     };
+
                     trainedModels.Add(baseTrainedModel);
                     Console.WriteLine($"Added Model: {baseTrainedModel.Name}");
                 }
@@ -292,7 +269,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 if (numRows <= 0)
                     throw new RowNotInTableException(nameof(numRows));
 
-                if(dbContextTransaction is null)
+                if (dbContextTransaction is null)
                     dbTransaction.Commit();
 
                 return ResultDTO.Ok();
@@ -301,6 +278,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
             {
                 if (dbTransaction is not null && dbContextTransaction is null)
                     dbTransaction.Rollback();
+
                 return ResultDTO.ExceptionFail(ex.Message, ex);
             }
         }
@@ -334,7 +312,7 @@ namespace DAL.ApplicationStorage.SeedDatabase.ModulesConfigs.MMDetectionSetup
                 if (File.Exists(fileDestPath) == false)
                 {
                     ResultDTO<string> downloadAndCopyResult = await DownloadFromUrlToFileAbsPath(fileUrl, fileDestPath);
-                    if(downloadAndCopyResult.IsSuccess == false)
+                    if (downloadAndCopyResult.IsSuccess == false)
                         return ResultDTO<string>.Fail(downloadAndCopyResult.ErrMsg!);
                 }
 

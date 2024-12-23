@@ -10,7 +10,7 @@ namespace Entities.TrainingEntities
         public bool IsCompleted { get; set; } = false;
         public string? Status { get; set; }
 
-        public Guid DatasetId { get; set; }
+        public Guid? DatasetId { get; set; }
         public virtual Dataset? Dataset { get; set; }
 
         public Guid? TrainedModelId { get; set; } = null;

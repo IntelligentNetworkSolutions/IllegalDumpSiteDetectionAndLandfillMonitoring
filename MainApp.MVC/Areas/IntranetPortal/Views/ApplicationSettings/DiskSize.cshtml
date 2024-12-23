@@ -1,0 +1,109 @@
+﻿@using MainApp.MVC.Helpers;
+@using Microsoft.AspNetCore.Localization;
+@using SD.Helpers;
+@model IEnumerable<MainApp.MVC.ViewModels.IntranetPortal.ApplicationSettings.FolderSizeViewModel>
+@{
+    ViewData["Title"] = @DbResHtml.T("Disk Size", "Resources");
+}
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Shows detailed disk size usage across all tracked folders.", "Resources") </small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Disk Size", "Resources")</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body">
+        <table id="folderSizesTable" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>@DbResHtml.T("Folder Name", "Resources")</th>
+                    <th>@DbResHtml.T("Size", "Resources")</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var folder in Model)
+                {
+                    <tr>
+                        <td>@folder.FolderName</td>
+                        <td>@folder.Size</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        var httpContext = ViewContext.HttpContext;
+        var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+        var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+    }
+
+    <script>
+        $(document).ready(function () {
+            $('#folderSizesTable').DataTable({
+                paging: true,
+                pageLength: 100,
+                language: {
+                    url: "@langPath"
+                },
+                responsive: true,
+                dom: '<"top"fB>rt<"bottom"lp>',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<i class="fas fa-file-alt"></i>',
+                        titleAttr: 'Export to Excel',
+                        className: 'btn btn-success'
+                    }
+                ],
+                columnDefs: [
+                    {
+                        targets: 1,
+                        render: function (data, type, row) {
+
+                            if (type === 'display') {
+                                return formatSize(data);
+                            }
+                            return data;
+                        },
+                        orderData: 1
+                    }
+                ],
+                order: [
+                    [1, 'desc']
+                ]
+            });
+        });
+
+
+        function formatSize(sizeInBytes) {
+            const OneMB = 1024 * 1024;
+            const OneGB = OneMB * 1024;
+
+            if (sizeInBytes >= OneGB) {
+                return (sizeInBytes / OneGB).toFixed(2) + ' GB';
+            } else if (sizeInBytes >= OneMB) {
+                return (sizeInBytes / OneMB).toFixed(2) + ' MB';
+            } else {
+                return (sizeInBytes / 1024).toFixed(2) + ' KB';
+            }
+        }
+
+
+    </script>
+}
+

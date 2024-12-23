@@ -58,7 +58,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _configuration = configuration;
             _mapper = mapper;
         }
-        
+
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
         public async Task<IActionResult> Index()
@@ -81,7 +81,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
-           
+
         }
 
         [HttpGet]
@@ -513,9 +513,9 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                     return ResultDTO.Fail("Directory path not found");
 
                 string? filePath = System.IO.Path.Combine(_webHostEnvironment.WebRootPath, trainingRunsErrorLogsFolder.Data);
-                if (!Directory.Exists(filePath))                
+                if (!Directory.Exists(filePath))
                     Directory.CreateDirectory(filePath);
-                
+
                 string fileName = $"{trainingRunId}_errMsg.txt";
                 string? fullFilePath = System.IO.Path.Combine(filePath, fileName);
                 if (fullFilePath == null)

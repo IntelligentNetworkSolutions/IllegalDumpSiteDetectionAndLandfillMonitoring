@@ -11,7 +11,7 @@ namespace Entities.TrainingEntities
 
         public bool IsPublished { get; set; } = false;
 
-        public Guid DatasetId { get; set; }
+        public Guid? DatasetId { get; set; }
         public virtual Dataset? Dataset { get; set; }
 
         public Guid? TrainingRunId { get; set; }
