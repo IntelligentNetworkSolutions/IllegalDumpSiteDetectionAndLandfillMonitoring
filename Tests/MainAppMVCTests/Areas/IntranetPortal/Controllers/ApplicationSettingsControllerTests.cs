@@ -3,6 +3,7 @@ using DTOs.MainApp.BL;
 using MainApp.BL.Interfaces.Services;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.ApplicationSettings;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -16,6 +17,8 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IApplicationSettingsService> _mockApplicationSettingsService;
         private readonly Mock<IAppSettingsAccessor> _mockAppSettingsAccessor;
         private readonly Mock<IConfiguration> _mockConfiguration;
+        private readonly Mock<IWebHostEnvironment> _mockWebHostEnviroment;
+        private readonly Mock<IMMDetectionConfigurationService> _mockIMMDetectionConfigurationService;
         private readonly ApplicationSettingsController _controller;
 
         public ApplicationSettingsControllerTests()
@@ -23,11 +26,16 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             _mockApplicationSettingsService = new Mock<IApplicationSettingsService>();
             _mockAppSettingsAccessor = new Mock<IAppSettingsAccessor>();
             _mockConfiguration = new Mock<IConfiguration>();
+            _mockWebHostEnviroment = new Mock<IWebHostEnvironment>();
+            _mockIMMDetectionConfigurationService = new Mock<IMMDetectionConfigurationService>();
 
             _controller = new ApplicationSettingsController(
                 _mockApplicationSettingsService.Object,
                 _mockConfiguration.Object,
-                _mockAppSettingsAccessor.Object);
+                _mockAppSettingsAccessor.Object,
+                _mockWebHostEnviroment.Object,
+                _mockIMMDetectionConfigurationService.Object
+                );
         }
 
         [Fact]
