@@ -20,8 +20,7 @@ namespace DAL.EnitityConfigurations.TrainingEntities
             builder.HasOne(tm => tm.Dataset)
                    .WithMany() // Assuming Dataset does not have a navigation property pointing back to TrainedModel
                    .HasForeignKey(tm => tm.DatasetId)
-                   .OnDelete(DeleteBehavior.Restrict) // Prevents cascade delete
-                   .IsRequired();
+                   .OnDelete(DeleteBehavior.SetNull); // Prevents cascade delete
 
             // Required TrainingRun navigation property
             builder.HasOne(tm => tm.TrainingRun)

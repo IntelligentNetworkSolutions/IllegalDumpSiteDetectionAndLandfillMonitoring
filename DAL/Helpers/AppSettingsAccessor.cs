@@ -1,9 +1,9 @@
-﻿using System.Threading.Tasks;
-using DAL.Interfaces.Helpers;
+﻿using DAL.Interfaces.Helpers;
 using DAL.Interfaces.Repositories;
 using Entities;
 using SD;
 using SD.Helpers;
+using System.Threading.Tasks;
 
 namespace DAL.Helpers
 {

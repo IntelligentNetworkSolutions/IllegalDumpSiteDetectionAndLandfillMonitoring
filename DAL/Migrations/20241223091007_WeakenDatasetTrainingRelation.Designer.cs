@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241223091007_WeakenDatasetTrainingRelation")]
+    partial class WeakenDatasetTrainingRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1818,7 +1821,7 @@ namespace DAL.Migrations
                     b.HasOne("Entities.DatasetEntities.Dataset", "Dataset")
                         .WithMany()
                         .HasForeignKey("DatasetId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_trained_models_datasets_dataset_id");
 
                     b.HasOne("Entities.TrainingEntities.TrainingRun", "TrainingRun")
@@ -1863,7 +1866,7 @@ namespace DAL.Migrations
                     b.HasOne("Entities.DatasetEntities.Dataset", "Dataset")
                         .WithMany()
                         .HasForeignKey("DatasetId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_training_runs_datasets_dataset_id");
 
                     b.Navigation("BaseModel");

@@ -292,6 +292,12 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a asp-area="IntranetPortal" asp-controller="ApplicationSettings" asp-action="DiskSize" title="@DbResHtml.T("Disk Size", "Resources")" class="nav-link @Html.IsActive(controllers: "ApplicationSettings", actions: "DiskSize")">
+                                    <i class="fas fa-sm fa-hdd"></i>
+                                    <p><small> @DbResHtml.T("Disk Size", "Resources")</small></p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a href="/mainapp/LocalizationAdmin" title="@DbResHtml.T("Localization", "Resources")" class="nav-link @Html.IsActive("LocalizationAdministration")">
                                     <i class="fas fa-sm fa-globe"></i>
                                     <p><small> @DbResHtml.T("Localization", "Resources")</small></p>

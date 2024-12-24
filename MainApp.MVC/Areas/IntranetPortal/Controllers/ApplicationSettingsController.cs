@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MainApp.MVC.ViewModels.IntranetPortal.ApplicationSettings;
-using DAL.Interfaces.Helpers;
-using MainApp.BL.Interfaces.Services;
-using SD;
+﻿using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
+using MainApp.BL.Interfaces.Services;
+using MainApp.MVC.ViewModels.IntranetPortal.ApplicationSettings;
+using Microsoft.AspNetCore.Mvc;
+using SD;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -14,12 +14,16 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private IApplicationSettingsService _applicationSettingsService;
         private IAppSettingsAccessor _appSettingsAccessor;
         private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IMMDetectionConfigurationService _mmDetectionService;
 
-        public ApplicationSettingsController(IApplicationSettingsService applicationSettingsService, IConfiguration configuration, IAppSettingsAccessor appSettingsAccessor)
+        public ApplicationSettingsController(IApplicationSettingsService applicationSettingsService, IConfiguration configuration, IAppSettingsAccessor appSettingsAccessor, IWebHostEnvironment webHostEnvironment, IMMDetectionConfigurationService mmDetectionService)
         {
             _applicationSettingsService = applicationSettingsService;
             _configuration = configuration;
             _appSettingsAccessor = appSettingsAccessor;
+            _webHostEnvironment = webHostEnvironment;
+            _mmDetectionService = mmDetectionService;
         }
 
         public async Task<IActionResult> Index()
@@ -198,7 +202,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             };
 
             ResultDTO resUpdate = await _applicationSettingsService.UpdateApplicationSetting(appSettingDTO);
-            if (!resUpdate.IsSuccess && ResultDTO.HandleError(resUpdate)) 
+            if (!resUpdate.IsSuccess && ResultDTO.HandleError(resUpdate))
             {
                 model.Modules = SD.Modules.GetAll().ToList();
                 return View(model);
@@ -278,6 +282,93 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> DiskSize()
+        {
+            var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
+            var datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+            var pointCloudFileConverts = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts");
+            var pointCloudFileUploads = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileUploads", "Uploads\\LegalLandfillUploads\\PointCloudUploads");
+            var detectionInputImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImagesFolder", "Uploads\\DetectionUploads\\InputImages");
+            var detectionInputImagesThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", "Uploads\\DetectionUploads\\InputImagesThumbnails");
+            var mmDetectionTrainingFolder = _mmDetectionService.GetTrainingRunsBaseOutDirAbsPath();
+
+            if ((datasetImagesFolder.IsSuccess == false && datasetImagesFolder.HandleError()) ||
+                (datasetThumbnailsFolder.IsSuccess == false && datasetThumbnailsFolder.HandleError()) ||
+                (pointCloudFileConverts.IsSuccess == false && pointCloudFileConverts.HandleError()) ||
+                (pointCloudFileUploads.IsSuccess == false && pointCloudFileUploads.HandleError()) ||
+                (detectionInputImagesFolder.IsSuccess == false && detectionInputImagesFolder.HandleError()) ||
+                (detectionInputImagesThumbnailsFolder.IsSuccess == false && detectionInputImagesThumbnailsFolder.HandleError()))
+            {
+                return View(new List<FolderSizeViewModel>());
+            }
+
+            var folderSizes = new List<FolderSizeViewModel>
+            {
+                new FolderSizeViewModel
+                {
+                    FolderName = "Dataset Images",
+                    Size = GetFolderSize(Path.Combine(_webHostEnvironment.WebRootPath, datasetImagesFolder.Data))
+                },
+                new FolderSizeViewModel
+                {
+                    FolderName = "Dataset Thumbnails",
+                    Size = GetFolderSize(Path.Combine(_webHostEnvironment.WebRootPath, datasetThumbnailsFolder.Data))
+                },
+                new FolderSizeViewModel
+                {
+                    FolderName = "Point Cloud File Converts",
+                    Size = GetFolderSize(Path.Combine(_webHostEnvironment.WebRootPath, pointCloudFileConverts.Data))
+                },
+                new FolderSizeViewModel
+                {
+                    FolderName = "Point Cloud File Uploads",
+                    Size = GetFolderSize(Path.Combine(_webHostEnvironment.WebRootPath, pointCloudFileUploads.Data))
+                },
+                new FolderSizeViewModel
+                {
+                    FolderName = "Detection Input Image",
+                    Size = GetFolderSize(Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImagesFolder.Data))
+                },
+                new FolderSizeViewModel
+                {
+                    FolderName = "Detection Input Image Thumbnails",
+                    Size = GetFolderSize(Path.Combine(_webHostEnvironment.WebRootPath, detectionInputImagesThumbnailsFolder.Data))
+                },
+                new FolderSizeViewModel
+                {
+                    FolderName = "Training Runs",
+                    Size = GetFolderSize(mmDetectionTrainingFolder)
+                }
+            };
+
+            return View(folderSizes);
+        }
+
+
+
+        private long GetFolderSize(string folderPath)
+        {
+            if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+                return 0;
+
+            var files = Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories);
+
+            long totalSize = 0;
+            foreach (var file in files)
+            {
+                try
+                {
+                    totalSize += new FileInfo(file).Length;
+                }
+                catch
+                {
+                    // TODO Handle access exceptions if needed
+                }
+            }
+
+            return totalSize;
         }
     }
 }
