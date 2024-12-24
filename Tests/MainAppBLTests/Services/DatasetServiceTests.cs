@@ -89,7 +89,7 @@ namespace Tests.MainAppBLTests.Services
             var datasetId = Guid.NewGuid();
 
             _mockDatasetRepository
-                .Setup(repo => repo.GetById(datasetId, false, null))
+                .Setup(repo => repo.GetById(datasetId, false, "CreatedBy"))
                 .ReturnsAsync(ResultDTO<Dataset?>.Ok(null));
 
             // Act

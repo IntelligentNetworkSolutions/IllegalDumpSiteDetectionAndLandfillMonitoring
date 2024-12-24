@@ -13,7 +13,7 @@
 
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                 <li class="nav-item">
-                    <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" id="NavlinkMap" class=" nav-link"  title="@DbResHtml.T("Map", "Resources")">
+                    <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" id="NavlinkMap" class="@Html.IsActive(controllers: "Map") nav-link" title="@DbResHtml.T("Map", "Resources")">
                         <i class="fas fa-map"></i> &nbsp;&nbsp;
                         <p>
                             @DbResHtml.T("Map", "Resources")

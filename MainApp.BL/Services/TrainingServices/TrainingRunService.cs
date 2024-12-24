@@ -298,12 +298,20 @@ namespace MainApp.BL.Services.TrainingServices
                     Directory.CreateDirectory(detectionCliLogsAbsPath);
                 }
 
-                BufferedCommandResult powerShellResults = await Cli.Wrap(_MMDetectionConfiguration.GetCondaExeAbsPath())
-                            .WithWorkingDirectory(_MMDetectionConfiguration.GetRootDirAbsPath())
+                string? condaExeAbsPath = _MMDetectionConfiguration.GetCondaExeAbsPath();
+                if (!File.Exists(condaExeAbsPath))
+                    return ResultDTO.Fail($"Conda.exe file does not exist on this path: {condaExeAbsPath}");
+
+                string? rootDirAbsPath = _MMDetectionConfiguration.GetRootDirAbsPath();
+                if (!Directory.Exists(rootDirAbsPath))
+                    return ResultDTO.Fail($"Root directory does not exist on this path: {rootDirAbsPath}");
+
+                BufferedCommandResult powerShellResults = await Cli.Wrap(condaExeAbsPath)
+                            .WithWorkingDirectory(rootDirAbsPath)
                             .WithValidation(CommandResultValidation.None)
                             .WithArguments(trainingCommand.ToLower())
-                            .WithStandardOutputPipe(PipeTarget.ToFile(Path.Combine(_MMDetectionConfiguration.GetTrainingRunCliOutDirAbsPath(), $"succ_{trainingRunId}.txt")))
-                            .WithStandardErrorPipe(PipeTarget.ToFile(Path.Combine(_MMDetectionConfiguration.GetTrainingRunCliOutDirAbsPath(), $"error_{trainingRunId}.txt")))
+                            .WithStandardOutputPipe(PipeTarget.ToFile(Path.Combine(trainingCliLogsAbsPath, $"succ_{trainingRunId}.txt")))
+                            .WithStandardErrorPipe(PipeTarget.ToFile(Path.Combine(trainingCliLogsAbsPath, $"error_{trainingRunId}.txt")))
                             .ExecuteBufferedAsync();
 
                 if (powerShellResults.IsSuccess == false)
@@ -643,6 +651,34 @@ namespace MainApp.BL.Services.TrainingServices
                     }
                 }
 
+                //delete config folder for training run from mmdetection
+                string? configTrainingRunFolder = _MMDetectionConfiguration.GetTrainingRunConfigDirAbsPathByRunId(trainingRunId);
+                if (Directory.Exists(configTrainingRunFolder))
+                {
+                    try
+                    {
+                        Directory.Delete(configTrainingRunFolder, recursive: true);
+                    }
+                    catch (Exception ex)
+                    {
+                        return ResultDTO.Fail($"Failed to delete folder: {ex.Message}");
+                    }
+                }
+
+                //delete data folder for training run from mmdetection
+                string datasetTrainingRunFolder = _MMDetectionConfiguration.GetTrainingRunDatasetDirAbsPath(trainingRunId);
+                if(Directory.Exists(datasetTrainingRunFolder))
+                {
+                    try
+                    {
+                        Directory.Delete(datasetTrainingRunFolder, recursive: true);
+                    }
+                    catch (Exception ex)
+                    {
+                        return ResultDTO.Fail($"Failed to delete folder: {ex.Message}");
+                    }
+                }
+
                 //get trained model entity
                 ResultDTO<TrainedModel?>? resultGetTrainedModel = await _trainedModelsRepository.GetById(resultGetEntity.Data.TrainedModelId!.Value, track: true);
                 if (!resultGetTrainedModel.IsSuccess && resultGetTrainedModel.HandleError())
@@ -661,10 +697,16 @@ namespace MainApp.BL.Services.TrainingServices
                 List<Guid?>? trainingModelIdsList = resultGetAllTrainingRuns.Data.Where(x => x.Id != trainingRunId).Select(x => x.TrainedModelId).ToList();
                 if (!trainingModelIdsList.Contains(resultGetTrainedModel.Data.Id))
                 {
-                    //detele trained model from db if it is not contained in other training runs
-                    ResultDTO? resultDeleteTrainedModel = await _trainedModelsRepository.Delete(resultGetTrainedModel.Data);
-                    if (!resultDeleteTrainedModel.IsSuccess && resultDeleteTrainedModel.HandleError())
-                        return ResultDTO.Fail(resultDeleteTrainedModel.ErrMsg!);
+                    //check if the trained model is not base model to prevent deleting base trained model
+                    if(resultGetTrainedModel.Data.BaseModelId != null)
+                    {
+                        //detele trained model from db if it is not contained in other training runs
+                        ResultDTO? resultDeleteTrainedModel = await _trainedModelsRepository.Delete(resultGetTrainedModel.Data);
+                        if (!resultDeleteTrainedModel.IsSuccess && resultDeleteTrainedModel.HandleError())
+                            return ResultDTO.Fail(resultDeleteTrainedModel.ErrMsg!);
+                    }
+
+                  
                 } 
 
                 //delete training run from db
