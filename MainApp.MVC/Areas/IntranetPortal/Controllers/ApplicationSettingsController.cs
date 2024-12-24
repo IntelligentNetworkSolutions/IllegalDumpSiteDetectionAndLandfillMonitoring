@@ -294,12 +294,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             var detectionInputImagesThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", "Uploads\\DetectionUploads\\InputImagesThumbnails");
             var mmDetectionTrainingFolder = _mmDetectionService.GetTrainingRunsBaseOutDirAbsPath();
 
-            if (datasetImagesFolder.IsSuccess == false && datasetImagesFolder.HandleError() ||
-                datasetThumbnailsFolder.IsSuccess == false && datasetThumbnailsFolder.HandleError() ||
-                pointCloudFileConverts.IsSuccess == false && pointCloudFileConverts.HandleError() ||
-                pointCloudFileUploads.IsSuccess == false && pointCloudFileUploads.HandleError() ||
-                detectionInputImagesFolder.IsSuccess == false && detectionInputImagesFolder.HandleError() ||
-                detectionInputImagesThumbnailsFolder.IsSuccess == false && detectionInputImagesThumbnailsFolder.HandleError())
+            if ((datasetImagesFolder.IsSuccess == false && datasetImagesFolder.HandleError()) ||
+                (datasetThumbnailsFolder.IsSuccess == false && datasetThumbnailsFolder.HandleError()) ||
+                (pointCloudFileConverts.IsSuccess == false && pointCloudFileConverts.HandleError()) ||
+                (pointCloudFileUploads.IsSuccess == false && pointCloudFileUploads.HandleError()) ||
+                (detectionInputImagesFolder.IsSuccess == false && detectionInputImagesFolder.HandleError()) ||
+                (detectionInputImagesThumbnailsFolder.IsSuccess == false && detectionInputImagesThumbnailsFolder.HandleError()))
             {
                 return View(new List<FolderSizeViewModel>());
             }
