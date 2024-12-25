@@ -28,88 +28,101 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
         public async Task<IActionResult> Index()
         {
-            ResultDTO<List<TrainedModelDTO>> resultDtoList = await _trainedModelService.GetAllTrainedModels();
-
-            if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+            try
             {
-                var errorPath = _configuration["ErrorViewsPath:Error"];
-                if (errorPath == null)
-                {
-                    return BadRequest();
-                }
-                return Redirect(errorPath);
-            }
-            if (resultDtoList.Data == null)
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (errorPath == null)
-                {
-                    return NotFound();
-                }
-                return Redirect(errorPath);
-            }
+                ResultDTO<List<TrainedModelDTO>> resultDtoList = await _trainedModelService.GetAllTrainedModels();
 
-            var vmList = _mapper.Map<List<TrainedModelViewModel>>(resultDtoList.Data);
-            if (vmList == null)
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (errorPath == null)
+                if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
                 {
-                    return NotFound();
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
                 }
-                return Redirect(errorPath);
-            }
+                if (resultDtoList.Data == null)
+                {
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+                }
 
-            return View(vmList);
+                var vmList = _mapper.Map<List<TrainedModelViewModel>>(resultDtoList.Data);
+                if (vmList == null)
+                {
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+                }
+
+                return View(vmList);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
         public async Task<ResultDTO<List<TrainedModelDTO>>> GetAllTrainedModels()
         {
-            ResultDTO<List<TrainedModelDTO>> resultDtoList = await _trainedModelService.GetAllTrainedModels();
+            try
+            {
+                ResultDTO<List<TrainedModelDTO>> resultDtoList = await _trainedModelService.GetAllTrainedModels();
 
-            if (resultDtoList.IsSuccess == false && resultDtoList.HandleError())
-                return ResultDTO<List<TrainedModelDTO>>.Fail(resultDtoList.ErrMsg!);
+                if (resultDtoList.IsSuccess == false && resultDtoList.HandleError())
+                    return ResultDTO<List<TrainedModelDTO>>.Fail(resultDtoList.ErrMsg!);
 
-            if (resultDtoList.Data == null)
-                return ResultDTO<List<TrainedModelDTO>>.Fail("Trained models are not found");
+                if (resultDtoList.Data == null)
+                    return ResultDTO<List<TrainedModelDTO>>.Fail("Trained models are not found");
 
-            return ResultDTO<List<TrainedModelDTO>>.Ok(resultDtoList.Data);
+                return ResultDTO<List<TrainedModelDTO>>.Ok(resultDtoList.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<List<TrainedModelDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewTrainingRuns))]
         public async Task<ResultDTO<TrainedModelDTO>> GetTrainedModelById(Guid trainedModelId)
         {
-            ResultDTO<TrainedModelDTO> resultGetEntity = await _trainedModelService.GetTrainedModelById(trainedModelId);
-            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
-                return ResultDTO<TrainedModelDTO>.Fail(resultGetEntity.ErrMsg!);
+            try
+            {
+                ResultDTO<TrainedModelDTO> resultGetEntity = await _trainedModelService.GetTrainedModelById(trainedModelId);
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                    return ResultDTO<TrainedModelDTO>.Fail(resultGetEntity.ErrMsg!);
 
-            if (resultGetEntity.Data == null)
-                return ResultDTO<TrainedModelDTO>.Fail("Trained model not found");
+                if (resultGetEntity.Data == null)
+                    return ResultDTO<TrainedModelDTO>.Fail("Trained model not found");
 
-            return ResultDTO<TrainedModelDTO>.Ok(resultGetEntity.Data);
+                return ResultDTO<TrainedModelDTO>.Ok(resultGetEntity.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<TrainedModelDTO>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.EditTrainingRun))]
         public async Task<ResultDTO> EditTrainedModelById(TrainedModelViewModel trainedModelViewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
+                if (!ModelState.IsValid)
+                {
+                    var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
+
+                ResultDTO resultEdit = await _trainedModelService.EditTrainedModelById(trainedModelViewModel.Id, trainedModelViewModel.Name, trainedModelViewModel.IsPublished);
+
+                if (!resultEdit.IsSuccess && resultEdit.HandleError())
+                {
+                    return ResultDTO.Fail(resultEdit.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
             }
-
-            ResultDTO resultEdit = await _trainedModelService.EditTrainedModelById(trainedModelViewModel.Id, trainedModelViewModel.Name, trainedModelViewModel.IsPublished);
-
-            if (!resultEdit.IsSuccess && resultEdit.HandleError())
+            catch (Exception ex)
             {
-                return ResultDTO.Fail(resultEdit.ErrMsg!);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
-
-            return ResultDTO.Ok();
 
         }
 
@@ -117,17 +130,24 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteTrainingRun))]
         public async Task<ResultDTO> DeleteTrainedModelById(Guid trainedModelId)
         {
-            if (trainedModelId == Guid.Empty)
-                return ResultDTO.Fail("Invalid training run id");
-
-            ResultDTO resultDelete = await _trainedModelService.DeleteTrainedModelById(trainedModelId);
-
-            if (!resultDelete.IsSuccess && resultDelete.HandleError())
+            try
             {
-                return ResultDTO.Fail(resultDelete.ErrMsg!);
-            }
+                if (trainedModelId == Guid.Empty)
+                    return ResultDTO.Fail("Invalid training run id");
 
-            return ResultDTO.Ok();
+                ResultDTO resultDelete = await _trainedModelService.DeleteTrainedModelById(trainedModelId);
+
+                if (!resultDelete.IsSuccess && resultDelete.HandleError())
+                {
+                    return ResultDTO.Fail(resultDelete.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
 
         }
 
@@ -155,6 +175,22 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             {
                 return ResultDTO<TrainingRunResultsDTO>.ExceptionFail(ex.Message, ex);
             }
+        }
+
+        private IActionResult HandleErrorRedirect(string configKey, int statusCode)
+        {
+            string? errorPath = _configuration[configKey];
+            if (string.IsNullOrEmpty(errorPath))
+            {
+                return statusCode switch
+                {
+                    404 => NotFound(),
+                    403 => Forbid(),
+                    405 => StatusCode(405),
+                    _ => BadRequest()
+                };
+            }
+            return Redirect(errorPath);
         }
     }
 }

@@ -248,16 +248,22 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task GetTrainedModelById_ThrowsException_WhenServiceThrowsException()
+        public async Task GetTrainedModelById_ReturnsExceptionFail_WhenServiceThrowsException()
         {
             // Arrange
             var trainedModelId = Guid.NewGuid();
+            var exceptionMessage = "Service exception";
             _trainedModelServiceMock.Setup(service => service.GetTrainedModelById(trainedModelId, false))
-                .ThrowsAsync(new Exception("Service exception"));
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetTrainedModelById(trainedModelId));
+            // Act
+            var result = await _controller.GetTrainedModelById(trainedModelId);
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
         }
+
 
         [Fact]
         public async Task GetTrainedModelById_HandlesNullErrorMessage()
@@ -537,14 +543,20 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         public async Task GetAllTrainedModels_Returns_ExceptionFail_When_Exception_Is_Thrown()
         {
             // Arrange
-            var exceptionMessage = "An unexpected error occurred.";
+            var exceptionMessage = "Exception";
             _trainedModelServiceMock.Setup(service => service.GetAllTrainedModels())
-                .ThrowsAsync(new Exception("Exception"));
+                .ThrowsAsync(new Exception(exceptionMessage));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<Exception>(() => _controller.GetAllTrainedModels());
+            // Act
+            var result = await _controller.GetAllTrainedModels();
 
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Equal(exceptionMessage, result.ErrMsg);
+            Assert.NotNull(result.ExObj);
+            Assert.IsType<Exception>(result.ExObj);
         }
+
 
         [Fact]
         public async Task Index_ReturnsNotFound_WhenError404PathIsNullAndVmListIsNull()

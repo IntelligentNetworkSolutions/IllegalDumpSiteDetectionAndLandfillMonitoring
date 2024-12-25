@@ -5,6 +5,7 @@ using Services;
 using MainApp.MVC.ViewModels.IntranetPortal.AuditLog;
 using DAL.Repositories;
 using DAL.Interfaces.Repositories;
+using MainApp.MVC.Filters;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers
 {
@@ -14,84 +15,96 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         private IAuditLogsDa _auditLogsDa;
         private AuditLogBl _auditLogBl;
         private IUserManagementDa _userManagementDa;
+        private readonly IConfiguration _configuration;
         public AuditLogsController(IAuditLogsDa auditLogsDa,
             AuditLogBl auditLogBl,
-            IUserManagementDa userManagementDa)
+            IUserManagementDa userManagementDa,
+            IConfiguration configuration)
         {
             _auditLogsDa = auditLogsDa;
             _auditLogBl = auditLogBl;
             _userManagementDa = userManagementDa;
+            _configuration = configuration;
         }
+
+        [HasAuthClaim(nameof(SD.AuthClaims.AuditLog))]
         public async Task<IActionResult> Index()
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.AuditLog) || !_modulesAndAuthClaims.HasModule(SD.Modules.AuditLog))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            var internalUsers = await _userManagementDa.GetAllIntanetPortalUsers();
-            var auditActions = new List<string> { DbResHtml.T("Insert", "Resources").ToString(), DbResHtml.T("Update", "Resources").ToString(), DbResHtml.T("Delete", "Resources").ToString() };
-
-            var internalUserList = internalUsers.Select(x => new AuditLogUserViewModel
+            try
             {
-                Username = x.UserName,
-                FullName = x.UserName + " (" + x.LastName + " " + x.FirstName + ")"
-            }).ToList();           
+                var internalUsers = await _userManagementDa.GetAllIntanetPortalUsers();
+                if (internalUsers == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            var model = new AuditLogViewModel
+                var auditActions = new List<string> { DbResHtml.T("Insert", "Resources").ToString(), DbResHtml.T("Update", "Resources").ToString(), DbResHtml.T("Delete", "Resources").ToString() };
+                if (auditActions == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                var internalUserList = internalUsers.Select(x => new AuditLogUserViewModel
+                {
+                    Username = x.UserName,
+                    FullName = x.UserName + " (" + x.LastName + " " + x.FirstName + ")"
+                }).ToList();
+
+                if (internalUserList == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                var model = new AuditLogViewModel
+                {
+                    InternalUsersList = internalUserList,
+                    AuditActionsList = auditActions
+                };
+
+                if (model == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                return View(model);
+            }
+            catch (Exception)
             {
-                InternalUsersList = internalUserList,
-                AuditActionsList = auditActions
-            };
-
-            return View(model);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
+
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.AuditLog))]
         public async Task<IActionResult> _AuditLogs(string internalUsername = null, DateTime? dateFrom = null, DateTime? dateTo = null, string actionType = null, string type = null)
         {
-            var auditLogs = await _auditLogsDa.GetAllByUsernameFromToDate(internalUsername, dateFrom, dateTo, actionType, type);
-
-            var auditLogsListVM = auditLogs.Select(x => new AuditLogListViewModel
+            try
             {
-                AuditInternalUser = x.AuditInternalUser,
-                AuditAction = x.AuditAction,
-                EntityType = x.EntityType,
-                AuditData = x.AuditData,
-                AuditDate = x.AuditDate,
-                AuditLogId = x.AuditLogId
-            }).ToList();
+                var auditLogs = await _auditLogsDa.GetAllByUsernameFromToDate(internalUsername, dateFrom, dateTo, actionType, type);
+                if (auditLogs == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            return PartialView(auditLogsListVM);
+                var auditLogsListVM = auditLogs.Select(x => new AuditLogListViewModel
+                {
+                    AuditInternalUser = x.AuditInternalUser,
+                    AuditAction = x.AuditAction,
+                    EntityType = x.EntityType,
+                    AuditData = x.AuditData,
+                    AuditDate = x.AuditDate,
+                    AuditLogId = x.AuditLogId
+                }).ToList();
+
+                if (auditLogsListVM == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                return PartialView(auditLogsListVM);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.AuditLog))]
         public async Task<AuditLog> GetAuditData(int id)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.AuditLog) || !_modulesAndAuthClaims.HasModule(SD.Modules.AuditLog))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
             var role = await _auditLogsDa.GetAuditData(id);
             return role;
         }
-        
+
         /*
         TODO
         public async Task<IActionResult> ExportAuditLog(string internalUsername = null, DateTime? dateFrom = null, DateTime? dateTo = null, string actionType = null, string type = null)
@@ -113,29 +126,46 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             return File(fileResult, contentType, "ExportAuditLogs.xlsx");
         }
         */
+        [HasAuthClaim(nameof(SD.AuthClaims.AuditLog))]
         public List<string> GetAuditActions()
         {
             return _auditLogsDa.GetAuditActions().Result;
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.UserManagementEditUsersAndRoles))]
         public async Task<IActionResult> RedirectToUserManagement(string username)
         {
-            // TODO: add check claim
-            //if (!User.HasAuthClaim(SD.AuthClaims.UserManagementEditUsersAndRoles))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            var user = await _userManagementDa.GetUserByUsername(username);
-            return RedirectToAction("EditUser", "UserManagement", new { id = user.Id, area = "IntranetPortal" });
+            try
+            {
+                var user = await _userManagementDa.GetUserByUsername(username);
+                if(user == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                return RedirectToAction("EditUser", "UserManagement", new { id = user.Id, area = "IntranetPortal" });
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
+
         }
-               
+
+        private IActionResult HandleErrorRedirect(string configKey, int statusCode)
+        {
+            string? errorPath = _configuration[configKey];
+            if (string.IsNullOrEmpty(errorPath))
+            {
+                return statusCode switch
+                {
+                    404 => NotFound(),
+                    403 => Forbid(),
+                    405 => StatusCode(405),
+                    _ => BadRequest()
+                };
+            }
+            return Redirect(errorPath);
+        }
+
     }
+
 }
