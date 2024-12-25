@@ -32,27 +32,34 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        @if (User.HasAuthClaim(SD.AuthClaims.UploadConvertLegalLandfillPointCloudFile))
-                        {
-                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#uploadConvertFileModal" title=@DbResHtml.T("Upload/Convert file", "Resources")>
-                                <i class="fas fa-plus"></i>
-                                @DbResHtml.T("Upload/Convert file", "Resources")
-                            </button>
-                        }
-                        @if (User.HasAuthClaim(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))
-                        {
-                            <button id="previewPointCloudFileBtn" onclick="previewSelectedFiles()" class="mb-1 ml-2 btn bg-gradient-info float-left" title=@DbResHtml.T("View all of the selected point cloud files", "Resources")>
-                                <i class="fas fa-info-circle"></i>
-                                @DbResHtml.T("View Point Clouds", "Resources")
-                            </button>
-                        }
-                        @if (User.HasAuthClaim(SD.AuthClaims.ViewWasteVolumeDiffAnalysis))
-                        {
-                            <button id="wasteVolumeDiffAnalysisBtn" onclick="wasteVolumeDiffAnalysisFunc()" class="mb-1 ml-2 btn bg-gradient-secondary float-left" title=@DbResHtml.T("Differential analysis of waste volume", "Resources")>
-                                <i class="fas fa-ruler-combined"></i>
-                                @DbResHtml.T("Waste volume differential analysis", "Resources")
-                            </button>
-                        }
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex">
+                                @if (User.HasAuthClaim(SD.AuthClaims.UploadConvertLegalLandfillPointCloudFile))
+                                {
+                                    <button class="mb-1 btn bg-gradient-primary mr-2" data-toggle="modal" data-target="#uploadConvertFileModal" title=@DbResHtml.T("Upload/Convert file", "Resources")>
+                                        <i class="fas fa-plus"></i>
+                                        @DbResHtml.T("Upload/Convert file", "Resources")
+                                    </button>
+                                }
+                                @if (User.HasAuthClaim(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))
+                                {
+                                    <button id="previewPointCloudFileBtn" onclick="previewSelectedFiles()" class="mb-1 btn bg-gradient-info mr-2" title=@DbResHtml.T("View all of the selected point cloud files", "Resources")>
+                                        <i class="fas fa-info-circle"></i>
+                                        @DbResHtml.T("View Point Clouds", "Resources")
+                                    </button>
+                                }
+                                @if (User.HasAuthClaim(SD.AuthClaims.ViewWasteVolumeDiffAnalysis))
+                                {
+                                    <button id="wasteVolumeDiffAnalysisBtn" onclick="wasteVolumeDiffAnalysisFunc()" class="mb-1 btn bg-gradient-secondary" title=@DbResHtml.T("Differential analysis of waste volume", "Resources")>
+                                        <i class="fas fa-ruler-combined"></i>
+                                        @DbResHtml.T("Waste volume differential analysis", "Resources")
+                                    </button>
+                                }
+                            </div>
+                            <div>
+                                @await Component.InvokeAsync("Documentation", new { path = "landfill-management/3d-point-cloud-guide.html" })
+                            </div>
+                        </div>
                         <div class="mt-5">
                             <table id="legalLandfillPointCloudFilesTable" class="table table-sm table-bordered table-striped custom-responsive-table">
                                 <thead>

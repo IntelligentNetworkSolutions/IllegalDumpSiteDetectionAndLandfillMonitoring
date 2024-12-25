@@ -35,10 +35,15 @@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.AddDetectionInputImage))
                         {
-                            <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addImageModal">
-                                <i class="fas fa-plus"></i>
-                                @DbResHtml.T("Add Input Image", "Resources")
-                            </button>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addImageModal">
+                                    <i class="fas fa-plus"></i>
+                                    @DbResHtml.T("Add Input Image", "Resources")
+                                </button>
+                                <div>
+                                    @await Component.InvokeAsync("Documentation", new { path = "detection-process/detection-input-images-guide.html" })
+                                </div>
+                            </div>
                         }
                         <div class="mt-5">
                             <table id="detectionInputImagesTable" class="table table-sm table-bordered table-striped custom-responsive-table">

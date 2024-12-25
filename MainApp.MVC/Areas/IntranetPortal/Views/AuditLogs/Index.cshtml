@@ -11,16 +11,21 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-6">
-                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                    <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
                 <small class="text-muted"> @DbResHtml.T("View audit logs to monitor and track all system activities and changes.", "Resources")</small>
             </div>
             <div class="col-sm-6">
-                <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item">
-                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
-                    </li>
-                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Audit Logs", "Resources")</li>
-                </ol>
+                <div class="d-flex flex-column align-items-end">
+                    <ol class="breadcrumb float-sm-right mb-2">
+                        <li class="breadcrumb-item">
+                            <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                        </li>
+                        <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Audit Logs", "Resources")</li>
+                    </ol>
+                    <div>
+                        @await Component.InvokeAsync("Documentation", new { path = "audit-logs/audit-logs-guide.html" })
+                    </div>
+                </div>
             </div>
         </div>
     </div>

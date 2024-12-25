@@ -42,14 +42,21 @@
                     <div class="card-body">
                         @if (User.HasAuthClaim(SD.AuthClaims.AddDataset))
                         {
-                            <button class="mb-1 btn btn-primary float-left" data-toggle="modal" data-target="#addNewDatasetModal">
-                                <i class="fas fa-plus"></i> 
-                                @DbResHtml.T("Add Dataset", "Resources")
-                            </button>
-                            <button class="mb-1 ml-2 btn btn-primary float-left" data-toggle="modal" data-target="#importNewDatasetModal">
-                                <i class="fas fa-plus"></i>
-                                @DbResHtml.T("Upload Dataset", "Resources")
-                            </button>                                  
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex">
+                                    <button class="mb-1 btn btn-primary mr-2" data-toggle="modal" data-target="#addNewDatasetModal">
+                                        <i class="fas fa-plus"></i> 
+                                        @DbResHtml.T("Add Dataset", "Resources")
+                                    </button>
+                                    <button class="mb-1 btn btn-primary" data-toggle="modal" data-target="#importNewDatasetModal">
+                                        <i class="fas fa-plus"></i>
+                                        @DbResHtml.T("Upload Dataset", "Resources")
+                                    </button>
+                                </div>
+                                <div>
+                                    @await Component.InvokeAsync("Documentation", new { path = "dataset-management/dataset-management-guide.html" })
+                                </div>
+                            </div>
                         }
                         <div class="mt-5">
                             <table id="datasetsTable" class="table table-sm table-bordered table-striped custom-responsive-table">

@@ -105,7 +105,7 @@ a > span > svg:hover path {
       </a>
     </div>
     <div class="collapse navbar-collapse" id="navbar">
-      <a title="Home Page" class="navbar-brand navbar-right d-flex align-items-center" href="{{_rel}}">
+      <a title="Home Page" class="navbar-brand navbar-right d-flex align-items-center" href="https://intelligentnetworksolutions.github.io/IllegalDumpSiteDetectionAndLandfillMonitoring/">
         <img id="logo" class="ins-logo" width=200 height=54
           src="~/ins-template/public/images/ins-logo.png" alt="{{_appName}}">
       </a>

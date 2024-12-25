@@ -33,6 +33,9 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
+                        <div class="float-right">
+                                @await Component.InvokeAsync("Documentation", new { path = "training-process/training-guide.html" })
+                        </div>
 @*                          <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addTrainingRunModal">
                              <i class="fas fa-plus"></i>
                              @DbResHtml.T("Add Training run", "Resources")
