@@ -83,10 +83,10 @@ namespace MainApp.BL.Services
                 if (string.IsNullOrEmpty(appSettingDTO.Description))
                     appSettingDTO.Description = appSettingDTO.Key;
 
-                applicationSettingEntity = _mapper.Map<ApplicationSettings>(appSettingDTO);
-                //_mapper.Map(appSettingDTO, applicationSettingEntity);
+                //applicationSettingEntity = _mapper.Map<ApplicationSettings>(appSettingDTO);
+                _mapper.Map(appSettingDTO, applicationSettingEntity);
 
-                if (applicationSettingEntity is null)
+                if (applicationSettingEntity is null || string.IsNullOrEmpty(applicationSettingEntity.Key))
                     return ResultDTO.Fail("Mapping Failed");
 
                 bool resUpdate = await _applicationSettingsRepo.UpdateApplicationSetting(applicationSettingEntity);

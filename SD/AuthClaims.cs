@@ -595,7 +595,31 @@ namespace SD
             FromModule = Modules.Training,
             Description = "View Trained Model Statistics"
         };
-        
+        public static readonly AuthClaim ViewApplicationSettings = new AuthClaim
+        {
+            Value = "20:1",
+            FromModule = Modules.ApplicationSettings,
+            Description = "View Application Settings"
+        };
+        public static readonly AuthClaim CreateApplicationSettings = new AuthClaim
+        {
+            Value = "20:2",
+            FromModule = Modules.ApplicationSettings,
+            Description = "Create Application Settings"
+        };
+        public static readonly AuthClaim UpdateApplicationSettings = new AuthClaim
+        {
+            Value = "20:3",
+            FromModule = Modules.ApplicationSettings,
+            Description = "Update Application Settings"
+        };
+        public static readonly AuthClaim DeleteApplicationSettings = new AuthClaim
+        {
+            Value = "20:4",
+            FromModule = Modules.ApplicationSettings,
+            Description = "Delete Application Settings"
+        };
+
 
 
     }

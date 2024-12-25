@@ -3,6 +3,7 @@ using Entities;
 using MainApp.MVC.Areas.IntranetPortal.Controllers;
 using MainApp.MVC.ViewModels.IntranetPortal.AuditLog;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Services;
 
@@ -13,14 +14,16 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         private readonly Mock<IAuditLogsDa> _mockAuditLogsDa;
         private readonly Mock<IUserManagementDa> _mockUserManagementDa;
         private readonly AuditLogBl _auditLogBl;
+        private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly AuditLogsController _controller;
 
         public AuditLogsControllerTests()
         {
             _mockAuditLogsDa = new Mock<IAuditLogsDa>();
             _mockUserManagementDa = new Mock<IUserManagementDa>();
+            _mockConfiguration = new Mock<IConfiguration>();
             _auditLogBl = new AuditLogBl(); // Assuming this has a parameterless constructor or adjust accordingly
-            _controller = new AuditLogsController(_mockAuditLogsDa.Object, _auditLogBl, _mockUserManagementDa.Object);
+            _controller = new AuditLogsController(_mockAuditLogsDa.Object, _auditLogBl, _mockUserManagementDa.Object, _mockConfiguration.Object);
         }
 
         [Fact]

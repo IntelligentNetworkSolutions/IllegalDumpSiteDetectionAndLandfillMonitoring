@@ -26,119 +26,154 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ManageDetectionIgnoreZones))]
         public async Task<ResultDTO<List<DetectionIgnoreZoneDTO>>> GetAlllIgnoreZones()
         {
-            ResultDTO<List<DetectionIgnoreZoneDTO>> resultGetEntites = await _detectionIgnoreZoneService.GetAllIgnoreZonesDTOs();
-            if (!resultGetEntites.IsSuccess && resultGetEntites.HandleError())
+            try
             {
-                return ResultDTO<List<DetectionIgnoreZoneDTO>>.Fail(resultGetEntites.ErrMsg!);
-            }
-            if (resultGetEntites.Data == null)
-            {
-                return ResultDTO<List<DetectionIgnoreZoneDTO>>.Fail("Igonre zones are not found");
+                ResultDTO<List<DetectionIgnoreZoneDTO>> resultGetEntites = await _detectionIgnoreZoneService.GetAllIgnoreZonesDTOs();
+                if (!resultGetEntites.IsSuccess && resultGetEntites.HandleError())
+                {
+                    return ResultDTO<List<DetectionIgnoreZoneDTO>>.Fail(resultGetEntites.ErrMsg!);
+                }
+                if (resultGetEntites.Data == null)
+                {
+                    return ResultDTO<List<DetectionIgnoreZoneDTO>>.Fail("Igonre zones are not found");
 
+                }
+                return ResultDTO<List<DetectionIgnoreZoneDTO>>.Ok(resultGetEntites.Data);
             }
-            return ResultDTO<List<DetectionIgnoreZoneDTO>>.Ok(resultGetEntites.Data);
+            catch (Exception ex)
+            {
+                return ResultDTO<List<DetectionIgnoreZoneDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ManageDetectionIgnoreZones))]
         public async Task<ResultDTO<DetectionIgnoreZoneDTO?>> GetIgnoreZoneById(Guid id)
-        {           
-            if (id == Guid.Empty)
+        {
+            try
             {
-                return ResultDTO<DetectionIgnoreZoneDTO?>.Fail("Invalid zone id");
-            }
-           
-           
-            ResultDTO<DetectionIgnoreZoneDTO?> resultGetEntity = await _detectionIgnoreZoneService.GetIgnoreZoneById(id);
-            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
-            {
-                return ResultDTO<DetectionIgnoreZoneDTO?>.Fail(resultGetEntity.ErrMsg!);
-            }
+                if (id == Guid.Empty)
+                {
+                    return ResultDTO<DetectionIgnoreZoneDTO?>.Fail("Invalid zone id");
+                }
 
-            return ResultDTO<DetectionIgnoreZoneDTO?>.Ok(resultGetEntity.Data);
+
+                ResultDTO<DetectionIgnoreZoneDTO?> resultGetEntity = await _detectionIgnoreZoneService.GetIgnoreZoneById(id);
+                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                {
+                    return ResultDTO<DetectionIgnoreZoneDTO?>.Fail(resultGetEntity.ErrMsg!);
+                }
+
+                return ResultDTO<DetectionIgnoreZoneDTO?>.Ok(resultGetEntity.Data);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<DetectionIgnoreZoneDTO?>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ManageDetectionIgnoreZones))]
         public async Task<ResultDTO> AddIgnoreZone([FromBody] DetectionIgnoreZoneDTO dto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
-            }
-            if (string.IsNullOrEmpty(dto.EnteredZonePolygon))
-            {
-                return ResultDTO.Fail("Invalid entered polygon");
-            }
-            var userId = User.FindFirstValue("UserId");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return ResultDTO.Fail("User not found");
-            }
+                if (!ModelState.IsValid)
+                {
+                    var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
+                if (string.IsNullOrEmpty(dto.EnteredZonePolygon))
+                {
+                    return ResultDTO.Fail("Invalid entered polygon");
+                }
+                var userId = User.FindFirstValue("UserId");
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return ResultDTO.Fail("User not found");
+                }
 
-            dto.CreatedById = userId;
-            dto.CreatedOn = DateTime.UtcNow;
-            dto.Geom = (Polygon)DTOs.Helpers.GeoJsonHelpers.GeoJsonFeatureToGeometry(dto.EnteredZonePolygon);
-            ResultDTO resultCreate = await _detectionIgnoreZoneService.CreateDetectionIgnoreZoneFromDTO(dto);
-            if (resultCreate.IsSuccess == false && resultCreate.HandleError())
-            {
-                return ResultDTO.Fail(resultCreate.ErrMsg!);
-            }
+                dto.CreatedById = userId;
+                dto.CreatedOn = DateTime.UtcNow;
+                dto.Geom = (Polygon)DTOs.Helpers.GeoJsonHelpers.GeoJsonFeatureToGeometry(dto.EnteredZonePolygon);
+                ResultDTO resultCreate = await _detectionIgnoreZoneService.CreateDetectionIgnoreZoneFromDTO(dto);
+                if (resultCreate.IsSuccess == false && resultCreate.HandleError())
+                {
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+                }
 
-            return ResultDTO.Ok();
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ManageDetectionIgnoreZones))]
         public async Task<ResultDTO> DeleteIgnoreZone(Guid id)
         {
-            if (id == Guid.Empty)
+            try
             {
-                return ResultDTO.Fail("Invalid zone id");
-            }
+                if (id == Guid.Empty)
+                {
+                    return ResultDTO.Fail("Invalid zone id");
+                }
 
-            ResultDTO<DetectionIgnoreZoneDTO?> resultGetEntity = await _detectionIgnoreZoneService.GetIgnoreZoneById(id);
-            if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                ResultDTO<DetectionIgnoreZoneDTO?> resultGetEntity = await _detectionIgnoreZoneService.GetIgnoreZoneById(id);
+                if (resultGetEntity.IsSuccess == false && resultGetEntity.HandleError())
+                {
+                    return ResultDTO.Fail(resultGetEntity.ErrMsg!);
+                }
+                if (resultGetEntity.Data == null)
+                {
+                    return ResultDTO.Fail("Ignore zone does not exist");
+                }
+
+
+                ResultDTO resultDeleteEntity = await _detectionIgnoreZoneService.DeleteDetectionIgnoreZoneFromDTO(resultGetEntity.Data);
+                if (resultDeleteEntity.IsSuccess == false && resultDeleteEntity.HandleError())
+                {
+                    return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
             {
-                return ResultDTO.Fail(resultGetEntity.ErrMsg!);
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
-            if(resultGetEntity.Data == null)
-            {
-                return ResultDTO.Fail("Ignore zone does not exist");
-            }
-
-
-            ResultDTO resultDeleteEntity = await _detectionIgnoreZoneService.DeleteDetectionIgnoreZoneFromDTO(resultGetEntity.Data);
-            if (resultDeleteEntity.IsSuccess == false && resultDeleteEntity.HandleError())
-            {
-                return ResultDTO.Fail(resultDeleteEntity.ErrMsg!);
-            }
-
-            return ResultDTO.Ok();
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ManageDetectionIgnoreZones))]
         public async Task<ResultDTO> UpdateIgnoreZone([FromBody] DetectionIgnoreZoneDTO dto)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
-            }
-            if (!string.IsNullOrEmpty(dto.EnteredZonePolygon))
-            {
-                dto.Geom = (Polygon)DTOs.Helpers.GeoJsonHelpers.GeoJsonFeatureToGeometry(dto.EnteredZonePolygon);
-            }
+                if (!ModelState.IsValid)
+                {
+                    var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
+                if (!string.IsNullOrEmpty(dto.EnteredZonePolygon))
+                {
+                    dto.Geom = (Polygon)DTOs.Helpers.GeoJsonHelpers.GeoJsonFeatureToGeometry(dto.EnteredZonePolygon);
+                }
 
-            ResultDTO resultUpdate = await _detectionIgnoreZoneService.UpdateDetectionIgnoreZoneFromDTO(dto);
-            if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())
-            {
-                return ResultDTO.Fail(resultUpdate.ErrMsg!);
-            }
+                ResultDTO resultUpdate = await _detectionIgnoreZoneService.UpdateDetectionIgnoreZoneFromDTO(dto);
+                if (resultUpdate.IsSuccess == false && resultUpdate.HandleError())
+                {
+                    return ResultDTO.Fail(resultUpdate.ErrMsg!);
+                }
 
-            return ResultDTO.Ok();
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         

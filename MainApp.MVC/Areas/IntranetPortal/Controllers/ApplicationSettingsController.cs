@@ -1,6 +1,7 @@
 ﻿using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL;
 using MainApp.BL.Interfaces.Services;
+using MainApp.MVC.Filters;
 using MainApp.MVC.ViewModels.IntranetPortal.ApplicationSettings;
 using Microsoft.AspNetCore.Mvc;
 using SD;
@@ -26,285 +27,247 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             _mmDetectionService = mmDetectionService;
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.ViewApplicationSettings))]
         public async Task<IActionResult> Index()
         {
-            // TODO: add check claim
-            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            var genSet = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("Generic", "hehe");
-            var genSetBool = await _appSettingsAccessor.GetApplicationSettingValueByKey<bool?>("GenericBool", false);
-            // Missing
-            var genSetBoolche = await _appSettingsAccessor.GetApplicationSettingValueByKey<bool?>("GenericBool4e");
-            var genSetDateTime = await _appSettingsAccessor.GetApplicationSettingValueByKey<DateTime?>("GenericDateTime");
-
-            var apps = await _applicationSettingsService.GetAllApplicationSettingsAsList();
-            var appSettingsVM = apps.Select(a => new ApplicationSettingsViewModel()
+            try
             {
-                Key = a.Key,
-                Value = a.Value,
-                DataType = a.DataType,
-                Description = a.Description,
-                Module = a.Module
-            });
-            return View(appSettingsVM);
+                var apps = await _applicationSettingsService.GetAllApplicationSettingsAsList();
+                if (apps == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                var appSettingsVM = apps.Select(a => new ApplicationSettingsViewModel()
+                {
+                    Key = a.Key,
+                    Value = a.Value,
+                    DataType = a.DataType,
+                    Description = a.Description,
+                    Module = a.Module
+                });
+                if(appSettingsVM == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                return View(appSettingsVM);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
+           
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.CreateApplicationSettings))]
         public async Task<IActionResult> Create()
         {
-            // TODO: add check claim
-            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            var allKeys = await _applicationSettingsService.GetAllApplicationSettingsKeysAsList();
-
-            ApplicationSettingsCreateViewModel model = new ApplicationSettingsCreateViewModel()
+            try
             {
-                Modules = SD.Modules.GetAll().ToList(),
-                AllApplicationSettingsKeys = allKeys
-            };
+                var allKeys = await _applicationSettingsService.GetAllApplicationSettingsKeysAsList();
+                if(allKeys == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            return View(model);
+                ApplicationSettingsCreateViewModel model = new ApplicationSettingsCreateViewModel()
+                {
+                    Modules = SD.Modules.GetAll().ToList(),
+                    AllApplicationSettingsKeys = allKeys
+                };
+
+                return View(model);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
-
-        //TODO
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.CreateApplicationSettings))]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ApplicationSettingsCreateViewModel model)
         {
-            // TODO: add check claim
-            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            var allKeys = await _applicationSettingsService.GetAllApplicationSettingsKeysAsList();
-
-            if (!ModelState.IsValid)
+            try
             {
-                model.Modules = SD.Modules.GetAll().ToList();
-                model.AllApplicationSettingsKeys = allKeys;
-                return View(model);
+                var allKeys = await _applicationSettingsService.GetAllApplicationSettingsKeysAsList();
+                if (allKeys == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                if (!ModelState.IsValid)
+                {
+                    model.Modules = SD.Modules.GetAll().ToList();
+                    model.AllApplicationSettingsKeys = allKeys;
+                    return View(model);
+                }
+
+                AppSettingDTO dto = new AppSettingDTO()
+                {
+                    Key = model.Key,
+                    Value = model.Value,
+                    DataType = model.DataType,
+                    Description = model.Description,
+                    Module = model.Modules.Count() > 0 ? model.Modules.FirstOrDefault().Value : null
+                };
+
+                var resultAdd = await _applicationSettingsService.CreateApplicationSetting(dto);
+                if (!resultAdd.IsSuccess && ResultDTO.HandleError(resultAdd))
+                {
+                    model.Modules = SD.Modules.GetAll().ToList();
+                    model.AllApplicationSettingsKeys = allKeys;
+                    return View(model);
+                }
+
+                return RedirectToAction(nameof(Index));
             }
-
-            AppSettingDTO dto = new AppSettingDTO()
+            catch (Exception)
             {
-                Key = model.Key,
-                Value = model.Value,
-                DataType = model.DataType,
-                Description = model.Description,
-                Module = model.Modules.Count() > 0 ? model.Modules.FirstOrDefault().Value : null
-            };
-
-            var resultAdd = await _applicationSettingsService.CreateApplicationSetting(dto);
-            if (!resultAdd.IsSuccess && ResultDTO.HandleError(resultAdd))
-            {
-                model.Modules = SD.Modules.GetAll().ToList();
-                model.AllApplicationSettingsKeys = allKeys;
-                return View(model);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
-
-            return RedirectToAction(nameof(Index));
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.UpdateApplicationSettings))]
         public async Task<IActionResult> Edit(string settingKey)
         {
-            // TODO: add check claim
-            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            var appSettingDb = await _applicationSettingsService.GetApplicationSettingByKey(settingKey);
-            if (appSettingDb == null)
+            try
             {
-                // TODO: Handle Error 
-                return View("Error");
+                var appSettingDb = await _applicationSettingsService.GetApplicationSettingByKey(settingKey);
+                if (appSettingDb == null)
+                {
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+                }
+
+                ApplicationSettingsEditViewModel model = new ApplicationSettingsEditViewModel()
+                {
+                    Key = appSettingDb.Key,
+                    Value = appSettingDb.Value,
+                    Description = appSettingDb.Description,
+                    DataType = appSettingDb.DataType,
+                    Modules = SD.Modules.GetAll().ToList(),
+                    InsertedModule = appSettingDb.Module,
+                };
+
+                return View(model);
             }
-
-            ApplicationSettingsEditViewModel model = new ApplicationSettingsEditViewModel()
+            catch (Exception)
             {
-                Key = appSettingDb.Key,
-                Value = appSettingDb.Value,
-                Description = appSettingDb.Description,
-                DataType = appSettingDb.DataType,
-                Modules = SD.Modules.GetAll().ToList(),
-                InsertedModule = appSettingDb.Module,
-            };
-
-            return View(model);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
 
         [HttpPost]
+        [HasAuthClaim(nameof(SD.AuthClaims.UpdateApplicationSettings))]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ApplicationSettingsEditViewModel model)
         {
-            // TODO: add check claim
-            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            if (!ModelState.IsValid)
+            try
             {
-                model.Modules = SD.Modules.GetAll().ToList();
-                return View(model);
+                if (!ModelState.IsValid)
+                {
+                    model.Modules = SD.Modules.GetAll().ToList();
+                    return View(model);
+                }
+
+                AppSettingDTO appSettingDTO = new AppSettingDTO()
+                {
+                    Key = model.Key,
+                    Value = model.Value,
+                    DataType = model.DataType,
+                    Description = model.Description,
+                    Module = model.Modules.Count() > 0 ? model.Modules.FirstOrDefault().Value : null
+                };
+
+                ResultDTO resUpdate = await _applicationSettingsService.UpdateApplicationSetting(appSettingDTO);
+                if (!resUpdate.IsSuccess && ResultDTO.HandleError(resUpdate))
+                {
+                    model.Modules = SD.Modules.GetAll().ToList();
+                    return View(model);
+                }
+
+                return RedirectToAction(nameof(Index));
             }
-
-            AppSettingDTO appSettingDTO = new AppSettingDTO()
+            catch (Exception)
             {
-                Key = model.Key,
-                Value = model.Value,
-                DataType = model.DataType,
-                Description = model.Description,
-                Module = model.Modules.Count() > 0 ? model.Modules.FirstOrDefault().Value : null
-            };
-
-            ResultDTO resUpdate = await _applicationSettingsService.UpdateApplicationSetting(appSettingDTO);
-            if (!resUpdate.IsSuccess && ResultDTO.HandleError(resUpdate))
-            {
-                model.Modules = SD.Modules.GetAll().ToList();
-                return View(model);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
-
-            return RedirectToAction(nameof(Index));
         }
 
+        [HasAuthClaim(nameof(SD.AuthClaims.DeleteApplicationSettings))]
         public async Task<IActionResult> Delete(string? key)
         {
-            // TODO: add check claim
-            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            if (key == null)
+            try
             {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (!string.IsNullOrEmpty(errorPath))
-                    return Redirect(errorPath);
-                else
-                    return NotFound();
-            }
+                if (key == null)
+                {
+                    var errorPath = _configuration["ErrorViewsPath:Error404"];
+                    if (!string.IsNullOrEmpty(errorPath))
+                        return Redirect(errorPath);
+                    else
+                        return NotFound();
+                }
 
-            var appSetting = await _applicationSettingsService.GetApplicationSettingByKey(key);
-            if (appSetting == null)
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (!string.IsNullOrEmpty(errorPath))
-                    return Redirect(errorPath);
-                else
-                    return NotFound();
-            }
+                var appSetting = await _applicationSettingsService.GetApplicationSettingByKey(key);
+                if (appSetting == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            ApplicationSettingsDeleteViewModel model = new ApplicationSettingsDeleteViewModel()
+                ApplicationSettingsDeleteViewModel model = new ApplicationSettingsDeleteViewModel()
+                {
+                    Key = appSetting.Key,
+                    Value = appSetting.Value,
+                    Description = appSetting.Description,
+                    DataType = appSetting.DataType,
+                    InsertedModule = appSetting.Module
+                };
+                return View(model);
+            }
+            catch (Exception)
             {
-                Key = appSetting.Key,
-                Value = appSetting.Value,
-                Description = appSetting.Description,
-                DataType = appSetting.DataType,
-                InsertedModule = appSetting.Module
-            };
-            return View(model);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         [HttpPost, ActionName("Delete")]
+        [HasAuthClaim(nameof(SD.AuthClaims.DeleteApplicationSettings))]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string key)
         {
-            // TODO: add check claim
-            //@if (User.HasCustomClaim("SpecialAuthClaim", "insadmin"))
-            //{
-            //    var errorPath = _configuration["ErrorViewsPath:Error403"];
-            //    if (!string.IsNullOrEmpty(errorPath))
-            //    {
-            //        return Redirect(errorPath);
-            //    }
-            //    else
-            //    {
-            //        return StatusCode(403);
-            //    }
-            //}
-            var resDelete = await _applicationSettingsService.DeleteApplicationSetting(key);
-
-            if (!resDelete.IsSuccess)
+            try
             {
-                return View();
-                //resDelete.ErrMsg
-            }
+                var resDelete = await _applicationSettingsService.DeleteApplicationSetting(key);
 
-            return RedirectToAction(nameof(Index));
+                if (!resDelete.IsSuccess)
+                {
+                    return View();
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         public async Task<IActionResult> DiskSize()
         {
-            var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
-            var datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
-            var pointCloudFileConverts = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts");
-            var pointCloudFileUploads = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileUploads", "Uploads\\LegalLandfillUploads\\PointCloudUploads");
-            var detectionInputImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImagesFolder", "Uploads\\DetectionUploads\\InputImages");
-            var detectionInputImagesThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", "Uploads\\DetectionUploads\\InputImagesThumbnails");
-            var mmDetectionTrainingFolder = _mmDetectionService.GetTrainingRunsBaseOutDirAbsPath();
-
-            if ((datasetImagesFolder.IsSuccess == false && datasetImagesFolder.HandleError()) ||
-                (datasetThumbnailsFolder.IsSuccess == false && datasetThumbnailsFolder.HandleError()) ||
-                (pointCloudFileConverts.IsSuccess == false && pointCloudFileConverts.HandleError()) ||
-                (pointCloudFileUploads.IsSuccess == false && pointCloudFileUploads.HandleError()) ||
-                (detectionInputImagesFolder.IsSuccess == false && detectionInputImagesFolder.HandleError()) ||
-                (detectionInputImagesThumbnailsFolder.IsSuccess == false && detectionInputImagesThumbnailsFolder.HandleError()))
+            try
             {
-                return View(new List<FolderSizeViewModel>());
-            }
+                var datasetImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetImagesFolder", "DatasetImages");
+                var datasetThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DatasetThumbnailsFolder", "DatasetThumbnails");
+                var pointCloudFileConverts = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileConverts", "Uploads\\LegalLandfillUploads\\PointCloudConverts");
+                var pointCloudFileUploads = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("LegalLandfillPointCloudFileUploads", "Uploads\\LegalLandfillUploads\\PointCloudUploads");
+                var detectionInputImagesFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImagesFolder", "Uploads\\DetectionUploads\\InputImages");
+                var detectionInputImagesThumbnailsFolder = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>("DetectionInputImageThumbnailsFolder", "Uploads\\DetectionUploads\\InputImagesThumbnails");
+                var mmDetectionTrainingFolder = _mmDetectionService.GetTrainingRunsBaseOutDirAbsPath();
 
-            var folderSizes = new List<FolderSizeViewModel>
+                if ((datasetImagesFolder.IsSuccess == false && datasetImagesFolder.HandleError()) ||
+                    (datasetThumbnailsFolder.IsSuccess == false && datasetThumbnailsFolder.HandleError()) ||
+                    (pointCloudFileConverts.IsSuccess == false && pointCloudFileConverts.HandleError()) ||
+                    (pointCloudFileUploads.IsSuccess == false && pointCloudFileUploads.HandleError()) ||
+                    (detectionInputImagesFolder.IsSuccess == false && detectionInputImagesFolder.HandleError()) ||
+                    (detectionInputImagesThumbnailsFolder.IsSuccess == false && detectionInputImagesThumbnailsFolder.HandleError()))
+                {
+                    return View(new List<FolderSizeViewModel>());
+                }
+
+                var folderSizes = new List<FolderSizeViewModel>
             {
                 new FolderSizeViewModel
                 {
@@ -343,9 +306,13 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 }
             };
 
-            return View(folderSizes);
+                return View(folderSizes);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
-
 
 
         private long GetFolderSize(string folderPath)
@@ -369,6 +336,21 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
 
             return totalSize;
+        }
+        private IActionResult HandleErrorRedirect(string configKey, int statusCode)
+        {
+            string? errorPath = _configuration[configKey];
+            if (string.IsNullOrEmpty(errorPath))
+            {
+                return statusCode switch
+                {
+                    404 => NotFound(),
+                    403 => Forbid(),
+                    405 => StatusCode(405),
+                    _ => BadRequest()
+                };
+            }
+            return Redirect(errorPath);
         }
     }
 }

@@ -838,24 +838,24 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task Preview_ReturnsBadRequest_WhenSelectedFilesIsNullOrEmpty()
+        public async Task Preview_ReturnsNotFound_WhenSelectedFilesIsNullOrEmpty()
         {
             // Arrange
-            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns((string)null);
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
 
             // Act
             var result = await _controller.Preview(null);
 
             // Assert
-            Assert.IsType<BadRequestResult>(result);
+            Assert.IsType<NotFoundResult>(result);
         }
 
         [Fact]
-        public async Task Preview_RedirectsToErrorView_WhenSelectedFilesIsNullOrEmpty()
+        public async Task Preview_RedirectsToError404View_WhenSelectedFilesIsEmpty()
         {
             // Arrange
-            var errorPath = "/Error";
-            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns(errorPath);
+            var errorPath = "/Error404";
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns(errorPath);
 
             // Act
             var result = await _controller.Preview(new List<string>());
@@ -864,6 +864,7 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
             var redirectResult = Assert.IsType<RedirectResult>(result);
             Assert.Equal(errorPath, redirectResult.Url);
         }
+
 
         [Fact]
         public async Task Preview_ReturnsBadRequest_OnException()

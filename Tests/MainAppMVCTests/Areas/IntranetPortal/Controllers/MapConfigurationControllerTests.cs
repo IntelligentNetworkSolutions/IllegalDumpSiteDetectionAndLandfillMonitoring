@@ -1339,55 +1339,104 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task EditMapConfiguration_ValidModel_SuccessfulRetrievalAndMapping_ReturnsView()
+        public async Task EditMapConfiguration_FailedRetrieval_ReturnsBadRequest()
         {
             // Arrange
             var mapId = Guid.NewGuid();
-            var dto = new MapConfigurationDTO(); // Assume this is a valid DTO
-            var viewModel = new MapConfigurationViewModel();
-            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId)).ReturnsAsync(ResultDTO<MapConfigurationDTO>.Ok(dto));
-            _mockMapper.Setup(m => m.Map<MapConfigurationViewModel>(dto)).Returns(viewModel);
+            var resultDto = ResultDTO<MapConfigurationDTO>.Fail("Error retrieving map configuration");
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId))
+                .ReturnsAsync(resultDto);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error400"]).Returns((string)null);
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_FailedRetrieval_RedirectsToError400()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+            var resultDto = ResultDTO<MapConfigurationDTO>.Fail("Error retrieving map configuration");
+            var errorPath = "/error400";
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId))
+                .ReturnsAsync(resultDto);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error400"]).Returns(errorPath);
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal(errorPath, redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_DataIsNull_ReturnsNotFound()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+            var resultDto = ResultDTO<MapConfigurationDTO>.Ok(null);
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId))
+                .ReturnsAsync(resultDto);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_DataIsNull_RedirectsToError404()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+            var resultDto = ResultDTO<MapConfigurationDTO>.Ok(null);
+            var errorPath = "/error404";
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId))
+                .ReturnsAsync(resultDto);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns(errorPath);
+
+            // Act
+            var result = await _controller.EditMapConfiguration(mapId);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal(errorPath, redirectResult.Url);
+        }
+
+        [Fact]
+        public async Task EditMapConfiguration_Success_ReturnsViewWithViewModel()
+        {
+            // Arrange
+            var mapId = Guid.NewGuid();
+            var mapConfigurationDto = new MapConfigurationDTO { Id = Guid.NewGuid() };
+            var resultDto = ResultDTO<MapConfigurationDTO>.Ok(mapConfigurationDto);
+
+            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId))
+                .ReturnsAsync(resultDto);
+
+            var viewModel = new MapConfigurationViewModel { Id = Guid.NewGuid() };
+            _mockMapper.Setup(m => m.Map<MapConfigurationViewModel>(mapConfigurationDto))
+                .Returns(viewModel);
 
             // Act
             var result = await _controller.EditMapConfiguration(mapId);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.IsType<MapConfigurationViewModel>(viewResult.Model);
-        }
-        [Fact]
-        public async Task EditMapConfiguration_FailedRetrieval_RedirectsToErrorPath()
-        {
-            // Arrange
-            var mapId = Guid.NewGuid();
-            var resultDto = ResultDTO<MapConfigurationDTO>.Fail("Error retrieving map configuration"); // Simulate failure
-            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId)).ReturnsAsync(resultDto);
-            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error"]).Returns("/error");
-
-            // Act
-            var result = await _controller.EditMapConfiguration(mapId);
-
-            // Assert
-            var redirectResult = Assert.IsType<RedirectResult>(result);
-            Assert.Equal("/error", redirectResult.Url);
+            Assert.Equal(viewModel, viewResult.Model);
         }
 
-        [Fact]
-        public async Task EditMapConfiguration_NullData_RedirectsToError404Path()
-        {
-            // Arrange
-            var mapId = Guid.NewGuid();
-            var resultDto = ResultDTO<MapConfigurationDTO>.Ok((MapConfigurationDTO)null); // Simulate null data
-            _mockMapConfigurationService.Setup(s => s.GetMapConfigurationById(mapId)).ReturnsAsync(resultDto);
-            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns("/error404");
-
-            // Act
-            var result = await _controller.EditMapConfiguration(mapId);
-
-            // Assert
-            var redirectResult = Assert.IsType<RedirectResult>(result);
-            Assert.Equal("/error404", redirectResult.Url);
-        }
 
         [Fact]
         public async Task Index_WhenErrorPathIsNull_ReturnsBadRequest()

@@ -142,17 +142,26 @@ namespace Tests.MainAppBLTests.Services
         {
             // Arrange
             var dto = new AppSettingDTO { Key = "TestKey", Value = "NewValue" };
-            var existingEntity = new ApplicationSettings();
-            _mockRepo.Setup(r => r.GetApplicationSettingByKey("TestKey")).ReturnsAsync(existingEntity);
-            _mockMapper.Setup(m => m.Map<ApplicationSettings>(It.IsAny<AppSettingDTO>())).Returns(existingEntity);
-            _mockRepo.Setup(r => r.UpdateApplicationSetting(It.IsAny<ApplicationSettings>())).ReturnsAsync(true);
+            var existingEntity = new ApplicationSettings { Key = "TestKey", Value = "OldValue" };
+
+            _mockRepo.Setup(r => r.GetApplicationSettingByKey("TestKey"))
+                .ReturnsAsync(existingEntity);
+            _mockMapper.Setup(m => m.Map(It.IsAny<AppSettingDTO>(), existingEntity))
+                .Callback((AppSettingDTO source, ApplicationSettings destination) =>
+                {
+                    destination.Value = source.Value; // Simulate the mapping logic
+                });
+            _mockRepo.Setup(r => r.UpdateApplicationSetting(It.IsAny<ApplicationSettings>()))
+                .ReturnsAsync(true);
 
             // Act
             var result = await _service.UpdateApplicationSetting(dto);
 
             // Assert
             Assert.True(result.IsSuccess);
+            Assert.Null(result.ErrMsg); // Ensure no error message is present
         }
+
 
         [Fact]
         public async Task UpdateApplicationSetting_SettingNotFound_ReturnsFail()
@@ -220,35 +229,53 @@ namespace Tests.MainAppBLTests.Services
         {
             // Arrange
             var dto = new AppSettingDTO { Key = "TestKey", Value = "NewValue" };
-            _mockRepo.Setup(r => r.GetApplicationSettingByKey("TestKey")).ReturnsAsync(new ApplicationSettings());
-            _mockMapper.Setup(m => m.Map<ApplicationSettings>(It.IsAny<AppSettingDTO>())).Returns((ApplicationSettings)null); // Simulate mapper failure
+            var existingEntity = new ApplicationSettings();
+
+            _mockRepo.Setup(r => r.GetApplicationSettingByKey("TestKey")).ReturnsAsync(existingEntity);
+            _mockMapper.Setup(m => m.Map(It.IsAny<AppSettingDTO>(), existingEntity)).Callback((AppSettingDTO _, ApplicationSettings entity) =>
+            {
+                entity = null;
+            });
 
             // Act
             var result = await _service.UpdateApplicationSetting(dto);
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Contains("Mapping Failed", result.ErrMsg); // Assuming this handling is added
+            Assert.Contains("Mapping Failed", result.ErrMsg);
         }
+
 
         [Fact]
         public async Task UpdateApplicationSetting_ThrowsException_ReturnsExceptionFail()
         {
             // Arrange
             var dto = new AppSettingDTO { Key = "TestKey", Value = "TestValue" };
+            var existingEntity = new ApplicationSettings { Key = "TestKey", Value = "OldValue" };
             var exceptionThrown = new Exception("Repository failure");
-            _mockRepo.Setup(r => r.GetApplicationSettingByKey(It.IsAny<string>())).ReturnsAsync(new ApplicationSettings());
-            _mockMapper.Setup(m => m.Map<ApplicationSettings>(It.IsAny<AppSettingDTO>())).Returns(new ApplicationSettings());
-            _mockRepo.Setup(r => r.UpdateApplicationSetting(It.IsAny<ApplicationSettings>())).ThrowsAsync(exceptionThrown);
+
+            _mockRepo.Setup(r => r.GetApplicationSettingByKey(It.IsAny<string>()))
+                .ReturnsAsync(existingEntity);
+
+            _mockMapper.Setup(m => m.Map(It.IsAny<AppSettingDTO>(), existingEntity))
+                .Callback((AppSettingDTO source, ApplicationSettings destination) =>
+                {
+                    destination.Key = source.Key;
+                    destination.Value = source.Value; 
+                });
+
+            _mockRepo.Setup(r => r.UpdateApplicationSetting(It.IsAny<ApplicationSettings>()))
+                .ThrowsAsync(exceptionThrown); 
 
             // Act
             var result = await _service.UpdateApplicationSetting(dto);
 
             // Assert
             Assert.False(result.IsSuccess);
-            Assert.Equal(exceptionThrown.Message, result.ErrMsg);
+            Assert.Equal("Repository failure", result.ErrMsg);
             Assert.Equal(exceptionThrown, result.ExObj);
         }
+
 
         [Fact]
         public async Task DeleteApplicationSetting_EmptyKey_ReturnsFail()

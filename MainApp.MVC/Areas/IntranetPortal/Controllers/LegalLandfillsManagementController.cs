@@ -44,218 +44,233 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ViewLegalLandfills))]
         public async Task<IActionResult> ViewLegalLandfills()
         {
-            var resultDtoList = await _legalLandfillService.GetAllLegalLandfills();
-            if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+            try
             {
-                var errorPath = _configuration["ErrorViewsPath:Error"];
-                if (errorPath == null)
-                {
-                    return BadRequest();
-                }
-                return Redirect(errorPath);
-            }
-            if (resultDtoList.Data == null)
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (errorPath == null)
-                {
-                    return NotFound();
-                }
-                return Redirect(errorPath);
-            }
+                var resultDtoList = await _legalLandfillService.GetAllLegalLandfills();
+                if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                if (resultDtoList.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            var vmList = _mapper.Map<List<LegalLandfillViewModel>>(resultDtoList.Data);
-            if (vmList == null)
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (errorPath == null)
-                {
-                    return NotFound();
-                }
-                return Redirect(errorPath);
-            }
+                var vmList = _mapper.Map<List<LegalLandfillViewModel>>(resultDtoList.Data);
+                if (vmList == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            return View(vmList);
+                return View(vmList);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.AddLegalLandfill))]
         public async Task<ResultDTO> CreateLegalLandfillConfirmed(LegalLandfillViewModel legalLandfillViewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
-            }
+                if (!ModelState.IsValid)
+                {
+                    var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
 
-            var dto = _mapper.Map<LegalLandfillDTO>(legalLandfillViewModel);
-            if (dto == null)
+                var dto = _mapper.Map<LegalLandfillDTO>(legalLandfillViewModel);
+                if (dto == null)
+                {
+                    var error = DbResHtml.T("Mapping failed", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
+
+                ResultDTO resultCreate = await _legalLandfillService.CreateLegalLandfill(dto);
+                if (!resultCreate.IsSuccess && resultCreate.HandleError())
+                {
+                    return ResultDTO.Fail(resultCreate.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
             {
-                var error = DbResHtml.T("Mapping failed", "Resources");
-                return ResultDTO.Fail(error.ToString());
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
-
-            ResultDTO resultCreate = await _legalLandfillService.CreateLegalLandfill(dto);
-            if (!resultCreate.IsSuccess && resultCreate.HandleError())
-            {
-                return ResultDTO.Fail(resultCreate.ErrMsg!);
-            }
-
-            return ResultDTO.Ok();
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.EditLegalLandfill))]
         public async Task<ResultDTO> EditLegalLandfillConfirmed(LegalLandfillViewModel legalLandfillViewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
-            }
+                if (!ModelState.IsValid)
+                {
+                    var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
 
-            var dto = _mapper.Map<LegalLandfillDTO>(legalLandfillViewModel);
-            if (dto == null)
+                var dto = _mapper.Map<LegalLandfillDTO>(legalLandfillViewModel);
+                if (dto == null)
+                {
+                    var error = DbResHtml.T("Mapping failed", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
+
+                ResultDTO resultEdit = await _legalLandfillService.EditLegalLandfill(dto);
+                if (!resultEdit.IsSuccess && resultEdit.HandleError())
+                {
+                    return ResultDTO.Fail(resultEdit.ErrMsg!);
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
             {
-                var error = DbResHtml.T("Mapping failed", "Resources");
-                return ResultDTO.Fail(error.ToString());
+                return ResultDTO.ExceptionFail(ex.Message, ex);
             }
-
-            ResultDTO resultEdit = await _legalLandfillService.EditLegalLandfill(dto);
-            if (!resultEdit.IsSuccess && resultEdit.HandleError())
-            {
-                return ResultDTO.Fail(resultEdit.ErrMsg!);
-            }
-
-            return ResultDTO.Ok();
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteLegalLandfill))]
         public async Task<ResultDTO> DeleteLegalLandfillConfirmed(LegalLandfillViewModel legalLandfillViewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
-            }
+                if (!ModelState.IsValid)
+                {
+                    var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
 
-            var resultCheckForFiles = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesByLandfillId(legalLandfillViewModel.Id);
-            if (!resultCheckForFiles.IsSuccess && resultCheckForFiles.HandleError())
-            {
-                return ResultDTO.Fail(resultCheckForFiles.ErrMsg!);
-            }
-            if (resultCheckForFiles.Data == null)
-            {
-                return ResultDTO.Fail("Data is null");
-            }
+                var resultCheckForFiles = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesByLandfillId(legalLandfillViewModel.Id);
+                if (!resultCheckForFiles.IsSuccess && resultCheckForFiles.HandleError())
+                {
+                    return ResultDTO.Fail(resultCheckForFiles.ErrMsg!);
+                }
+                if (resultCheckForFiles.Data == null)
+                {
+                    return ResultDTO.Fail("Data is null");
+                }
 
-            if (resultCheckForFiles.Data.Count > 0)
-            {
-                var error = DbResHtml.T("There are point cloud files for this landfill. Delete first the files!", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
+                if (resultCheckForFiles.Data.Count > 0)
+                {
+                    var error = DbResHtml.T("There are point cloud files for this landfill. Delete first the files!", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
 
-            var dto = _mapper.Map<LegalLandfillDTO>(legalLandfillViewModel);
-            if (dto == null)
-            {
-                var error = DbResHtml.T("Mapping failed", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
+                var dto = _mapper.Map<LegalLandfillDTO>(legalLandfillViewModel);
+                if (dto == null)
+                {
+                    var error = DbResHtml.T("Mapping failed", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
 
-            ResultDTO resultDelete = await _legalLandfillService.DeleteLegalLandfill(dto);
-            if (!resultDelete.IsSuccess && resultDelete.HandleError())
-            {
-                return ResultDTO.Fail(resultDelete.ErrMsg!);
-            }
+                ResultDTO resultDelete = await _legalLandfillService.DeleteLegalLandfill(dto);
+                if (!resultDelete.IsSuccess && resultDelete.HandleError())
+                {
+                    return ResultDTO.Fail(resultDelete.ErrMsg!);
+                }
 
-            return ResultDTO.Ok();
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         public async Task<ResultDTO<LegalLandfillDTO>> GetLegalLandfillById(Guid legalLandfillId)
         {
-            ResultDTO<LegalLandfillDTO> resultGetEntity = await _legalLandfillService.GetLegalLandfillById(legalLandfillId);
-            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+            try
             {
-                return ResultDTO<LegalLandfillDTO>.Fail(resultGetEntity.ErrMsg!);
-            }
-            if (resultGetEntity.Data == null)
-            {
-                return ResultDTO<LegalLandfillDTO>.Fail("Landfill is null");
+                ResultDTO<LegalLandfillDTO> resultGetEntity = await _legalLandfillService.GetLegalLandfillById(legalLandfillId);
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                {
+                    return ResultDTO<LegalLandfillDTO>.Fail(resultGetEntity.ErrMsg!);
+                }
+                if (resultGetEntity.Data == null)
+                {
+                    return ResultDTO<LegalLandfillDTO>.Fail("Landfill is null");
 
+                }
+                return ResultDTO<LegalLandfillDTO>.Ok(resultGetEntity.Data);
             }
-            return ResultDTO<LegalLandfillDTO>.Ok(resultGetEntity.Data);
+            catch (Exception ex)
+            {
+                return ResultDTO<LegalLandfillDTO>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         public async Task<ResultDTO<LegalLandfillPointCloudFileDTO>> GetLegalLandfillPointCloudFileById(Guid fileId)
         {
-            ResultDTO<LegalLandfillPointCloudFileDTO> resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(fileId);
-            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+            try
             {
-                return ResultDTO<LegalLandfillPointCloudFileDTO>.Fail(resultGetEntity.ErrMsg!);
-            }
-            if (resultGetEntity.Data == null)
-            {
-                return ResultDTO<LegalLandfillPointCloudFileDTO>.Fail("File is null");
+                ResultDTO<LegalLandfillPointCloudFileDTO> resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(fileId);
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                {
+                    return ResultDTO<LegalLandfillPointCloudFileDTO>.Fail(resultGetEntity.ErrMsg!);
+                }
+                if (resultGetEntity.Data == null)
+                {
+                    return ResultDTO<LegalLandfillPointCloudFileDTO>.Fail("File is null");
 
+                }
+                return ResultDTO<LegalLandfillPointCloudFileDTO>.Ok(resultGetEntity.Data);
             }
-            return ResultDTO<LegalLandfillPointCloudFileDTO>.Ok(resultGetEntity.Data);
+            catch (Exception ex)
+            {
+                return ResultDTO<LegalLandfillPointCloudFileDTO>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewLegalLandfillPointCloudFiles))]
         public async Task<IActionResult> ViewPointCloudFiles()
         {
-            var resultDtoList = await _legalLandfillPointCloudFileService.GetAllLegalLandfillPointCloudFiles();
-            if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+            try
             {
-                var errorPath = _configuration["ErrorViewsPath:Error"];
-                if (errorPath == null)
-                {
-                    return BadRequest();
-                }
-                return Redirect(errorPath);
-            }
-            if (resultDtoList.Data == null)
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (errorPath == null)
-                {
-                    return NotFound();
-                }
-                return Redirect(errorPath);
-            }
+                var resultDtoList = await _legalLandfillPointCloudFileService.GetAllLegalLandfillPointCloudFiles();
+                if (!resultDtoList.IsSuccess && resultDtoList.HandleError())
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
 
-            var vmList = _mapper.Map<List<LegalLandfillPointCloudFileViewModel>>(resultDtoList.Data);
-            if (vmList == null)
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error404"];
-                if (errorPath == null)
-                {
-                    return NotFound();
-                }
-                return Redirect(errorPath);
-            }
+                if (resultDtoList.Data == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
-            return View(vmList);
+                var vmList = _mapper.Map<List<LegalLandfillPointCloudFileViewModel>>(resultDtoList.Data);
+                if (vmList == null)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
+                return View(vmList);
+            }
+            catch (Exception)
+            {
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
         }
 
         [HttpPost]
         public async Task<ResultDTO<List<LegalLandfillDTO>>> GetAllLegalLandfills()
         {
-            ResultDTO<List<LegalLandfillDTO>> resultGetEntity = await _legalLandfillService.GetAllLegalLandfills();
-            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+            try
             {
-                return ResultDTO<List<LegalLandfillDTO>>.Fail(resultGetEntity.ErrMsg!);
-            }
-            if (resultGetEntity.Data == null)
-            {
-                return ResultDTO<List<LegalLandfillDTO>>.Fail("Object is null");
+                ResultDTO<List<LegalLandfillDTO>> resultGetEntity = await _legalLandfillService.GetAllLegalLandfills();
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                {
+                    return ResultDTO<List<LegalLandfillDTO>>.Fail(resultGetEntity.ErrMsg!);
+                }
+                if (resultGetEntity.Data == null)
+                {
+                    return ResultDTO<List<LegalLandfillDTO>>.Fail("Object is null");
 
+                }
+                return ResultDTO<List<LegalLandfillDTO>>.Ok(resultGetEntity.Data);
             }
-            return ResultDTO<List<LegalLandfillDTO>>.Ok(resultGetEntity.Data);
+            catch (Exception ex)
+            {
+                return ResultDTO<List<LegalLandfillDTO>>.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
@@ -381,14 +396,14 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))]
         public ResultDTO<string> ProcessSelectedFiles([FromBody] List<Guid> selectedFiles)
-        {
-            if (selectedFiles == null)
-            {
-                return ResultDTO<string>.Fail("No files selected");
-            }
-
+        {      
             try
             {
+                if (selectedFiles == null)
+                {
+                    return ResultDTO<string>.Fail("No files selected");
+                }
+
                 List<string> encryptedGuids = new List<string>();
                 foreach (var guid in selectedFiles)
                 {
@@ -412,19 +427,12 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HttpGet]
         [HasAuthClaim(nameof(SD.AuthClaims.PreviewLegalLandfillPointCloudFiles))]
         public async Task<IActionResult> Preview(List<string> selectedFiles)
-        {
-            if (selectedFiles == null || selectedFiles.Count == 0)
-            {
-                var errorPath = _configuration["ErrorViewsPath:Error"];
-                if (errorPath == null)
-                {
-                    return BadRequest();
-                }
-                return Redirect(errorPath);
-            }
-
+        {           
             try
             {
+                if (selectedFiles == null || selectedFiles.Count == 0)
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+
                 List<Guid> depryptedGuids = new List<Guid>();
                 foreach (var item in selectedFiles)
                 {
@@ -437,23 +445,10 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
                 {
                     var resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(item);
                     if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
-                    {
-                        var errorPath = _configuration["ErrorViewsPath:Error404"];
-                        if (errorPath == null)
-                        {
-                            return NotFound();
-                        }
-                        return Redirect(errorPath);
-                    }
+                          return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+
                     if (resultGetEntity.Data == null)
-                    {
-                        var errorPath = _configuration["ErrorViewsPath:Error404"];
-                        if (errorPath == null)
-                        {
-                            return NotFound();
-                        }
-                        return Redirect(errorPath);
-                    }
+                         return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
 
                     string? fileNameWithoutExtension = Path.GetFileNameWithoutExtension(resultGetEntity.Data.FileName);
 
@@ -471,12 +466,7 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
             catch (Exception)
             {
-                var errorPath = _configuration["ErrorViewsPath:Error"];
-                if (errorPath == null)
-                {
-                    return BadRequest();
-                }
-                return Redirect(errorPath);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
         }
 
@@ -484,144 +474,181 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.DeleteLegalLandfillPointCloudFile))]
         public async Task<ResultDTO> DeleteLegalLandfillPointCloudFileConfirmed(LegalLandfillPointCloudFileViewModel legalLandfillPointCloudFileViewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
-            }
+                if (!ModelState.IsValid)
+                {
+                    var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
+                }
 
-            var resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(legalLandfillPointCloudFileViewModel.Id);
-            if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
-            {
-                return ResultDTO.Fail(resultGetEntity.ErrMsg!);
-            }
-            if (resultGetEntity.Data == null)
-            {
-                var error = DbResHtml.T("Object not found", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
+                var resultGetEntity = await _legalLandfillPointCloudFileService.GetLegalLandfillPointCloudFilesById(legalLandfillPointCloudFileViewModel.Id);
+                if (!resultGetEntity.IsSuccess && resultGetEntity.HandleError())
+                {
+                    return ResultDTO.Fail(resultGetEntity.ErrMsg!);
+                }
+                if (resultGetEntity.Data == null)
+                {
+                    var error = DbResHtml.T("Object not found", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
 
-            //delete from uploads
-            ResultDTO resultDeletingFilesFromUploads = await _legalLandfillPointCloudFileService.DeleteFilesFromUploads(resultGetEntity.Data, _webHostEnvironment.WebRootPath);
-            if (!resultDeletingFilesFromUploads.IsSuccess && resultDeletingFilesFromUploads.HandleError())
-            {
-                return ResultDTO.Fail(resultDeletingFilesFromUploads.ErrMsg!);
-            }
-            //delete from converts
-            ResultDTO resultDeletingFilesFromConverts = await _legalLandfillPointCloudFileService.DeleteFilesFromConverts(resultGetEntity.Data, _webHostEnvironment.WebRootPath);
-            if (!resultDeletingFilesFromConverts.IsSuccess && resultDeletingFilesFromConverts.HandleError())
-            {
-                return ResultDTO.Fail(resultDeletingFilesFromConverts.ErrMsg!);
-            }
-            //delete from db
-            ResultDTO resultDelete = await _legalLandfillPointCloudFileService.DeleteLegalLandfillPointCloudFile(legalLandfillPointCloudFileViewModel.Id);
-            if (!resultDelete.IsSuccess && resultDelete.HandleError())
-            {
-                return ResultDTO.Fail(resultDelete.ErrMsg!);
-            }
+                //delete from uploads
+                ResultDTO resultDeletingFilesFromUploads = await _legalLandfillPointCloudFileService.DeleteFilesFromUploads(resultGetEntity.Data, _webHostEnvironment.WebRootPath);
+                if (!resultDeletingFilesFromUploads.IsSuccess && resultDeletingFilesFromUploads.HandleError())
+                {
+                    return ResultDTO.Fail(resultDeletingFilesFromUploads.ErrMsg!);
+                }
+                //delete from converts
+                ResultDTO resultDeletingFilesFromConverts = await _legalLandfillPointCloudFileService.DeleteFilesFromConverts(resultGetEntity.Data, _webHostEnvironment.WebRootPath);
+                if (!resultDeletingFilesFromConverts.IsSuccess && resultDeletingFilesFromConverts.HandleError())
+                {
+                    return ResultDTO.Fail(resultDeletingFilesFromConverts.ErrMsg!);
+                }
+                //delete from db
+                ResultDTO resultDelete = await _legalLandfillPointCloudFileService.DeleteLegalLandfillPointCloudFile(legalLandfillPointCloudFileViewModel.Id);
+                if (!resultDelete.IsSuccess && resultDelete.HandleError())
+                {
+                    return ResultDTO.Fail(resultDelete.ErrMsg!);
+                }
 
-            return ResultDTO.Ok();
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.EditLegalLandfillPointCloudFile))]
         public async Task<ResultDTO> EditLegalLandfillPointCloudFileConfirmed(LegalLandfillPointCloudFileViewModel legalLandfillPointCloudFileViewModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return ResultDTO.Fail(error);
-            }
-
-            if (legalLandfillPointCloudFileViewModel.FilePath == null)
-            {
-                var error = DbResHtml.T("File path is null", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
-
-            var dto = _mapper.Map<LegalLandfillPointCloudFileDTO>(legalLandfillPointCloudFileViewModel);
-            if (dto == null)
-            {
-                var error = DbResHtml.T("Mapping failed", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
-
-            //edit in db
-            ResultDTO<LegalLandfillPointCloudFileDTO> resultEdit = await _legalLandfillPointCloudFileService.EditLegalLandfillPointCloudFile(dto);
-            if (!resultEdit.IsSuccess && resultEdit.HandleError())
-            {
-                return ResultDTO.Fail(resultEdit.ErrMsg!);
-            }
-            if (resultEdit.Data == null)
-            {
-                var error = DbResHtml.T("No result data", "Resources");
-                return ResultDTO.Fail(error.ToString());
-            }
-
-            if (legalLandfillPointCloudFileViewModel.OldLegalLandfillId != resultEdit.Data.LegalLandfillId)
-            {
-                //edit upload folder
-                ResultDTO resultEditFileInUploads = await _legalLandfillPointCloudFileService.EditFileInUploads(_webHostEnvironment.WebRootPath, legalLandfillPointCloudFileViewModel.FilePath, resultEdit.Data);
-                if (!resultEditFileInUploads.IsSuccess && resultEditFileInUploads.HandleError())
+                if (!ModelState.IsValid)
                 {
-                    return ResultDTO.Fail(resultEditFileInUploads.ErrMsg!);
+                    var error = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                    return ResultDTO.Fail(error);
                 }
-                //edit convert folder
-                ResultDTO resultEditFileConverts = await _legalLandfillPointCloudFileService.EditFileConverts(_webHostEnvironment.WebRootPath, legalLandfillPointCloudFileViewModel.OldLegalLandfillId, resultEdit.Data);
-                if (!resultEditFileConverts.IsSuccess && resultEditFileConverts.HandleError())
-                {
-                    return ResultDTO.Fail(resultEditFileConverts.ErrMsg!);
-                }
-            }
 
-            return ResultDTO.Ok();
+                if (legalLandfillPointCloudFileViewModel.FilePath == null)
+                {
+                    var error = DbResHtml.T("File path is null", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
+
+                var dto = _mapper.Map<LegalLandfillPointCloudFileDTO>(legalLandfillPointCloudFileViewModel);
+                if (dto == null)
+                {
+                    var error = DbResHtml.T("Mapping failed", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
+
+                //edit in db
+                ResultDTO<LegalLandfillPointCloudFileDTO> resultEdit = await _legalLandfillPointCloudFileService.EditLegalLandfillPointCloudFile(dto);
+                if (!resultEdit.IsSuccess && resultEdit.HandleError())
+                {
+                    return ResultDTO.Fail(resultEdit.ErrMsg!);
+                }
+                if (resultEdit.Data == null)
+                {
+                    var error = DbResHtml.T("No result data", "Resources");
+                    return ResultDTO.Fail(error.ToString());
+                }
+
+                if (legalLandfillPointCloudFileViewModel.OldLegalLandfillId != resultEdit.Data.LegalLandfillId)
+                {
+                    //edit upload folder
+                    ResultDTO resultEditFileInUploads = await _legalLandfillPointCloudFileService.EditFileInUploads(_webHostEnvironment.WebRootPath, legalLandfillPointCloudFileViewModel.FilePath, resultEdit.Data);
+                    if (!resultEditFileInUploads.IsSuccess && resultEditFileInUploads.HandleError())
+                    {
+                        return ResultDTO.Fail(resultEditFileInUploads.ErrMsg!);
+                    }
+                    //edit convert folder
+                    ResultDTO resultEditFileConverts = await _legalLandfillPointCloudFileService.EditFileConverts(_webHostEnvironment.WebRootPath, legalLandfillPointCloudFileViewModel.OldLegalLandfillId, resultEdit.Data);
+                    if (!resultEditFileConverts.IsSuccess && resultEditFileConverts.HandleError())
+                    {
+                        return ResultDTO.Fail(resultEditFileConverts.ErrMsg!);
+                    }
+                }
+
+                return ResultDTO.Ok();
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO.ExceptionFail(ex.Message, ex);
+            }
         }
 
         [HttpPost]
         [HasAuthClaim(nameof(SD.AuthClaims.ViewWasteVolumeDiffAnalysis))]
         public async Task<ResultDTO<WasteVolumeComparisonDTO>> WasteVolumeDiffAnalysis([FromBody] List<Guid> selectedFiles)
         {
-            var resultGetEntities = await _legalLandfillPointCloudFileService.GetFilteredLegalLandfillPointCloudFiles(selectedFiles);
-            if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
+            try
             {
-                return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultGetEntities.ErrMsg!);
-            }
-            if (resultGetEntities.Data == null || resultGetEntities.Data.Count < 2 || resultGetEntities.Data.Count > 2)
-            {
-                return ResultDTO<WasteVolumeComparisonDTO>.Fail("Expected data is null or does not have required number of elements.");
-            }
+                var resultGetEntities = await _legalLandfillPointCloudFileService.GetFilteredLegalLandfillPointCloudFiles(selectedFiles);
+                if (!resultGetEntities.IsSuccess && resultGetEntities.HandleError())
+                {
+                    return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultGetEntities.ErrMsg!);
+                }
+                if (resultGetEntities.Data == null || resultGetEntities.Data.Count < 2 || resultGetEntities.Data.Count > 2)
+                {
+                    return ResultDTO<WasteVolumeComparisonDTO>.Fail("Expected data is null or does not have required number of elements.");
+                }
 
-            var orderedList = resultGetEntities.Data.OrderBy(x => x.ScanDateTime).ToList();
-            var resultCreatingFile = await _legalLandfillPointCloudFileService.CreateDiffWasteVolumeComparisonFile(orderedList, _webHostEnvironment.WebRootPath);
-            if (!resultCreatingFile.IsSuccess && resultCreatingFile.HandleError())
-            {
-                return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultCreatingFile.ErrMsg!);
-            }
-            if (resultCreatingFile.Data == null)
-            {
-                return ResultDTO<WasteVolumeComparisonDTO>.Fail("Differential file path is null");
-            }
+                var orderedList = resultGetEntities.Data.OrderBy(x => x.ScanDateTime).ToList();
+                var resultCreatingFile = await _legalLandfillPointCloudFileService.CreateDiffWasteVolumeComparisonFile(orderedList, _webHostEnvironment.WebRootPath);
+                if (!resultCreatingFile.IsSuccess && resultCreatingFile.HandleError())
+                {
+                    return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultCreatingFile.ErrMsg!);
+                }
+                if (resultCreatingFile.Data == null)
+                {
+                    return ResultDTO<WasteVolumeComparisonDTO>.Fail("Differential file path is null");
+                }
 
-            var resultReadAndDeleteFile = await _legalLandfillPointCloudFileService.ReadAndDeleteDiffWasteVolumeComparisonFile(resultCreatingFile.Data);
-            if (!resultReadAndDeleteFile.IsSuccess && resultReadAndDeleteFile.HandleError())
-            {
-                return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultReadAndDeleteFile.ErrMsg!);
-            }
-            if (resultReadAndDeleteFile.Data == null)
-            {
-                return ResultDTO<WasteVolumeComparisonDTO>.Fail("Difference was not calculated properly!");
-            }
+                var resultReadAndDeleteFile = await _legalLandfillPointCloudFileService.ReadAndDeleteDiffWasteVolumeComparisonFile(resultCreatingFile.Data);
+                if (!resultReadAndDeleteFile.IsSuccess && resultReadAndDeleteFile.HandleError())
+                {
+                    return ResultDTO<WasteVolumeComparisonDTO>.Fail(resultReadAndDeleteFile.ErrMsg!);
+                }
+                if (resultReadAndDeleteFile.Data == null)
+                {
+                    return ResultDTO<WasteVolumeComparisonDTO>.Fail("Difference was not calculated properly!");
+                }
 
-            WasteVolumeComparisonDTO dto = new()
-            {
-                FileAName = Path.GetFileNameWithoutExtension(orderedList[0].FileName),
-                FileBName = Path.GetFileNameWithoutExtension(orderedList[1].FileName),
-                ScanDateFileA = orderedList[0].ScanDateTime.ToString("dd.MM.yyyy"),
-                ScanDateFileB = orderedList[1].ScanDateTime.ToString("dd.MM.yyyy"),
-                Difference = resultReadAndDeleteFile.Data
-            };
+                WasteVolumeComparisonDTO dto = new()
+                {
+                    FileAName = Path.GetFileNameWithoutExtension(orderedList[0].FileName),
+                    FileBName = Path.GetFileNameWithoutExtension(orderedList[1].FileName),
+                    ScanDateFileA = orderedList[0].ScanDateTime.ToString("dd.MM.yyyy"),
+                    ScanDateFileB = orderedList[1].ScanDateTime.ToString("dd.MM.yyyy"),
+                    Difference = resultReadAndDeleteFile.Data
+                };
 
-            return ResultDTO<WasteVolumeComparisonDTO>.Ok(dto);
+                return ResultDTO<WasteVolumeComparisonDTO>.Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                return ResultDTO<WasteVolumeComparisonDTO>.ExceptionFail(ex.Message, ex);
+            }
+        }
+
+        private IActionResult HandleErrorRedirect(string configKey, int statusCode)
+        {
+            string? errorPath = _configuration[configKey];
+            if (string.IsNullOrEmpty(errorPath))
+            {
+                return statusCode switch
+                {
+                    404 => NotFound(),
+                    403 => Forbid(),
+                    405 => StatusCode(405),
+                    _ => BadRequest()
+                };
+            }
+            return Redirect(errorPath);
         }
 
     }
