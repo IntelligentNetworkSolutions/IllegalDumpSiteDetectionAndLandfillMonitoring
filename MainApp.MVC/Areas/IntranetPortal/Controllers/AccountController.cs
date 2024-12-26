@@ -187,43 +187,50 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> ForgotPassword(IntranetUsersForgotPasswordViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            string? domain = _configuration["DomainSettings:MainDomain"];
-            string? webRootPath = _hostingEnvironment.WebRootPath;
-            string url;
-            string? token = Guid.NewGuid().ToString();
-            bool isEmailSend;
-
-            ApplicationUser? userByEmail = await _userManager.FindByEmailAsync(model.UsernameOrEmail);
-            ApplicationUser? userByUsername = await _userManager.FindByNameAsync(model.UsernameOrEmail);
-
-            if (userByEmail != null)
+            try
             {
-                await _intranetPortalUsersTokenDa.CreateIntranetPortalUserToken(token, userByEmail.Id);
-                url = string.Format("https://{0}/IntranetPortal/Account/ResetPassword?userId={1}&token={2}", domain, userByEmail.Id, token);
-                isEmailSend = await _forgotResetPasswordService.SendPasswordResetEmail(userByEmail.Email, userByEmail.UserName, url, webRootPath);
-                if (isEmailSend)
-                    return View("ResetPasswordConfirmation");
+                if (!ModelState.IsValid)
+                    return View(model);
+
+                string? domain = _configuration["DomainSettings:MainDomain"];
+                string? webRootPath = _hostingEnvironment.WebRootPath;
+                string url;
+                string? token = Guid.NewGuid().ToString();
+                bool isEmailSend;
+
+                ApplicationUser? userByEmail = await _userManager.FindByEmailAsync(model.UsernameOrEmail);
+                ApplicationUser? userByUsername = await _userManager.FindByNameAsync(model.UsernameOrEmail);
+
+                if (userByEmail != null)
+                {
+                    await _intranetPortalUsersTokenDa.CreateIntranetPortalUserToken(token, userByEmail.Id);
+                    url = string.Format("https://{0}/IntranetPortal/Account/ResetPassword?userId={1}&token={2}", domain, userByEmail.Id, token);
+                    isEmailSend = await _forgotResetPasswordService.SendPasswordResetEmail(userByEmail.Email, userByEmail.UserName, url, webRootPath);
+                    if (isEmailSend)
+                        return View("ResetPasswordConfirmation");
+                    else
+                        return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+
+                }
+                else if (userByUsername != null)
+                {
+                    await _intranetPortalUsersTokenDa.CreateIntranetPortalUserToken(token, userByUsername.Id);
+                    url = string.Format("https://{0}/IntranetPortal/Account/ResetPassword?userId={1}&token={2}", domain, userByUsername.Id, token);
+                    isEmailSend = await _forgotResetPasswordService.SendPasswordResetEmail(userByUsername.Email, userByUsername.UserName, url, webRootPath);
+                    if (isEmailSend)
+                        return View("ResetPasswordConfirmation");
+                    else
+                        return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+
+                }
                 else
-                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
-
+                {
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+                }
             }
-            else if (userByUsername != null)
+            catch (Exception)
             {
-                await _intranetPortalUsersTokenDa.CreateIntranetPortalUserToken(token, userByUsername.Id);
-                url = string.Format("https://{0}/IntranetPortal/Account/ResetPassword?userId={1}&token={2}", domain, userByUsername.Id, token);
-                isEmailSend = await _forgotResetPasswordService.SendPasswordResetEmail(userByUsername.Email, userByUsername.UserName, url, webRootPath);
-                if (isEmailSend)
-                    return View("ResetPasswordConfirmation");
-                else
-                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
-
-            }
-            else
-            {
-                return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
             }
         }
 

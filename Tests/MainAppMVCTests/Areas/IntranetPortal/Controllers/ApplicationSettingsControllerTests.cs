@@ -266,20 +266,39 @@ namespace Tests.MainAppMVCTests.Areas.IntranetPortal.Controllers
         }
 
         [Fact]
-        public async Task Edit_SettingNotFound_ReturnsErrorView()
+        public async Task Edit_SettingNotFound_ReturnsNotFoundResult()
         {
             // Arrange
             var settingKey = "NonExistentKey";
-
             _mockApplicationSettingsService.Setup(service => service.GetApplicationSettingByKey(settingKey))
                 .ReturnsAsync((AppSettingDTO)null);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns((string)null);
 
             // Act
             var result = await _controller.Edit(settingKey);
 
             // Assert
-            var viewResult = Assert.IsType<ViewResult>(result);
-            Assert.Equal("Error", viewResult.ViewName);
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task Edit_SettingNotFound_RedirectsToError404View()
+        {
+            // Arrange
+            var settingKey = "NonExistentKey";
+            var errorPath = "/Error404";
+            _mockApplicationSettingsService.Setup(service => service.GetApplicationSettingByKey(settingKey))
+                .ReturnsAsync((AppSettingDTO)null);
+
+            _mockConfiguration.Setup(c => c["ErrorViewsPath:Error404"]).Returns(errorPath);
+
+            // Act
+            var result = await _controller.Edit(settingKey);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectResult>(result);
+            Assert.Equal(errorPath, redirectResult.Url);
         }
 
         [Fact]

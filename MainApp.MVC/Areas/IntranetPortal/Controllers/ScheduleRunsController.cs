@@ -38,113 +38,121 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
         [HasAuthClaim(nameof(SD.AuthClaims.ManageScheduledRuns))]
         public async Task<IActionResult> ViewScheduledRuns()
         {
-            ResultDTO<List<DetectionRunDTO>> resultGetDetectionRuns = await _detectionRunService.GetAllDetectionRuns();
-            if (!resultGetDetectionRuns.IsSuccess && resultGetDetectionRuns.HandleError())
+            try
             {
-                return RedirectToErrorPage("Error");
-            }
-            if (resultGetDetectionRuns.Data == null)
-            {
-                return RedirectToErrorPage("Error404");
-            }
-
-            ResultDTO<List<TrainingRunDTO>> resultGetTrainingRuns = await _trainingRunService.GetAllTrainingRuns();
-            if (!resultGetTrainingRuns.IsSuccess && resultGetTrainingRuns.HandleError())
-            {
-                return RedirectToErrorPage("Error");
-            }
-            if (resultGetTrainingRuns.Data == null)
-            {
-                return RedirectToErrorPage("Error404");
-            }
-
-            //check if the detection run status is stuck in PROCESSING status for too long, change status to error or success
-            bool hasProcessingStatus = resultGetDetectionRuns.Data.Any(d => d.Status == nameof(ScheduleRunsStatus.Processing));
-            if (hasProcessingStatus)
-            {
-                List<DetectionRunDTO> allProcessingRuns = resultGetDetectionRuns.Data.Where(x => x.Status.Equals(nameof(ScheduleRunsStatus.Processing))).ToList();
-
-                var monitoringApi = JobStorage.Current.GetMonitoringApi();
-                var processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
-                var succeededJobs = monitoringApi.SucceededJobs(0, int.MaxValue);
-                var failedJobs = monitoringApi.FailedJobs(0, int.MaxValue);
-
-                //Get jobs parameter detectionRunId 
-                List<string> processingJobsDetectionRunIds = GetProcessingJobDetectionRunIds(processingJobs);
-
-                foreach (var run in allProcessingRuns)
-                {
-                    if (!processingJobsDetectionRunIds.Contains(run.Id.Value.ToString()))
-                    {
-                        //check if the job is in failed jobs 
-                        bool jobFoundInFailedJobs = await CheckFailedJobsAndUpdateStatus(run, failedJobs);
-                        if (!jobFoundInFailedJobs)
-                        {
-                            //check if the job is in success jobs 
-                            await CheckSucceededJobsAndUpdateStatus(run, succeededJobs, monitoringApi);
-                        }                       
-                    }
-                }
-
-                //re-fetch detectionRuns after status updated to ERROR or SUCCESS
-                resultGetDetectionRuns = await _detectionRunService.GetAllDetectionRuns();
+                ResultDTO<List<DetectionRunDTO>> resultGetDetectionRuns = await _detectionRunService.GetAllDetectionRuns();
                 if (!resultGetDetectionRuns.IsSuccess && resultGetDetectionRuns.HandleError())
                 {
-                    return RedirectToErrorPage("Error");
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
                 }
                 if (resultGetDetectionRuns.Data == null)
                 {
-                   return RedirectToErrorPage("Error404");
-                }
-            }
-
-            //check if the training run status is stuck in PROCESSING status for too long, change status to error or success
-            bool isProcessingStatus = resultGetTrainingRuns.Data.Any(d => d.Status == nameof(ScheduleRunsStatus.Processing));
-            if (isProcessingStatus)
-            {
-                List<TrainingRunDTO> allProcessingRuns = resultGetTrainingRuns.Data.Where(x => x.Status.Equals(nameof(ScheduleRunsStatus.Processing))).ToList();
-
-                var monitoringApi = JobStorage.Current.GetMonitoringApi();
-                var processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
-                var succeededJobs = monitoringApi.SucceededJobs(0, int.MaxValue);
-                var failedJobs = monitoringApi.FailedJobs(0, int.MaxValue);
-
-                //Get jobs parameter trainingRunId 
-                List<string> processingJobsDetectionRunIds = GetProcessingJobTrainingRunIds(processingJobs);
-
-                foreach (var run in allProcessingRuns)
-                {
-                    if (!processingJobsDetectionRunIds.Contains(run.Id.Value.ToString()))
-                    {
-                        //check if the job is in failed jobs 
-                        bool jobFoundInFailedJobs = await CheckFailedJobsAndUpdateStatusForTrainingRuns(run, failedJobs);
-                        if (!jobFoundInFailedJobs)
-                        {
-                            //check if the job is in success jobs 
-                            await CheckSucceededJobsAndUpdateStatusForTrainingRuns(run, succeededJobs, monitoringApi);
-                        }
-                    }
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
                 }
 
-                //re-fetch detectionRuns after status updated to ERROR or SUCCESS
-                resultGetTrainingRuns = await _trainingRunService.GetAllTrainingRuns();
+                ResultDTO<List<TrainingRunDTO>> resultGetTrainingRuns = await _trainingRunService.GetAllTrainingRuns();
                 if (!resultGetTrainingRuns.IsSuccess && resultGetTrainingRuns.HandleError())
                 {
-                    return RedirectToErrorPage("Error");
+                    return HandleErrorRedirect("ErrorViewsPath:Error", 400);
                 }
                 if (resultGetTrainingRuns.Data == null)
                 {
-                    return RedirectToErrorPage("Error404");
+                    return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
                 }
+
+                //check if the detection run status is stuck in PROCESSING status for too long, change status to error or success
+                bool hasProcessingStatus = resultGetDetectionRuns.Data.Any(d => d.Status == nameof(ScheduleRunsStatus.Processing));
+                if (hasProcessingStatus)
+                {
+                    List<DetectionRunDTO> allProcessingRuns = resultGetDetectionRuns.Data.Where(x => x.Status.Equals(nameof(ScheduleRunsStatus.Processing))).ToList();
+
+                    var monitoringApi = JobStorage.Current.GetMonitoringApi();
+                    var processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
+                    var succeededJobs = monitoringApi.SucceededJobs(0, int.MaxValue);
+                    var failedJobs = monitoringApi.FailedJobs(0, int.MaxValue);
+
+                    //Get jobs parameter detectionRunId 
+                    List<string> processingJobsDetectionRunIds = GetProcessingJobDetectionRunIds(processingJobs);
+
+                    foreach (var run in allProcessingRuns)
+                    {
+                        if (!processingJobsDetectionRunIds.Contains(run.Id.Value.ToString()))
+                        {
+                            //check if the job is in failed jobs 
+                            bool jobFoundInFailedJobs = await CheckFailedJobsAndUpdateStatus(run, failedJobs);
+                            if (!jobFoundInFailedJobs)
+                            {
+                                //check if the job is in success jobs 
+                                await CheckSucceededJobsAndUpdateStatus(run, succeededJobs, monitoringApi);
+                            }
+                        }
+                    }
+
+                    //re-fetch detectionRuns after status updated to ERROR or SUCCESS
+                    resultGetDetectionRuns = await _detectionRunService.GetAllDetectionRuns();
+                    if (!resultGetDetectionRuns.IsSuccess && resultGetDetectionRuns.HandleError())
+                    {
+                        return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                    }
+                    if (resultGetDetectionRuns.Data == null)
+                    {
+                        return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+                    }
+                }
+
+                //check if the training run status is stuck in PROCESSING status for too long, change status to error or success
+                bool isProcessingStatus = resultGetTrainingRuns.Data.Any(d => d.Status == nameof(ScheduleRunsStatus.Processing));
+                if (isProcessingStatus)
+                {
+                    List<TrainingRunDTO> allProcessingRuns = resultGetTrainingRuns.Data.Where(x => x.Status.Equals(nameof(ScheduleRunsStatus.Processing))).ToList();
+
+                    var monitoringApi = JobStorage.Current.GetMonitoringApi();
+                    var processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
+                    var succeededJobs = monitoringApi.SucceededJobs(0, int.MaxValue);
+                    var failedJobs = monitoringApi.FailedJobs(0, int.MaxValue);
+
+                    //Get jobs parameter trainingRunId 
+                    List<string> processingJobsDetectionRunIds = GetProcessingJobTrainingRunIds(processingJobs);
+
+                    foreach (var run in allProcessingRuns)
+                    {
+                        if (!processingJobsDetectionRunIds.Contains(run.Id.Value.ToString()))
+                        {
+                            //check if the job is in failed jobs 
+                            bool jobFoundInFailedJobs = await CheckFailedJobsAndUpdateStatusForTrainingRuns(run, failedJobs);
+                            if (!jobFoundInFailedJobs)
+                            {
+                                //check if the job is in success jobs 
+                                await CheckSucceededJobsAndUpdateStatusForTrainingRuns(run, succeededJobs, monitoringApi);
+                            }
+                        }
+                    }
+
+                    //re-fetch detectionRuns after status updated to ERROR or SUCCESS
+                    resultGetTrainingRuns = await _trainingRunService.GetAllTrainingRuns();
+                    if (!resultGetTrainingRuns.IsSuccess && resultGetTrainingRuns.HandleError())
+                    {
+                        return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+                    }
+                    if (resultGetTrainingRuns.Data == null)
+                    {
+                        return HandleErrorRedirect("ErrorViewsPath:Error404", 404);
+                    }
+                }
+
+                ViewScheduledRunsViewModel vm = new()
+                {
+                    DetectionRuns = resultGetDetectionRuns.Data,
+                    TrainingRuns = resultGetTrainingRuns.Data
+                };
+
+                return View(vm);
             }
-
-            ViewScheduledRunsViewModel vm = new()
+            catch (Exception)
             {
-                DetectionRuns = resultGetDetectionRuns.Data,
-                TrainingRuns = resultGetTrainingRuns.Data
-            };
-
-            return View(vm);
+                return HandleErrorRedirect("ErrorViewsPath:Error", 400);
+            }
+            
         }
 
         //detection runs
@@ -269,10 +277,20 @@ namespace MainApp.MVC.Areas.IntranetPortal.Controllers
             }
         }
 
-        private IActionResult RedirectToErrorPage(string errorType)
+        private IActionResult HandleErrorRedirect(string configKey, int statusCode)
         {
-            var errorPath = _configuration[$"ErrorViewsPath:{errorType}"];
-            return string.IsNullOrEmpty(errorPath) ? errorType == "Error" ? BadRequest() : NotFound() : Redirect(errorPath);
+            string? errorPath = _configuration[configKey];
+            if (string.IsNullOrEmpty(errorPath))
+            {
+                return statusCode switch
+                {
+                    404 => NotFound(),
+                    403 => Forbid(),
+                    405 => StatusCode(405),
+                    _ => BadRequest()
+                };
+            }
+            return Redirect(errorPath);
         }
     }
 }
