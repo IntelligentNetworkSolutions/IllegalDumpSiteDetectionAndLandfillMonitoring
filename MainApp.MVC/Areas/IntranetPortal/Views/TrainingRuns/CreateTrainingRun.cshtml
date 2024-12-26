@@ -93,7 +93,7 @@
                             <a asp-area="IntranetPortal" asp-controller="TrainingRuns" asp-action="Index" class="btn btn-secondary ml-2">
                                 @DbResHtml.T("Back", "Resources")
                             </a>
-                            @await Component.InvokeAsync("Documentation", new { path = "training-process/training-guide.html" })
+                            @await Component.InvokeAsync("Documentation", new { path = "/guides/training-process/training-guide.html" })
 
                             @if (User.HasAuthClaim(SD.AuthClaims.ScheduleTrainingRun))
                             {

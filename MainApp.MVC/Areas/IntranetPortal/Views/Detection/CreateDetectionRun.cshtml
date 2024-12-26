@@ -67,7 +67,7 @@
                             </a>
                             @if (User.HasAuthClaim(SD.AuthClaims.ScheduleDetectionRun))
                             {
-                                @await Component.InvokeAsync("Documentation", new { path = "detection-process/detection-guide.html" })
+                                @await Component.InvokeAsync("Documentation", new { path = "/guides/detection-process/detection-guide.html" })
                                 <button type="button" onclick="scheduleDetectionRun()" class="btn bg-gradient-success">
                                     @DbResHtml.T("Schedule Detection", "Resources")
                                 </button>
