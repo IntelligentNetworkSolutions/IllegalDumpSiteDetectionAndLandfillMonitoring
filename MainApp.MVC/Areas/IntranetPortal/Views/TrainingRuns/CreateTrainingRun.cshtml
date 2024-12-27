@@ -13,15 +13,19 @@
                 <small class="text-muted">@DbResHtml.T("Initiate a training run selected training model and dataset.", "Resources")</small>
             </div>
             <div class="col-sm-6">
-                <ol class="breadcrumb float-sm-right">
+                <ol class="breadcrumb float-sm-right mb-2">
                     <li class="breadcrumb-item">
                         <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
                     </li>
                     <li class="breadcrumb-item">
                         <a asp-action="Index" asp-controller="TrainingRuns" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Training runs list", "Resources")</a>
                     </li>
-                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Create Training Run", "Resources")</li>
+                    <li class="breadcrumb-item active">
+                        @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Create Training Run", "Resources")
+                    </li>
                 </ol>
+                <div>
+                </div>
             </div>
         </div>
     </div>
@@ -39,7 +43,7 @@
                                         @DbResHtml.T("Training Run Name", "Resources")
                                     </label>
                                     <input type="text" name="Name" class="form-control" id="inpName" required />
-                                </div>                               
+                                </div>
                                 <div class="form-group">
                                     <label for="trainedModelSelect" class="form-label">@DbResHtml.T("Model To Train On", "Resources")</label>
                                     <select id="trainedModelSelect" class="form-control" name="trainedModelSelect">
@@ -56,11 +60,11 @@
                                 <div class="form-group">
                                     <label for="numOfEpochs" class="form-label">@DbResHtml.T("Number of epochs", "Resources")</label>
                                     <select id="numOfEpochs" class="form-control" name="numOfEpochs">
-                                       <option></option>
-                                       @for (int i = 1; i <= 50; i++)
-                                       {
-                                         <option value="@i">@i</option>
-                                       }
+                                        <option></option>
+                                        @for (int i = 1; i <= 50; i++)
+                                        {
+                                            <option value="@i">@i</option>
+                                        }
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -86,15 +90,18 @@
                             </div>
                         </div>
                         <div class="col-12 text-center d-flex justify-content-between mt-4">
+                            <a asp-area="IntranetPortal" asp-controller="TrainingRuns" asp-action="Index" class="btn btn-secondary ml-2">
+                                @DbResHtml.T("Back", "Resources")
+                            </a>
+                            @await Component.InvokeAsync("Documentation", new { path = "/guides/training-process/training-guide.html" })
+
                             @if (User.HasAuthClaim(SD.AuthClaims.ScheduleTrainingRun))
                             {
+
                                 <button type="button" onclick="scheduleTrainingRun()" class="btn bg-gradient-success">
                                     @DbResHtml.T("Schedule Training", "Resources")
                                 </button>
                             }
-                            <a asp-area="IntranetPortal" asp-controller="TrainingRuns" asp-action="Index" class="btn btn-secondary ml-2">
-                                @DbResHtml.T("Back", "Resources")
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -103,10 +110,10 @@
     </div>
 </div>
 
-@section Scripts{
+@section Scripts {
     <script>
         $(document).ready(function () {
-            
+
             $("#trainedModelSelect").select2({
                 width: '100%',
                 theme: 'bootstrap4',
@@ -245,7 +252,7 @@
                             var createdOn = new Date(data.currentDataset.createdOn);
 
                             var day = createdOn.getDate();
-                            var month = createdOn.getMonth() + 1; 
+                            var month = createdOn.getMonth() + 1;
                             var year = createdOn.getFullYear();
 
                             var formattedDate = ('0' + day).slice(-2) + '.' + ('0' + month).slice(-2) + '.' + year;
@@ -253,21 +260,21 @@
                             currentDatasetHeaderHtml += `<h3 class="card-title">@DbResHtml.T("Selected Dataset: ", "Resources")</h3>`;
 
                             currentDatasetPropertiesHtml += `
-                                     <strong><i class="fas fa-file-signature mr-1"></i>@DbResHtml.T("Name", "Resources")</strong>
-                                     <p class="text-muted">${data.currentDataset.name}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-book mr-1"></i>@DbResHtml.T("Descripiton", "Resources")</strong>
-                                     <p class="text-muted">${data.currentDataset.description}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-calendar-alt mr-1"></i>@DbResHtml.T("Created On", "Resources")</strong>
-                                             <p class="text-muted">${formattedDate}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-user-edit mr-1"></i>@DbResHtml.T("Created By", "Resources")</strong>
-                                     <p class="text-muted">${data.currentDataset.createdBy.userName}</p>
-                                     <hr>
-                                     <strong><i class="fas fa-file-upload mr-1"></i>@DbResHtml.T("Is Published", "Resources")</strong>
-                                     <p class="text-muted">${data.currentDataset.isPublished}</p>
-                                    `;
+                                                     <strong><i class="fas fa-file-signature mr-1"></i>@DbResHtml.T("Name", "Resources")</strong>
+                                                     <p class="text-muted">${data.currentDataset.name}</p>
+                                                     <hr>
+                                                     <strong><i class="fas fa-book mr-1"></i>@DbResHtml.T("Descripiton", "Resources")</strong>
+                                                     <p class="text-muted">${data.currentDataset.description}</p>
+                                                     <hr>
+                                                     <strong><i class="fas fa-calendar-alt mr-1"></i>@DbResHtml.T("Created On", "Resources")</strong>
+                                                             <p class="text-muted">${formattedDate}</p>
+                                                     <hr>
+                                                     <strong><i class="fas fa-user-edit mr-1"></i>@DbResHtml.T("Created By", "Resources")</strong>
+                                                     <p class="text-muted">${data.currentDataset.createdBy.userName}</p>
+                                                     <hr>
+                                                     <strong><i class="fas fa-file-upload mr-1"></i>@DbResHtml.T("Is Published", "Resources")</strong>
+                                                     <p class="text-muted">${data.currentDataset.isPublished}</p>
+                                                    `;
                         }
 
                         var dataHtmlParent = "";
@@ -320,7 +327,7 @@
                                 allowOutsideClick: false,
                                 icon: "error"
                             });
-                        } 
+                        }
                         else {
                             var list = data.data;
                             var baseModels = $("#trainedModelSelect optgroup[label='Base models']");
@@ -355,7 +362,7 @@
                             $('#trainedModelSelect').val(null).trigger('change');
                         }
 
-                    } 
+                    }
                     else {
                         Swal.fire({
                             text: `@DbResHtml.T("No data received", "Resources")`,
@@ -556,14 +563,13 @@
             let frozenStages = $("#frozenStages").val();
 
 
-            if ((name === '' || name === undefined) || 
-                (trainedModelId === '' || trainedModelId === undefined) || 
-                (datasetId === '' || datasetId === undefined) || 
-                (batchSize === '' || batchSize === undefined) || 
+            if ((name === '' || name === undefined) ||
+                (trainedModelId === '' || trainedModelId === undefined) ||
+                (datasetId === '' || datasetId === undefined) ||
+                (batchSize === '' || batchSize === undefined) ||
                 (numOfEpochs === '' || numOfEpochs === undefined) ||
                 (frozenStages === '' || frozenStages === undefined)
-            )
-            {
+            ) {
                 Swal.fire({
                     text: '@DbResHtml.T("All fields are required", "Resources")',
                     icon: 'error'
@@ -631,7 +637,7 @@
         }
     </script>
 }
-@section BodyArea{
+@section BodyArea {
     <div class="modal" id="trainedModelStatisticsModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
             <div class="modal-content">

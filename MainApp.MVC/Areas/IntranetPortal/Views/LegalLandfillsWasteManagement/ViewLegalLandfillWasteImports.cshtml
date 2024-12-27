@@ -32,15 +32,18 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
-                        <div class="row justify-content-between mb-3">
                             @if (User.HasAuthClaim(SD.AuthClaims.AddLegalLandfillWasteImports))
                             {
-                                <a asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="CreateLegalLandfillWasteImport" class="mb-1 btn bg-gradient-primary float-left">
-                                    <i class="fas fa-plus"></i>
-                                    @DbResHtml.T("Add Legal Landfill Waste Import", "Resources")
-                                </a>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <a asp-area="IntranetPortal" asp-controller="LegalLandfillsWasteManagement" asp-action="CreateLegalLandfillWasteImport" class="mb-1 btn bg-gradient-primary float-left">
+                                        <i class="fas fa-plus"></i>
+                                        @DbResHtml.T("Add Legal Landfill Waste Import", "Resources")
+                                    </a>
+                                    <div>
+                                    @await Component.InvokeAsync("Documentation", new { path = "/guides/landfill-management/landfill-management-guide.html" })
+                                    </div>
+                                </div>
                             }
-                        </div>
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="mb-0">Filter Options</h5>
@@ -191,6 +194,7 @@
             </div>
         </div>
     </div>
+</div>
 
 @section Scripts {
         <script>

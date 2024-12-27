@@ -368,11 +368,12 @@ FodyWeavers.xsd
 /MainApp/appsettings.Development.json
 /Tests/coveragereport
 /coveragereport
-/MainApp.MVC/wwwroot/DatasetImages/
-/MainApp.MVC/wwwroot/DatasetThumbnails/
-/MainApp.MVC/wwwroot/detection-runs/input-images
+/MainApp.MVC/wwwroot/DatasetImages/*
+/MainApp.MVC/wwwroot/DatasetThumbnails/*
+/MainApp.MVC/wwwroot/detection-runs/input-images/*
 /MainApp.MVC/wwwroot/detection-runs/outputs/visualized-images
-/MainApp.MVC/wwwroot/Uploads/
+/MainApp.MVC/wwwroot/Uploads/*
 /MainApp.MVC/wwwroot/detection/input-images
 /MainApp.MVC/MainApp.MVC.csproj
 /MainApp.MVC/wwwroot/temp0ecd3ef5-f811-4ba6-9b1b-71e8fe29ae8c
+/docs/docfx_project/web.config
