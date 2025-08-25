@@ -21,11 +21,11 @@
                 @await Component.InvokeAsync("LastExtentTool")
                 @await Component.InvokeAsync("ZoomToExtentTool")
                 @await Component.InvokeAsync("MeasureLengthTool")
+                @await Component.InvokeAsync("RegisterDumpsiteTool")
                 @await Component.InvokeAsync("MeasureAreaTool")
                 @await Component.InvokeAsync("GoToCoordinatesTool")
                 @await Component.InvokeAsync("HistoricData", new { detectionRunId = Model})
                 @await Component.InvokeAsync("DetectionIgnoreZonesTool")
-                
                 @await Component.InvokeAsync("DetectionInputImagesTool")
                 
             </div>

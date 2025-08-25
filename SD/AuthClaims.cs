@@ -619,7 +619,66 @@ namespace SD
             FromModule = Modules.ApplicationSettings,
             Description = "Delete Application Settings"
         };
+        public static readonly AuthClaim MapToolRegisterDumpsites = new AuthClaim
+        {
+            Value = "21:1",
+            FromModule = Modules.MapToolRegisterDumpsites,
+            Description = "Manage Registered Dumpsites"
+        };
+        public static readonly AuthClaim ViewRegisteredDumpsiteRiskLevels = new AuthClaim
+        {
+            Value = "21:2",
+            FromModule = Modules.ManageRegisteredDumpsites,
+            Description = "View Registered Dumpsite Risk Levels"
+        };
 
+        public static readonly AuthClaim AddRegisteredDumpsiteRiskLevel = new AuthClaim
+        {
+            Value = "21:3",
+            FromModule = Modules.ManageRegisteredDumpsites,
+            Description = "Add Registered Dumpsite Risk Level"
+        };
+
+        public static readonly AuthClaim EditRegisteredDumpsiteRiskLevel = new AuthClaim
+        {
+            Value = "21:4",
+            FromModule = Modules.ManageRegisteredDumpsites,
+            Description = "Edit Registered Dumpsite Risk Level"
+        };
+
+        public static readonly AuthClaim DeleteRegisteredDumpsiteRiskLevel = new AuthClaim
+        {
+            Value = "21:5",
+            FromModule = Modules.ManageRegisteredDumpsites,
+            Description = "Delete Registered Dumpsite Risk Level"
+        };
+        public static readonly AuthClaim ViewRegisteredDumpsiteWasteTypes = new AuthClaim
+        {
+            Value = "21:6",
+            FromModule = Modules.ManageRegisteredDumpsites,
+            Description = "View Registered Dumpsite Waste Types"
+        };
+
+        public static readonly AuthClaim AddRegisteredDumpsiteWasteType = new AuthClaim
+        {
+            Value = "21:7",
+            FromModule = Modules.ManageRegisteredDumpsites,
+            Description = "Add Registered Dumpsite Waste Type"
+        };
+
+        public static readonly AuthClaim EditRegisteredDumpsiteWasteType = new AuthClaim
+        {
+            Value = "21:8",
+            FromModule = Modules.ManageRegisteredDumpsites,
+            Description = "Edit Registered Dumpsite Waste Type"
+        };
+
+        public static readonly AuthClaim DeleteRegisteredDumpsiteWasteType = new AuthClaim
+        {
+            Value = "21:9",
+            FromModule = Modules.ManageRegisteredDumpsites,
+            Description = "Delete Registered Dumpsite Waste Type"
+        };
 
 
     }

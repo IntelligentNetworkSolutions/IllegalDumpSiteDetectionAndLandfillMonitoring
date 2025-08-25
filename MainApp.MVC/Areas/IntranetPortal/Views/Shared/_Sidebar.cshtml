@@ -173,7 +173,38 @@
                         </ul>
                     </li>
                 }
-
+                @if (User.HasAuthClaim(SD.AuthClaims.ViewRegisteredDumpsiteRiskLevels) && User.HasAuthClaim(SD.AuthClaims.ViewRegisteredDumpsiteWasteTypes))
+                {
+                    <li class="nav-item @Html.IsActive(controllers: "RegisteredDumpsites", cssClass: "menu-open")">
+                        <a href="#" class="nav-link @Html.IsActive(controllers: "RegisteredDumpsites")" id="NavlinkRegisteredDumpsites">
+                            <i class="fas fa-truck-loading"></i> &nbsp;&nbsp;
+                            <p>
+                                @DbResHtml.T("Registered Dumpsites", "Resources")
+                                <i class="fas fa-angle-left right"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a asp-action="ViewRegisteredDumpsiteRiskLevels" asp-controller="RegisteredDumpsites" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "RegisteredDumpsites", actions: "ViewRegisteredDumpsiteRiskLevels")" id="NavlinkRegisteredDumpsitesRiskLevels"
+                                   title="@DbResHtml.T("Risk Levels", "Resources")">
+                                    <i class="fas fa-industry"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Risk Levels", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-action="ViewRegisteredDumpsiteWasteTypes" asp-controller="RegisteredDumpsites" asp-area="IntranetPortal" class="nav-link @Html.IsActive(controllers: "RegisteredDumpsites", actions: "ViewRegisteredDumpsiteWasteTypes")" id="NavlinkRegisteredDumpsitesWasteTypes"
+                                   title="@DbResHtml.T("Waste Types", "Resources")">
+                                    <i class="fas fa-trash"></i> &nbsp;&nbsp;
+                                    <p>
+                                        @DbResHtml.T("Waste Types", "Resources")
+                                    </p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
                 @if (User.HasAuthClaim(SD.AuthClaims.ViewLegalLandfillsManagement))
                 {
                     <li class="nav-item @Html.IsActive(controllers: "LegalLandfillsManagement,LegalLandfillsWasteManagement",cssClass: "menu-open")">

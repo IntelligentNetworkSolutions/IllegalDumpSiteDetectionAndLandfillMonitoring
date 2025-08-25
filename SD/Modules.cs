@@ -73,8 +73,8 @@ namespace SD
         public static readonly Module ScheduleDetectionAndTrainingRuns = new Module { Value = "ScheduleDetectionAndTrainingRuns", Title = "Schedule Detection And Training Runs", Description = "Schedule Detection And Training Runs" };
         public static readonly Module Training = new Module { Value = "Training", Title = "Training", Description = "Training" };
         public static readonly Module ApplicationSettings = new Module { Value = "ApplicationSettings", Title = "Application Settings", Description = "Application Settings Management" };
-
-
+        public static readonly Module MapToolRegisterDumpsites = new Module { Value = "MapToolRegisterDumpsites", Title = "Map Tool Register Dumpsites", Description = "Map Tool Register Dumpsites" };
+        public static readonly Module ManageRegisteredDumpsites = new Module { Value = "RegisteredDumpsitesManagement", Title = "Registered Dumpsites Management", Description = "Registered Dumpsites Management" };
 
     }
 }

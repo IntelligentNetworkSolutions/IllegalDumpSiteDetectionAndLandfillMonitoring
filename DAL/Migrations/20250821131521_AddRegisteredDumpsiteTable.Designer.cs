@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250821131521_AddRegisteredDumpsiteTable")]
+    partial class AddRegisteredDumpsiteTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1107,10 +1110,6 @@ namespace DAL.Migrations
                         .HasColumnName("created_on")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
 
-                    b.Property<DateTime?>("DateOfResolvment")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date_of_resolvment");
-
                     b.Property<string>("Description")
                         .HasColumnType("text")
                         .HasColumnName("description");
@@ -1129,151 +1128,12 @@ namespace DAL.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<Guid>("RegisteredDumpsiteRiskLevelId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("registered_dumpsite_risk_level_id");
-
-                    b.Property<int>("RegisteredDumpsiteStatusId")
-                        .HasColumnType("integer")
-                        .HasColumnName("registered_dumpsite_status_id");
-
-                    b.Property<Guid>("RegisteredDumpsiteWasteTypeId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("registered_dumpsite_waste_type_id");
-
                     b.HasKey("Id")
                         .HasName("pk_registered_dumpsites");
 
                     b.HasIndex("CreatedById");
 
-                    b.HasIndex("RegisteredDumpsiteRiskLevelId");
-
-                    b.HasIndex("RegisteredDumpsiteStatusId");
-
-                    b.HasIndex("RegisteredDumpsiteWasteTypeId");
-
                     b.ToTable("registered_dumpsites");
-                });
-
-            modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteRiskLevel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("CreatedById")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("created_by_id");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_on")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_registered_dumpsite_risk_levels");
-
-                    b.HasIndex("CreatedById");
-
-                    b.ToTable("registered_dumpsite_risk_levels");
-                });
-
-            modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Color")
-                        .HasColumnType("text")
-                        .HasColumnName("color");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_registered_dumpsite_statuses");
-
-                    b.ToTable("registered_dumpsite_statuses");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Color = "#FF0000",
-                            Description = "Waste has been detected.",
-                            Name = "Detected"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Color = "#FFA500",
-                            Description = "Cleanup is in progress.",
-                            Name = "InProcess"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Color = "#008000",
-                            Description = "Waste has been resolved.",
-                            Name = "Resolved"
-                        });
-                });
-
-            modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteWasteType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<string>("CreatedById")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("created_by_id");
-
-                    b.Property<DateTime>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_on")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_registered_dumpsite_waste_types");
-
-                    b.HasIndex("CreatedById");
-
-                    b.ToTable("registered_dumpsite_waste_types");
                 });
 
             modelBuilder.Entity("Entities.TrainingEntities.TrainedModel", b =>
@@ -1995,57 +1855,6 @@ namespace DAL.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_registered_dumpsites_asp_net_users_created_by_id");
-
-                    b.HasOne("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteRiskLevel", "RegisteredDumpsiteRiskLevel")
-                        .WithMany()
-                        .HasForeignKey("RegisteredDumpsiteRiskLevelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_registered_dumpsites_registered_dumpsite_risk_levels_registere~");
-
-                    b.HasOne("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteStatus", "RegisteredDumpsiteStatus")
-                        .WithMany()
-                        .HasForeignKey("RegisteredDumpsiteStatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_registered_dumpsites_registered_dumpsite_statuses_registered_~");
-
-                    b.HasOne("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteWasteType", "RegisteredDumpsiteWasteType")
-                        .WithMany()
-                        .HasForeignKey("RegisteredDumpsiteWasteTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_registered_dumpsites_registered_dumpsite_waste_types_registere~");
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("RegisteredDumpsiteRiskLevel");
-
-                    b.Navigation("RegisteredDumpsiteStatus");
-
-                    b.Navigation("RegisteredDumpsiteWasteType");
-                });
-
-            modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteRiskLevel", b =>
-                {
-                    b.HasOne("Entities.ApplicationUser", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_registered_dumpsite_risk_levels_asp_net_users_created_by_id");
-
-                    b.Navigation("CreatedBy");
-                });
-
-            modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteWasteType", b =>
-                {
-                    b.HasOne("Entities.ApplicationUser", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_registered_dumpsite_waste_types_asp_net_users_created_by_id");
 
                     b.Navigation("CreatedBy");
                 });

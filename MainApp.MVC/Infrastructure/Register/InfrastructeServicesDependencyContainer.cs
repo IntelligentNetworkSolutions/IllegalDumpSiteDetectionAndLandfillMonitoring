@@ -4,12 +4,14 @@ using DAL.Interfaces.Repositories.DatasetRepositories;
 using DAL.Interfaces.Repositories.DetectionRepositories;
 using DAL.Interfaces.Repositories.LegalLandfillManagementRepositories;
 using DAL.Interfaces.Repositories.MapConfigurationRepositories;
+using DAL.Interfaces.Repositories.RegisteredDumpsiteRepositories;
 using DAL.Interfaces.Repositories.TrainingRepositories;
 using DAL.Repositories;
 using DAL.Repositories.DatasetRepositories;
 using DAL.Repositories.DetectionRepositories;
 using DAL.Repositories.LegalLandfillManagementRepositories;
 using DAL.Repositories.MapConfigurationRepositories;
+using DAL.Repositories.RegisteredDumpsiteRepositories;
 using DAL.Repositories.TrainingRepositories;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Services;
@@ -49,6 +51,9 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ITrainingRunsRepository, TrainingRunsRepository>();
             services.TryAddScoped<ITrainedModelsRepository, TrainedModelsRepository>();
             services.TryAddScoped<ITrainingRunTrainParamsRepository, TrainingRunTrainParamsRepository>();
+            services.TryAddScoped<IRegisteredDumpsiteRepository, RegisteredDumpsiteRepository>();
+            services.TryAddScoped<IRegisteredDumpsiteWasteTypeRepository, RegisteredDumpsiteWasteTypeRepository>();
+            services.TryAddScoped<IRegisteredDumpsiteRiskLevelRepository, RegisteredDumpsiteRiskLevelRepository>();
 
             return services;
         }

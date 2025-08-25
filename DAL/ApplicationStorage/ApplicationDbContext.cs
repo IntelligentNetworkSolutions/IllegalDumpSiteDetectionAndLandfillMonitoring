@@ -5,6 +5,7 @@ using Entities.DatasetEntities;
 using Entities.DetectionEntities;
 using Entities.LegalLandfillsManagementEntites;
 using Entities.MapConfigurationEntities;
+using Entities.RegisteredDumpsiteEntities;
 using Entities.TrainingEntities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -54,6 +55,13 @@ namespace DAL.ApplicationStorage
         public virtual DbSet<DetectionIgnoreZone> DetectionIgnoreZones { get; set; }
         public virtual DbSet<DetectionInputImage> DetectionInputImages { get; set; }
 
+        #endregion
+
+        #region RegisteredDumpsite
+        public virtual DbSet<RegisteredDumpsite> RegisteredDumpsites { get; set; }
+        public virtual DbSet<RegisteredDumpsiteStatus> RegisteredDumpsiteStatuses { get; set; }
+        public virtual DbSet<RegisteredDumpsiteRiskLevel> RegisteredDumpsiteRiskLevels { get; set; }
+        public virtual DbSet<RegisteredDumpsiteWasteType> RegisteredDumpsiteWasteTypes { get; set; }
         #endregion
 
         #region LegalLandfillsManagement

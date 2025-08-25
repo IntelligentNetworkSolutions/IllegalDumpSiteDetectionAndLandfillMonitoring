@@ -1,0 +1,499 @@
+﻿@using MainApp.MVC.Helpers
+@using MainApp.MVC.ViewModels.IntranetPortal.RegisteredDumpsite
+@using Microsoft.AspNetCore.Localization
+@using SD.Helpers
+@model IEnumerable<RegisteredDumpsiteRiskLevelViewModel>
+
+@{
+    ViewData["Title"] = @DbResHtml.T("Registered Dumpsite Risk Level list", "Resources");
+}
+
+<div class="content-header bg-gradient-white border-bottom mb-4">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="text-muted mb-0"> @ViewData["Title"]</h4>
+                <small class="text-muted">@DbResHtml.T("Add, edit, delete and view all registered dumpsite risk levels", "Resources")</small>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index" asp-controller="Map" asp-area="IntranetPortal" class="text-success">@DbResHtml.T("Home", "Resources")</a>
+                    </li>
+                    <li class="breadcrumb-item active"> @DbResHtml.T(@ViewData["Title"]?.ToString() ?? "Registered Dumpsite Risk Level list", "Resources")</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        @if (User.HasAuthClaim(SD.AuthClaims.AddRegisteredDumpsiteRiskLevel))
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <button class="mb-1 btn bg-gradient-primary float-left" data-toggle="modal" data-target="#addRegisteredDumpsiteRiskLevelModal">
+                                    <i class="fas fa-plus"></i>
+                                    @DbResHtml.T("Add Registered Dumpsite Risk Level", "Resources")
+                                </button>
+                                <div>
+                                    @await Component.InvokeAsync("Documentation", new { path = "/guides/landfill-management/landfill-management-guide.html" })
+                                </div>
+                            </div>
+                        }
+                        @*                         <button id="exportToExcelButton" class="btn btn-success mb-1 float-right" type="button" title="Export to Excel">
+                            <i class="fas fa-file-alt"></i>
+                        </button> *@
+                        <div class="mt-5">
+                            <table id="registeredDumpsiteTable" class="table table-sm table-bordered table-striped custom-responsive-table">
+                                <thead>
+                                    <tr>
+                                        <th>@DbResHtml.T("Name", "Resources")</th>
+                                        <th>@DbResHtml.T("Description", "Resources")</th>
+                                        <th>@DbResHtml.T("Actions", "Resources")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.Name</td>
+                                            <td>@item.Description</td>
+                                            <td>
+                                                @if (User.HasAuthClaim(SD.AuthClaims.EditRegisteredDumpsiteRiskLevel))
+                                                {
+                                                    <button class="mb-1 btn bg-gradient-warning text-white btn-xs" id="@item.Id" onclick="editRegisteredDumpsiteRiskLevelModalFunction('@item.Id')" title=@DbResHtml.T("Edit", "Resources")>
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                }
+                                                @if (User.HasAuthClaim(SD.AuthClaims.DeleteRegisteredDumpsiteRiskLevel))
+                                                {
+                                                    <button class="ml-1 mb-1 btn bg-gradient-danger btn-xs" onclick="deleteRegisteredDumpsiteRiskLevelModalFunction('@item.Id')" title="@DbResHtml.T("Delete Registered Dumpsite Risk Level", "Resources")">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        @{
+                        var httpContext = ViewContext.HttpContext;
+                        var currentCulture = httpContext.Features.Get<IRequestCultureFeature>().RequestCulture.UICulture.TwoLetterISOLanguageName;
+                        var langPath = Url.Content("~/i18n/datatable/" + @currentCulture + ".json");
+        }
+
+        $(document).ready(function () {
+            $('#registeredDumpsiteTable').DataTable({
+                paging: true,
+                pageLength: 100,
+                "columnDefs": [
+                    { "width": "20%", "targets": 2 }
+                ],
+                "language": {
+                    "url": "@langPath"
+                },
+                responsive: true,
+                dom: '<"top"fB>rt<"bottom"lp>',
+                "buttons": [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<i class="fas fa-file-alt"></i>',
+                        titleAttr: 'Export to Excel',
+                        className: 'btn btn-success'
+                    }
+                ]
+            });
+        });
+
+        function deleteRegisteredRiskLevelTypeConfirmed() {
+
+            const id = $("#txtDeleteId").val();
+            const name = $("#txtDeleteName").val();
+            const description = $("#txtDeleteDescription").val();
+
+            var registeredDumpsiteRiskLevelViewModel = {
+                Id: id,
+                Name: name,
+                Description: description,
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("DeleteRegisteredDumpsiteRiskLevelConfirmed", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                data: {
+                    registeredDumpsiteRiskLevelViewModel: registeredDumpsiteRiskLevelViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully deleted Risk Level", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function deleteRegisteredDumpsiteRiskLevelModalFunction(registeredDumpsiteRiskLevelId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetRegisteredDumpsiteRiskLevelById", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                data: {
+                    registeredDumpsiteRiskLevelId: registeredDumpsiteRiskLevelId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#deleteRegisteredDumpsiteRiskLevelModalBody").html("");
+
+                            $("#deleteRegisteredDumpsiteRiskLevelModalBody").append(
+                                '<div>'
+                                + '<input type="text" id="txtDeleteId" hidden/>'
+                                + '<input type="text" id="txtDeleteName" hidden/>'
+                                + '<input type="text" id="txtDeleteDescription" hidden/>'
+
+                                + '<table class="table table-striped my-4 w-100">'
+                                + '<thead>'
+                                + '<tr>'
+                                + '<th>@DbResHtml.T("Name", "Resources")</th>'
+                                + '<th>@DbResHtml.T("Description", "Resources")</th>'
+                                + '</tr>'
+                                + '</thead>'
+                                + '<tbody>'
+                                + '<tr>'
+                                + `<td>${data.data.name}</td>`
+                                + `<td>${data.data.description ?? " / "}</td>`
+                                + '</tr>'
+                                + '</tbody>'
+                                + '</table>'
+                                + '</div>'
+                            );
+
+                            $(`#txtDeleteId`).val(data.data.id);
+                            $(`#txtDeleteName`).val(data.data.name);
+                            $(`#txtDeleteDescription`).val(data.data.description);
+
+                            $('#deleteRegisteredDumpsiteRiskLevelModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+        function editRegisteredDumpsiteRiskLevelConfirmed() {
+            const id = $("#txtEditId").val();
+            const name = $("#txtEditName").val();
+            const description = $("#txtEditDescription").val();
+            const createdById = $("#txtEditCreatedById").val();
+            const createdOn = $("#txtEditCreatedOn").val();
+            if (name == '') {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Name is required property", "Resources")"
+                });
+                return;
+            }
+
+            var registeredDumpsiteRiskLevelViewModel = {
+                Id: id,
+                Name: name,
+                Description: description,
+                CreatedById: createdById,
+                CreatedOn: createdOn
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditRegisteredDumpsiteRiskLevelConfirmed", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                data: {
+                    registeredDumpsiteRiskLevelViewModel: registeredDumpsiteRiskLevelViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully edited Risk Level", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occured", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+        function editRegisteredDumpsiteRiskLevelModalFunction(registeredDumpsiteRiskLevelId) {
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("GetRegisteredDumpsiteRiskLevelById", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                data: {
+                    registeredDumpsiteRiskLevelId: registeredDumpsiteRiskLevelId
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            $("#editRegisteredDumpsiteRiskLevelModalBody").html("");
+
+                            $("#editRegisteredDumpsiteRiskLevelModalBody").append(
+                                '<div>'
+                                + `<input type="text" hidden id="txtEditId">`
+                                + `<label class="form-control-label" for="txtEditName">@DbResHtml.T("Name:", "Resources")</label><input class="form-control" type="text" id="txtEditName" />`
+                                + `<label class="form-control-label mt-3" for="txtEditDescription">@DbResHtml.T("Description:", "Resources")</label><input class="form-control" type="text" id="txtEditDescription" />`
+                                + '<input type="text" id="txtEditCreatedById" hidden/>'
+                                + '<input type="text" id="txtEditCreatedOn" hidden/>'
+                                + '</div>'
+                            );
+
+                            $(`#txtEditId`).val(data.data.id);
+                            $(`#txtEditName`).val(data.data.name);
+                            $(`#txtEditDescription`).val(data.data.description);
+                            $('#txtEditCreatedById').val(data.data.createdById);
+                            $('#txtEditCreatedOn').val(data.data.createdOn);
+                            $('#editRegisteredDumpsiteRiskLevelModal').modal('show');
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    ajaxErrorHandlingAlert("error", req.status);
+                }
+            });
+        }
+        function addRegisteredDumpsiteRiskLevelConfirmed() {
+            const name = $("#addRegisteredDumpsiteRiskLevelNameInput").val();
+            const description = $("#addRegisteredDumpsiteRiskLevelDescriptionInput").val();
+
+            if (name == '') {
+                Swal.fire({
+                    icon: "warning",
+                    text: "@DbResHtml.T("Name is required property", "Resources")"
+                });
+                return;
+            }
+
+            var registeredDumpsiteRiskLevelViewModel = {
+                Name: name,
+                Description: description,
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("CreateRegisteredDumpsiteRiskLevelConfirmed", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                data: {
+                    registeredDumpsiteRiskLevelViewModel: registeredDumpsiteRiskLevelViewModel
+                },
+                success: function (data) {
+                    if (data != undefined || data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Successfully added Risk Level", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    location.reload();
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function (req, status, error) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occurred", "Resources")',
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+
+    </script>
+}
+@section BodyArea {
+    <div class="modal" id="deleteRegisteredDumpsiteRiskLevelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-danger">
+                    <h5 class="modal-title">@DbResHtml.T("Are you sure you want to delete this registered dumpsite Risk Level?", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="deleteRegisteredDumpsiteRiskLevelModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-danger" onclick="deleteRegisteredRiskLevelTypeConfirmed()" data-dismiss="modal" aria-label="Delete">
+                        <span aria-hidden="true"> @DbResHtml.T("Delete", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="editRegisteredDumpsiteRiskLevelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-warning text-white">
+                    <h5 class="modal-title">@DbResHtml.T("Edit Registered Dumpsite Risk Level", "Resources")</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="editRegisteredDumpsiteRiskLevelModalBody" class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-warning text-white" onclick="editRegisteredDumpsiteRiskLevelConfirmed()" data-dismiss="modal" aria-label="Edit">
+                        <span aria-hidden="true"> @DbResHtml.T("Edit", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addRegisteredDumpsiteRiskLevelModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary">
+                    <h4 class="modal-title">@DbResHtml.T("New Registered Dumpsite Risk Level", "Resources")</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="addRegisteredDumpsiteRiskLevelModalBody" class="modal-body">
+                    <div class="form-group">
+                        <label class="form-control-label" for="addRegisteredDumpsiteRiskLevelNameInput">@DbResHtml.T("Name:", "Resources")</label>
+                        <input type="text" name="Name" class="form-control" id="addRegisteredDumpsiteRiskLevelNameInput" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label mt-3" for="#addRegisteredDumpsiteRiskLevelDescriptionInput">@DbResHtml.T("Description:", "Resources")</label>
+                        <input type="text" name="Description" class="form-control" id="addRegisteredDumpsiteRiskLevelDescriptionInput" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mb-1 btn bg-gradient-primary" onclick="addRegisteredDumpsiteRiskLevelConfirmed()" data-dismiss="modal" aria-label="Add">
+                        <span aria-hidden="true"> @DbResHtml.T("Add", "Resources")</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}

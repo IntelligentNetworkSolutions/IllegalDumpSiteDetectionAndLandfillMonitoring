@@ -7,12 +7,14 @@ using MainApp.BL.Interfaces.Services.DatasetServices;
 using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.LegalLandfillManagmentServices;
 using MainApp.BL.Interfaces.Services.MapConfigurationServices;
+using MainApp.BL.Interfaces.Services.RegisteredDumpsiteServices;
 using MainApp.BL.Interfaces.Services.TrainingServices;
 using MainApp.BL.Services;
 using MainApp.BL.Services.DatasetServices;
 using MainApp.BL.Services.DetectionServices;
 using MainApp.BL.Services.LegalLandfillManagementServices;
 using MainApp.BL.Services.MapConfigurationServices;
+using MainApp.BL.Services.RegisteredDumpsiteServices;
 using MainApp.BL.Services.TrainingServices;
 using MainApp.MVC.Helpers;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -52,6 +54,9 @@ namespace MainApp.MVC.Infrastructure.Register
             services.TryAddScoped<ITrainingRunService, TrainingRunService>();
             services.TryAddScoped<ITrainedModelService, TrainedModelService>();
             services.TryAddScoped<ITrainingRunTrainParamsService, TrainingRunTrainParamsService>();
+            services.TryAddScoped<IRegisteredDumpsiteService, RegisteredDumpsiteService>();
+            services.TryAddScoped<IRegisteredDumpsiteWasteTypeService, RegisteredDumpsiteWasteTypeService>();
+            services.TryAddScoped<IRegisteredDumpsiteRiskLevelService, RegisteredDumpsiteRiskLevelService>();
 
             return services;
         }
