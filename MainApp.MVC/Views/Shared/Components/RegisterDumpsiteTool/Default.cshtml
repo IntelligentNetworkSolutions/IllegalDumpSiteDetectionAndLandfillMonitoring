@@ -112,7 +112,6 @@
                 <h5 class="modal-title" id="editDumpsiteModalLabel">@DbResHtml.T("Proceed editing the selected registered dumpsite", "Resources")</h5>
             </div>
             <div id="editDumpsiteModalBody" class="modal-body">
-                
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal" onclick="closeEditDumpsiteModal()">@DbResHtml.T("Cancel", "Resources")</button>
@@ -127,7 +126,7 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
         <span class="lead">@DbResHtml.T("Editing Registered Dumpsite", "Resources")</span>
         <button id="finishEditingButton" class="btn btn-xs btn-warning ml-4">@DbResHtml.T("Proceed", "Resources")</button>
-        <button id="cancelEditingButton" class="btn btn-xs btn-outline-light mx-2">@DbResHtml.T("Cancel", "Resources")</button>       
+        <button id="cancelEditingButton" class="btn btn-xs btn-outline-light mx-2">@DbResHtml.T("Cancel", "Resources")</button>
     </div>
     <div>
         <p class="mb-0 text-xs">@DbResHtml.T("CLICK AND HOLD on the polygon lines to start editing.", "Resources")</p>
@@ -147,6 +146,7 @@
         <p class="mb-0 text-xs">@DbResHtml.T("Click CANCEL or ESC to abort drawing.", "Resources")</p>
     </div>
 </div>
+
 <script type="text/javascript">
     $(function () {
         // Activate the registered dumpsites tool
@@ -160,11 +160,11 @@
         function deactivateRegisteredDumpsitesTool() {
             cleanupDrawInteraction();
             if (currentFocusedPolygon) {
-                let dumpsiteName = currentFocusedPolygon.get('dumpsiteName');   
+                let dumpsiteName = currentFocusedPolygon.get('dumpsiteName');
                 let dumpsiteIsEnabled = currentFocusedPolygon.get('isEnabled');
                 if (originalGeometry) {
                     currentFocusedPolygon.setGeometry(originalGeometry.clone());
-                }               
+                }
                 currentFocusedPolygon.setStyle(defaultStyle(dumpsiteName, dumpsiteIsEnabled));
                 currentFocusedPolygon = null;
                 originalGeometry = null;
@@ -263,8 +263,8 @@
                     if (!$("#editNotify").hasClass("d-none")) {
                         $("#editNotify").addClass("d-none");
                     }
-                }                           
-              
+                }
+
             }
         });
 
@@ -389,17 +389,20 @@
                      <td class="text-center">
                           <input type="checkbox" ${item.isEnabled ? 'checked' : ''} disabled style="transform: scale(1.5);">
                      </td>
-                     <td>
-                          <button onclick='focusOnDumpsite("${item.id}")' class="btn btn-xs bg-gradient-dark mr-1" title="@DbResHtml.T("Focus on this dumpsite", "Resources")">
-                                  <i class="fas fa-search-location"></i>
-                          </button>
-                          <button onclick='editDumpsite("${item.id}")' class="btn btn-xs bg-gradient-warning text-white mx-1" title="@DbResHtml.T("Edit", "Resources")">
-                                  <i class="fas fa-edit"></i>
-                          </button>
-                          <button onclick='deleteDumpsite("${item.id}")' class="btn btn-xs bg-gradient-danger ml-1" title="@DbResHtml.T("Delete", "Resources")">
-                                  <i class="fas fa-trash"></i>
-                          </button>
-                    </td>
+                        <td>
+                            <button onclick='focusOnDumpsite("${item.id}")' class="btn btn-xs bg-gradient-dark mr-1" title='@DbResHtml.T("Focus on this dumpsite", "Resources")'>
+                                <i class="fas fa-search-location"></i>
+                            </button>
+                            <button onclick='editDumpsite("${item.id}")' class="btn btn-xs bg-gradient-warning text-white mx-1" title='@DbResHtml.T("Edit", "Resources")'>
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick='deleteDumpsite("${item.id}")' class="btn btn-xs bg-gradient-danger mx-1" title='@DbResHtml.T("Delete", "Resources")'>
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button onclick='infoDumpsite("${item.id}")' class="btn btn-xs bg-gradient-info text-white ml-1" title='@DbResHtml.T("Info", "Resources")'>
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </td>
                  </tr>
                 `
         });
@@ -438,13 +441,26 @@
 
         var overlapDetails = $('#overlapDetails');
         overlapDetails.empty();
-        
-        var detailsHtml = '<h6>' + '@DbResHtml.T("Overlapping Dumpsites:", "Resources")' + '</h6><ul>';
+
+        var detailsHtml = '<h6>' + '@DbResHtml.T("Overlapping Dumpsites:", "Resources")' + '</h6>';
+
+        // Add selection dropdown for merge target
+        detailsHtml += '<div class="form-group mt-3" id="mergeTargetSelection" style="display: none;">';
+        detailsHtml += '<label for="mergeTargetSelect">@DbResHtml.T("Select which dumpsite to keep as main:", "Resources")</label>';
+        detailsHtml += '<select class="form-control" id="mergeTargetSelect">';
+        detailsHtml += '<option value="new">@DbResHtml.T("New Dumpsite", "Resources") (' + (newDumpsiteData.name || '@DbResHtml.T("Unnamed", "Resources")') + ')</option>';
+        overlaps.forEach(function(overlap) {
+            detailsHtml += '<option value="' + overlap.id + '">' + overlap.name + '</option>';
+        });
+        detailsHtml += '</select>';
+        detailsHtml += '</div>';
+
+        detailsHtml += '<ul>';
         overlaps.forEach(function(overlap) {
             detailsHtml += '<li>' + overlap.name + '</li>';
         });
         detailsHtml += '</ul>';
-        
+
         overlapDetails.html(detailsHtml);
 
         $('#overlapModal').modal({
@@ -454,9 +470,29 @@
         $('#overlapModal').modal('show');
     }
 
+
+    function updateMergeButtonClick() {
+        // Replace the existing onclick in your HTML with this:
+        $(document).on('click', '[onclick="resolveOverlap(\'merge\')"]', function(e) {
+            e.preventDefault();
+            $('#mergeTargetSelection').show();
+            $(this).text('@DbResHtml.T("Confirm Merge", "Resources")').attr('onclick', 'confirmMergeWithTarget()');
+        });
+    }
+
+    // 3. Add new function for confirming merge with selected target
+    function confirmMergeWithTarget() {
+        var selectedTarget = $('#mergeTargetSelect').val();
+        if (!selectedTarget) {
+            alert('@DbResHtml.T("Please select a target dumpsite", "Resources")');
+            return;
+        }
+        performMergeOperation(selectedTarget);
+    }
+
     function resolveOverlap(action, targetId = null) {
         var originalZIndex = $('#map-sidebar').css('z-index');
-        
+
         switch(action) {
             case 'merge':
                 performMergeOperation();
@@ -466,8 +502,7 @@
                 break;
         }
     }
-
-      function performMergeOperation() {
+    function performMergeOperation(targetId = null) {
         var originalZIndex = $('#map-sidebar').css('z-index');
 
         // Get all overlapping dumpsite IDs
@@ -475,29 +510,76 @@
             return overlap.id;
         });
 
-        // Convert new geometry to GeoJSON
-        var geoJsonFormat = new ol.format.GeoJSON();
-        var feature = new ol.Feature({ geometry: pendingDumpsiteData.geometry });
-        var newDumpsiteGeoJson = geoJsonFormat.writeFeature(feature);
+        // Determine merge data based on selected target
+        var mergeData;
+        var idsToDelete = [];
 
-        // Call server-side merge operation
+        if (targetId === 'new' || !targetId) {
+            // Use new dumpsite data, delete all existing overlaps
+            var geoJsonFormat = new ol.format.GeoJSON();
+            var feature = new ol.Feature({ geometry: pendingDumpsiteData.geometry });
+            var newDumpsiteGeoJson = geoJsonFormat.writeFeature(feature);
+
+            mergeData = {
+                Name: pendingDumpsiteData.name || "New Dumpsite",
+                Description: pendingDumpsiteData.description || "",
+                RegisteredDumpsiteWasteTypeId: pendingDumpsiteData.wasteTypeId || null,
+                RegisteredDumpsiteRiskLevelId: pendingDumpsiteData.riskLevelId || null,
+                EnteredZonePolygon: newDumpsiteGeoJson,
+                IsEnabled: pendingDumpsiteData.isEnabled || false
+            };
+            idsToDelete = idsToMerge;
+        } else {
+            // Use existing dumpsite as base, delete others
+            var targetDumpsite = overlappingDumpsites.find(o => o.id === targetId);
+            if (!targetDumpsite) {
+                Swal.fire({
+                    text: '@DbResHtml.T("Target dumpsite not found", "Resources")',
+                    icon: "error"
+                });
+                return;
+            }
+
+            // Get target feature and create a simple merged geometry (use the larger extent)
+            var targetFeature = targetDumpsite.feature;
+            var geoJsonFormat = new ol.format.GeoJSON();
+
+            // Create a buffered version of the geometry to avoid topology issues
+            var targetGeom = targetFeature.getGeometry();
+            var newGeom = pendingDumpsiteData.geometry;
+
+            // Use the new geometry as the merged result to avoid topology errors
+            var newFeature = new ol.Feature({ geometry: newGeom });
+            var mergedGeoJson = geoJsonFormat.writeFeature(newFeature);
+
+            mergeData = {
+                Id: targetId,
+                Name: targetFeature.get('dumpsiteName'),
+                Description: targetFeature.get('description') || '',
+                RegisteredDumpsiteWasteTypeId: null,
+                RegisteredDumpsiteRiskLevelId: null,
+                EnteredZonePolygon: mergedGeoJson,
+                IsEnabled: targetFeature.get('isEnabled')
+            };
+
+            // idsToDelete = idsToMerge.filter(id => id !== targetId); //kiril
+            idsToDelete = idsToMerge;
+        }
+
+        // Call server-side merge operation with corrected data structure
         $.ajax({
             type: "POST",
             url: "@Url.Action("MergeRegisteredDumpsites", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
             data: JSON.stringify({
-                NewDumpsiteData: {
-                    Name: pendingDumpsiteData.name,
-                    Description: pendingDumpsiteData.description,
-                    EnteredZonePolygon: newDumpsiteGeoJson,
-                    IsEnabled: pendingDumpsiteData.isEnabled
-                },
-                ExistingDumpsiteIds: idsToMerge
+                NewDumpsiteData: mergeData,  // Changed from MergeData to NewDumpsiteData
+                ExistingDumpsiteIds: idsToDelete, // Changed from IdsToDelete to ExistingDumpsiteIds
+                IsUpdate: targetId !== 'new' && targetId !== null
             }),
             contentType: "application/json",
             success: function(data) {
                 if (data.isSuccess) {
                     closeOverlapModal();
-                    resetAddModalInputValues(); 
+                    resetAddModalInputValues();
                     refreshDumpsitesView();
                     Swal.fire({
                         text: '@DbResHtml.T("Dumpsites merged successfully", "Resources")',
@@ -512,7 +594,7 @@
                     });
                 } else {
                     Swal.fire({
-                        text: data.errMsg,
+                        text: data.errMsg || '@DbResHtml.T("Merge operation failed", "Resources")',
                         confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                         didOpen: () => {
                             manageMapSidebarZIndex(originalZIndex, '1040');
@@ -524,7 +606,8 @@
                     });
                 }
             },
-            error: function() {
+            error: function(xhr, status, error) {
+                console.error('Merge error:', xhr.responseText);
                 Swal.fire({
                     text: '@DbResHtml.T("Error occurred during merge operation", "Resources")',
                     confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
@@ -547,22 +630,25 @@
         var geoJsonFormat = new ol.format.GeoJSON();
         var feature = new ol.Feature({ geometry: pendingDumpsiteData.geometry });
         var geoJson = geoJsonFormat.writeFeature(feature);
-        
-        // saveDumpsiteAfterOverlapResolution(geoJson);
 
-            $("#polygonCoordinates").val(JSON.stringify(geoJson));
-    $('#polygonModal').modal({
-        backdrop: 'static',
-        keyboard: false
-    });
-    $('.modal-backdrop').css({
-        'background-color': 'black',
-        'opacity': '0.8',
-        'z-index': '1050'
-    });
-    $("#polygonModal").modal('show');
+        // Store the coordinates but don't open modal yet
+        $("#polygonCoordinates").val(JSON.stringify(geoJson));
 
-    pendingDumpsiteData = null;
+        // Now open the add modal
+        setTimeout(function() {
+            $('#polygonModal').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+            $('.modal-backdrop').css({
+                'background-color': 'black',
+                'opacity': '0.8',
+                'z-index': '1050'
+            });
+            $("#polygonModal").modal('show');
+        }, 300);
+
+        pendingDumpsiteData = null;
     }
 
     function saveDumpsiteAfterOverlapResolution(geoJson) {
@@ -683,7 +769,7 @@
     function getDumpsiteById(dumpsiteId) {
         var dumpsitesLayer = mapVars.map.getLayers().getArray().find(layer =>
             layer instanceof ol.layer.Vector && layer.get('title') === 'Registered Dumpsites'
-        );       
+        );
 
         var features = dumpsitesLayer.getSource().getFeatures();
         var selectedDumpsite = features.find(function (feature) {
@@ -754,7 +840,7 @@
         });
     }
 
-    function handleCancelEditingButtonClick(dumpsite) {        
+    function handleCancelEditingButtonClick(dumpsite) {
         let dumpsiteName = dumpsite.get('dumpsiteName');
         let dumpsiteIsEnabled = dumpsite.get('isEnabled');
         if (dumpsite && originalGeometry) {
@@ -775,7 +861,7 @@
         // Check for overlaps with the modified geometry
         var overlaps = checkForOverlaps(dumpsite);
         overlaps = overlaps.filter(overlap => overlap.id !== dumpsiteId); // Remove self from overlaps
-        
+
         cleanUpEditDumpsiteMode();
         $("#editNotify").fadeOut(300, function () {
             $(this).addClass("d-none");
@@ -794,7 +880,7 @@
 
     function handleEditOverlaps(geoJson, dumpsiteId, overlaps) {
         var originalZIndex = $('#map-sidebar').css('z-index');
-        
+
         Swal.fire({
             title: '@DbResHtml.T("Overlap Detected During Edit", "Resources")',
             text: '@DbResHtml.T("The modified dumpsite overlaps with existing dumpsites. How would you like to proceed?", "Resources")',
@@ -1077,39 +1163,39 @@
     }
 
     function saveEditDumpsite() {
-        var originalZIndex = $('#map-sidebar').css('z-index');
-        var id = $("#editDumpsiteId").val();
-        var name = $("#editDumpsiteName").val();
-        var description = $("#editDumpsiteDescription").val();
-        var wasteTypeId = $("#editDumpsiteWasteType").val();
-        var riskLevelId = $("#editDumpsiteRiskLevel").val();
-        var isEnabled = $("#isEditDumpsiteEnabled").prop("checked");
+     var originalZIndex = $('#map-sidebar').css('z-index');
+     var id = $("#editDumpsiteId").val();
+     var name = $("#editDumpsiteName").val();
+     var description = $("#editDumpsiteDescription").val();
+     var wasteTypeId = $("#editDumpsiteWasteType").val();
+     var riskLevelId = $("#editDumpsiteRiskLevel").val();
+     var isEnabled = $("#isEditDumpsiteEnabled").prop("checked");
 
-        if (name.trim() === "") {
-            $("#editDumpsiteModal").modal('hide');
-            Swal.fire({
-                text: '@DbResHtml.T("Name is required", "Resources")',
-                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-                didOpen: () => {
-                    manageMapSidebarZIndex(originalZIndex, '1040');
-                },
-                willClose: () => {
-                    manageMapSidebarZIndex(originalZIndex, '1040');
-                },
-                allowOutsideClick: false,
-                icon: "warning"
-            });            
-            return;
-        }
+     // Validation
+     if (name.trim() === "") {
+         showValidationError('@DbResHtml.T("Name is required", "Resources")', originalZIndex);
+         return;
+     }
 
-        var formattedGeoJson = null;
-        if ($("#editDumpsiteModal").data("useGeoJson")) {
-            var geoJsonString = $("#editedPolygonCoordinates").val();
-            var geoJsonObject = JSON.parse(geoJsonString);
-            var geoJsonFormat = new ol.format.GeoJSON();
-            var feature = geoJsonFormat.readFeature(geoJsonObject);
-            formattedGeoJson = geoJsonFormat.writeFeature(feature);
-        }
+     if (!wasteTypeId || wasteTypeId.trim() === "") {
+         showValidationError('@DbResHtml.T("Waste Type is required", "Resources")', originalZIndex);
+         return;
+     }
+
+     if (!riskLevelId || riskLevelId.trim() === "") {
+         showValidationError('@DbResHtml.T("Risk Level is required", "Resources")', originalZIndex);
+         return;
+     }
+
+     // Continue with existing save logic...
+     var formattedGeoJson = null;
+     if ($("#editDumpsiteModal").data("useGeoJson")) {
+         var geoJsonString = $("#editedPolygonCoordinates").val();
+         var geoJsonObject = JSON.parse(geoJsonString);
+         var geoJsonFormat = new ol.format.GeoJSON();
+         var feature = geoJsonFormat.readFeature(geoJsonObject);
+         formattedGeoJson = geoJsonFormat.writeFeature(feature);
+     }
         $.ajax({
             type: "POST",
             url: "@Url.Action("UpdateRegisteredDumpsite", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
@@ -1140,7 +1226,7 @@
                             icon: "error"
                         });
                     }
-                    else {                        
+                    else {
                         Swal.fire({
                             text: '@DbResHtml.T("Registered dumpsite updated successfully", "Resources")',
                             confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
@@ -1194,7 +1280,7 @@
             }
         });
     }
-    
+
     function resetEditModalInputValues() {
         $("#editDumpsiteName").val('');
         $("#editDumpsiteDescription").val('');
@@ -1212,7 +1298,7 @@
         }
     }
 
-    //2.add new registered dumpsite btn click functions 
+    //2.add new registered dumpsite btn click functions
     var draw;
     var source = new ol.source.Vector({ wrapX: false });
 
@@ -1238,38 +1324,41 @@
 
     function drawDumpsitePolygonOnMap() {
         cleanupDrawInteraction();
-        
+
         $("#addNotify").removeClass("d-none").fadeIn(300);
         draw = new ol.interaction.Draw({
             source: source,
             type: 'Polygon',
             style: createFocusedStyle(),
-            projection: mapVars.projection           
+            projection: mapVars.projection
         });
 
         mapVars.map.addInteraction(draw);
         $("#cancelAddingDumpsiteBtn").off('click').on('click', function () {
             cancelAddingDumpsite();
         });
-               
-        draw.on('drawend', function (event) {      
+
+        draw.on('drawend', function (event) {
+            // Clean the geometry before checking overlaps
+            var cleanedGeometry = cleanGeometry(event.feature.getGeometry());
+            event.feature.setGeometry(cleanedGeometry);
+
             var overlaps = checkForOverlaps(event.feature);
-            
+
             cleanupDrawInteraction();
             $("#addNotify").fadeOut(300, function () {
                 $(this).addClass("d-none");
             });
 
             if (overlaps.length > 0) {
-                // Show overlap resolution modal
+                // Show overlap resolution modal - DON'T open add modal yet
                 var dumpsiteData = {
-                    geometry: event.feature.getGeometry(),
+                    geometry: cleanedGeometry,
                     name: '',
                     description: '',
                     isEnabled: false
                 };
                 showOverlapModal(dumpsiteData, overlaps);
-                openAddPolygonModalForOverlap();
             } else {
                 // No overlaps, proceed normally
                 var geoJsonFormat = new ol.format.GeoJSON();
@@ -1279,19 +1368,7 @@
         });
     }
 
-    function openAddPolygonModalForOverlap() {
-        $('#polygonModal').modal({
-            backdrop: 'static',
-            keyboard: false
-        });
-        $('.modal-backdrop').css({
-            'background-color': 'black',
-            'opacity': '0.8',
-            'z-index': '1050'
-        });
-        $("#polygonModal").modal('show');
-    }
-    
+
     function openAddPolygonModal(geoJson) {
         $("#polygonCoordinates").val(JSON.stringify(geoJson));
         $('#polygonModal').modal({
@@ -1303,15 +1380,15 @@
             'opacity': '0.8',
             'z-index': '1050'
         });
-        
+
         $("#polygonModal").modal('show');
     }
 
-    function closeAddPolygonModal() {       
-        cleanupDrawInteraction();        
+    function closeAddPolygonModal() {
+        cleanupDrawInteraction();
         $("#polygonModal").modal('hide');
         resetAddModalInputValues();
-        
+
         if (pendingDumpsiteData) {
             cancelOverlapResolution();
         }
@@ -1323,8 +1400,7 @@
         });
         cleanupDrawInteraction();
     }
-
-        function savePolygon() {
+    function savePolygon() {
         var originalZIndex = $('#map-sidebar').css('z-index');
         var name = $("#dumpsiteName").val();
         var description = $("#dumpsiteDescription").val();
@@ -1333,46 +1409,28 @@
         var isEnabled = $("#isDumpsiteEnabled").prop("checked");
         var geoJsonString = $("#polygonCoordinates").val();
 
+        // Validation
         if (name.trim() === "") {
-            $("#polygonModal").modal('hide');
-            Swal.fire({
-                text: '@DbResHtml.T("Name is required", "Resources")',
-                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-                didOpen: () => {
-                    manageMapSidebarZIndex(originalZIndex, '1040');
-                },
-                willClose: () => {
-                    manageMapSidebarZIndex(originalZIndex, '1040');
-                },
-                allowOutsideClick: false,
-                icon: "warning"
-            }).then(() => {
-                // Reopen the modal after the error message
-                $("#polygonModal").modal('show');
-            });
+            showValidationError('@DbResHtml.T("Name is required", "Resources")', originalZIndex);
+            return;
+        }
+
+        if (!wasteTypeId || wasteTypeId.trim() === "") {
+            showValidationError('@DbResHtml.T("Waste Type is required", "Resources")', originalZIndex);
+            return;
+        }
+
+        if (!riskLevelId || riskLevelId.trim() === "") {
+            showValidationError('@DbResHtml.T("Risk Level is required", "Resources")', originalZIndex);
             return;
         }
 
         if (geoJsonString === '') {
-            $("#polygonModal").modal('hide');
-            Swal.fire({
-                text: '@DbResHtml.T("Please enter polygon", "Resources")',
-                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
-                didOpen: () => {
-                    manageMapSidebarZIndex(originalZIndex, '1040');
-                },
-                willClose: () => {
-                    manageMapSidebarZIndex(originalZIndex, '1040');
-                },
-                allowOutsideClick: false,
-                icon: "warning"
-            }).then(() => {
-                // Reopen the modal after the error message
-                $("#polygonModal").modal('show');
-            });
+            showValidationError('@DbResHtml.T("Please enter polygon", "Resources")', originalZIndex);
             return;
         }
 
+        // Continue with save logic...
         var geoJsonObject = JSON.parse(geoJsonString);
         var geoJsonFormat = new ol.format.GeoJSON();
         var feature = geoJsonFormat.readFeature(geoJsonObject);
@@ -1384,8 +1442,8 @@
             data: JSON.stringify({
                 Name: name,
                 Description: description,
-                RegisteredDumpsiteWasteTypeId: wasteTypeId || null,
-                RegisteredDumpsiteRiskLevelId: riskLevelId || null,
+                RegisteredDumpsiteWasteTypeId: wasteTypeId,
+                RegisteredDumpsiteRiskLevelId: riskLevelId,
                 EnteredZonePolygon: formattedGeoJson,
                 IsEnabled: isEnabled
             }),
@@ -1460,7 +1518,6 @@
             }
         });
     }
-
     function cleanupDrawInteraction() {
         if (draw) {
             source.clear();
@@ -1536,7 +1593,7 @@
 
         return new ol.style.Style(styleOptions);
      }
-    
+
     function focusOnDumpsite(dumpsiteId) {
         var originalZIndex = $('#map-sidebar').css('z-index');
         $.ajax({
@@ -1673,7 +1730,7 @@
 
         if (dumpsitesLayer) {
             dumpsitesLayer.getSource().getFeatures().forEach(function (feature) {
-                let dumpsiteName = feature.get('dumpsiteName'); 
+                let dumpsiteName = feature.get('dumpsiteName');
                 let dumpsiteIsEnabled = feature.get('isEnabled');
                 feature.setStyle(defaultStyle(dumpsiteName, dumpsiteIsEnabled));
             });
@@ -1695,7 +1752,7 @@
             },
             didOpen: () => {
                 manageMapSidebarZIndex(originalZIndex, '1040');
-            },   
+            },
             willClose: () => {
                 manageMapSidebarZIndex(originalZIndex, '1040');
             },
@@ -1784,7 +1841,7 @@
                             icon: "error"
                         });
                     } else {
-                        removeRegisteredDumpsitesLayer();                       
+                        removeRegisteredDumpsitesLayer();
                         if (data.data.length > 0) {
                             createRegisteredDumpsitesLayerAndShowOnMap(data.data);
                         }
@@ -1830,7 +1887,7 @@
 
         var vectorLayer = new ol.layer.Vector({
             source: vectorSource,
-            title: 'Registered Dumpsites'          
+            title: 'Registered Dumpsites'
         });
 
         mapVars.map.addLayer(vectorLayer);
@@ -1854,5 +1911,64 @@
         pendingDumpsiteData = null;
         overlappingDumpsites = [];
         resetAddModalInputValues();
+    }
+
+    function showValidationError(message, originalZIndex) {
+        $("#polygonModal, #editDumpsiteModal").modal('hide');
+        Swal.fire({
+            text: message,
+            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+            didOpen: () => {
+                manageMapSidebarZIndex(originalZIndex, '1040');
+            },
+            willClose: () => {
+                manageMapSidebarZIndex(originalZIndex, '1040');
+            },
+            allowOutsideClick: false,
+            icon: "warning"
+        }).then(() => {
+            // Reopen the appropriate modal after the error message
+            if ($("#polygonCoordinates").val()) {
+                $("#polygonModal").modal('show');
+            } else if ($("#editDumpsiteId").val()) {
+                $("#editDumpsiteModal").modal('show');
+            }
+        });
+    }
+
+        function cleanGeometry(geometry) {
+        try {
+            // For polygons, ensure they don't have self-intersections
+            if (geometry instanceof ol.geom.Polygon) {
+                var coordinates = geometry.getCoordinates();
+                var ring = coordinates[0];
+
+                // Remove duplicate consecutive points
+                var cleanedRing = [];
+                for (var i = 0; i < ring.length; i++) {
+                    if (i === 0 ||
+                        ring[i][0] !== ring[i-1][0] ||
+                        ring[i][1] !== ring[i-1][1]) {
+                        cleanedRing.push(ring[i]);
+                    }
+                }
+
+                // Ensure ring is closed
+                if (cleanedRing.length > 3 &&
+                    (cleanedRing[0][0] !== cleanedRing[cleanedRing.length-1][0] ||
+                     cleanedRing[0][1] !== cleanedRing[cleanedRing.length-1][1])) {
+                    cleanedRing.push(cleanedRing[0]);
+                }
+
+                if (cleanedRing.length >= 4) {
+                    return new ol.geom.Polygon([cleanedRing]);
+                }
+            }
+
+            return geometry;
+        } catch (e) {
+            console.warn('Geometry cleaning failed:', e);
+            return geometry;
+        }
     }
 </script>

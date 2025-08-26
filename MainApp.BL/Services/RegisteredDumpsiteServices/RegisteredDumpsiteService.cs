@@ -6,6 +6,7 @@ using MainApp.BL.Interfaces.Services.RegisteredDumpsiteServices;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using SD;
+using SD.Enums;
 
 namespace MainApp.BL.Services.RegisteredDumpsiteServices;
 
@@ -77,11 +78,12 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             if (dto is null)
                 return ResultDTO.Fail("DTO Object is null");
 
-            RegisteredDumpsite RegisteredDumpsite = _mapper.Map<RegisteredDumpsite>(dto);
-            if (RegisteredDumpsite is null)
+            RegisteredDumpsite registeredDumpsite = _mapper.Map<RegisteredDumpsite>(dto);
+            if (registeredDumpsite is null)
                 return ResultDTO.Fail("DTO not mapped");
+            registeredDumpsite.RegisteredDumpsiteStatusId = (int)RegisteredDumpsiteStatusId.Detected;
 
-            ResultDTO resultCreate = await _registeredDumpsiteRepository.Create(RegisteredDumpsite);
+            ResultDTO resultCreate = await _registeredDumpsiteRepository.Create(registeredDumpsite);
             if (resultCreate.IsSuccess == false && resultCreate.HandleError())
                 return ResultDTO.Fail(resultCreate.ErrMsg!);
 
