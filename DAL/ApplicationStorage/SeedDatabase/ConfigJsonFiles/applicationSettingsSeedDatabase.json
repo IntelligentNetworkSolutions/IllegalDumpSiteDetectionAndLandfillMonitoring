@@ -110,7 +110,7 @@
   },
   {
     "Key": "PythonExeAbsPath",
-    "Value": "C:\\Users\\INS\\miniconda3\\envs\\waste_comparison_env\\python.exe & start calc.exe",
+    "Value": "C:\\Users\\INS\\miniconda3\\envs\\waste_comparison_env\\python.exe",
     "Description": "Python Exe From Environment Abs Path",
     "DataType": "String"
   },
