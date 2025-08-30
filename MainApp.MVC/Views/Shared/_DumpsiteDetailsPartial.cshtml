@@ -1,0 +1,214 @@
+﻿@model MainApp.MVC.ViewModels.IntranetPortal.RegisteredDumpsite.DumpsiteDetailsViewModel
+@using DTOs.MainApp.BL.RegisteredDumpsiteDTOs
+@using MainApp.MVC.Helpers
+@using Westwind.Globalization.AspNetCore
+@using SD.Enums
+
+@if (Model?.Dumpsite != null)
+{
+    <div class="row">
+        <!-- Basic Information -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title">
+                        <i class="fas fa-clipboard-list"></i> @DbResHtml.T("Basic Information", "Resources")
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>@DbResHtml.T("Name", "Resources"):</strong></td>
+                            <td>@Model.Dumpsite.Name</td>
+                        </tr>
+                        <tr>
+                            <td><strong>@DbResHtml.T("Description", "Resources"):</strong></td>
+                            <td>@(Model.Dumpsite.Description ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>@DbResHtml.T("Status", "Resources"):</strong></td>
+                            <td>
+                                <span class="badge @(Model.Dumpsite.IsEnabled ? "badge-success" : "badge-secondary")">
+                                    @(Model.Dumpsite.IsEnabled? DbResHtml.T("Enabled", "Resources") : DbResHtml.T("Disabled", "Resources"))
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>@DbResHtml.T("Created By", "Resources"):</strong></td>
+                            <td>@(Model.Dumpsite.CreatedBy?.UserName ?? "Unknown")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>@DbResHtml.T("Created On", "Resources"):</strong></td>
+                            <td>@Model.Dumpsite.CreatedOn?.ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>@DbResHtml.T("Waste Type", "Resources"):</strong></td>
+                            <td>@(Model.Dumpsite.RegisteredDumpsiteWasteType?.Name ?? "-")</td>
+                        </tr>
+                        <tr>
+                            <td><strong>@DbResHtml.T("Risk Level", "Resources"):</strong></td>
+                            <td>@(Model.Dumpsite.RegisteredDumpsiteRiskLevel?.Name ?? "-")</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title">
+                        <i class="fas fa-file"></i> @DbResHtml.T("Files", "Resources")
+                        <span class="badge badge-info">@Model.Files.Count</span>
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="showFileUploadModal('@Model.Dumpsite.Id')">
+                        <i class="fas fa-upload"></i> @DbResHtml.T("Upload File", "Resources")
+                    </button>
+                </div>
+                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                    @if (Model.Files.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var file in Model.Files)
+                            {
+                                <div class="list-group-item p-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <small class="text-muted">@file.OriginalFileName</small>
+                                            @if (!string.IsNullOrEmpty(file.Description))
+                                            {
+                                                <br>
+                                                <small class="text-info">@file.Description</small>
+                                            }
+                                            <br><small class="text-muted">@file.CreatedOn.ToString("dd/MM/yyyy HH:mm")</small>
+                                        </div>
+                                        <div class="btn-group">
+                                            <a href="@Url.Action("DownloadDumpsiteFile", "RegisteredDumpsites", new { area = "IntranetPortal", fileId = file.Id })"
+                                               class="btn btn-xs btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteDumpsiteFile('@file.Id')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">@DbResHtml.T("No files uploaded", "Resources")</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspections Section -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="card-title">
+                        <i class="fas fa-search"></i> @DbResHtml.T("Inspections", "Resources")
+                        <span class="badge badge-info">@Model.Inspections.Count</span>
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-success" onclick="showCreateInspectionModal('@Model.Dumpsite.Id')">
+                        <i class="fas fa-plus"></i> @DbResHtml.T("Schedule Inspection", "Resources")
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (Model.Inspections.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>@DbResHtml.T("Scheduled Date", "Resources")</th>
+                                        <th>@DbResHtml.T("Status", "Resources")</th>
+                                        <th>@DbResHtml.T("Inspection Date", "Resources")</th>
+                                        <th>@DbResHtml.T("Actions", "Resources")</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var inspection in Model.Inspections.OrderByDescending(i => i.ScheduledDate))
+                                    {
+                                        <tr>
+                                            <td>@inspection.ScheduledDate?.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <span class="badge @GetStatusBadgeClass(inspection.Status)">
+                                                    @GetStatusText(inspection.Status)
+                                                </span>
+                                            </td>
+                                            <td>@(inspection.InspectionDate != default ? inspection.InspectionDate.ToString("dd/MM/yyyy") : "-")</td>
+                                            <td>
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-xs btn-info" onclick="viewInspectionDetails('@inspection.Id')">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    @if (inspection.Status == RegisteredDumpsiteInspectionStatus.Scheduled)
+                                                    {
+                                                        <button type="button" class="btn btn-xs btn-warning" onclick="showAssignInspectorModal('@inspection.Id')">
+                                                            <i class="fas fa-user-plus"></i>
+                                                        </button>
+                                                    }
+                                                    @if (inspection.Status == RegisteredDumpsiteInspectionStatus.Assigned ||
+                                                         inspection.Status == RegisteredDumpsiteInspectionStatus.InProgress)
+                                                    {
+                                                        <button type="button" class="btn btn-xs btn-success" onclick="showCompleteInspectionModal('@inspection.Id')">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    }
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">@DbResHtml.T("No inspections scheduled", "Resources")</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">
+        @DbResHtml.T("Dumpsite details not found", "Resources")
+    </div>
+}
+
+@functions {
+    string GetStatusBadgeClass(RegisteredDumpsiteInspectionStatus status)
+    {
+        return status switch
+        {
+            RegisteredDumpsiteInspectionStatus.Scheduled => "badge-info",
+            RegisteredDumpsiteInspectionStatus.Assigned => "badge-warning",
+            RegisteredDumpsiteInspectionStatus.InProgress => "badge-primary",
+            RegisteredDumpsiteInspectionStatus.Completed => "badge-success",
+            RegisteredDumpsiteInspectionStatus.Cancelled => "badge-danger",
+            _ => "badge-secondary"
+        };
+    }
+
+    string GetStatusText(RegisteredDumpsiteInspectionStatus status)
+    {
+        return status switch
+        {
+            RegisteredDumpsiteInspectionStatus.Scheduled => DbResHtml.T("Scheduled", "Resources").ToString(),
+            RegisteredDumpsiteInspectionStatus.Assigned => DbResHtml.T("Assigned", "Resources").ToString(),
+            RegisteredDumpsiteInspectionStatus.InProgress => DbResHtml.T("In Progress", "Resources").ToString(),
+            RegisteredDumpsiteInspectionStatus.Completed => DbResHtml.T("Completed", "Resources").ToString(),
+            RegisteredDumpsiteInspectionStatus.Cancelled => DbResHtml.T("Cancelled", "Resources").ToString(),
+            _ => "Unknown"
+        };
+    }
+}

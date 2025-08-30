@@ -1,0 +1,523 @@
+﻿@using Westwind.Globalization.AspNetCore
+@using MainApp.MVC.Helpers
+
+<!-- File Upload Modal -->
+<div class="modal fade" id="fileUploadModal" tabindex="-1" role="dialog" aria-labelledby="fileUploadModalLabel" aria-hidden="true" style="z-index:2200;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileUploadModalLabel">
+                    <i class="fas fa-upload"></i> @DbResHtml.T("Upload File", "Resources")
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="fileUploadForm" enctype="multipart/form-data">
+                    <input type="hidden" id="uploadDumpsiteId" />
+                    <div class="form-group">
+                        <label for="fileInput">@DbResHtml.T("Select File", "Resources")</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="fileInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt,.xlsx,.xls">
+                            <label class="custom-file-label" for="fileInput">@DbResHtml.T("Choose file", "Resources")</label>
+                        </div>
+                        <small class="form-text text-muted">
+                            @DbResHtml.T("Supported formats: PDF, Word, Images, Excel, Text files", "Resources")
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="fileDescription">@DbResHtml.T("Description", "Resources") (@DbResHtml.T("Optional", "Resources"))</label>
+                        <textarea class="form-control" id="fileDescription" rows="3" placeholder="@DbResHtml.T("Add a description for this file", "Resources")"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@DbResHtml.T("Cancel", "Resources")</button>
+                <button type="button" class="btn btn-primary" onclick="uploadFile()">
+                    <i class="fas fa-upload"></i> @DbResHtml.T("Upload", "Resources")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Inspection Modal -->
+<div class="modal fade" id="createInspectionModal" tabindex="-1" role="dialog" aria-labelledby="createInspectionModalLabel" aria-hidden="true" style="z-index:2200;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createInspectionModalLabel">
+                    <i class="fas fa-plus"></i> @DbResHtml.T("Schedule Inspection", "Resources")
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createInspectionForm">
+                    <input type="hidden" id="inspectionDumpsiteId" />
+                    <div class="form-group">
+                        <label for="scheduledDate">@DbResHtml.T("Scheduled Date", "Resources") <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="scheduledDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inspectionNotes">@DbResHtml.T("Notes", "Resources")</label>
+                        <textarea class="form-control" id="inspectionNotes" rows="3" placeholder="@DbResHtml.T("Add any notes for this inspection", "Resources")"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@DbResHtml.T("Cancel", "Resources")</button>
+                <button type="button" class="btn btn-success" onclick="createInspection()">
+                    <i class="fas fa-plus"></i> @DbResHtml.T("Schedule", "Resources")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Inspector Modal -->
+<div class="modal fade" id="assignInspectorModal" tabindex="-1" role="dialog" aria-labelledby="assignInspectorModalLabel" aria-hidden="true" style="z-index:2200;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignInspectorModalLabel">
+                    <i class="fas fa-user-plus"></i> @DbResHtml.T("Assign Inspector", "Resources")
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="assignInspectorForm">
+                    <input type="hidden" id="assignInspectionId" />
+                    <div class="form-group">
+                        <label for="inspectorSelect">@DbResHtml.T("Select Inspector", "Resources") <span class="text-danger">*</span></label>
+                        <select class="form-control select2" id="inspectorSelect" required style="width: 100%;">
+                            <option value="">@DbResHtml.T("Select Inspector", "Resources")</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@DbResHtml.T("Cancel", "Resources")</button>
+                <button type="button" class="btn btn-warning" onclick="assignInspector()">
+                    <i class="fas fa-user-plus"></i> @DbResHtml.T("Assign", "Resources")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Complete Inspection Modal -->
+<div class="modal fade" id="completeInspectionModal" tabindex="-1" role="dialog" aria-labelledby="completeInspectionModalLabel" aria-hidden="true" style="z-index:2200;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="completeInspectionModalLabel">
+                    <i class="fas fa-check"></i> @DbResHtml.T("Complete Inspection", "Resources")
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="completeInspectionForm">
+                    <input type="hidden" id="completeInspectionId" />
+                    <div class="form-group">
+                        <label for="inspectionFindings">@DbResHtml.T("Findings", "Resources") <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="inspectionFindings" rows="4" required placeholder="@DbResHtml.T("Describe the inspection findings", "Resources")"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="inspectionRecommendations">@DbResHtml.T("Recommendations", "Resources")</label>
+                        <textarea class="form-control" id="inspectionRecommendations" rows="3" placeholder="@DbResHtml.T("Add recommendations based on findings", "Resources")"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@DbResHtml.T("Cancel", "Resources")</button>
+                <button type="button" class="btn btn-success" onclick="completeInspection()">
+                    <i class="fas fa-check"></i> @DbResHtml.T("Complete", "Resources")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+       // Updated JavaScript for modals with proper toast notifications and fixes
+
+    function showFileUploadModal(dumpsiteId) {
+        $('#uploadDumpsiteId').val(dumpsiteId);
+        $('#fileInput').val('');
+        $('#fileDescription').val('');
+        $('.custom-file-label').text('Choose file');
+        $('#fileUploadModal').modal('show');
+    }
+
+    function showCreateInspectionModal(dumpsiteId) {
+        $('#inspectionDumpsiteId').val(dumpsiteId);
+        $('#scheduledDate').val('');
+        $('#inspectionNotes').val('');
+        $('#createInspectionModal').modal('show');
+    }
+
+    function showAssignInspectorModal(inspectionId) {
+        $('#assignInspectionId').val(inspectionId);
+        loadInspectors();
+        $('#assignInspectorModal').modal('show');
+    }
+
+    function showCompleteInspectionModal(inspectionId) {
+        $('#completeInspectionId').val(inspectionId);
+        $('#inspectionFindings').val('');
+        $('#inspectionRecommendations').val('');
+        $('#completeInspectionModal').modal('show');
+    }
+
+    function viewInspectionDetails(inspectionId) {
+        // Load inspection details in a modal or navigate to details page
+        $.get('@Url.Action("GetInspectionDetails", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { inspectionId: inspectionId })
+            .done(function(result) {
+                if (result.isSuccess) {
+                    // Show inspection details in a modal or update UI
+                    showInspectionDetailsModal(result.data);
+                } else {
+                    notifyAlerts('error', result.errMsg || 'Error loading inspection details');
+                }
+            })
+            .fail(function() {
+                notifyAlerts('error', 'Error loading inspection details');
+            });
+    }
+
+    function showInspectionDetailsModal(inspection) {
+        // Create and show a modal with inspection details
+        let modalContent = `
+            <div class="modal fade" id="inspectionDetailsModal" tabindex="-1" role="dialog" style="z-index:2300">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Inspection Details</h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table">
+                                <tr><td><strong>Scheduled Date:</strong></td><td>${inspection.scheduledDate || '-'}</td></tr>
+                                <tr><td><strong>Inspector:</strong></td><td>${inspection.inspector?.userName || 'Not Assigned'}</td></tr>
+                                <tr><td><strong>Status:</strong></td><td>${inspection.status}</td></tr>
+                                <tr><td><strong>Inspection Date:</strong></td><td>${inspection.inspectionDate || '-'}</td></tr>
+                                <tr><td><strong>Findings:</strong></td><td>${inspection.findings || '-'}</td></tr>
+                                <tr><td><strong>Recommendations:</strong></td><td>${inspection.recommendations || '-'}</td></tr>
+                                <tr><td><strong>Notes:</strong></td><td>${inspection.notes || '-'}</td></tr>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if present
+        $('#inspectionDetailsModal').remove();
+
+        // Add modal to body and show
+        $('body').append(modalContent);
+        $('#inspectionDetailsModal').modal('show');
+
+        // Remove modal from DOM when hidden
+        $('#inspectionDetailsModal').on('hidden.bs.modal', function () {
+            $(this).remove();
+        });
+    }
+
+    function uploadFile() {
+        var formData = new FormData();
+        var fileInput = document.getElementById('fileInput');
+        var dumpsiteId = $('#uploadDumpsiteId').val();
+        var description = $('#fileDescription').val();
+
+        if (fileInput.files.length === 0) {
+            notifyAlerts("error", "Please select a file");
+            return;
+        }
+
+        formData.append('file', fileInput.files[0]);
+        formData.append('dumpsiteId', dumpsiteId);
+        formData.append('description', description);
+
+        $.ajax({
+            url: '@Url.Action("UploadDumpsiteFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(result) {
+                if (result.isSuccess) {
+                    notifyAlerts("success", "File uploaded successfully");
+                    $('#fileUploadModal').modal('hide');
+                    refreshDumpsiteDetails();
+                } else {
+                    notifyAlerts('error', result.errMsg);
+                }
+            },
+            error: function() {
+                notifyAlerts("error", "Error uploading file");
+            }
+        });
+    }
+
+    function createInspection() {
+        var inspection = {
+            RegisteredDumpsiteId: $('#inspectionDumpsiteId').val(),
+            ScheduledDate: $('#scheduledDate').val(),
+            Notes: $('#inspectionNotes').val()
+        };
+
+        $.ajax({
+            url: '@Url.Action("CreateInspection", "RegisteredDumpsites", new { Area = "IntranetPortal" })',
+            type: 'POST',
+            data: JSON.stringify(inspection),
+            contentType: 'application/json',
+            success: function(result) {
+                if (result.isSuccess) {
+                    notifyAlerts('success', 'Inspection scheduled successfully');
+                    $('#createInspectionModal').modal('hide');
+                    refreshDumpsiteDetails();
+                } else {
+                    notifyAlerts('error', result.errMsg);
+                }
+            },
+            error: function() {
+                notifyAlerts('error', 'Error scheduling inspection');
+            }
+        });
+    }
+
+    function assignInspector() {
+        var inspectionId = $('#assignInspectionId').val();
+        var inspectorId = $('#inspectorSelect').val();
+
+        if (!inspectorId) {
+            notifyAlerts('error', 'Please select an inspector');
+            return;
+        }
+
+        $.ajax({
+            url: '@Url.Action("AssignInspector", "RegisteredDumpsites", new { Area = "IntranetPortal" })',
+            type: 'POST',
+            data: JSON.stringify({
+                inspectionId: inspectionId,
+                inspectorId: inspectorId
+            }),
+            contentType: 'application/json',
+            success: function(result) {
+                if (result.isSuccess) {
+                    notifyAlerts('success', 'Inspector assigned successfully');
+                    $('#assignInspectorModal').modal('hide');
+                    refreshDumpsiteDetails();
+                } else {
+                    notifyAlerts('error', result.errMsg);
+                }
+            },
+            error: function() {
+                notifyAlerts('error', 'Error assigning inspector');
+            }
+        });
+    }
+
+    function completeInspection() {
+        var inspectionId = $('#completeInspectionId').val();
+        var findings = $('#inspectionFindings').val();
+        var recommendations = $('#inspectionRecommendations').val();
+
+        if (!findings.trim()) {
+            notifyAlerts('error', 'Please enter findings');
+            return;
+        }
+
+        $.ajax({
+            url: '@Url.Action("CompleteInspection", "RegisteredDumpsites", new { Area = "IntranetPortal" })',
+            type: 'POST',
+            data: JSON.stringify({
+                inspectionId: inspectionId,
+                findings: findings,
+                recommendations: recommendations
+            }),
+            contentType: 'application/json',
+            success: function(result) {
+                if (result.isSuccess) {
+                    notifyAlerts('success', 'Inspection completed successfully');
+                    $('#completeInspectionModal').modal('hide');
+                    refreshDumpsiteDetails();
+                } else {
+                    notifyAlerts('error', result.errMsg);
+                }
+            },
+            error: function() {
+                notifyAlerts('error', 'Error completing inspection');
+            }
+        });
+    }
+
+    function deleteDumpsiteFile(fileId) {
+        // Use your existing popup confirmation
+        notifyAlerts('popup-warning-delete', 'Are you sure you want to delete this file?', 'Delete File')
+            .then(function(confirmed) {
+                if (confirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteDumpsiteFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })/' + fileId,
+                        type: 'DELETE',
+                        success: function(result) {
+                            if (result.isSuccess) {
+                                notifyAlerts('success', 'File deleted successfully');
+                                refreshDumpsiteDetails();
+                            } else {
+                                notifyAlerts('error', result.errMsg);
+                            }
+                        },
+                        error: function() {
+                            notifyAlerts('error', 'Error deleting file');
+                        }
+                    });
+                }
+            });
+    }
+
+    function loadInspectors() {
+        $.get('@Url.Action("GetAvailableInspectors", "RegisteredDumpsites", new { Area = "IntranetPortal" })')
+            .done(function(result) {
+                var select = $('#inspectorSelect');
+                select.empty().append('<option value="">Select Inspector</option>');
+
+                if (result.isSuccess && result.data) {
+                    result.data.forEach(function(inspector) {
+                        select.append($('<option>', {
+                            value: inspector.id,
+                            text: inspector.userName || inspector.fullName
+                        }));
+                    });
+                }
+            })
+            .fail(function() {
+                notifyAlerts('error', 'Error loading inspectors');
+            });
+    }
+
+    function refreshDumpsiteDetails() {
+        // Reload the current page or refresh the modal content
+        location.reload();
+    }
+
+    // File input label update
+    $(document).ready(function() {
+        $('#fileInput').on('change', function() {
+            var fileName = $(this).val().split('\\').pop();
+            $('.custom-file-label').text(fileName || 'Choose file');
+        });
+    });
+
+    // Toast notification function - make sure this is available globally
+    function notifyAlerts(type, message, title) {
+        // Ensure the modal backdrop doesn't interfere with toast notifications
+        const toastContainer = document.querySelector('.toast-container') || createToastContainer();
+
+        if (type == "success") {
+            Toast.fire({
+                title: message ? message : "Success!",
+            });
+        }
+        if (type == "warning") {
+            Toast.fire({
+                title: message ? message : "Warning!",
+                icon: 'warning'
+            });
+        }
+        if (type == "error") {
+            Toast.fire({
+                title: message ? message : "Error!",
+                icon: 'error'
+            });
+        }
+        if (type == "info") {
+            Toast.fire({
+                title: message,
+                icon: 'info'
+            });
+        }
+        if (type == "popup-success") {
+            defaultPopup.fire({
+                title: title ? title : 'Success!',
+                text: message,
+                icon: 'success',
+            });
+        }
+        if (type == "popup-info") {
+            defaultPopup.fire({
+                title: title ? title : 'Info',
+                text: message,
+                icon: 'info',
+            });
+        }
+        if (type == "popup-warning") {
+            defaultPopup.fire({
+                title: title ? title : 'Warning!',
+                text: message,
+                icon: 'warning',
+            });
+        }
+        if (type == "popup-error") {
+            defaultPopup.fire({
+                title: title ? title : 'Error',
+                text: message,
+                icon: 'error',
+            });
+        }
+        if (type == "popup-confirm") {
+            return defaultPopup.fire({
+                title: title ? title : "Info",
+                text: message,
+                icon: 'info',
+                showCancelButton: true,
+            }).then(function (result) {
+                return result.isConfirmed;
+            });
+        }
+        if (type == "popup-warning-delete") {
+            return defaultPopup.fire({
+                title: title ? title : 'Delete?',
+                text: message ? message : "This action can't be undone!",
+                icon: 'warning',
+                customClass: {
+                    confirmButton: "btn btn-lg btn-danger",
+                    cancelButton: "btn btn-lg btn-default me-2"
+                },
+                confirmButtonText: "Yes",
+                cancelButtonText: "No",
+                showCancelButton: true,
+                focusConfirm: false,
+            }).then((result) => {
+                return result.isConfirmed;
+            });
+        }
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.className = 'toast-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            pointer-events: none;
+        `;
+        document.body.appendChild(container);
+        return container;
+    }
+
+
+</script>

@@ -15,12 +15,18 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
     private readonly IRegisteredDumpsiteRepository _registeredDumpsiteRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<RegisteredDumpsiteService> _logger;
+    private readonly IRegisteredDumpsiteFileRepository _registeredDumpsiteFileRepository;
+    private readonly IRegisteredDumpsiteInspectionRepository _inspectionRepository;
 
-    public RegisteredDumpsiteService(IRegisteredDumpsiteRepository RegisteredDumpsiteRepository, IMapper mapper, ILogger<RegisteredDumpsiteService> logger)
+
+
+    public RegisteredDumpsiteService(IRegisteredDumpsiteRepository RegisteredDumpsiteRepository, IMapper mapper, ILogger<RegisteredDumpsiteService> logger, IRegisteredDumpsiteFileRepository registeredDumpsiteFileRepository, IRegisteredDumpsiteInspectionRepository inspectionRepository)
     {
         _registeredDumpsiteRepository = RegisteredDumpsiteRepository;
         _mapper = mapper;
         _logger = logger;
+        _registeredDumpsiteFileRepository = registeredDumpsiteFileRepository;
+        _inspectionRepository = inspectionRepository;
     }
 
     public async Task<ResultDTO<List<RegisteredDumpsiteDTO>>> GetAllRegisteredDumpsitesDTOs()
@@ -52,7 +58,7 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
     {
         try
         {
-            ResultDTO<RegisteredDumpsite?> resultGetEntity = await _registeredDumpsiteRepository.GetById(id, includeProperties: "CreatedBy");
+            ResultDTO<RegisteredDumpsite?> resultGetEntity = await _registeredDumpsiteRepository.GetById(id, includeProperties: "CreatedBy,RegisteredDumpsiteWasteType,RegisteredDumpsiteRiskLevel");
             if (resultGetEntity.IsSuccess == false && !resultGetEntity.HandleError())
                 return ResultDTO<RegisteredDumpsiteDTO?>.Fail(resultGetEntity.ErrMsg!);
             if (resultGetEntity.Data == null)
@@ -172,14 +178,13 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
         }
     }
 
-    public async Task<ResultDTO> MergeRegisteredDumpsites(CreateRegisteredDumpsiteDTO newDumpsiteData, List<Guid> existingIds)
+    public async Task<ResultDTO> MergeRegisteredDumpsites(CreateRegisteredDumpsiteDTO newDumpsiteData, List<Guid> existingIds, Guid? targetDumpsiteId = null)
     {
         try
         {
             if (newDumpsiteData == null || existingIds == null || !existingIds.Any())
                 return ResultDTO.Fail("Invalid merge data");
 
-            // Get existing dumpsites
             var existingDumpsites = new List<RegisteredDumpsite>();
             foreach (var id in existingIds)
             {
@@ -191,12 +196,37 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             if (!existingDumpsites.Any())
                 return ResultDTO.Fail("No existing dumpsites found to merge");
 
-            // Convert new dumpsite GeoJSON to Polygon
+            RegisteredDumpsite targetDumpsite = null;
+            List<RegisteredDumpsite> dumpsitesToDelete = new List<RegisteredDumpsite>();
+
+            if (targetDumpsiteId.HasValue)
+            {
+                targetDumpsite = existingDumpsites.FirstOrDefault(d => d.Id == targetDumpsiteId.Value);
+                if (targetDumpsite == null)
+                    return ResultDTO.Fail("Specified target dumpsite not found");
+
+                dumpsitesToDelete = existingDumpsites.Where(d => d.Id != targetDumpsiteId.Value).ToList();
+            }
+            else
+            {
+                targetDumpsite = new RegisteredDumpsite
+                {
+                    Id = Guid.NewGuid(),
+                    Name = newDumpsiteData.Name,
+                    Description = newDumpsiteData.Description,
+                    IsEnabled = newDumpsiteData.IsEnabled,
+                    RegisteredDumpsiteWasteTypeId = (Guid)newDumpsiteData.RegisteredDumpsiteWasteTypeId,
+                    RegisteredDumpsiteRiskLevelId = (Guid)newDumpsiteData.RegisteredDumpsiteRiskLevelId,
+                    CreatedById = newDumpsiteData.CreatedById ?? "system",
+                    CreatedOn = DateTime.UtcNow
+                };
+                dumpsitesToDelete = existingDumpsites.ToList();
+            }
+
             var geoJsonReader = new NetTopologySuite.IO.GeoJsonReader();
             var feature = geoJsonReader.Read<NetTopologySuite.Features.Feature>(newDumpsiteData.EnteredZonePolygon);
             var newGeometry = feature.Geometry;
 
-            // Perform union operation using NetTopologySuite
             var unionGeometry = newGeometry;
             foreach (var existingDumpsite in existingDumpsites)
             {
@@ -206,12 +236,21 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             if (unionGeometry is not Polygon polygonResult)
                 return ResultDTO.Fail("The merged geometry is not a single polygon. Please ensure the input zones are contiguous or simplify them.");
 
-            // Use the first existing dumpsite as the base and update its geometry
-            var baseDumpsite = existingDumpsites.First();
-            baseDumpsite.Geom = polygonResult;
+            targetDumpsite.Geom = polygonResult;
 
-            // Delete other existing dumpsites
-            var dumpsitesToDelete = existingDumpsites.Skip(1);
+            ResultDTO saveResult;
+            if (targetDumpsiteId.HasValue)
+            {
+                saveResult = await _registeredDumpsiteRepository.Update(targetDumpsite);
+            }
+            else
+            {
+                saveResult = await _registeredDumpsiteRepository.Create(targetDumpsite);
+            }
+
+            if (!saveResult.IsSuccess && saveResult.HandleError())
+                return ResultDTO.Fail(saveResult.ErrMsg!);
+
             foreach (var dumpsite in dumpsitesToDelete)
             {
                 var deleteResult = await _registeredDumpsiteRepository.Delete(dumpsite);
@@ -219,8 +258,290 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
                     return ResultDTO.Fail($"Failed to delete dumpsite: {deleteResult.ErrMsg}");
             }
 
-            // Update the base dumpsite with merged geometry
-            var updateResult = await _registeredDumpsiteRepository.Update(baseDumpsite);
+            return ResultDTO.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO.ExceptionFail(ex.Message, ex);
+        }
+    }
+    public async Task<ResultDTO<List<RegisteredDumpsiteFileDTO>>> GetFilesByDumpsiteId(Guid dumpsiteId)
+    {
+        try
+        {
+            var result = await _registeredDumpsiteFileRepository.GetAll(
+                filter: f => f.RegisteredDumpsiteId == dumpsiteId,
+                includeProperties: "CreatedBy");
+
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<List<RegisteredDumpsiteFileDTO>>.Fail(result.ErrMsg!);
+
+            if (result.Data == null)
+                return ResultDTO<List<RegisteredDumpsiteFileDTO>>.Fail("Files not found");
+
+            var dtos = _mapper.Map<List<RegisteredDumpsiteFileDTO>>(result.Data);
+            if (dtos == null)
+                return ResultDTO<List<RegisteredDumpsiteFileDTO>>.Fail("Mapping files failed");
+
+            return ResultDTO<List<RegisteredDumpsiteFileDTO>>.Ok(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<List<RegisteredDumpsiteFileDTO>>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO<RegisteredDumpsiteFileDTO>> GetSingleFileById(Guid fileId)
+    {
+        try
+        {
+            var result = await _registeredDumpsiteFileRepository.GetById(fileId, includeProperties: "CreatedBy");
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<RegisteredDumpsiteFileDTO>.Fail(result.ErrMsg!);
+
+            if (result.Data == null)
+                return ResultDTO<RegisteredDumpsiteFileDTO>.Fail("Files not found");
+
+            var dtos = _mapper.Map<RegisteredDumpsiteFileDTO>(result.Data);
+            if (dtos == null)
+                return ResultDTO<RegisteredDumpsiteFileDTO>.Fail("Mapping files failed");
+
+            return ResultDTO<RegisteredDumpsiteFileDTO>.Ok(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<RegisteredDumpsiteFileDTO>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO<RegisteredDumpsiteFileDTO>> UploadFile(RegisteredDumpsiteFileDTO dumpsiteFileDto)
+    {
+        try
+        {
+            var dumpsiteFile = _mapper.Map<RegisteredDumpsiteFile>(dumpsiteFileDto);
+
+            var createResult = await _registeredDumpsiteFileRepository.Create(dumpsiteFile);
+            if (!createResult.IsSuccess && createResult.HandleError())
+                return ResultDTO<RegisteredDumpsiteFileDTO>.Fail(createResult.ErrMsg!);
+
+            return ResultDTO<RegisteredDumpsiteFileDTO>.Ok(dumpsiteFileDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while saving dumpsite file");
+            return ResultDTO<RegisteredDumpsiteFileDTO>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO> DeleteFile(Guid fileId)
+    {
+        try
+        {
+            var getResult = await _registeredDumpsiteFileRepository.GetById(fileId);
+            if (!getResult.IsSuccess && getResult.HandleError())
+                return ResultDTO.Fail(getResult.ErrMsg!);
+
+            if (getResult.Data == null)
+                return ResultDTO.Fail("File not found");
+
+            // Only delete from DB now
+            var deleteResult = await _registeredDumpsiteFileRepository.Delete(getResult.Data);
+            if (!deleteResult.IsSuccess && deleteResult.HandleError())
+                return ResultDTO.Fail(deleteResult.ErrMsg!);
+
+            return ResultDTO.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting file from DB");
+            return ResultDTO.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO<List<RegisteredDumpsiteInspectionDTO>>> GetInspectionsByDumpsiteId(Guid dumpsiteId)
+    {
+        try
+        {
+            var result = await _inspectionRepository.GetAll(
+                filter: i => i.RegisteredDumpsiteId == dumpsiteId,
+                includeProperties: "Assignments,CreatedBy,InspectionFiles,RegisteredDumpsiteInspectionStatus");
+
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail(result.ErrMsg!);
+
+            if (result.Data == null)
+                return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail("Inspections not found");
+
+            var dtos = _mapper.Map<List<RegisteredDumpsiteInspectionDTO>>(result.Data);
+            if (dtos == null)
+                return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail("Mapping inspections failed");
+
+            return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Ok(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO<RegisteredDumpsiteInspectionDTO?>> GetInspectionById(Guid id)
+    {
+        try
+        {
+            var result = await _inspectionRepository.GetById(id,
+                includeProperties: "CreatedBy,InspectionFiles");
+
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<RegisteredDumpsiteInspectionDTO?>.Fail(result.ErrMsg!);
+
+            if (result.Data == null)
+                return ResultDTO<RegisteredDumpsiteInspectionDTO?>.Fail("Inspection not found");
+
+            var dto = _mapper.Map<RegisteredDumpsiteInspectionDTO>(result.Data);
+            return ResultDTO<RegisteredDumpsiteInspectionDTO?>.Ok(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<RegisteredDumpsiteInspectionDTO?>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO> CreateInspection(RegisteredDumpsiteInspectionDTO dto)
+    {
+        try
+        {
+            if (dto == null)
+                return ResultDTO.Fail("DTO Object is null");
+
+            var inspection = _mapper.Map<RegisteredDumpsiteInspection>(dto);
+            if (inspection == null)
+                return ResultDTO.Fail("DTO not mapped");
+            inspection.RegisteredDumpsiteInspectionStatusId = (int)SD.Enums.RegisteredDumpsiteInspectionStatus.Scheduled;
+
+            var result = await _inspectionRepository.Create(inspection);
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO.Fail(result.ErrMsg!);
+
+            return ResultDTO.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO> UpdateInspection(RegisteredDumpsiteInspectionDTO dto)
+    {
+        try
+        {
+            if (dto == null || dto.Id == null)
+                return ResultDTO.Fail("DTO Object or Id is null");
+
+            var getResult = await _inspectionRepository.GetById((Guid)dto.Id, track: true);
+            if (!getResult.IsSuccess && getResult.HandleError())
+                return ResultDTO.Fail(getResult.ErrMsg!);
+
+            if (getResult.Data == null)
+                return ResultDTO.Fail("Inspection not found");
+
+            dto.CreatedOn = getResult.Data.CreatedOn;
+            dto.CreatedById = getResult.Data.CreatedById;
+
+            _mapper.Map(dto, getResult.Data);
+
+            var updateResult = await _inspectionRepository.Update(getResult.Data);
+            if (!updateResult.IsSuccess && updateResult.HandleError())
+                return ResultDTO.Fail(updateResult.ErrMsg!);
+
+            return ResultDTO.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO> DeleteInspection(Guid id)
+    {
+        try
+        {
+            var getResult = await _inspectionRepository.GetById(id, track: true);
+            if (!getResult.IsSuccess && getResult.HandleError())
+                return ResultDTO.Fail(getResult.ErrMsg!);
+
+            if (getResult.Data == null)
+                return ResultDTO.Fail("Inspection not found");
+
+            var deleteResult = await _inspectionRepository.Delete(getResult.Data);
+            if (!deleteResult.IsSuccess && deleteResult.HandleError())
+                return ResultDTO.Fail(deleteResult.ErrMsg!);
+
+            return ResultDTO.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO> AssignInspector(Guid inspectionId, string inspectorId)
+    {
+        try
+        {
+            var getResult = await _inspectionRepository.GetById(inspectionId, track: true);
+            if (!getResult.IsSuccess && getResult.HandleError())
+                return ResultDTO.Fail(getResult.ErrMsg!);
+
+            if (getResult.Data == null)
+                return ResultDTO.Fail("Inspection not found");
+
+            var assignment = new InspectionAssignment
+            {
+                RegisteredDumpsiteInspectionId = inspectionId,
+                InspectorId = inspectorId,
+                AssignedOn = DateTime.UtcNow
+            };
+
+            getResult.Data.Assignments.Add(assignment);
+            var updateResult = await _inspectionRepository.Update(getResult.Data);
+            await _inspectionRepository.SaveChangesAsync();
+            if (!updateResult.IsSuccess && updateResult.HandleError())
+                return ResultDTO.Fail(updateResult.ErrMsg!);
+
+            return ResultDTO.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO> CompleteInspection(Guid inspectionId, string findings, string? recommendations)
+    {
+        try
+        {
+            var getResult = await _inspectionRepository.GetById(inspectionId, track: true);
+            if (!getResult.IsSuccess && getResult.HandleError())
+                return ResultDTO.Fail(getResult.ErrMsg!);
+
+            if (getResult.Data == null)
+                return ResultDTO.Fail("Inspection not found");
+
+            //getResult.Data.Status = RegisteredDumpsiteInspectionStatus.Completed;
+            getResult.Data.Findings = findings;
+            getResult.Data.Recommendations = recommendations;
+            getResult.Data.InspectionDate = DateTime.UtcNow;
+
+            var updateResult = await _inspectionRepository.Update(getResult.Data);
             if (!updateResult.IsSuccess && updateResult.HandleError())
                 return ResultDTO.Fail(updateResult.ErrMsg!);
 

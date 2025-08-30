@@ -17,45 +17,47 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Services;
 using Services.Interfaces.Services;
 
-namespace MainApp.MVC.Infrastructure.Register
-{
-    public static class InfrastructeServicesDependencyContainer
-    {
-        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
-        {
-            services.TryAddScoped<IApplicationSettingsRepo, ApplicationSettingsRepository>();
-            services.TryAddScoped<IUserManagementDa, UserManagementDa>();
-            services.TryAddScoped<IIntranetPortalUsersTokenDa, IntranetPortalUsersTokenDa>();
-            services.TryAddScoped<IUserManagementService, UserManagementService>();
-            services.TryAddScoped<IAuditLogsDa, AuditLogsDa>();
-            services.TryAddScoped<IDatasetsRepository, DatasetsRepository>();
-            services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
-            services.TryAddScoped<IDatasetClassesRepository, DatasetClassesRepository>();
-            services.TryAddScoped<IDataset_DatasetClassRepository, Dataset_DatasetClassRepository>();
-            services.TryAddScoped<IDatasetImagesRepository, DatasetImagesRepository>();
-            services.TryAddScoped<IMapConfigurationRepository, MapConfigurationRepository>();
-            services.TryAddScoped<IMapLayersConfigurationRepository, MapLayersConfigurationRepository>();
-            services.TryAddScoped<IMapLayerGroupsConfigurationRepository, MapLayerGroupsConfigurationRepository>();
-            services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
-            services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
-            services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
-            services.TryAddScoped<IDbInitializer, DbInitializer>();
-            services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
-            services.TryAddScoped<ILegalLandfillRepository, LegalLandfillRepository>();
-            services.TryAddScoped<ILegalLandfillPointCloudFileRepository, LegalLandfillPointCloudFileRepository>();
-            services.TryAddScoped<ILegalLandfillTruckRepository, LegalLandfillTruckRepository>();
-            services.TryAddScoped<ILegalLandfillWasteImportRepository, LegalLandfillWasteImportRepository>();
-            services.TryAddScoped<ILegalLandfillWasteTypeRepository, LegalLandfillWasteTypeRepository>();
-            services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();
-            services.TryAddScoped<IDetectionInputImageRepository, DetectionInputImageRepository>();
-            services.TryAddScoped<ITrainingRunsRepository, TrainingRunsRepository>();
-            services.TryAddScoped<ITrainedModelsRepository, TrainedModelsRepository>();
-            services.TryAddScoped<ITrainingRunTrainParamsRepository, TrainingRunTrainParamsRepository>();
-            services.TryAddScoped<IRegisteredDumpsiteRepository, RegisteredDumpsiteRepository>();
-            services.TryAddScoped<IRegisteredDumpsiteWasteTypeRepository, RegisteredDumpsiteWasteTypeRepository>();
-            services.TryAddScoped<IRegisteredDumpsiteRiskLevelRepository, RegisteredDumpsiteRiskLevelRepository>();
+namespace MainApp.MVC.Infrastructure.Register;
 
-            return services;
-        }
+public static class InfrastructeServicesDependencyContainer
+{
+    public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
+    {
+        services.TryAddScoped<IApplicationSettingsRepo, ApplicationSettingsRepository>();
+        services.TryAddScoped<IUserManagementDa, UserManagementDa>();
+        services.TryAddScoped<IIntranetPortalUsersTokenDa, IntranetPortalUsersTokenDa>();
+        services.TryAddScoped<IUserManagementService, UserManagementService>();
+        services.TryAddScoped<IAuditLogsDa, AuditLogsDa>();
+        services.TryAddScoped<IDatasetsRepository, DatasetsRepository>();
+        services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
+        services.TryAddScoped<IDatasetClassesRepository, DatasetClassesRepository>();
+        services.TryAddScoped<IDataset_DatasetClassRepository, Dataset_DatasetClassRepository>();
+        services.TryAddScoped<IDatasetImagesRepository, DatasetImagesRepository>();
+        services.TryAddScoped<IMapConfigurationRepository, MapConfigurationRepository>();
+        services.TryAddScoped<IMapLayersConfigurationRepository, MapLayersConfigurationRepository>();
+        services.TryAddScoped<IMapLayerGroupsConfigurationRepository, MapLayerGroupsConfigurationRepository>();
+        services.TryAddScoped<IDetectionRunsRepository, DetectionRunsRepository>();
+        services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
+        services.TryAddScoped<IImageAnnotationsRepository, ImageAnnotationsRepository>();
+        services.TryAddScoped<IDbInitializer, DbInitializer>();
+        services.TryAddScoped<IDetectedDumpSitesRepository, DetectedDumpSitesRepository>();
+        services.TryAddScoped<ILegalLandfillRepository, LegalLandfillRepository>();
+        services.TryAddScoped<ILegalLandfillPointCloudFileRepository, LegalLandfillPointCloudFileRepository>();
+        services.TryAddScoped<ILegalLandfillTruckRepository, LegalLandfillTruckRepository>();
+        services.TryAddScoped<ILegalLandfillWasteImportRepository, LegalLandfillWasteImportRepository>();
+        services.TryAddScoped<ILegalLandfillWasteTypeRepository, LegalLandfillWasteTypeRepository>();
+        services.TryAddScoped<IDetectionIgnoreZonesRepository, DetectionIgnoreZonesRepository>();
+        services.TryAddScoped<IDetectionInputImageRepository, DetectionInputImageRepository>();
+        services.TryAddScoped<ITrainingRunsRepository, TrainingRunsRepository>();
+        services.TryAddScoped<ITrainedModelsRepository, TrainedModelsRepository>();
+        services.TryAddScoped<ITrainingRunTrainParamsRepository, TrainingRunTrainParamsRepository>();
+        services.TryAddScoped<IRegisteredDumpsiteRepository, RegisteredDumpsiteRepository>();
+        services.TryAddScoped<IRegisteredDumpsiteWasteTypeRepository, RegisteredDumpsiteWasteTypeRepository>();
+        services.TryAddScoped<IRegisteredDumpsiteRiskLevelRepository, RegisteredDumpsiteRiskLevelRepository>();
+        services.TryAddScoped<IRegisteredDumpsiteInspectionRepository, RegisteredDumpsiteInspectionRepository>();
+        services.TryAddScoped<IRegisteredDumpsiteInspectionFileRepository, RegisteredDumpsiteInspectionFileRepository>();
+        services.TryAddScoped<IRegisteredDumpsiteFileRepository, RegisteredDumpsiteFileRepository>();
+
+        return services;
     }
 }

@@ -3,6 +3,7 @@ using System;
 using DAL.ApplicationStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DAL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250827101824_AddRegisteredDumpsiteFileAndInspectionTables")]
+    partial class AddRegisteredDumpsiteFileAndInspectionTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1089,27 +1092,6 @@ namespace DAL.Migrations
                     b.ToTable("map_layer_group_configurations");
                 });
 
-            modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.InspectionAssignment", b =>
-                {
-                    b.Property<Guid>("RegisteredDumpsiteInspectionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("registered_dumpsite_inspection_id");
-
-                    b.Property<string>("InspectorId")
-                        .HasColumnType("text")
-                        .HasColumnName("inspector_id");
-
-                    b.Property<DateTime>("AssignedOn")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("assigned_on");
-
-                    b.HasKey("RegisteredDumpsiteInspectionId", "InspectorId");
-
-                    b.HasIndex("InspectorId");
-
-                    b.ToTable("inspection_assignment");
-                });
-
             modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.RegisteredDumpsite", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1263,6 +1245,11 @@ namespace DAL.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("inspection_date");
 
+                    b.Property<string>("InspectorId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("inspector_id");
+
                     b.Property<string>("Notes")
                         .HasColumnType("text")
                         .HasColumnName("notes");
@@ -1287,6 +1274,8 @@ namespace DAL.Migrations
                         .HasName("pk_registered_dumpsite_inspections");
 
                     b.HasIndex("CreatedById");
+
+                    b.HasIndex("InspectorId");
 
                     b.HasIndex("RegisteredDumpsiteId");
 
@@ -2253,27 +2242,6 @@ namespace DAL.Migrations
                     b.Navigation("UpdatedBy");
                 });
 
-            modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.InspectionAssignment", b =>
-                {
-                    b.HasOne("Entities.ApplicationUser", "Inspector")
-                        .WithMany()
-                        .HasForeignKey("InspectorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_inspection_assignment_asp_net_users_inspector_id");
-
-                    b.HasOne("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteInspection", "RegisteredDumpsiteInspection")
-                        .WithMany("Assignments")
-                        .HasForeignKey("RegisteredDumpsiteInspectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_inspection_assignment_registered_dumpsite_inspections_registe~");
-
-                    b.Navigation("Inspector");
-
-                    b.Navigation("RegisteredDumpsiteInspection");
-                });
-
             modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.RegisteredDumpsite", b =>
                 {
                     b.HasOne("Entities.ApplicationUser", "CreatedBy")
@@ -2343,6 +2311,13 @@ namespace DAL.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_registered_dumpsite_inspections_asp_net_users_created_by_id");
 
+                    b.HasOne("Entities.ApplicationUser", "Inspector")
+                        .WithMany()
+                        .HasForeignKey("InspectorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_registered_dumpsite_inspections_asp_net_users_inspector_id");
+
                     b.HasOne("Entities.RegisteredDumpsiteEntities.RegisteredDumpsite", "RegisteredDumpsite")
                         .WithMany("Inspections")
                         .HasForeignKey("RegisteredDumpsiteId")
@@ -2358,6 +2333,8 @@ namespace DAL.Migrations
                         .HasConstraintName("fk_registered_dumpsite_inspections_registered_dumpsite_inspectio~");
 
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("Inspector");
 
                     b.Navigation("RegisteredDumpsite");
 
@@ -2599,8 +2576,6 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("Entities.RegisteredDumpsiteEntities.RegisteredDumpsiteInspection", b =>
                 {
-                    b.Navigation("Assignments");
-
                     b.Navigation("InspectionFiles");
                 });
 

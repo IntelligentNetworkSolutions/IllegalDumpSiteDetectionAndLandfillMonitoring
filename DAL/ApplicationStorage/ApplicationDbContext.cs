@@ -62,6 +62,11 @@ namespace DAL.ApplicationStorage
         public virtual DbSet<RegisteredDumpsiteStatus> RegisteredDumpsiteStatuses { get; set; }
         public virtual DbSet<RegisteredDumpsiteRiskLevel> RegisteredDumpsiteRiskLevels { get; set; }
         public virtual DbSet<RegisteredDumpsiteWasteType> RegisteredDumpsiteWasteTypes { get; set; }
+        public virtual DbSet<RegisteredDumpsiteFile> RegisteredDumpsiteFiles { get; set; }
+        public virtual DbSet<RegisteredDumpsiteInspection> RegisteredDumpsiteInspections { get; set; }
+        public virtual DbSet<RegisteredDumpsiteInspectionFile> RegisteredDumpsiteInspectionFiles { get; set; }
+        public virtual DbSet<RegisteredDumpsiteInspectionStatus> RegisteredDumpsiteInspectionStatuses { get; set; }
+
         #endregion
 
         #region LegalLandfillsManagement

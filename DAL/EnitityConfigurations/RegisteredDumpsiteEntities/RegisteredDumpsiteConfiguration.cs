@@ -48,5 +48,15 @@ public class RegisteredDumpsiteConfiguration : IEntityTypeConfiguration<Register
                 .HasForeignKey(d => d.RegisteredDumpsiteWasteTypeId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
+
+        builder.HasMany(d => d.DumpsiteFiles)
+               .WithOne(f => f.RegisteredDumpsite)
+               .HasForeignKey(f => f.RegisteredDumpsiteId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(d => d.Inspections)
+               .WithOne(i => i.RegisteredDumpsite)
+               .HasForeignKey(i => i.RegisteredDumpsiteId)
+               .OnDelete(DeleteBehavior.Cascade);
     }
 }

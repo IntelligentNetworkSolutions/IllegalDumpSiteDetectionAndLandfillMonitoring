@@ -30,8 +30,8 @@ public class RegisteredDumpsiteDTO
     public virtual UserDTO? CreatedBy { get; set; }
 
     public Guid? RegisteredDumpsiteWasteTypeId { get; set; }
-    public virtual RegisteredDumpsiteWasteTypeDTO? RegisteredDumpsiteType { get; set; }
+    public virtual RegisteredDumpsiteWasteTypeDTO? RegisteredDumpsiteWasteType { get; set; }
     public Guid? RegisteredDumpsiteRiskLevelId { get; set; }
-    public virtual RegisteredDumpsiteRiskLevelDTO? RegisteredDumpsiteRiskLevelType { get; set; }
+    public virtual RegisteredDumpsiteRiskLevelDTO? RegisteredDumpsiteRiskLevel { get; set; }
 
 }

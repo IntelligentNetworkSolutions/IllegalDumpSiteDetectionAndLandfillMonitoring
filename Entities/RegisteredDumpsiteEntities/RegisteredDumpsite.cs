@@ -30,4 +30,7 @@ public class RegisteredDumpsite : BaseEntity<Guid>, ICreatedByUser
 
     public Guid RegisteredDumpsiteRiskLevelId { get; set; }
     public virtual RegisteredDumpsiteRiskLevel? RegisteredDumpsiteRiskLevel { get; set; }
+
+    public virtual ICollection<RegisteredDumpsiteFile> DumpsiteFiles { get; set; } = new List<RegisteredDumpsiteFile>();
+    public virtual ICollection<RegisteredDumpsiteInspection> Inspections { get; set; } = new List<RegisteredDumpsiteInspection>();
 }

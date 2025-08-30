@@ -6,7 +6,84 @@
 @using Westwind.Globalization.AspNetCore
 @using Newtonsoft.Json
 
+<style>
+    #dumpsiteDetailsModal {
+        z-index: 2000 !important;
+    }
 
+    .modal-backdrop {
+        z-index: 1999 !important;
+    }
+
+    /* CSS to ensure toast notifications appear above modals */
+
+    /* Ensure SweetAlert2 toasts appear above Bootstrap modals */
+    .swal2-container {
+        z-index: 99999 !important;
+    }
+
+    /* Toast notifications container */
+    .toast-container {
+        position: fixed !important;
+        top: 20px !important;
+        right: 20px !important;
+        z-index: 99999 !important;
+        pointer-events: none !important;
+    }
+
+    /* Individual toast notifications */
+    .toast {
+        z-index: 99999 !important;
+        pointer-events: auto !important;
+    }
+
+    /* SweetAlert2 popup containers */
+    .swal2-popup {
+        z-index: 99999 !important;
+    }
+
+    /* Bootstrap modal z-index adjustments */
+    .modal {
+        z-index: 1050;
+    }
+
+    .modal-backdrop {
+        z-index: 1040;
+    }
+
+    /* Specific modal z-index overrides for your modals */
+    #dumpsiteDetailsModal {
+        z-index: 2000 !important;
+    }
+
+    #fileUploadModal,
+    #createInspectionModal,
+    #assignInspectorModal,
+    #completeInspectionModal {
+        z-index: 2200 !important;
+    }
+
+    #polygonModal,
+    #overlapModal,
+    #editDumpsiteModal {
+        z-index: 2000 !important;
+    }
+
+    /* Ensure modal backdrops don't interfere with toasts */
+    .modal-backdrop {
+        z-index: 1999 !important;
+    }
+
+    /* Fix for Select2 dropdowns in modals */
+    .select2-container {
+        z-index: 99999 !important;
+    }
+
+    .select2-dropdown {
+        z-index: 99999 !important;
+    }
+
+</style>
 <!-- Modal HTML -->
 <div class="modal fade" id="polygonModal" tabindex="-1" role="dialog" aria-labelledby="polygonModalLabel" aria-hidden="true" style="z-index:2000;">
     <div class="modal-dialog">
@@ -121,6 +198,24 @@
     </div>
 </div>
 
+<div class="modal fade" id="dumpsiteDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dumpsite Details</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- AJAX content will go here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- edit polygon alert-->
 <div id="editNotify" class="d-none position-fixed bg-gradient-dark text-white p-3 rounded shadow-lg" style="top: 60px; left: 50%; transform: translateX(-50%); z-index: 1000; opacity: 0.95;">
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -147,7 +242,110 @@
     </div>
 </div>
 
+@await Html.PartialAsync("_FileUploadModal");
+
+
 <script type="text/javascript">
+    function showDumpsiteInfo(dumpsiteId) {
+        if (!dumpsiteId) return;
+
+        $('#dumpsiteDetailsModal .modal-body').html('<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
+        $('#dumpsiteDetailsModal').modal('show');
+
+    $.get('@Url.Action("GetDumpsiteDetailsPartial", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { dumpsiteId: dumpsiteId })
+            .done(function (result) {
+                $('#dumpsiteDetailsModal .modal-body').html(result);
+            })
+            .fail(function () {
+                $('#dumpsiteDetailsModal .modal-body').html('<div class="alert alert-danger">Error loading dumpsite details.</div>');
+            });
+    }
+
+    //     // ==== Files ====
+    // function downloadDumpsiteFile(fileId) {
+    //     window.location.href = '@Url.Action("DownloadDumpsiteFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })/' + fileId;
+    // }
+
+    // function deleteDumpsiteFile(fileId) {
+    //     if (!confirm('Are you sure you want to delete this file?')) return;
+
+    //     $.ajax({
+    //         url: '@Url.Action("DeleteDumpsiteFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })/' + fileId,
+    //         type: 'DELETE'
+    //     }).done(function (result) {
+    //         if (result.isSuccess) {
+    //             alert('File deleted successfully.');
+    //             const dumpsiteId = $('#dumpsiteDetailsModal').data('dumpsite-id');
+    //             if (dumpsiteId) showDumpsiteDetailsModal(dumpsiteId);
+    //         } else {
+    //             alert(result.errMsg || 'Error deleting file.');
+    //         }
+    //     }).fail(function () {
+    //         alert('Error deleting file.');
+    //     });
+    // }
+
+    // function showFileUploadModal(dumpsiteId) {
+    //     $('#dumpsiteDetailsModal').data('dumpsite-id', dumpsiteId);
+    //     $('#fileUploadModal').modal('show');
+    // }
+
+    // // ==== Inspections ====
+    // function showCreateInspectionModal(dumpsiteId) {
+    //     $('#dumpsiteDetailsModal').data('dumpsite-id', dumpsiteId);
+    //     $('#createInspectionModal').modal('show');
+    // }
+
+    // function viewInspectionDetails(inspectionId) {
+    //     $.get('@Url.Action("GetInspectionById", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { inspectionId: inspectionId })
+    //         .done(function (result) {
+    //             if (result.isSuccess) {
+    //                 // Populate your inspection modal with data
+    //                 populateInspectionModal(result.data);
+    //                 $('#inspectionDetailsModal').modal('show');
+    //             } else {
+    //                 alert(result.errMsg || 'Failed to load inspection details.');
+    //             }
+    //         });
+    // }
+
+    // function showAssignInspectorModal(inspectionId) {
+    //     $('#assignInspectorModal').data('inspection-id', inspectionId).modal('show');
+    // }
+
+    // function assignInspector(inspectionId, inspectorId) {
+    //     $.post('@Url.Action("AssignInspector", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { inspectionId: inspectionId, inspectorId: inspectorId })
+    //         .done(function (result) {
+    //             if (result.isSuccess) {
+    //                 alert('Inspector assigned successfully.');
+    //                 const dumpsiteId = $('#dumpsiteDetailsModal').data('dumpsite-id');
+    //                 if (dumpsiteId) showDumpsiteDetailsModal(dumpsiteId);
+    //                 $('#assignInspectorModal').modal('hide');
+    //             } else {
+    //                 alert(result.errMsg || 'Failed to assign inspector.');
+    //             }
+    //         });
+    // }
+
+    // function showCompleteInspectionModal(inspectionId) {
+    //     $('#completeInspectionModal').data('inspection-id', inspectionId).modal('show');
+    // }
+
+    // function completeInspection(inspectionId, findings, recommendations) {
+    //     $.post('@Url.Action("CompleteInspection", "RegisteredDumpsites", new { Area = "IntranetPortal" })',
+    //         { inspectionId: inspectionId, findings: findings, recommendations: recommendations })
+    //         .done(function (result) {
+    //             if (result.isSuccess) {
+    //                 alert('Inspection completed successfully.');
+    //                 const dumpsiteId = $('#dumpsiteDetailsModal').data('dumpsite-id');
+    //                 if (dumpsiteId) showDumpsiteDetailsModal(dumpsiteId);
+    //                 $('#completeInspectionModal').modal('hide');
+    //             } else {
+    //                 alert(result.errMsg || 'Failed to complete inspection.');
+    //             }
+    //         });
+    // }
+
     $(function () {
         // Activate the registered dumpsites tool
         function activateRegisteredDumpsitesTool() {
@@ -399,9 +597,10 @@
                             <button onclick='deleteDumpsite("${item.id}")' class="btn btn-xs bg-gradient-danger mx-1" title='@DbResHtml.T("Delete", "Resources")'>
                                 <i class="fas fa-trash"></i>
                             </button>
-                            <button onclick='infoDumpsite("${item.id}")' class="btn btn-xs bg-gradient-info text-white ml-1" title='@DbResHtml.T("Info", "Resources")'>
-                                <i class="fas fa-info-circle"></i>
+                            <button onclick='showDumpsiteInfo("${item.id}")' class="btn btn-xs bg-gradient-info text-white ml-1" title='@DbResHtml.T("Info", "Resources")'>
+                               <i class="fas fa-info-circle"></i>
                             </button>
+
                         </td>
                  </tr>
                 `
@@ -443,25 +642,28 @@
         overlapDetails.empty();
 
         var detailsHtml = '<h6>' + '@DbResHtml.T("Overlapping Dumpsites:", "Resources")' + '</h6>';
+        detailsHtml += '<ul>';
+        overlaps.forEach(function(overlap) {
+            detailsHtml += '<li><strong>' + overlap.name + '</strong> (ID: ' + overlap.id + ')</li>';
+        });
+        detailsHtml += '</ul>';
 
-        // Add selection dropdown for merge target
+        // Target selection dropdown (initially hidden)
         detailsHtml += '<div class="form-group mt-3" id="mergeTargetSelection" style="display: none;">';
-        detailsHtml += '<label for="mergeTargetSelect">@DbResHtml.T("Select which dumpsite to keep as main:", "Resources")</label>';
+        detailsHtml += '<label for="mergeTargetSelect"><strong>@DbResHtml.T("Select which dumpsite properties to keep:", "Resources")</strong></label>';
         detailsHtml += '<select class="form-control" id="mergeTargetSelect">';
-        detailsHtml += '<option value="new">@DbResHtml.T("New Dumpsite", "Resources") (' + (newDumpsiteData.name || '@DbResHtml.T("Unnamed", "Resources")') + ')</option>';
+        detailsHtml += '<option value="new">@DbResHtml.T("New Dumpsite Properties", "Resources") (' + (newDumpsiteData.name || '@DbResHtml.T("Unnamed", "Resources")') + ')</option>';
         overlaps.forEach(function(overlap) {
             detailsHtml += '<option value="' + overlap.id + '">' + overlap.name + '</option>';
         });
         detailsHtml += '</select>';
+        detailsHtml += '<small class="form-text text-muted">@DbResHtml.T("The selected dumpsite properties will be preserved, others will be deleted.", "Resources")</small>';
         detailsHtml += '</div>';
 
-        detailsHtml += '<ul>';
-        overlaps.forEach(function(overlap) {
-            detailsHtml += '<li>' + overlap.name + '</li>';
-        });
-        detailsHtml += '</ul>';
-
         overlapDetails.html(detailsHtml);
+
+        // Update button handlers
+        $('.btn[onclick*="resolveOverlap"]').off('click');
 
         $('#overlapModal').modal({
             backdrop: 'static',
@@ -469,6 +671,7 @@
         });
         $('#overlapModal').modal('show');
     }
+
 
 
     function updateMergeButtonClick() {
@@ -484,25 +687,26 @@
     function confirmMergeWithTarget() {
         var selectedTarget = $('#mergeTargetSelect').val();
         if (!selectedTarget) {
-            alert('@DbResHtml.T("Please select a target dumpsite", "Resources")');
+            alert('@DbResHtml.T("Please select which properties to keep", "Resources")');
             return;
         }
         performMergeOperation(selectedTarget);
     }
 
-    function resolveOverlap(action, targetId = null) {
-        var originalZIndex = $('#map-sidebar').css('z-index');
-
-        switch(action) {
-            case 'merge':
-                performMergeOperation();
-                break;
-            case 'retain':
-                performRetainOperation();
-                break;
+    function resolveOverlap(action) {
+        if (action === 'merge') {
+            // Show target selection and change button
+            $('#mergeTargetSelection').show();
+            $('[onclick="resolveOverlap(\'merge\')"]')
+                .text('@DbResHtml.T("Confirm Merge", "Resources")')
+                .attr('onclick', 'confirmMergeWithTarget()')
+                .removeClass('btn-primary')
+                .addClass('btn-warning');
+        } else if (action === 'retain') {
+            performRetainOperation();
         }
     }
-    function performMergeOperation(targetId = null) {
+        function performMergeOperation(targetId) {
         var originalZIndex = $('#map-sidebar').css('z-index');
 
         // Get all overlapping dumpsite IDs
@@ -512,7 +716,7 @@
 
         // Determine merge data based on selected target
         var mergeData;
-        var idsToDelete = [];
+        var targetDumpsiteId = null;
 
         if (targetId === 'new' || !targetId) {
             // Use new dumpsite data, delete all existing overlaps
@@ -526,11 +730,12 @@
                 RegisteredDumpsiteWasteTypeId: pendingDumpsiteData.wasteTypeId || null,
                 RegisteredDumpsiteRiskLevelId: pendingDumpsiteData.riskLevelId || null,
                 EnteredZonePolygon: newDumpsiteGeoJson,
-                IsEnabled: pendingDumpsiteData.isEnabled || false
+                IsEnabled: pendingDumpsiteData.isEnabled || false,
+                CreatedById: null // Will be set on server
             };
-            idsToDelete = idsToMerge;
+            targetDumpsiteId = null; // Create new
         } else {
-            // Use existing dumpsite as base, delete others
+            // Use existing dumpsite as base
             var targetDumpsite = overlappingDumpsites.find(o => o.id === targetId);
             if (!targetDumpsite) {
                 Swal.fire({
@@ -540,40 +745,31 @@
                 return;
             }
 
-            // Get target feature and create a simple merged geometry (use the larger extent)
-            var targetFeature = targetDumpsite.feature;
+            // Create merged geometry using new drawing
             var geoJsonFormat = new ol.format.GeoJSON();
-
-            // Create a buffered version of the geometry to avoid topology issues
-            var targetGeom = targetFeature.getGeometry();
-            var newGeom = pendingDumpsiteData.geometry;
-
-            // Use the new geometry as the merged result to avoid topology errors
-            var newFeature = new ol.Feature({ geometry: newGeom });
+            var newFeature = new ol.Feature({ geometry: pendingDumpsiteData.geometry });
             var mergedGeoJson = geoJsonFormat.writeFeature(newFeature);
 
             mergeData = {
-                Id: targetId,
-                Name: targetFeature.get('dumpsiteName'),
-                Description: targetFeature.get('description') || '',
-                RegisteredDumpsiteWasteTypeId: null,
-                RegisteredDumpsiteRiskLevelId: null,
+                Name: targetDumpsite.feature.get('dumpsiteName'),
+                Description: targetDumpsite.feature.get('description') || '',
+                RegisteredDumpsiteWasteTypeId: targetDumpsite.feature.get('wasteTypeId') || null,
+                RegisteredDumpsiteRiskLevelId: targetDumpsite.feature.get('riskLevelId') || null,
                 EnteredZonePolygon: mergedGeoJson,
-                IsEnabled: targetFeature.get('isEnabled')
+                IsEnabled: targetDumpsite.feature.get('isEnabled'),
+                CreatedById: null // Will be set on server
             };
-
-            // idsToDelete = idsToMerge.filter(id => id !== targetId); //kiril
-            idsToDelete = idsToMerge;
+            targetDumpsiteId = targetId;
         }
 
-        // Call server-side merge operation with corrected data structure
+        // Call server-side merge operation
         $.ajax({
             type: "POST",
             url: "@Url.Action("MergeRegisteredDumpsites", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
             data: JSON.stringify({
-                NewDumpsiteData: mergeData,  // Changed from MergeData to NewDumpsiteData
-                ExistingDumpsiteIds: idsToDelete, // Changed from IdsToDelete to ExistingDumpsiteIds
-                IsUpdate: targetId !== 'new' && targetId !== null
+                NewDumpsiteData: mergeData,
+                ExistingDumpsiteIds: idsToMerge,
+                TargetDumpsiteId: targetDumpsiteId
             }),
             contentType: "application/json",
             success: function(data) {
@@ -915,8 +1111,13 @@
         });
     }
 
-    function performEditMerge(geoJson, targetId, overlaps) {
+        function performEditMerge(geoJson, targetId, overlaps) {
         var idsToMerge = overlaps.map(overlap => overlap.id);
+
+        // Always include the edited dumpsite in the merge
+        if (!idsToMerge.includes(targetId)) {
+            idsToMerge.push(targetId);
+        }
 
         // Get the target dumpsite data
         var targetDumpsite = getDumpsiteById(targetId);
@@ -929,7 +1130,7 @@
             return;
         }
 
-        // Call server-side merge operation
+        // Call server-side merge operation with the edited dumpsite as target
         $.ajax({
             type: "POST",
             url: "@Url.Action("MergeRegisteredDumpsites", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
@@ -937,10 +1138,14 @@
                 NewDumpsiteData: {
                     Name: targetDumpsite.get('dumpsiteName'),
                     Description: targetDumpsite.get('description') || '',
+                    RegisteredDumpsiteWasteTypeId: null,
+                    RegisteredDumpsiteRiskLevelId: null,
                     EnteredZonePolygon: geoJson,
-                    IsEnabled: targetDumpsite.get('isEnabled')
+                    IsEnabled: targetDumpsite.get('isEnabled'),
+                    CreatedById: null
                 },
-                ExistingDumpsiteIds: idsToMerge
+                ExistingDumpsiteIds: idsToMerge,
+                TargetDumpsiteId: targetId // Keep the edited dumpsite
             }),
             contentType: "application/json",
             success: function(data) {
