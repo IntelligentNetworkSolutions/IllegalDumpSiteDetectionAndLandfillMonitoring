@@ -553,4 +553,118 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             return ResultDTO.ExceptionFail(ex.Message, ex);
         }
     }
+    public async Task<ResultDTO<RegisteredDumpsiteDTO?>> ConvertDetectedDumpsiteAsync(ConvertDetectedDumpsiteRequest request)
+    {
+        try
+        {
+            // Validate the request
+            var validationResult = ValidateConvertRequest(request);
+            if (!validationResult.IsSuccess)
+            {
+                return ResultDTO<RegisteredDumpsiteDTO?>.Fail(validationResult.ErrMsg!);
+            }
+
+            // Parse GeoJSON to Polygon using NetTopologySuite
+            var polygon = ParseGeoJsonToPolygon(request.EnteredZonePolygon);
+            if (polygon == null)
+            {
+                return ResultDTO<RegisteredDumpsiteDTO?>.Fail("Invalid geometry data provided");
+            }
+
+            // Check for overlaps with existing registered dumpsites
+            var existingDumpsites = await _registeredDumpsiteRepository.GetAll();
+            var overlappingDumpsites = existingDumpsites.Data.Where(d => d.Geom.Intersects(polygon)).ToList();
+
+            if (overlappingDumpsites.Any())
+            {
+                return ResultDTO<RegisteredDumpsiteDTO?>.Fail("The converted dumpsite overlaps with existing registered dumpsites. Please handle overlaps first.");
+            }
+
+            // Create new registered dumpsite
+            var newDumpsite = new RegisteredDumpsite
+            {
+                Id = Guid.NewGuid(),
+                Name = request.Name,
+                Description = request.Description,
+                RegisteredDumpsiteWasteTypeId = request.RegisteredDumpsiteWasteTypeId,
+                RegisteredDumpsiteRiskLevelId = request.RegisteredDumpsiteRiskLevelId,
+                Geom = polygon,
+                IsEnabled = request.IsEnabled,
+                CreatedById = "b9e7defd-4f17-428a-813b-211c2521bfa8",
+                CreatedOn = DateTime.UtcNow,
+                RegisteredDumpsiteStatusId = 1 // Set default status (you might need to adjust this)
+            };
+
+            // Add conversion metadata to description if provided
+            if (!string.IsNullOrEmpty(request.ConversionNotes))
+            {
+                newDumpsite.Description += $"\n\n[Conversion Notes: {request.ConversionNotes}]";
+            }
+
+            await _registeredDumpsiteRepository.Create(newDumpsite);
+
+            // Save changes
+            var saveResult = await _registeredDumpsiteRepository.SaveChangesAsync();
+            //if (saveResult > 0)
+            //{
+            var dto = _mapper.Map<RegisteredDumpsiteDTO>(newDumpsite);
+            return ResultDTO<RegisteredDumpsiteDTO?>.Ok(dto);
+            //}
+
+            //return ResultDTO<RegisteredDumpsiteDTO?>.Fail("Failed to save the converted dumpsite");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<RegisteredDumpsiteDTO?>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    private ResultDTO<RegisteredDumpsiteDTO?> ValidateConvertRequest(ConvertDetectedDumpsiteRequest request)
+    {
+        var errors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(request.Name))
+            errors.Add("Name is required");
+
+        if (request.RegisteredDumpsiteWasteTypeId == Guid.Empty)
+            errors.Add("Waste Type is required");
+
+        if (request.RegisteredDumpsiteRiskLevelId == Guid.Empty)
+            errors.Add("Risk Level is required");
+
+        if (string.IsNullOrWhiteSpace(request.EnteredZonePolygon))
+            errors.Add("Geometry data is required");
+
+        if (errors.Any())
+        {
+            return ResultDTO<RegisteredDumpsiteDTO?>.Fail(string.Join(", ", errors));
+        }
+
+        return ResultDTO<RegisteredDumpsiteDTO?>.Ok(null);
+    }
+
+    private Polygon? ParseGeoJsonToPolygon(string geoJsonString)
+    {
+        try
+        {
+            // Using NetTopologySuite GeoJSON reader
+            var geoJsonReader = new NetTopologySuite.IO.GeoJsonReader();
+            var geometry = geoJsonReader.Read<Geometry>(geoJsonString);
+
+            // Ensure it's a Polygon
+            if (geometry is Polygon polygon)
+            {
+                return polygon;
+            }
+
+            _logger.LogWarning("GeoJSON does not represent a valid Polygon geometry. Only Polygon geometries are supported.");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return null;
+        }
+    }
 }

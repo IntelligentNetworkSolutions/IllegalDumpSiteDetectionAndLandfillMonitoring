@@ -560,4 +560,463 @@
     }
 
 
+
+    //kj
+
+        // Add this to your existing script section in the historic data view
+
+    $(function () {
+        // Initialize the Convert Detected Dumpsite tool
+        function activateConvertDetectedDumpsiteTool() {
+            mapVars.deactivateTools();
+            $("#map-sidebar-convertdumpsite-pane").addClass("active");
+            enableDetectedDumpsiteClickHandler();
+            this.isActive = true;
+
+            // Show instruction tooltip
+            showConvertToolInstructions();
+        }
+
+        function deactivateConvertDetectedDumpsiteTool() {
+            disableDetectedDumpsiteClickHandler();
+            $("#map-sidebar-convertdumpsite-pane").removeClass("active");
+            hideConvertToolInstructions();
+            this.isActive = false;
+            return true;
+        }
+
+        var convertDetectedDumpsite = new MapToolBaseClass("ConvertDetectedDumpsite");
+        convertDetectedDumpsite.activateTool = activateConvertDetectedDumpsiteTool;
+        convertDetectedDumpsite.deactivateTool = deactivateConvertDetectedDumpsiteTool;
+        convertDetectedDumpsite.defaultFitPadding = [30, 580, 30, 30];
+
+        mapVars.mapTools.push(convertDetectedDumpsite);
+
+        // Add tab and pane HTML for the convert tool
+        var convertTabHtml = `<li>
+                                <a href="#map-sidebar-convertdumpsite-pane" id="map-sidebar-convertdumpsite-btn" role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="@DbResHtml.T("Convert Detected Dumpsite", "Resources")">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </a>
+                              </li>`;
+
+        var convertPaneHtml = `<div class="turbosidebar-pane" id="map-sidebar-convertdumpsite-pane">
+                                <h1 class="turbosidebar-header text-center bg-gradient-info">
+                                    @DbResHtml.T("Convert Detected Dumpsite", "Resources")
+                                    <span class="turbosidebar-close"><i class="fa fa-times"></i></span>
+                                </h1>
+                                <div class="p-3">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>@DbResHtml.T("Instructions:", "Resources")</strong><br>
+                                        @DbResHtml.T("1. Make sure Historic Data tool has detected dumpsites displayed on the map", "Resources")<br>
+                                        @DbResHtml.T("2. Click on any detected dumpsite polygon to convert it", "Resources")<br>
+                                        @DbResHtml.T("3. Fill in the required information in the conversion dialog", "Resources")
+                                    </div>
+                                    <div id="convert-tool-status" class="mt-3">
+                                        <span class="badge badge-secondary">@DbResHtml.T("Tool activated - Click on detected dumpsites", "Resources")</span>
+                                    </div>
+                                </div>
+                            </div>`;
+
+        $("#map-sidebar-upper-tabs-list").append(convertTabHtml);
+        $("#map-sidebar-content").append(convertPaneHtml);
+
+        // Toggle the convert tool when the sidebar button is clicked
+        $('#map-sidebar-convertdumpsite-btn').on("click", function () {
+            if ($(this).parent().hasClass("active")) {
+                convertDetectedDumpsite.deactivateTool();
+            } else {
+                convertDetectedDumpsite.activateTool();
+            }
+        });
+
+        // Variables for click handling
+        let clickHandler = null;
+        let convertToolInstructions = null;
+
+        function enableDetectedDumpsiteClickHandler() {
+            // Remove existing handler if any
+            disableDetectedDumpsiteClickHandler();
+
+            clickHandler = function(event) {
+                var historicDataLayer = mapVars.map.getLayers().getArray().find(layer =>
+                    layer instanceof ol.layer.Group && layer.get('name') === 'Historic Data'
+                );
+
+                if (!historicDataLayer) {
+                    showNoHistoricDataWarning();
+                    return;
+                }
+
+                var coordinate = event.coordinate;
+                var features = [];
+
+                // Check all vector layers in the Historic Data group
+                historicDataLayer.getLayers().forEach(function(layer) {
+                    if (layer instanceof ol.layer.Vector) {
+                        mapVars.map.forEachFeatureAtPixel(event.pixel, function(feature) {
+                            if (layer.getSource().getFeatures().includes(feature)) {
+                                features.push({
+                                    feature: feature,
+                                    layerName: layer.get('title')
+                                });
+                            }
+                        });
+                    }
+                });
+
+                if (features.length > 0) {
+                    // Get the first detected dumpsite feature
+                    var detectedFeature = features[0];
+                    handleDetectedDumpsiteClick(detectedFeature, coordinate);
+                }
+            };
+
+            mapVars.map.on('singleclick', clickHandler);
+
+            // Change cursor when hovering over detected dumpsites
+            mapVars.map.on('pointermove', function(event) {
+                var hit = mapVars.map.hasFeatureAtPixel(event.pixel, {
+                    layerFilter: function(layer) {
+                        var historicDataLayer = mapVars.map.getLayers().getArray().find(l =>
+                            l instanceof ol.layer.Group && l.get('name') === 'Historic Data'
+                        );
+                        if (historicDataLayer) {
+                            return historicDataLayer.getLayers().getArray().includes(layer);
+                        }
+                        return false;
+                    }
+                });
+
+                mapVars.map.getTarget().style.cursor = hit ? 'pointer' : '';
+            });
+        }
+
+        function disableDetectedDumpsiteClickHandler() {
+            if (clickHandler) {
+                mapVars.map.un('singleclick', clickHandler);
+                clickHandler = null;
+            }
+            mapVars.map.getTarget().style.cursor = '';
+        }
+
+        function handleDetectedDumpsiteClick(detectedFeature, coordinate) {
+            var originalZIndex = $('#map-sidebar').css('z-index');
+
+            // Extract dumpsite information (you'll need to adjust based on your feature properties)
+            var confidence = detectedFeature.feature.getStyle().getText().getText();
+            var confidenceMatch = confidence.match(/(\d+)%/);
+            var confidenceRate = confidenceMatch ? parseInt(confidenceMatch[1]) : 0;
+
+            Swal.fire({
+                title: '@DbResHtml.T("Convert Detected Dumpsite", "Resources")',
+                html: `
+                    <div class="text-left">
+                        <p><strong>@DbResHtml.T("Detection Run:", "Resources")</strong> ${detectedFeature.layerName}</p>
+                        <p><strong>@DbResHtml.T("Confidence Rate:", "Resources")</strong> ${confidenceRate}%</p>
+                        <p class="mt-3">@DbResHtml.T("Do you want to convert this detected dumpsite to a registered dumpsite?", "Resources")</p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '@DbResHtml.T("Yes, Convert", "Resources")',
+                cancelButtonText: '@DbResHtml.T("Cancel", "Resources")',
+                customClass: {
+                    confirmButton: 'bg-gradient-success',
+                    cancelButton: 'bg-gradient-secondary'
+                },
+                didOpen: () => {
+                    manageMapSidebarZIndex(originalZIndex, '1040');
+                },
+                willClose: () => {
+                    manageMapSidebarZIndex(originalZIndex, '1040');
+                },
+                icon: "question"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    openConvertDumpsiteModal(detectedFeature, confidenceRate);
+                }
+            });
+        }
+
+        function openConvertDumpsiteModal(detectedFeature, confidenceRate) {
+            // Extract geometry from the detected feature
+            var geoJsonFormat = new ol.format.GeoJSON();
+            var geoJson = geoJsonFormat.writeFeature(detectedFeature.feature);
+
+            // Create conversion modal HTML
+            var modalHtml = `
+                <div class="modal fade" id="convertDumpsiteModal" tabindex="-1" role="dialog" aria-labelledby="convertDumpsiteModalLabel" aria-hidden="true" style="z-index:2000;">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header bg-gradient-info">
+                                <h5 class="modal-title" id="convertDumpsiteModalLabel">@DbResHtml.T("Convert to Registered Dumpsite", "Resources")</h5>
+                            </div>
+                            <div class="modal-body">
+                                <form id="convertDumpsiteForm">
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <strong>@DbResHtml.T("Source:", "Resources")</strong> ${detectedFeature.layerName}<br>
+                                            <strong>@DbResHtml.T("Confidence:", "Resources")</strong> ${confidenceRate}%
+                                        </small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="convertDumpsiteName">@DbResHtml.T("Name", "Resources") *</label>
+                                        <input type="text" class="form-control" id="convertDumpsiteName" required
+                                               value="@DbResHtml.T("Detected Dumpsite", "Resources") - ${detectedFeature.layerName}">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="convertDumpsiteDescription">@DbResHtml.T("Description", "Resources")</label>
+                                        <textarea class="form-control" id="convertDumpsiteDescription" rows="3"
+                                                  placeholder="@DbResHtml.T("Converted from detected dumpsite with", "Resources") ${confidenceRate}% @DbResHtml.T("confidence", "Resources")">@DbResHtml.T("Converted from detected dumpsite with", "Resources") ${confidenceRate}% @DbResHtml.T("confidence", "Resources")</textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="convertDumpsiteWasteType">@DbResHtml.T("Waste Type", "Resources") *</label>
+                                        <select class="form-control select2" id="convertDumpsiteWasteType" style="width: 100%;" required>
+                                            <option value="">@DbResHtml.T("Select Waste Type", "Resources")</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="convertDumpsiteRiskLevel">@DbResHtml.T("Risk Level", "Resources") *</label>
+                                        <select class="form-control select2" id="convertDumpsiteRiskLevel" style="width: 100%;" required>
+                                            <option value="">@DbResHtml.T("Select Risk Level", "Resources")</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group clearfix">
+                                        <div class="icheck-success mt-3 text-bold">
+                                            <input type="checkbox" id="isConvertDumpsiteEnabled" checked />
+                                            <label for="isConvertDumpsiteEnabled">
+                                                @DbResHtml.T("Is Enabled", "Resources")
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" id="convertDumpsiteCoordinates" value='${JSON.stringify(geoJson)}'>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeConvertDumpsiteModal()">@DbResHtml.T("Cancel", "Resources")</button>
+                                <button type="button" class="btn btn-sm bg-gradient-success" onclick="saveConvertedDumpsite()">@DbResHtml.T("Convert & Save", "Resources")</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            $('#convertDumpsiteModal').remove();
+
+            // Add modal to body
+            $('body').append(modalHtml);
+
+            // Load dropdown data and show modal
+            loadDropdownData().then(() => {
+                $('.select2').select2({
+                    dropdownParent: $('#convertDumpsiteModal'),
+                    theme: 'bootstrap4'
+                });
+
+                $('#convertDumpsiteModal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                });
+                $('#convertDumpsiteModal').modal('show');
+            });
+        }
+
+        function showNoHistoricDataWarning() {
+            var originalZIndex = $('#map-sidebar').css('z-index');
+            Swal.fire({
+                title: '@DbResHtml.T("No Historic Data", "Resources")',
+                text: '@DbResHtml.T("Please use the Historic Data tool first to display detected dumpsites on the map.", "Resources")',
+                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                didOpen: () => {
+                    manageMapSidebarZIndex(originalZIndex, '1040');
+                },
+                willClose: () => {
+                    manageMapSidebarZIndex(originalZIndex, '1040');
+                },
+                icon: "warning"
+            });
+        }
+
+        function showConvertToolInstructions() {
+            convertToolInstructions = $(`
+                <div id="convertToolNotify" class="position-fixed bg-gradient-info text-white p-3 rounded shadow-lg" style="top: 60px; right: 20px; z-index: 1000; opacity: 0.95;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="lead">@DbResHtml.T("Convert Tool Active", "Resources")</span>
+                        <button id="hideConvertInstructions" class="btn btn-xs btn-outline-light">×</button>
+                    </div>
+                    <div>
+                        <p class="mb-0 text-xs">@DbResHtml.T("Click on any detected dumpsite to convert it", "Resources")</p>
+                    </div>
+                </div>
+            `);
+
+            $('body').append(convertToolInstructions);
+
+            $('#hideConvertInstructions').on('click', function() {
+                hideConvertToolInstructions();
+            });
+        }
+
+        function hideConvertToolInstructions() {
+            if (convertToolInstructions) {
+                convertToolInstructions.remove();
+                convertToolInstructions = null;
+            }
+        }
+
+        // Global functions for modal handling
+        window.closeConvertDumpsiteModal = function() {
+            $('#convertDumpsiteModal').modal('hide');
+            setTimeout(() => $('#convertDumpsiteModal').remove(), 300);
+        };
+
+        window.saveConvertedDumpsite = function() {
+            var originalZIndex = $('#map-sidebar').css('z-index');
+            var name = $("#convertDumpsiteName").val();
+            var description = $("#convertDumpsiteDescription").val();
+            var wasteTypeId = $("#convertDumpsiteWasteType").val();
+            var riskLevelId = $("#convertDumpsiteRiskLevel").val();
+            var isEnabled = $("#isConvertDumpsiteEnabled").prop("checked");
+            var geoJsonString = $("#convertDumpsiteCoordinates").val();
+
+            // Validation
+            if (name.trim() === "") {
+                showConvertValidationError('@DbResHtml.T("Name is required", "Resources")', originalZIndex);
+                return;
+            }
+
+            if (!wasteTypeId || wasteTypeId.trim() === "") {
+                showConvertValidationError('@DbResHtml.T("Waste Type is required", "Resources")', originalZIndex);
+                return;
+            }
+
+            if (!riskLevelId || riskLevelId.trim() === "") {
+                showConvertValidationError('@DbResHtml.T("Risk Level is required", "Resources")', originalZIndex);
+                return;
+            }
+
+            if (geoJsonString === '') {
+                showConvertValidationError('@DbResHtml.T("Geometry data is missing", "Resources")', originalZIndex);
+                return;
+            }
+
+            // Parse and reformat GeoJSON
+            var geoJsonObject = JSON.parse(geoJsonString);
+            var geoJsonFormat = new ol.format.GeoJSON();
+            var feature = geoJsonFormat.readFeature(geoJsonObject);
+            var formattedGeoJson = geoJsonFormat.writeFeature(feature);
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("AddRegisteredDumpsite", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                data: JSON.stringify({
+                    Name: name,
+                    Description: description,
+                    RegisteredDumpsiteWasteTypeId: wasteTypeId,
+                    RegisteredDumpsiteRiskLevelId: riskLevelId,
+                    EnteredZonePolygon: formattedGeoJson,
+                    IsEnabled: isEnabled
+                }),
+                contentType: "application/json",
+                success: function (data) {
+                    closeConvertDumpsiteModal();
+                    if (data != undefined && data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                didOpen: () => {
+                                    manageMapSidebarZIndex(originalZIndex, '1040');
+                                },
+                                willClose: () => {
+                                    manageMapSidebarZIndex(originalZIndex, '1040');
+                                },
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Detected dumpsite converted successfully", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                didOpen: () => {
+                                    manageMapSidebarZIndex(originalZIndex, '1040');
+                                },
+                                willClose: () => {
+                                    manageMapSidebarZIndex(originalZIndex, '1040');
+                                },
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Refresh registered dumpsites if the tool is available
+                                    if (typeof getAllRegisteredDumpsites === 'function') {
+                                        getAllRegisteredDumpsites();
+                                    }
+                                    if (typeof generateRegisteredDumpsitesTable === 'function') {
+                                        generateRegisteredDumpsitesTable();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            didOpen: () => {
+                                manageMapSidebarZIndex(originalZIndex, '1040');
+                            },
+                            willClose: () => {
+                                manageMapSidebarZIndex(originalZIndex, '1040');
+                            },
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function () {
+                    closeConvertDumpsiteModal();
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occurred while converting", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        didOpen: () => {
+                            manageMapSidebarZIndex(originalZIndex, '1040');
+                        },
+                        willClose: () => {
+                            manageMapSidebarZIndex(originalZIndex, '1040');
+                        },
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                }
+            });
+        };
+
+        function showConvertValidationError(message, originalZIndex) {
+            $("#convertDumpsiteModal").modal('hide');
+            Swal.fire({
+                text: message,
+                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                didOpen: () => {
+                    manageMapSidebarZIndex(originalZIndex, '1040');
+                },
+                willClose: () => {
+                    manageMapSidebarZIndex(originalZIndex, '1040');
+                },
+                allowOutsideClick: false,
+                icon: "warning"
+            }).then(() => {
+                $("#convertDumpsiteModal").modal('show');
+            });
+        }
+    });
+
 </script>

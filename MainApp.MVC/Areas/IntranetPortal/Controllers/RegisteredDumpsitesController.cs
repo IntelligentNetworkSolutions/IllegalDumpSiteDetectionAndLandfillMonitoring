@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.RegisteredDumpsiteDTOs;
+using MainApp.BL.Interfaces.Services.DetectionServices;
 using MainApp.BL.Interfaces.Services.RegisteredDumpsiteServices;
 using MainApp.MVC.Filters;
 using MainApp.MVC.Helpers;
@@ -25,8 +26,9 @@ public class RegisteredDumpsitesController : Controller
     private readonly IAppSettingsAccessor _appSettingsAccessor;
     private readonly ILogger<RegisteredDumpsitesController> _logger;
     private readonly IUserManagementService _userManagementService;
+    private readonly IDetectionRunService _detectionRunService;
 
-    public RegisteredDumpsitesController(IRegisteredDumpsiteService registeredDumpsiteService, IRegisteredDumpsiteWasteTypeService registeredDumpsiteWasteTypeService, IRegisteredDumpsiteRiskLevelService registeredDumpsiteRiskLevelService, IConfiguration configuration, IMapper mapper, IWebHostEnvironment webHostEnvironment, IAppSettingsAccessor appSettingsAccessor, ILogger<RegisteredDumpsitesController> logger, IUserManagementService userManagementService)
+    public RegisteredDumpsitesController(IRegisteredDumpsiteService registeredDumpsiteService, IRegisteredDumpsiteWasteTypeService registeredDumpsiteWasteTypeService, IRegisteredDumpsiteRiskLevelService registeredDumpsiteRiskLevelService, IConfiguration configuration, IMapper mapper, IWebHostEnvironment webHostEnvironment, IAppSettingsAccessor appSettingsAccessor, ILogger<RegisteredDumpsitesController> logger, IUserManagementService userManagementService, IDetectionRunService detectionRunService)
     {
         _registeredDumpsiteService = registeredDumpsiteService;
         _registeredDumpsiteWasteTypeService = registeredDumpsiteWasteTypeService;
@@ -37,6 +39,7 @@ public class RegisteredDumpsitesController : Controller
         _appSettingsAccessor = appSettingsAccessor;
         _logger = logger;
         _userManagementService = userManagementService;
+        _detectionRunService = detectionRunService;
     }
 
     #region RegisteredDumpsites
@@ -1062,4 +1065,50 @@ public class RegisteredDumpsitesController : Controller
         }
     }
     #endregion
+
+
+    // last
+
+    [HttpPost]
+    public async Task<IActionResult> ConvertDetectedDumpsite([FromBody] ConvertDetectedDumpsiteRequest request)
+    {
+        try
+        {
+            var result = await _registeredDumpsiteService.ConvertDetectedDumpsiteAsync(request);
+
+            if (result.IsSuccess)
+            {
+                return Ok(new { isSuccess = true, data = result.Data });
+            }
+
+            return Ok(new { isSuccess = false, errMsg = result.ErrMsg });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error converting detected dumpsite");
+            return Ok(new { isSuccess = false, errMsg = "An error occurred while converting the dumpsite" });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDetectedDumpsiteDetails(Guid detectedDumpsiteId)
+    {
+        try
+        {
+            var result = await _detectionRunService.GetDetectionRunById(detectedDumpsiteId);
+
+            if (result.IsSuccess)
+            {
+                return Ok(new { isSuccess = true, data = result.Data });
+            }
+
+            return Ok(new { isSuccess = false, errMsg = result.ErrMsg });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving detected dumpsite details");
+            return Ok(new { isSuccess = false, errMsg = "An error occurred while retrieving dumpsite details" });
+        }
+    }
+
 }

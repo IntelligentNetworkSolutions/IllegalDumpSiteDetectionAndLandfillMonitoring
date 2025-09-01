@@ -16,6 +16,9 @@ public interface IRegisteredDumpsiteService
     Task<ResultDTO> DeleteFile(Guid fileId);
     Task<ResultDTO<RegisteredDumpsiteFileDTO>> GetSingleFileById(Guid fileId);
     Task<ResultDTO> CompleteInspection(Guid inspectionId, string findings, string? recommendations);
+
+
+    Task<ResultDTO<RegisteredDumpsiteDTO?>> ConvertDetectedDumpsiteAsync(ConvertDetectedDumpsiteRequest request);
     Task<ResultDTO> AssignInspector(Guid inspectionId, string inspectorId);
     Task<ResultDTO> DeleteInspection(Guid id);
     Task<ResultDTO> UpdateInspection(RegisteredDumpsiteInspectionDTO dto);
