@@ -996,17 +996,38 @@ public class RegisteredDumpsitesController : Controller
             var filesResult = await _registeredDumpsiteService.GetFilesByDumpsiteId(dumpsiteId);
             var inspectionsResult = await _registeredDumpsiteService.GetInspectionsByDumpsiteId(dumpsiteId);
 
+            var userId = User.FindFirstValue("UserId");
+
             var viewModel = new DumpsiteDetailsViewModel
             {
                 Dumpsite = dumpsiteResult.Data,
                 Files = filesResult.Data ?? new List<RegisteredDumpsiteFileDTO>(),
-                Inspections = inspectionsResult.Data ?? new List<RegisteredDumpsiteInspectionDTO>()
+                Inspections = inspectionsResult.Data ?? new List<RegisteredDumpsiteInspectionDTO>(),
+                CurrentUserId = userId
             };
+
+            // Load inspection files for each inspection
+            if (viewModel.Inspections.Any())
+            {
+                foreach (var inspection in viewModel.Inspections)
+                {
+                    if (inspection.Id.HasValue)
+                    {
+                        var inspectionFilesResult = await _registeredDumpsiteService.GetInspectionFilesByInspectionId(inspection.Id.Value);
+                        if (inspectionFilesResult.IsSuccess && inspectionFilesResult.Data != null)
+                        {
+                            viewModel.InspectionFiles[inspection.Id.Value] = inspectionFilesResult.Data;
+                            inspection.InspectionFiles = inspectionFilesResult.Data;
+                        }
+                    }
+                }
+            }
 
             return PartialView("_DumpsiteDetailsPartial", viewModel);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error loading dumpsite details");
             return PartialView("_DumpsiteDetailsPartial", null);
         }
     }
@@ -1066,6 +1087,186 @@ public class RegisteredDumpsitesController : Controller
     }
     #endregion
 
+
+    #region Inspection File Management
+
+    [HttpPost]
+    [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
+    [RequestSizeLimit(int.MaxValue)]
+    [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue)]
+    public async Task<ResultDTO<RegisteredDumpsiteInspectionFileDTO>> UploadInspectionFile(Guid inspectionId, IFormFile file, string? description)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail("No file provided");
+
+            if (inspectionId == Guid.Empty)
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail("Invalid inspection id");
+
+            var userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail("User not found");
+
+            // Check if user is assigned to this inspection
+            var assignmentCheck = await _registeredDumpsiteService.IsUserAssignedToInspection(inspectionId, userId);
+            if (!assignmentCheck.IsSuccess || !assignmentCheck.Data)
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail("You are not assigned to this inspection");
+
+            // Get upload folder path from app settings
+            var uploadFolderResult = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>(
+                "RegisteredDumpsiteInspectionFilesFolder",
+                "Uploads\\RegisteredDumpsites\\InspectionFiles"
+            );
+
+            if (!uploadFolderResult.IsSuccess && uploadFolderResult.HandleError())
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail("Cannot get the application settings");
+
+            if (string.IsNullOrEmpty(uploadFolderResult.Data))
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail("Upload folder path not found");
+
+            // Resolve physical path
+            string saveDirectory = Path.Combine(_webHostEnvironment.WebRootPath, uploadFolderResult.Data);
+            if (!Directory.Exists(saveDirectory))
+                Directory.CreateDirectory(saveDirectory);
+
+            // Save file
+            string fileExtension = Path.GetExtension(file.FileName);
+            string fileName = $"{Guid.NewGuid()}{fileExtension}";
+            string filePath = Path.Combine(saveDirectory, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Create entity
+            var inspectionFile = new RegisteredDumpsiteInspectionFileDTO
+            {
+                RegisteredDumpsiteInspectionId = inspectionId,
+                FileName = fileName,
+                OriginalFileName = file.FileName,
+                FilePath = Path.Combine(uploadFolderResult.Data, fileName),
+                ContentType = file.ContentType,
+                FileExtension = fileExtension,
+                Description = description,
+                CreatedById = userId,
+                CreatedOn = DateTime.UtcNow
+            };
+
+            // Save in DB
+            var createResult = await _registeredDumpsiteService.UploadInspectionFile(inspectionFile);
+            if (!createResult.IsSuccess && createResult.HandleError())
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail(createResult.ErrMsg!);
+
+            var dto = _mapper.Map<RegisteredDumpsiteInspectionFileDTO>(inspectionFile);
+            return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Ok(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while uploading inspection file");
+            return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    [HttpGet]
+    [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
+    public async Task<ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>> GetInspectionFiles(Guid inspectionId)
+    {
+        try
+        {
+            if (inspectionId == Guid.Empty)
+                return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Fail("Invalid inspection id");
+
+            var result = await _registeredDumpsiteService.GetInspectionFilesByInspectionId(inspectionId);
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Fail(result.ErrMsg!);
+
+            return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Ok(result.Data ?? new List<RegisteredDumpsiteInspectionFileDTO>());
+        }
+        catch (Exception ex)
+        {
+            return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    [HttpGet]
+    [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
+    public async Task<IActionResult> DownloadInspectionFile(Guid fileId)
+    {
+        try
+        {
+            var fileInfo = await _registeredDumpsiteService.GetSingleInspectionFileById(fileId);
+            if (!fileInfo.IsSuccess || fileInfo.Data == null)
+                return NotFound("File information not found");
+
+            string fullPath = Path.Combine(_webHostEnvironment.WebRootPath, fileInfo.Data.FilePath);
+            if (!System.IO.File.Exists(fullPath))
+                return NotFound("Physical file not found");
+
+            byte[] fileBytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+
+            return File(fileBytes, fileInfo.Data.ContentType, fileInfo.Data.OriginalFileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading inspection file");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpDelete]
+    [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
+    public async Task<ResultDTO> DeleteInspectionFile(Guid fileId)
+    {
+        try
+        {
+            var fileInfo = await _registeredDumpsiteService.GetSingleInspectionFileById(fileId);
+            if (!fileInfo.IsSuccess || fileInfo.Data == null)
+                return ResultDTO.Fail("File not found");
+
+            var userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+                return ResultDTO.Fail("User not found");
+
+            // Check if user is assigned to this inspection or is the file creator
+            var assignmentCheck = await _registeredDumpsiteService.IsUserAssignedToInspection(fileInfo.Data.RegisteredDumpsiteInspectionId, userId);
+            if (!assignmentCheck.IsSuccess || (!assignmentCheck.Data && fileInfo.Data.CreatedById != userId))
+                return ResultDTO.Fail("You don't have permission to delete this file");
+
+            string fullPath = Path.Combine(_webHostEnvironment.WebRootPath, fileInfo.Data.FilePath);
+            if (System.IO.File.Exists(fullPath))
+                System.IO.File.Delete(fullPath);
+
+            return await _registeredDumpsiteService.DeleteInspectionFile(fileId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting inspection file");
+            return ResultDTO.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    [HttpGet]
+    [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
+    public async Task<ResultDTO<bool>> CheckInspectionAssignment(Guid inspectionId)
+    {
+        try
+        {
+            var userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+                return ResultDTO<bool>.Fail("User not found");
+
+            return await _registeredDumpsiteService.IsUserAssignedToInspection(inspectionId, userId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking inspection assignment");
+            return ResultDTO<bool>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    #endregion
 
     // last
 

@@ -4,6 +4,7 @@ using DTOs.MainApp.BL.RegisteredDumpsiteDTOs;
 using Entities.RegisteredDumpsiteEntities;
 using MainApp.BL.Interfaces.Services.RegisteredDumpsiteServices;
 using Microsoft.Extensions.Logging;
+using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using SD;
 using SD.Enums;
@@ -17,16 +18,18 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
     private readonly ILogger<RegisteredDumpsiteService> _logger;
     private readonly IRegisteredDumpsiteFileRepository _registeredDumpsiteFileRepository;
     private readonly IRegisteredDumpsiteInspectionRepository _inspectionRepository;
+    private readonly IRegisteredDumpsiteInspectionFileRepository _inspectionFileRepository;
 
 
 
-    public RegisteredDumpsiteService(IRegisteredDumpsiteRepository RegisteredDumpsiteRepository, IMapper mapper, ILogger<RegisteredDumpsiteService> logger, IRegisteredDumpsiteFileRepository registeredDumpsiteFileRepository, IRegisteredDumpsiteInspectionRepository inspectionRepository)
+    public RegisteredDumpsiteService(IRegisteredDumpsiteRepository RegisteredDumpsiteRepository, IMapper mapper, ILogger<RegisteredDumpsiteService> logger, IRegisteredDumpsiteFileRepository registeredDumpsiteFileRepository, IRegisteredDumpsiteInspectionRepository inspectionRepository, IRegisteredDumpsiteInspectionFileRepository inspectionFileRepository)
     {
         _registeredDumpsiteRepository = RegisteredDumpsiteRepository;
         _mapper = mapper;
         _logger = logger;
         _registeredDumpsiteFileRepository = registeredDumpsiteFileRepository;
         _inspectionRepository = inspectionRepository;
+        _inspectionFileRepository = inspectionFileRepository;
     }
 
     public async Task<ResultDTO<List<RegisteredDumpsiteDTO>>> GetAllRegisteredDumpsitesDTOs()
@@ -224,7 +227,7 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             }
 
             var geoJsonReader = new NetTopologySuite.IO.GeoJsonReader();
-            var feature = geoJsonReader.Read<NetTopologySuite.Features.Feature>(newDumpsiteData.EnteredZonePolygon);
+            var feature = geoJsonReader.Read<Feature>(newDumpsiteData.EnteredZonePolygon);
             var newGeometry = feature.Geometry;
 
             var unionGeometry = newGeometry;
@@ -237,7 +240,7 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
                 return ResultDTO.Fail("The merged geometry is not a single polygon. Please ensure the input zones are contiguous or simplify them.");
 
             targetDumpsite.Geom = polygonResult;
-
+            targetDumpsite.RegisteredDumpsiteStatusId = (int)RegisteredDumpsiteStatusId.Detected;
             ResultDTO saveResult;
             if (targetDumpsiteId.HasValue)
             {
@@ -665,6 +668,119 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
         {
             _logger.LogError(ex.Message, ex);
             return null;
+        }
+    }
+
+
+    public async Task<ResultDTO<RegisteredDumpsiteInspectionFileDTO>> UploadInspectionFile(RegisteredDumpsiteInspectionFileDTO inspectionFileDto)
+    {
+        try
+        {
+            var inspectionFile = _mapper.Map<RegisteredDumpsiteInspectionFile>(inspectionFileDto);
+
+            var createResult = await _inspectionFileRepository.Create(inspectionFile);
+            if (!createResult.IsSuccess && createResult.HandleError())
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail(createResult.ErrMsg!);
+
+            return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Ok(inspectionFileDto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while saving inspection file");
+            return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO> DeleteInspectionFile(Guid fileId)
+    {
+        try
+        {
+            var getResult = await _inspectionFileRepository.GetById(fileId);
+            if (!getResult.IsSuccess && getResult.HandleError())
+                return ResultDTO.Fail(getResult.ErrMsg!);
+
+            if (getResult.Data == null)
+                return ResultDTO.Fail("File not found");
+
+            var deleteResult = await _inspectionFileRepository.Delete(getResult.Data);
+            if (!deleteResult.IsSuccess && deleteResult.HandleError())
+                return ResultDTO.Fail(deleteResult.ErrMsg!);
+
+            return ResultDTO.Ok();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting inspection file from DB");
+            return ResultDTO.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO<RegisteredDumpsiteInspectionFileDTO>> GetSingleInspectionFileById(Guid fileId)
+    {
+        try
+        {
+            var result = await _inspectionFileRepository.GetById(fileId);
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail(result.ErrMsg!);
+
+            if (result.Data == null)
+                return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Fail("File not found");
+
+            var dto = _mapper.Map<RegisteredDumpsiteInspectionFileDTO>(result.Data);
+            return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.Ok(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<RegisteredDumpsiteInspectionFileDTO>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>> GetInspectionFilesByInspectionId(Guid inspectionId)
+    {
+        try
+        {
+            var result = await _inspectionFileRepository.GetAll(
+                filter: f => f.RegisteredDumpsiteInspectionId == inspectionId,
+                includeProperties: "CreatedBy");
+
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Fail(result.ErrMsg!);
+
+            if (result.Data == null)
+                return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Fail("Files not found");
+
+            var dtos = _mapper.Map<List<RegisteredDumpsiteInspectionFileDTO>>(result.Data);
+            if (dtos == null)
+                return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Fail("Mapping files failed");
+
+            return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Ok(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
+    public async Task<ResultDTO<bool>> IsUserAssignedToInspection(Guid inspectionId, string userId)
+    {
+        try
+        {
+            var inspectionResult = await _inspectionRepository.GetAll(
+                        filter: i => i.Id == inspectionId && i.Assignments.Any(x => x.InspectorId == userId),
+                        includeProperties: "Assignments");
+
+            if (!inspectionResult.IsSuccess && inspectionResult.HandleError())
+                return ResultDTO<bool>.Fail(inspectionResult.ErrMsg!);
+
+            bool isAssigned = inspectionResult.Data != null && inspectionResult.Data.Any();
+            return ResultDTO<bool>.Ok(isAssigned);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<bool>.ExceptionFail(ex.Message, ex);
         }
     }
 }

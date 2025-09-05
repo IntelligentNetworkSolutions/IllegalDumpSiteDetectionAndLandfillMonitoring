@@ -692,13 +692,19 @@
             });
         }
 
-        function disableDetectedDumpsiteClickHandler() {
-            if (clickHandler) {
-                mapVars.map.un('singleclick', clickHandler);
-                clickHandler = null;
-            }
-            mapVars.map.getTarget().style.cursor = '';
+    function disableDetectedDumpsiteClickHandler() {
+        if (clickHandler && mapVars?.map) {
+            mapVars.map.un('singleclick', clickHandler);
+            clickHandler = null;
         }
+
+        // Ensure target exists before changing cursor
+        const target = mapVars?.map?.getTarget();
+        if (target && target.style) {
+            target.style.cursor = '';
+        }
+    }
+
 
         function handleDetectedDumpsiteClick(detectedFeature, coordinate) {
             var originalZIndex = $('#map-sidebar').css('z-index');
@@ -737,96 +743,134 @@
                 }
             });
         }
+    function openConvertDumpsiteModal(detectedFeature, confidenceRate) {
+        // Extract geometry from the detected feature
+        var geoJsonFormat = new ol.format.GeoJSON();
+        var geoJson = geoJsonFormat.writeFeature(detectedFeature.feature);
 
-        function openConvertDumpsiteModal(detectedFeature, confidenceRate) {
-            // Extract geometry from the detected feature
-            var geoJsonFormat = new ol.format.GeoJSON();
-            var geoJson = geoJsonFormat.writeFeature(detectedFeature.feature);
+        // Create conversion modal HTML
+        var modalHtml = `
+            <div class="modal fade" id="convertDumpsiteModal" tabindex="-1" role="dialog" aria-labelledby="convertDumpsiteModalLabel" aria-hidden="true" style="z-index:2000;">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-gradient-info">
+                            <h5 class="modal-title" id="convertDumpsiteModalLabel">@DbResHtml.T("Convert to Registered Dumpsite", "Resources")</h5>
+                        </div>
+                        <div class="modal-body">
+                            <form id="convertDumpsiteForm">
+                                <div class="alert alert-info">
+                                    <small>
+                                        <strong>@DbResHtml.T("Source:", "Resources")</strong> ${detectedFeature.layerName}<br>
+                                        <strong>@DbResHtml.T("Confidence:", "Resources")</strong> ${confidenceRate}%
+                                    </small>
+                                </div>
 
-            // Create conversion modal HTML
-            var modalHtml = `
-                <div class="modal fade" id="convertDumpsiteModal" tabindex="-1" role="dialog" aria-labelledby="convertDumpsiteModalLabel" aria-hidden="true" style="z-index:2000;">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header bg-gradient-info">
-                                <h5 class="modal-title" id="convertDumpsiteModalLabel">@DbResHtml.T("Convert to Registered Dumpsite", "Resources")</h5>
-                            </div>
-                            <div class="modal-body">
-                                <form id="convertDumpsiteForm">
-                                    <div class="alert alert-info">
-                                        <small>
-                                            <strong>@DbResHtml.T("Source:", "Resources")</strong> ${detectedFeature.layerName}<br>
-                                            <strong>@DbResHtml.T("Confidence:", "Resources")</strong> ${confidenceRate}%
-                                        </small>
+                                <div class="form-group">
+                                    <label for="convertDumpsiteName">@DbResHtml.T("Name", "Resources") *</label>
+                                    <input type="text" class="form-control" id="convertDumpsiteName" required
+                                           value="@DbResHtml.T("Detected Dumpsite", "Resources") - ${detectedFeature.layerName}">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="convertDumpsiteDescription">@DbResHtml.T("Description", "Resources")</label>
+                                    <textarea class="form-control" id="convertDumpsiteDescription" rows="3"
+                                              placeholder="@DbResHtml.T("Converted from detected dumpsite with", "Resources") ${confidenceRate}% @DbResHtml.T("confidence", "Resources")">@DbResHtml.T("Converted from detected dumpsite with", "Resources") ${confidenceRate}% @DbResHtml.T("confidence", "Resources")</textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="convertDumpsiteWasteType">@DbResHtml.T("Waste Type", "Resources") *</label>
+                                    <select class="form-control select2" id="convertDumpsiteWasteType" style="width: 100%;" required>
+                                        <option value="">@DbResHtml.T("Select Waste Type", "Resources")</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="convertDumpsiteRiskLevel">@DbResHtml.T("Risk Level", "Resources") *</label>
+                                    <select class="form-control select2" id="convertDumpsiteRiskLevel" style="width: 100%;" required>
+                                        <option value="">@DbResHtml.T("Select Risk Level", "Resources")</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group clearfix">
+                                    <div class="icheck-success mt-3 text-bold">
+                                        <input type="checkbox" id="isConvertDumpsiteEnabled" checked />
+                                        <label for="isConvertDumpsiteEnabled">
+                                            @DbResHtml.T("Is Enabled", "Resources")
+                                        </label>
                                     </div>
+                                </div>
 
-                                    <div class="form-group">
-                                        <label for="convertDumpsiteName">@DbResHtml.T("Name", "Resources") *</label>
-                                        <input type="text" class="form-control" id="convertDumpsiteName" required
-                                               value="@DbResHtml.T("Detected Dumpsite", "Resources") - ${detectedFeature.layerName}">
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="convertDumpsiteDescription">@DbResHtml.T("Description", "Resources")</label>
-                                        <textarea class="form-control" id="convertDumpsiteDescription" rows="3"
-                                                  placeholder="@DbResHtml.T("Converted from detected dumpsite with", "Resources") ${confidenceRate}% @DbResHtml.T("confidence", "Resources")">@DbResHtml.T("Converted from detected dumpsite with", "Resources") ${confidenceRate}% @DbResHtml.T("confidence", "Resources")</textarea>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="convertDumpsiteWasteType">@DbResHtml.T("Waste Type", "Resources") *</label>
-                                        <select class="form-control select2" id="convertDumpsiteWasteType" style="width: 100%;" required>
-                                            <option value="">@DbResHtml.T("Select Waste Type", "Resources")</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="convertDumpsiteRiskLevel">@DbResHtml.T("Risk Level", "Resources") *</label>
-                                        <select class="form-control select2" id="convertDumpsiteRiskLevel" style="width: 100%;" required>
-                                            <option value="">@DbResHtml.T("Select Risk Level", "Resources")</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group clearfix">
-                                        <div class="icheck-success mt-3 text-bold">
-                                            <input type="checkbox" id="isConvertDumpsiteEnabled" checked />
-                                            <label for="isConvertDumpsiteEnabled">
-                                                @DbResHtml.T("Is Enabled", "Resources")
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    <input type="hidden" id="convertDumpsiteCoordinates" value='${JSON.stringify(geoJson)}'>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeConvertDumpsiteModal()">@DbResHtml.T("Cancel", "Resources")</button>
-                                <button type="button" class="btn btn-sm bg-gradient-success" onclick="saveConvertedDumpsite()">@DbResHtml.T("Convert & Save", "Resources")</button>
-                            </div>
+                                <input type="hidden" id="convertDumpsiteCoordinates" value='${JSON.stringify(geoJson)}'>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeConvertDumpsiteModal()">@DbResHtml.T("Cancel", "Resources")</button>
+                            <button type="button" class="btn btn-sm bg-gradient-success" onclick="saveConvertedDumpsite()">@DbResHtml.T("Convert & Save", "Resources")</button>
                         </div>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
 
-            // Remove existing modal if any
-            $('#convertDumpsiteModal').remove();
+        // Remove existing modal if any
+        $('#convertDumpsiteModal').remove();
 
-            // Add modal to body
-            $('body').append(modalHtml);
+        // Add modal to body
+        $('body').append(modalHtml);
 
-            // Load dropdown data and show modal
-            loadDropdownData().then(() => {
-                $('.select2').select2({
-                    dropdownParent: $('#convertDumpsiteModal'),
-                    theme: 'bootstrap4'
-                });
-
-                $('#convertDumpsiteModal').modal({
-                    backdrop: 'static',
-                    keyboard: false
-                });
-                $('#convertDumpsiteModal').modal('show');
+        // Load dropdown data and show modal
+        loadDropdownData().then(() => {
+            $('.select2').select2({
+                dropdownParent: $('#convertDumpsiteModal'),
+                theme: 'bootstrap4'
             });
+
+            $('#convertDumpsiteModal').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+            $('#convertDumpsiteModal').modal('show');
+        });
+    }
+
+    async function loadDropdownData() {
+        try {
+            // Fetch Waste Types
+            const wasteTypesResponse = await $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetWasteTypes", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                dataType: "json"
+            });
+
+            if (wasteTypesResponse.isSuccess && wasteTypesResponse.data) {
+                const wasteTypes = wasteTypesResponse.data;
+                wasteTypes.forEach(wasteType => {
+                    $('#convertDumpsiteWasteType').append(new Option(wasteType.name, wasteType.id));
+                });
+            } else {
+                console.error("Failed to load waste types");
+            }
+
+            // Fetch Risk Levels
+            const riskLevelsResponse = await $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetRiskLevels", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                dataType: "json"
+            });
+
+            if (riskLevelsResponse.isSuccess && riskLevelsResponse.data) {
+                const riskLevels = riskLevelsResponse.data;
+                riskLevels.forEach(riskLevel => {
+                    $('#convertDumpsiteRiskLevel').append(new Option(riskLevel.name, riskLevel.id));
+                });
+            } else {
+                console.error("Failed to load risk levels");
+            }
+        } catch (error) {
+            console.error("Error loading dropdown data:", error);
         }
+    }
+
 
         function showNoHistoricDataWarning() {
             var originalZIndex = $('#map-sidebar').css('z-index');
@@ -912,6 +956,27 @@
             var geoJsonFormat = new ol.format.GeoJSON();
             var feature = geoJsonFormat.readFeature(geoJsonObject);
             var formattedGeoJson = geoJsonFormat.writeFeature(feature);
+
+            // Check for overlaps with existing registered dumpsites
+            var overlaps = checkForOverlapsInHistoricData(feature);
+            
+            if (overlaps.length > 0) {
+                // Close convert modal and show overlap resolution
+                closeConvertDumpsiteModal();
+                
+                var convertDumpsiteData = {
+                    name: name,
+                    description: description,
+                    wasteTypeId: wasteTypeId,
+                    riskLevelId: riskLevelId,
+                    isEnabled: isEnabled,
+                    geometry: feature.getGeometry(),
+                    geoJson: formattedGeoJson
+                };
+                
+                showConvertOverlapModal(convertDumpsiteData, overlaps);
+                return;
+            }
 
             $.ajax({
                 type: "POST",
@@ -1016,6 +1081,342 @@
             }).then(() => {
                 $("#convertDumpsiteModal").modal('show');
             });
+        }
+
+        // Overlap detection functions for HistoricData
+        function checkForOverlapsInHistoricData(newFeature) {
+            var dumpsitesLayer = mapVars.map.getLayers().getArray().find(layer =>
+                layer instanceof ol.layer.Vector && layer.get('title') === 'Registered Dumpsites'
+            );
+
+            if (!dumpsitesLayer) return [];
+
+            var overlaps = [];
+            var newGeometry = newFeature.getGeometry();
+            var features = dumpsitesLayer.getSource().getFeatures();
+
+            features.forEach(function(feature) {
+                var existingGeometry = feature.getGeometry();
+                if (newGeometry.intersectsExtent(existingGeometry.getExtent())) {
+                    overlaps.push({
+                        feature: feature,
+                        id: feature.get('id'),
+                        name: feature.get('dumpsiteName')
+                    });
+                }
+            });
+
+            return overlaps;
+        }
+
+        function showConvertOverlapModal(convertDumpsiteData, overlaps) {
+            var modalHtml = `
+                <div class="modal fade" id="convertOverlapModal" tabindex="-1" role="dialog" aria-labelledby="convertOverlapModalLabel" aria-hidden="true" style="z-index:2100;">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="convertOverlapModalLabel">@DbResHtml.T("Dumpsite Overlap Detected", "Resources")</h5>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    @DbResHtml.T("The detected dumpsite overlaps with existing registered dumpsites. Please choose how to proceed:", "Resources")
+                                </div>
+                                <div id="convertOverlapDetails" class="mb-3">
+                                    <h6>@DbResHtml.T("Overlapping Dumpsites:", "Resources")</h6>
+                                    <ul>`;
+            
+            overlaps.forEach(function(overlap) {
+                modalHtml += '<li><strong>' + overlap.name + '</strong> (ID: ' + overlap.id + ')</li>';
+            });
+            
+            modalHtml += `</ul>
+                                    <div class="form-group mt-3" id="convertMergeTargetSelection" style="display: none;">
+                                        <label for="convertMergeTargetSelect"><strong>@DbResHtml.T("Select which dumpsite properties to keep:", "Resources")</strong></label>
+                                        <select class="form-control" id="convertMergeTargetSelect">
+                                            <option value="new">@DbResHtml.T("New Detection Properties", "Resources") (` + convertDumpsiteData.name + `)</option>`;
+            
+            overlaps.forEach(function(overlap) {
+                modalHtml += '<option value="' + overlap.id + '">' + overlap.name + '</option>';
+            });
+            
+            modalHtml += `</select>
+                                        <small class="form-text text-muted">@DbResHtml.T("The selected dumpsite properties will be preserved, others will be deleted.", "Resources")</small>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card border-primary">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-object-group fa-2x text-primary mb-2"></i>
+                                                <h6>@DbResHtml.T("Merge", "Resources")</h6>
+                                                <p class="small">@DbResHtml.T("Combine with overlapping dumpsites into one", "Resources")</p>
+                                                <button type="button" class="btn btn-primary btn-sm" onclick="resolveConvertOverlap('merge')">
+                                                    @DbResHtml.T("Merge Dumpsites", "Resources")
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card border-success">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-save fa-2x text-success mb-2"></i>
+                                                <h6>@DbResHtml.T("Keep Separate", "Resources")</h6>
+                                                <p class="small">@DbResHtml.T("Keep existing dumpsites and add new one", "Resources")</p>
+                                                <button type="button" class="btn btn-success btn-sm" onclick="resolveConvertOverlap('separate')">
+                                                    @DbResHtml.T("Keep Separate", "Resources")
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="cancelConvertOverlapResolution()">@DbResHtml.T("Cancel", "Resources")</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            $('body').append(modalHtml);
+            
+            // Store data globally for the resolution functions
+            window.pendingConvertData = convertDumpsiteData;
+            window.convertOverlappingDumpsites = overlaps;
+            
+            $('#convertOverlapModal').modal({
+                backdrop: 'static',
+                keyboard: false
+            });
+            $('#convertOverlapModal').modal('show');
+        }
+
+        function resolveConvertOverlap(action) {
+            if (action === 'merge') {
+                $('#convertMergeTargetSelection').show();
+                $('[onclick="resolveConvertOverlap(\'merge\')"]')
+                    .text('@DbResHtml.T("Confirm Merge", "Resources")')
+                    .attr('onclick', 'confirmConvertMergeWithTarget()')
+                    .removeClass('btn-primary')
+                    .addClass('btn-warning');
+            } else if (action === 'separate') {
+                performConvertSeparateOperation();
+            }
+        }
+
+        function confirmConvertMergeWithTarget() {
+            var selectedTarget = $('#convertMergeTargetSelect').val();
+            if (!selectedTarget) {
+                alert('@DbResHtml.T("Please select which properties to keep", "Resources")');
+                return;
+            }
+            performConvertMergeOperation(selectedTarget);
+        }
+
+        function performConvertMergeOperation(targetId) {
+            var originalZIndex = $('#map-sidebar').css('z-index');
+            var idsToMerge = window.convertOverlappingDumpsites.map(function(overlap) {
+                return overlap.id;
+            });
+
+            var mergeData;
+            if (targetId === 'new') {
+                mergeData = {
+                    Name: window.pendingConvertData.name,
+                    Description: window.pendingConvertData.description,
+                    RegisteredDumpsiteWasteTypeId: window.pendingConvertData.wasteTypeId,
+                    RegisteredDumpsiteRiskLevelId: window.pendingConvertData.riskLevelId,
+                    EnteredZonePolygon: window.pendingConvertData.geoJson,
+                    IsEnabled: window.pendingConvertData.isEnabled,
+                    CreatedById: null
+                };
+            } else {
+                var targetDumpsite = window.convertOverlappingDumpsites.find(o => o.id === targetId);
+                if (!targetDumpsite) {
+                    Swal.fire({
+                        text: '@DbResHtml.T("Target dumpsite not found", "Resources")',
+                        icon: "error"
+                    });
+                    return;
+                }
+
+                mergeData = {
+                    Name: targetDumpsite.feature.get('dumpsiteName'),
+                    Description: targetDumpsite.feature.get('description') || '',
+                    RegisteredDumpsiteWasteTypeId: targetDumpsite.feature.get('wasteTypeId'),
+                    RegisteredDumpsiteRiskLevelId: targetDumpsite.feature.get('riskLevelId'),
+                    EnteredZonePolygon: window.pendingConvertData.geoJson,
+                    IsEnabled: targetDumpsite.feature.get('isEnabled'),
+                    CreatedById: null
+                };
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("MergeRegisteredDumpsites", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                data: JSON.stringify({
+                    NewDumpsiteData: mergeData,
+                    ExistingDumpsiteIds: idsToMerge,
+                    TargetDumpsiteId: targetId === 'new' ? null : targetId
+                }),
+                contentType: "application/json",
+                success: function(data) {
+                    closeConvertOverlapModal();
+                    if (data.isSuccess) {
+                        Swal.fire({
+                            text: '@DbResHtml.T("Detection converted and merged successfully", "Resources")',
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            didOpen: () => {
+                                manageMapSidebarZIndex(originalZIndex, '1040');
+                            },
+                            willClose: () => {
+                                manageMapSidebarZIndex(originalZIndex, '1040');
+                            },
+                            allowOutsideClick: false,
+                            icon: "success"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                if (typeof getAllRegisteredDumpsites === 'function') {
+                                    getAllRegisteredDumpsites();
+                                }
+                                if (typeof generateRegisteredDumpsitesTable === 'function') {
+                                    generateRegisteredDumpsitesTable();
+                                }
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            text: data.errMsg || '@DbResHtml.T("Merge operation failed", "Resources")',
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            didOpen: () => {
+                                manageMapSidebarZIndex(originalZIndex, '1040');
+                            },
+                            willClose: () => {
+                                manageMapSidebarZIndex(originalZIndex, '1040');
+                            },
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function() {
+                    closeConvertOverlapModal();
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occurred during merge operation", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        didOpen: () => {
+                            manageMapSidebarZIndex(originalZIndex, '1040');
+                        },
+                        willClose: () => {
+                            manageMapSidebarZIndex(originalZIndex, '1040');
+                        },
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+        function performConvertSeparateOperation() {
+            var originalZIndex = $('#map-sidebar').css('z-index');
+            
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("AddRegisteredDumpsite", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
+                data: JSON.stringify({
+                    Name: window.pendingConvertData.name,
+                    Description: window.pendingConvertData.description,
+                    RegisteredDumpsiteWasteTypeId: window.pendingConvertData.wasteTypeId,
+                    RegisteredDumpsiteRiskLevelId: window.pendingConvertData.riskLevelId,
+                    EnteredZonePolygon: window.pendingConvertData.geoJson,
+                    IsEnabled: window.pendingConvertData.isEnabled
+                }),
+                contentType: "application/json",
+                success: function (data) {
+                    closeConvertOverlapModal();
+                    if (data != undefined && data != null) {
+                        if (data.isSuccess == false && data.errMsg != null) {
+                            Swal.fire({
+                                text: `${data.errMsg}`,
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                didOpen: () => {
+                                    manageMapSidebarZIndex(originalZIndex, '1040');
+                                },
+                                willClose: () => {
+                                    manageMapSidebarZIndex(originalZIndex, '1040');
+                                },
+                                allowOutsideClick: false,
+                                icon: "error"
+                            });
+                        }
+                        else {
+                            Swal.fire({
+                                text: '@DbResHtml.T("Detected dumpsite converted successfully", "Resources")',
+                                confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                                didOpen: () => {
+                                    manageMapSidebarZIndex(originalZIndex, '1040');
+                                },
+                                willClose: () => {
+                                    manageMapSidebarZIndex(originalZIndex, '1040');
+                                },
+                                allowOutsideClick: false,
+                                icon: "success"
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    if (typeof getAllRegisteredDumpsites === 'function') {
+                                        getAllRegisteredDumpsites();
+                                    }
+                                    if (typeof generateRegisteredDumpsitesTable === 'function') {
+                                        generateRegisteredDumpsitesTable();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        Swal.fire({
+                            text: `@DbResHtml.T("No data received", "Resources")`,
+                            confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                            didOpen: () => {
+                                manageMapSidebarZIndex(originalZIndex, '1040');
+                            },
+                            willClose: () => {
+                                manageMapSidebarZIndex(originalZIndex, '1040');
+                            },
+                            allowOutsideClick: false,
+                            icon: "error"
+                        });
+                    }
+                },
+                error: function () {
+                    closeConvertOverlapModal();
+                    Swal.fire({
+                        text: '@DbResHtml.T("Error occurred while converting", "Resources")',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
+                        didOpen: () => {
+                            manageMapSidebarZIndex(originalZIndex, '1040');
+                        },
+                        willClose: () => {
+                            manageMapSidebarZIndex(originalZIndex, '1040');
+                        },
+                        allowOutsideClick: false,
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+        function closeConvertOverlapModal() {
+            $('#convertOverlapModal').modal('hide');
+            setTimeout(() => {
+                $('#convertOverlapModal').remove();
+                window.pendingConvertData = null;
+                window.convertOverlappingDumpsites = [];
+            }, 300);
+        }
+
+        function cancelConvertOverlapResolution() {
+            closeConvertOverlapModal();
         }
     });
 

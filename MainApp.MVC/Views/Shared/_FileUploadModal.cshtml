@@ -145,6 +145,71 @@
     </div>
 </div>
 
+<!-- Inspection File Upload Modal -->
+<div class="modal fade" id="inspectionFileUploadModal" tabindex="-1" role="dialog" aria-labelledby="inspectionFileUploadModalLabel" aria-hidden="true" style="z-index:2200;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inspectionFileUploadModalLabel">
+                    <i class="fas fa-upload"></i> @DbResHtml.T("Upload Inspection File", "Resources")
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="inspectionFileUploadForm" enctype="multipart/form-data">
+                    <input type="hidden" id="uploadInspectionId" />
+                    <div class="form-group">
+                        <label for="inspectionFileInput">@DbResHtml.T("Select File", "Resources")</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="inspectionFileInput" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt,.xlsx,.xls">
+                            <label class="custom-file-label" for="inspectionFileInput">@DbResHtml.T("Choose file", "Resources")</label>
+                        </div>
+                        <small class="form-text text-muted">
+                            @DbResHtml.T("Supported formats: PDF, Word, Images, Excel, Text files", "Resources")
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="inspectionFileDescription">@DbResHtml.T("Description", "Resources") (@DbResHtml.T("Optional", "Resources"))</label>
+                        <textarea class="form-control" id="inspectionFileDescription" rows="3" placeholder="@DbResHtml.T("Add a description for this inspection file", "Resources")"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@DbResHtml.T("Cancel", "Resources")</button>
+                <button type="button" class="btn btn-primary" onclick="uploadInspectionFile()">
+                    <i class="fas fa-upload"></i> @DbResHtml.T("Upload", "Resources")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inspection Files View Modal -->
+<div class="modal fade" id="inspectionFilesModal" tabindex="-1" role="dialog" aria-labelledby="inspectionFilesModalLabel" aria-hidden="true" style="z-index:2200;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="inspectionFilesModalLabel">
+                    <i class="fas fa-file"></i> @DbResHtml.T("Inspection Files", "Resources")
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="inspectionFilesContent">
+                    <!-- Files will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@DbResHtml.T("Close", "Resources")</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
        // Updated JavaScript for modals with proper toast notifications and fixes
 
@@ -208,8 +273,14 @@
                                 <tr><td><strong>Inspector:</strong></td><td>${inspection.inspector?.userName || 'Not Assigned'}</td></tr>
                                 <tr><td><strong>Status:</strong></td><td>${inspection.status}</td></tr>
                                 <tr><td><strong>Inspection Date:</strong></td><td>${inspection.inspectionDate || '-'}</td></tr>
-                                <tr><td><strong>Findings:</strong></td><td>${inspection.findings || '-'}</td></tr>
-                                <tr><td><strong>Recommendations:</strong></td><td>${inspection.recommendations || '-'}</td></tr>
+                                <tr>
+                                    <td><strong>Findings:</strong></td>
+                                    <td class="text-wrap text-break" style="max-height: 300px; overflow-y: auto;">${inspection.findings || '-'}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Recommendations:</strong></td>
+                                    <td class="text-wrap text-break" style="max-height: 300px; overflow-y: auto;">${inspection.recommendations || '-'}</td>
+                                </tr>
                                 <tr><td><strong>Notes:</strong></td><td>${inspection.notes || '-'}</td></tr>
                             </table>
                         </div>
@@ -412,6 +483,152 @@
         location.reload();
     }
 
+
+    function showInspectionFileUploadModal(inspectionId) {
+        // First check if user is assigned to this inspection
+        $.get('@Url.Action("CheckInspectionAssignment", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { inspectionId: inspectionId })
+            .done(function(result) {
+                if (result.isSuccess && result.data) {
+                    $('#uploadInspectionId').val(inspectionId);
+                    $('#inspectionFileInput').val('');
+                    $('#inspectionFileDescription').val('');
+                    $('.custom-file-label').text('Choose file');
+                    $('#inspectionFileUploadModal').modal('show');
+                } else {
+                    notifyAlerts('error', 'You are not assigned to this inspection');
+                }
+            })
+            .fail(function() {
+                notifyAlerts('error', 'Error checking inspection assignment');
+            });
+    }
+
+    function uploadInspectionFile() {
+        var formData = new FormData();
+        var fileInput = document.getElementById('inspectionFileInput');
+        var inspectionId = $('#uploadInspectionId').val();
+        var description = $('#inspectionFileDescription').val();
+
+        if (fileInput.files.length === 0) {
+            notifyAlerts("error", "Please select a file");
+            return;
+        }
+
+        formData.append('file', fileInput.files[0]);
+        formData.append('inspectionId', inspectionId);
+        formData.append('description', description);
+
+        $.ajax({
+            url: '@Url.Action("UploadInspectionFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(result) {
+                if (result.isSuccess) {
+                    notifyAlerts("success", "Inspection file uploaded successfully");
+                    $('#inspectionFileUploadModal').modal('hide');
+                    refreshDumpsiteDetails();
+                } else {
+                    notifyAlerts('error', result.errMsg);
+                }
+            },
+            error: function() {
+                notifyAlerts("error", "Error uploading inspection file");
+            }
+        });
+    }
+
+    function viewInspectionFiles(inspectionId) {
+        $.get('@Url.Action("GetInspectionFiles", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { inspectionId: inspectionId })
+            .done(function(result) {
+                if (result.isSuccess) {
+                    displayInspectionFiles(result.data);
+                    $('#inspectionFilesModal').modal('show');
+                } else {
+                    notifyAlerts('error', result.errMsg || 'Error loading inspection files');
+                }
+            })
+            .fail(function() {
+                notifyAlerts('error', 'Error loading inspection files');
+            });
+    }
+
+    function displayInspectionFiles(files) {
+        var content = $('#inspectionFilesContent');
+        content.empty();
+
+        if (files && files.length > 0) {
+            var filesList = '<div class="list-group">';
+
+            files.forEach(function(file) {
+                filesList += `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">${file.originalFileName}</h6>
+                                <small class="text-muted">Uploaded: ${new Date(file.createdOn).toLocaleDateString()}</small>
+                                ${file.description ? `<br><small class="text-info">${file.description}</small>` : ''}
+                                <br><small class="text-muted">By: ${file.createdBy?.userName || 'Unknown'}</small>
+                            </div>
+                            <div class="btn-group">
+                                <a href="@Url.Action("DownloadInspectionFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })?fileId=${file.id}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteInspectionFile('${file.id}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            filesList += '</div>';
+            content.html(filesList);
+        } else {
+            content.html('<p class="text-muted text-center">No inspection files uploaded yet</p>');
+        }
+    }
+
+    function deleteInspectionFile(fileId) {
+        notifyAlerts('popup-warning-delete', 'Are you sure you want to delete this inspection file?', 'Delete File')
+            .then(function(confirmed) {
+                if (confirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteInspectionFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })/' + fileId,
+                        type: 'DELETE',
+                        success: function(result) {
+                            if (result.isSuccess) {
+                                notifyAlerts('success', 'Inspection file deleted successfully');
+                                // Refresh the files display if modal is open
+                                if ($('#inspectionFilesModal').hasClass('show')) {
+                                    var inspectionId = $('#uploadInspectionId').val();
+                                    if (inspectionId) {
+                                        viewInspectionFiles(inspectionId);
+                                    }
+                                }
+                                refreshDumpsiteDetails();
+                            } else {
+                                notifyAlerts('error', result.errMsg);
+                            }
+                        },
+                        error: function() {
+                            notifyAlerts('error', 'Error deleting inspection file');
+                        }
+                    });
+                }
+            });
+    }
+
+    // Update file input label for inspection files
+    $(document).ready(function() {
+        $('#inspectionFileInput').on('change', function() {
+            var fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').text(fileName || 'Choose file');
+        });
+    });
     // File input label update
     $(document).ready(function() {
         $('#fileInput').on('change', function() {
