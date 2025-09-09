@@ -244,20 +244,30 @@
 
 @await Html.PartialAsync("_FileUploadModal");
 
+<script src="~/js/notification-helpers.js" asp-append-version="true"></script>
 
 <script type="text/javascript">
     function showDumpsiteInfo(dumpsiteId) {
         if (!dumpsiteId) return;
 
+        $('#dumpsiteDetailsModal').data('dumpsite-id', dumpsiteId);
         $('#dumpsiteDetailsModal .modal-body').html('<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
         $('#dumpsiteDetailsModal').modal('show');
 
-    $.get('@Url.Action("GetDumpsiteDetailsPartial", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { dumpsiteId: dumpsiteId })
+        refreshDumpsiteDetails(dumpsiteId);
+    }
+
+
+
+        function refreshDumpsiteDetails(dumpsiteId) {
+        $('#dumpsiteDetailsModal .modal-body').html('<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Refreshing...</div>');
+
+        $.get('@Url.Action("GetDumpsiteDetailsPartial", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { dumpsiteId: dumpsiteId })
             .done(function (result) {
                 $('#dumpsiteDetailsModal .modal-body').html(result);
             })
             .fail(function () {
-                $('#dumpsiteDetailsModal .modal-body').html('<div class="alert alert-danger">Error loading dumpsite details.</div>');
+                $('#dumpsiteDetailsModal .modal-body').html('<div class="alert alert-danger">Error refreshing dumpsite details.</div>');
             });
     }
 

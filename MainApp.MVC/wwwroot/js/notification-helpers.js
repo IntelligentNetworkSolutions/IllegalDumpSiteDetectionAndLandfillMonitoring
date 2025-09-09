@@ -1,17 +1,4 @@
-﻿const Toast = Swal.mixin({
-    toast: true,
-    position: "top-end",
-    icon: "success",
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-    didOpen: (toast) => {
-        toast.onmouseenter = defaultPopup.fire.stopTimer;
-        toast.onmouseleave = defaultPopup.fire.resumeTimer;
-    }
-});
-
-const defaultPopup = Swal.mixin({
+﻿const defaultPopup = Swal.mixin({
     customClass: {
         confirmButton: "btn btn-lg btn-success",
         cancelButton: "btn btn-lg btn-default me-2"
@@ -22,6 +9,19 @@ const defaultPopup = Swal.mixin({
     cancelButtonText: jsRes(`Cancel`),
     showCancelButton: false,
     reverseButtons: true
+});
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    icon: "success",
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.onmouseenter = defaultPopup.fire.stopTimer;
+        toast.onmouseleave = defaultPopup.fire.resumeTimer;
+    }
 });
 
 let popupQueue = Promise.resolve();
