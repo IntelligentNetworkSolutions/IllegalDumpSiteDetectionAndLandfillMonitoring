@@ -24,14 +24,21 @@ public class InspectionPwaController : Controller
     {
         var domain = _configuration.GetValue<string>("DomainSettings:MainDomain");
         var appPath = _configuration.GetValue<string>("DomainSettings:MainAppPath", "");
-        var manifestFile = _configuration.GetValue<string>("AppInstanceSettings:InstanceName", "manifest"); // Fallback if not found
+        var pwaAppPath = _configuration.GetValue<string>("DomainSettings:PwaAppPath", "PWA");
+        var manifestFile = _configuration.GetValue<string>("AppInstanceSettings:InstanceName", "WasteDetection");
+        var appStartupMode = _configuration.GetValue<string>("ApplicationStartupMode");
 
         appPath = !string.IsNullOrWhiteSpace(appPath) ? "/" + appPath.Trim('/') : "";
 
-        ViewData["AppPath"] = appPath;
-        ViewData["FullAppUrl"] = $"https://{domain}{appPath}";
+        var baseUrl = HttpContext.Request.IsHttps ? "https://" : "http://";
+        var fullDomain = $"{baseUrl}{domain}";
 
-        HttpContext.Response.Headers["Content-Type"] = "application/json";
+        ViewData["AppPath"] = appPath;
+        ViewData["PwaAppPath"] = pwaAppPath;
+        ViewData["FullAppUrl"] = $"/IntranetPortal/InspectionPwa/";
+        ViewData["InstanceName"] = manifestFile;
+
+        Response.Headers.Add("Content-Type", "application/json");
         return View($"Manifest/{manifestFile}");
     }
 
@@ -41,14 +48,19 @@ public class InspectionPwaController : Controller
     {
         var domain = _configuration.GetValue<string>("DomainSettings:MainDomain");
         var appPath = _configuration.GetValue<string>("DomainSettings:MainAppPath", "");
+        var appStartupMode = _configuration.GetValue<string>("ApplicationStartupMode");
+        var instanceName = _configuration.GetValue<string>("AppInstanceSettings:InstanceName", "WasteDetection");
 
         appPath = !string.IsNullOrWhiteSpace(appPath) ? "/" + appPath.Trim('/') : "";
 
-        ViewData["AppPath"] = appPath;
-        ViewData["FullAppUrl"] = $"https://{domain}{appPath}";
+        // For local development vs production
+        var baseUrl = HttpContext.Request.IsHttps ? "https://" : "http://";
+        var fullDomain = $"{baseUrl}{domain}";
 
-        HttpContext.Response.Headers["Content-Type"] = "text/javascript";
+        ViewData["AppPath"] = $"{fullDomain}";
+        ViewData["InstanceName"] = instanceName;
+
+        Response.Headers.Add("Content-Type", "text/javascript");
         return View();
     }
-
 }

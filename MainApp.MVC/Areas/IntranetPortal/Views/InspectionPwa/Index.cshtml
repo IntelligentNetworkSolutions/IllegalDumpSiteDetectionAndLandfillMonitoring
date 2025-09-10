@@ -1,1 +1,169 @@
-﻿<h1>Hello</h1>
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste Detection PWA</title>
+
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="@Url.Action("ManifestJson", "InspectionPwa", new { area = "IntranetPortal" })">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Waste Detection">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="72x72" href="~/PWA/images/icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="~/PWA/images/icons/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="~/PWA/images/icons/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="~/PWA/images/icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="~/PWA/images/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="~/PWA/images/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="~/PWA/images/icons/icon-384x384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="~/PWA/images/icons/icon-512x512.png">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .install-prompt {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .install-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+            .install-btn:hover {
+                background: #45a049;
+            }
+
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Waste Detection PWA</h1>
+        <p>Progressive Web App for Waste Detection and Monitoring</p>
+
+        <div id="installPrompt" class="install-prompt">
+            <p>📱 Install this app for a better experience!</p>
+            <button id="installBtn" class="install-btn">Install App</button>
+        </div>
+
+        <div id="status" class="status">
+            <p>Checking PWA status...</p>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <a href="@Url.Action("Index", "Map", new { area = "IntranetPortal" })"
+               style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 5px; display: inline-block;">
+                🗺️ Go to Map
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installBtn = document.getElementById('installBtn');
+        const status = document.getElementById('status');
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('@Url.Action("ServiceWorker", "InspectionPwa", new { area = "IntranetPortal" })')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                        updateStatus('✅ Service Worker registered successfully');
+
+                        // Check if app is already installed
+                        if (window.matchMedia('(display-mode: standalone)').matches ||
+                            window.navigator.standalone === true) {
+                            updateStatus('✅ App is already installed');
+                        }
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                        updateStatus('❌ Service Worker registration failed');
+                    });
+            });
+        } else {
+            updateStatus('❌ Service Worker not supported');
+        }
+
+        // Handle install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installPrompt.style.display = 'block';
+            updateStatus('📱 App ready to install');
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installPrompt.style.display = 'none';
+
+                if (outcome === 'accepted') {
+                    updateStatus('✅ App installed successfully');
+                } else {
+                    updateStatus('❌ App installation cancelled');
+                }
+            }
+        });
+
+        // Handle app installed
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was installed');
+            updateStatus('✅ App installed successfully');
+            installPrompt.style.display = 'none';
+        });
+
+        function updateStatus(message) {
+            status.innerHTML = `<p>${message}</p>`;
+        }
+
+        // Initial status check
+        setTimeout(() => {
+            if (status.innerHTML.includes('Checking')) {
+                if ('serviceWorker' in navigator) {
+                    updateStatus('🔄 PWA features loading...');
+                } else {
+                    updateStatus('⚠️ PWA features not fully supported in this browser');
+                }
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
