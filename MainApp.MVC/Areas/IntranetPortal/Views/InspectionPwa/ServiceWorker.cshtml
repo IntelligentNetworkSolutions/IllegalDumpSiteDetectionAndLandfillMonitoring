@@ -1,176 +1,96 @@
 ﻿@{
     Layout = null;
-    Context.Response.ContentType = "text/javascript";
 }
-const staticWasteDetection = "waste-detection-pwa-v1";
+const staticNexus = "waste-detection-pwa-v3";
 const appPath = "@ViewData["AppPath"]";
-const appInstanceName = "@ViewData["InstanceName"]";
 
+// Only cache essential PWA resources
 const assets = [
-    appPath + "/",
-    appPath + "/IntranetPortal/InspectionPwa/",
-    appPath + "/IntranetPortal/Map/Index",
-    appPath + "/PWA/images/icons/icon-72x72.png",
-    appPath + "/PWA/images/icons/icon-96x96.png",
-    appPath + "/PWA/images/icons/icon-128x128.png",
-    appPath + "/PWA/images/icons/icon-144x144.png",
-    appPath + "/PWA/images/icons/icon-152x152.png",
-    appPath + "/PWA/images/icons/icon-192x192.png",
-    appPath + "/PWA/images/icons/icon-384x384.png",
-    appPath + "/PWA/images/icons/icon-512x512.png"
+    "/IntranetPortal/InspectionPwa/"
 ];
 
-// Clear outdated cache
-self.addEventListener('activate', function(event) {
-    console.log('Service Worker activating...');
+// Install event
+self.addEventListener("install", installEvent => {
+    console.log("Service Worker installing...");
+    installEvent.waitUntil(
+        caches.open(staticNexus)
+            .then(cache => {
+                console.log("Opened cache");
+                return Promise.allSettled(
+                    assets.map(asset => {
+                        return cache.add(asset)
+                            .then(() => console.log(`✅ Cached: ${asset}`))
+                            .catch(error => {
+                                console.warn(`❌ Failed to cache ${asset}:`, error);
+                            });
+                    })
+                );
+            })
+            .then(() => {
+                console.log("✅ Service Worker installed successfully");
+                return self.skipWaiting();
+            })
+            .catch(error => {
+                console.error("❌ Service Worker installation failed:", error);
+            })
+    );
+});
+
+// Activate event - Clean up old caches
+self.addEventListener('activate', event => {
+    console.log("Service Worker activating...");
     event.waitUntil(
-        caches.keys().then(function(cacheNames) {
+        caches.keys().then(cacheNames => {
             return Promise.all(
-                cacheNames.filter(function(cacheName) {
-                    // Remove old caches
-                    return cacheName !== staticWasteDetection;
-                }).map(function(cacheName) {
-                    console.log('Deleting old cache:', cacheName);
-                    return caches.delete(cacheName);
-                })
+                cacheNames
+                    .filter(cacheName => {
+                        return cacheName.startsWith('waste-detection-pwa-') && cacheName !== staticNexus;
+                    })
+                    .map(cacheName => {
+                        console.log(`🗑️ Deleting old cache: ${cacheName}`);
+                        return caches.delete(cacheName);
+                    })
             );
         }).then(() => {
-            console.log('Service Worker activated');
+            console.log("✅ Service Worker activated");
             return self.clients.claim();
         })
     );
 });
 
-// Install event
-self.addEventListener("install", installEvent => {
-    console.log('Service Worker installing...');
-    installEvent.waitUntil(
-        caches.open(staticWasteDetection).then(cache => {
-            console.log('Caching app shell');
-            return cache.addAll(assets).catch(err => {
-                console.error('Failed to cache assets:', err);
-                // Continue without failing the installation
-                return Promise.resolve();
-            });
-        }).then(() => {
-            console.log('Service Worker installed');
-            return self.skipWaiting();
-        })
-    );
-});
-
-// Fetch event
+// Fetch event - Network first strategy
 self.addEventListener("fetch", fetchEvent => {
-    // Only handle same-origin requests
-    if (fetchEvent.request.url.startsWith(self.location.origin)) {
-        fetchEvent.respondWith(
-            caches.match(fetchEvent.request).then(response => {
-                if (response) {
-                    console.log('Serving from cache:', fetchEvent.request.url);
-                    return response;
-                }
+    const url = new URL(fetchEvent.request.url);
 
-                console.log('Fetching from network:', fetchEvent.request.url);
-                return fetch(fetchEvent.request).then(networkResponse => {
-                    // Cache successful GET requests
-                    if (fetchEvent.request.method === 'GET' && networkResponse.status === 200) {
-                        const responseClone = networkResponse.clone();
-                        caches.open(staticWasteDetection).then(cache => {
+    // Only handle PWA app requests
+    if (url.pathname.startsWith('/IntranetPortal/InspectionPwa/')) {
+        fetchEvent.respondWith(
+            fetch(fetchEvent.request)
+                .then(response => {
+                    if (response.ok) {
+                        const responseClone = response.clone();
+                        caches.open(staticNexus).then(cache => {
                             cache.put(fetchEvent.request, responseClone);
                         });
                     }
-                    return networkResponse;
-                }).catch(err => {
-                    console.error('Fetch failed:', err);
-                    // Return a fallback response for navigation requests
-                    if (fetchEvent.request.mode === 'navigate') {
-                        return caches.match(appPath + "/");
-                    }
-                    throw err;
-                });
-            })
+                    return response;
+                })
+                .catch(() => {
+                    return caches.match(fetchEvent.request)
+                        .then(cachedResponse => {
+                            if (cachedResponse) {
+                                console.log(`📦 Served from cache: ${fetchEvent.request.url}`);
+                                return cachedResponse;
+                            }
+                            if (fetchEvent.request.destination === 'document') {
+                                return new Response(
+                                    '<h1>Offline</h1><p>This page is not available offline.</p>',
+                                    { headers: { 'Content-Type': 'text/html' } }
+                                );
+                            }
+                            return new Response('Network error', { status: 408 });
+                        });
+                })
         );
     }
 });
-
-// Handle push event
-self.addEventListener('push', function(event) {
-    console.log('Push event received');
-    let data = {
-        title: appInstanceName,
-        body: 'New notification from Waste Detection',
-        url: appPath + "/IntranetPortal/Map/Index"
-    };
-
-    if (event.data) {
-        try {
-            data = event.data.json();
-        } catch (e) {
-            console.error('Error parsing push data:', e);
-        }
-    }
-
-    const options = {
-        body: data.body,
-        icon: appPath + '/PWA/images/icons/icon-128x128.png',
-        badge: appPath + '/PWA/images/icons/icon-72x72.png',
-        data: {
-            url: data.url
-        },
-        actions: [
-            {
-                action: 'view',
-                title: 'View',
-                icon: appPath + '/PWA/images/icons/icon-72x72.png'
-            },
-            {
-                action: 'close',
-                title: 'Close'
-            }
-        ]
-    };
-
-    event.waitUntil(
-        self.registration.showNotification(data.title, options)
-    );
-});
-
-// Handle notification click
-self.addEventListener('notificationclick', function(event) {
-    console.log('Notification clicked:', event.action);
-    event.notification.close();
-
-    if (event.action === 'close') {
-        return;
-    }
-
-    const url = event.notification.data.url || appPath + "/IntranetPortal/Map/Index";
-
-    event.waitUntil(
-        clients.matchAll({
-            type: 'window',
-            includeUncontrolled: true
-        }).then(clientList => {
-            // Focus existing window if open
-            for (const client of clientList) {
-                if (client.url.includes(url) && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            // Open new window if none exists
-            if (clients.openWindow) {
-                return clients.openWindow(url);
-            }
-        })
-    );
-});
-
-// Handle skip waiting
-self.addEventListener('message', function(event) {
-    console.log('Message received:', event.data);
-    if (event.data && event.data.action === 'skipWaiting') {
-        self.skipWaiting();
-    }
-});
-
-console.log('Service Worker script loaded');

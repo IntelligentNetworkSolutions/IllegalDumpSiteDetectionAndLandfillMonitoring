@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="~/css/Views/map.css">
     <link rel="stylesheet" href="~/css/ViewComponents/map-view-component.css">
 }
+
 <div class="container-fluid p-0">
     <div class="row m-0">
         <div class="col-xl-12 p-0">
@@ -27,11 +28,11 @@
                 @await Component.InvokeAsync("HistoricData", new { detectionRunId = Model})
                 @await Component.InvokeAsync("DetectionIgnoreZonesTool")
                 @await Component.InvokeAsync("DetectionInputImagesTool")
-                
             </div>
         </div>
     </div>
 </div>
+
 @section Scripts{
     <script src="~/vendor/proj4/dist/proj4-src.js"></script>
     <script src="~/vendor/ol/dist/ol.js"></script>

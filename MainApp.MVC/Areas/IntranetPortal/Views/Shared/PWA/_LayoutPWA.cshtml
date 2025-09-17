@@ -1,5 +1,517 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@using MainApp.MVC.Filters;
+@using MainApp.MVC.Helpers;
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>@ViewData["Title"] - Waste Detection PWA</title>
+    <link rel="icon" type="image/x-icon" href="~/logo.png" asp-append-version="true">
+
+    <!-- Essential CSS -->
+    <link rel="stylesheet" href="~/vendor/typeface-source-sans-pro/index.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/fontawesome-free/css/all.min.css">
+    <link rel="stylesheet" href="~/vendor/font-gis/css/font-gis.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/jquery-ui/jquery-ui.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/select2/css/select2.min.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/daterangepicker/daterangepicker.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/dist/css/adminlte.css">
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css">
+    <link rel="stylesheet" href="~/vendor//cropperjs/dist/cropper.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/vendor/paginationjs/dist/pagination.css" />
+    <link rel="stylesheet" href="~/vendor/admin-lte/plugins/ion-rangeslider/css/ion.rangeSlider.min.css">
+    <link rel="stylesheet" href="~/css/sidebar.css">
+
+
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/IntranetPortal/InspectionPwa/ManifestJson">
+
+    <!-- Essential PWA Meta Tags -->
+    <meta name="theme-color" content="#28a745">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="WasteDetection">
+    <meta name="application-name" content="WasteDetection">
+    <meta name="msapplication-TileColor" content="#28a745">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/InspectionPwa/images/icons/icon-128x128.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/InspectionPwa/images/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="/InspectionPwa/images/icons/icon-192x192.png">
+
+    <!-- PWA Styles -->
+    <style>
+        .pwa-layout {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .pwa-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            background: #28a745 !important;
+            border: none;
+            height: 56px;
+            display: flex;
+            align-items: center;
+        }
+
+        .pwa-content {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+
+        .pwa-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: 500;
+            font-size: 18px;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            font-size: 18px;
+            padding: 8px 12px;
+        }
+
+            .navbar-nav .nav-link:hover {
+                color: white !important;
+            }
+
+        /* Hide elements not needed in PWA */
+        .main-sidebar,
+        .control-sidebar {
+            display: none;
+        }
+    </style>
+
+    @if (IsSectionDefined("Styles"))
+    {
+        @RenderSection("Styles", required: false)
+    }
+</head>
+<body class="pwa-layout">
+    <!-- Essential Scripts -->
+    <script src="~/InspectionPwa/js/app.js"></script>
+    <script src="~/vendor/admin-lte/plugins/jquery/jquery.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/jquery-ui/jquery-ui.js"></script>
+    <script src="~/vendor/admin-lte/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/tempus-dominus-helper.js"></script>
+    <script src="~/vendor/admin-lte/plugins/select2/js/select2.full.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/jszip/jszip.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/pdfmake/pdfmake.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/pdfmake/vfs_fonts.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables-buttons/js/buttons.print.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/sweetalert2/sweetalert2.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/moment/moment.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/daterangepicker/daterangepicker.js"></script>
+    <script src="~/vendor/admin-lte/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="~/vendor/admin-lte/dist/js/adminlte.min.js"></script>
+    <script src="~/vendor/cropperjs/dist/cropper.min.js"></script>
+    <script src="~/vendor/paginationjs/dist/pagination.min.js"></script>
+    <script src="~/vendor/geotiff/dist-browser/geotiff.js"></script>
+    <script src="~/vendor/admin-lte/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
+    <script src="~/vendor/admin-lte/plugins/chart.js/Chart.min.js"></script>
+    <script src="~/js/notification-helpers.js"></script>
+
+    <script src="~/js/site.js"></script>
+
+    <!-- PWA Navbar -->
+    <nav class="pwa-navbar navbar navbar-expand navbar-dark">
+        <a href="#" class="navbar-brand">
+            <img src="~/logo.png" alt="Logo" class="brand-image" style="opacity: .8; height: 32px; width: 32px; margin-right: 8px;">
+            Waste Detection
+        </a>
+
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="showMyInspections()">
+                    <i class="fas fa-tasks"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="IntranetPortal" asp-controller="Account" asp-action="MyProfile">
+                    <i class="fas fa-user-edit"></i>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="IntranetPortal" asp-controller="Account" asp-action="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="pwa-content">
+        @RenderBody()
+    </div>
+
+    <!-- Mobile Action Bar -->
+    <div class="mobile-action-bar d-md-none">
+        <button type="button" class="mobile-action-btn" onclick="toggleLocationTracking()">
+            <i class="fas fa-location-arrow"></i>
+            <span>Location</span>
+        </button>
+        <button type="button" class="mobile-action-btn" onclick="showMyInspections()">
+            <i class="fas fa-clipboard-list"></i>
+            <span>Inspections</span>
+        </button>
+        <button type="button" class="mobile-action-btn" onclick="showMapLayers()">
+            <i class="fas fa-layer-group"></i>
+            <span>Layers</span>
+        </button>
+        <button type="button" class="mobile-action-btn" onclick="showMapTools()">
+            <i class="fas fa-tools"></i>
+            <span>Tools</span>
+        </button>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi" style="opacity: 0.5;"></i> You're offline
+    </div>
+
+    <!-- My Inspections Sidebar -->
+    <div id="inspectionsSidebar" class="inspection-sidebar">
+        <div class="sidebar-header">
+            <h5><i class="fas fa-clipboard-list"></i> My Inspections</h5>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeInspectionsSidebar()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <div id="inspectionsListContainer">
+                <!-- Inspections will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // Global variable for app settings
+        window.AppSettings = {
+            "AppPath": "@ViewData["AppPath"]",
+            "Domain": "@ViewData["Domain"]",
+            "FullAppUrl": "@ViewData["FullAppUrl"]",
+            "AppInstanceName": "@ViewData["InstanceName"]"
+        };
+
+        // PWA functionality
+        let deferredPrompt;
+        let geolocationControl;
+
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/IntranetPortal/InspectionPwa/ServiceWorker')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    }, function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // PWA install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallPrompt();
+        });
+
+        function showInstallPrompt() {
+            // Show install button or notification
+            console.log('PWA can be installed');
+        }
+
+        // Network status
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (navigator.onLine) {
+                indicator.classList.remove('show');
+            } else {
+                indicator.classList.add('show');
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Mobile action bar functions
+        function toggleLocationTracking() {
+            if (window.geolocationControl) {
+                window.geolocationControl.toggleTracking();
+            }
+        }
+
+        function showMyInspections() {
+            const sidebar = document.getElementById('inspectionsSidebar');
+            sidebar.classList.add('show');
+
+            if (window.inspectionFileManager) {
+                window.inspectionFileManager.loadMyInspections();
+            }
+        }
+
+        function closeInspectionsSidebar() {
+            const sidebar = document.getElementById('inspectionsSidebar');
+            sidebar.classList.remove('show');
+        }
+
+        function showMapLayers() {
+            // Toggle layer switcher if available
+            const layerSwitcher = document.querySelector('.layer-switcher');
+            if (layerSwitcher) {
+                layerSwitcher.style.display = layerSwitcher.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function showMapTools() {
+            // Show map tools panel
+            console.log('Show map tools');
+        }
+
+        // Initialize PWA features when document is ready
+        $(document).ready(function() {
+            updateOnlineStatus();
+
+            // Initialize geolocation control when map is ready
+            if (typeof mapVars !== 'undefined' && mapVars.map) {
+                window.geolocationControl = new GeolocationControl(mapVars.map);
+            }
+        });
+
+        // Map height adjustment for PWA
+        function setMapHeight() {
+            const navbar = document.querySelector('.pwa-navbar');
+            const actionBar = document.querySelector('.mobile-action-bar');
+            const map = document.getElementById('map');
+
+            if (map) {
+                const navbarHeight = navbar ? navbar.offsetHeight : 0;
+                const actionBarHeight = actionBar ? actionBar.offsetHeight : 0;
+                const availableHeight = window.innerHeight - navbarHeight - actionBarHeight;
+
+                map.style.height = availableHeight + 'px';
+
+                if (typeof mapVars !== 'undefined' && mapVars.map && mapVars.map.updateSize) {
+                    mapVars.map.updateSize();
+                }
+            }
+        }
+
+        window.addEventListener('resize', setMapHeight);
+        window.addEventListener('orientationchange', function() {
+            setTimeout(setMapHeight, 100);
+        });
+
+        // Touch gestures for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+
+            // Detect swipe gestures
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        // Swipe left - could close sidebar
+                        closeInspectionsSidebar();
+                    } else {
+                        // Swipe right - could open sidebar
+                        // showMyInspections();
+                    }
+                }
+            }
+        });
+    </script>
+
+    <style>
+        /* Additional PWA-specific styles */
+        .inspection-sidebar {
+            position: fixed;
+            top: 56px;
+            right: -100%;
+            width: 90%;
+            max-width: 400px;
+            height: calc(100vh - 56px);
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1040;
+            overflow-y: auto;
+        }
+
+            .inspection-sidebar.show {
+                right: 0;
+            }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #dee2e6;
+            background: #f8f9fa;
+        }
+
+        .sidebar-content {
+            padding: 16px;
+        }
+
+        .mobile-action-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #dee2e6;
+            padding: 10px;
+            z-index: 1040;
+            display: none;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        @@media (max-width: 768px) {
+            .mobile-action-bar
+
+        {
+            display: flex;
+        }
+
+        }
+
+        .mobile-action-btn {
+            background: none;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: #6c757d;
+            transition: all 0.2s;
+            min-width: 60px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+            .mobile-action-btn:hover,
+            .mobile-action-btn.active {
+                background-color: #28a745;
+                color: white;
+                transform: translateY(-2px);
+            }
+
+            .mobile-action-btn i {
+                display: block;
+                font-size: 18px;
+                margin-bottom: 4px;
+            }
+
+            .mobile-action-btn span {
+                display: block;
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+        .offline-indicator {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 9998;
+            display: none;
+        }
+
+            .offline-indicator.show {
+                display: block;
+                animation: slideDown 0.3s ease;
+            }
+
+        @@keyframes slideDown {
+            from
+
+        {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        }
+
+        /* Safe area adjustments for iOS */
+        @@supports (padding-top: env(safe-area-inset-top)) {
+            .pwa-navbar
+
+        {
+            padding-top: env(safe-area-inset-top);
+            height: calc(56px + env(safe-area-inset-top));
+        }
+
+        .pwa-content {
+            top: calc(56px + env(safe-area-inset-top));
+        }
+
+        .inspection-sidebar {
+            top: calc(56px + env(safe-area-inset-top));
+            height: calc(100vh - 56px - env(safe-area-inset-top));
+        }
+
+        .mobile-action-bar {
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        }
+
+        }
+    </style>
+</body>
+</html>

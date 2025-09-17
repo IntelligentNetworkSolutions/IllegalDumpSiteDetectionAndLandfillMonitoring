@@ -18,17 +18,10 @@
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7230;http://localhost:5137"
     },
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
     "IIS": {
       "commandName": "IIS",
       "launchBrowser": true,
-      "launchUrl": "http://localhost:8989/IntranetPortal/UserManagement/Index",
+      "launchUrl": "https://wastedetection.mk/",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -38,12 +31,8 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iis": {
-      "applicationUrl": "http://localhost:8989/IntranetPortal/UserManagement/Index",
+      "applicationUrl": "https://wastedetection.mk/",
       "sslPort": 0
-    },
-    "iisExpress": {
-      "applicationUrl": "http://localhost:4254",
-      "sslPort": 44376
     }
   }
 }
