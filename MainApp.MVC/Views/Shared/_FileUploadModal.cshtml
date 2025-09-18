@@ -330,7 +330,7 @@
                 if (result.isSuccess) {
                     notifyAlerts("success", "File uploaded successfully");
                     $('#fileUploadModal').modal('hide');
-                    refreshDumpsiteDetails();
+                    refreshDetails();
                 } else {
                     notifyAlerts('error', result.errMsg);
                 }
@@ -357,7 +357,7 @@
                 if (result.isSuccess) {
                     notifyAlerts('success', 'Inspection scheduled successfully');
                     $('#createInspectionModal').modal('hide');
-                    refreshDumpsiteDetails();
+                    refreshDetails();
                 } else {
                     notifyAlerts('error', result.errMsg);
                 }
@@ -389,7 +389,7 @@
                 if (result.isSuccess) {
                     notifyAlerts('success', 'Inspector assigned successfully');
                     $('#assignInspectorModal').modal('hide');
-                    refreshDumpsiteDetails();
+                    refreshDetails();
                 } else {
                     notifyAlerts('error', result.errMsg);
                 }
@@ -423,7 +423,7 @@
                 if (result.isSuccess) {
                     notifyAlerts('success', 'Inspection completed successfully');
                     $('#completeInspectionModal').modal('hide');
-                    refreshDumpsiteDetails();
+                    refreshDetails();
                 } else {
                     notifyAlerts('error', result.errMsg);
                 }
@@ -445,7 +445,7 @@
                         success: function(result) {
                             if (result.isSuccess) {
                                 notifyAlerts('success', 'File deleted successfully');
-                                refreshDumpsiteDetails();
+                                refreshDetails();
                             } else {
                                 notifyAlerts('error', result.errMsg);
                             }
@@ -478,11 +478,10 @@
             });
     }
 
-    function refreshDumpsiteDetails() {
+    function refreshDetails() {
     let dumpsiteId = $('#dumpsiteDetailsModal').data('dumpsite-id');
     refreshDumpsiteDetails(dumpsiteId);
     }
-
 
     function showInspectionFileUploadModal(inspectionId) {
         // First check if user is assigned to this inspection
@@ -528,7 +527,7 @@
                 if (result.isSuccess) {
                     notifyAlerts("success", "Inspection file uploaded successfully");
                     $('#inspectionFileUploadModal').modal('hide');
-                    refreshDumpsiteDetails();
+                    refreshDetails();
                 } else {
                     notifyAlerts('error', result.errMsg);
                 }
@@ -609,7 +608,7 @@
                                         viewInspectionFiles(inspectionId);
                                     }
                                 }
-                                refreshDumpsiteDetails();
+                                refreshDetails();
                             } else {
                                 notifyAlerts('error', result.errMsg);
                             }
@@ -637,104 +636,4 @@
         });
     });
 
-    // Toast notification function - make sure this is available globally
-    function notifyAlerts(type, message, title) {
-        // Ensure the modal backdrop doesn't interfere with toast notifications
-        const toastContainer = document.querySelector('.toast-container') || createToastContainer();
-
-        if (type == "success") {
-            Toast.fire({
-                title: message ? message : "Success!",
-            });
-        }
-        if (type == "warning") {
-            Toast.fire({
-                title: message ? message : "Warning!",
-                icon: 'warning'
-            });
-        }
-        if (type == "error") {
-            Toast.fire({
-                title: message ? message : "Error!",
-                icon: 'error'
-            });
-        }
-        if (type == "info") {
-            Toast.fire({
-                title: message,
-                icon: 'info'
-            });
-        }
-        if (type == "popup-success") {
-            defaultPopup.fire({
-                title: title ? title : 'Success!',
-                text: message,
-                icon: 'success',
-            });
-        }
-        if (type == "popup-info") {
-            defaultPopup.fire({
-                title: title ? title : 'Info',
-                text: message,
-                icon: 'info',
-            });
-        }
-        if (type == "popup-warning") {
-            defaultPopup.fire({
-                title: title ? title : 'Warning!',
-                text: message,
-                icon: 'warning',
-            });
-        }
-        if (type == "popup-error") {
-            defaultPopup.fire({
-                title: title ? title : 'Error',
-                text: message,
-                icon: 'error',
-            });
-        }
-        if (type == "popup-confirm") {
-            return defaultPopup.fire({
-                title: title ? title : "Info",
-                text: message,
-                icon: 'info',
-                showCancelButton: true,
-            }).then(function (result) {
-                return result.isConfirmed;
-            });
-        }
-        if (type == "popup-warning-delete") {
-            return defaultPopup.fire({
-                title: title ? title : 'Delete?',
-                text: message ? message : "This action can't be undone!",
-                icon: 'warning',
-                customClass: {
-                    confirmButton: "btn btn-lg btn-danger",
-                    cancelButton: "btn btn-lg btn-default me-2"
-                },
-                confirmButtonText: "Yes",
-                cancelButtonText: "No",
-                showCancelButton: true,
-                focusConfirm: false,
-            }).then((result) => {
-                return result.isConfirmed;
-            });
-        }
-    }
-
-    function createToastContainer() {
-        const container = document.createElement('div');
-        container.className = 'toast-container';
-        container.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            pointer-events: none;
-        `;
-        document.body.appendChild(container);
-        return container;
-    }
-
-
-</script>
+ </script>
