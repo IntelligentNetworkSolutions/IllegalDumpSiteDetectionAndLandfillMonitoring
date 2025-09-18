@@ -783,4 +783,27 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             return ResultDTO<bool>.ExceptionFail(ex.Message, ex);
         }
     }
+
+    public async Task<ResultDTO<List<InspectionAssignmentDTO>>> GetInspectionsByInspectorId(string userId)
+    {
+        try
+        {
+            var result = await _inspectionRepository.GetAll(
+                filter: i => i.Assignments.Any(a => a.InspectorId == userId),
+                includeProperties: "CreatedBy,RegisteredDumpsite,RegisteredDumpsiteInspectionStatus,Assignments");
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<List<InspectionAssignmentDTO>>.Fail(result.ErrMsg!);
+            if (result.Data == null)
+                return ResultDTO<List<InspectionAssignmentDTO>>.Fail("Inspections not found");
+            var dtos = _mapper.Map<List<InspectionAssignmentDTO>>(result.Data);
+            if (dtos == null)
+                return ResultDTO<List<InspectionAssignmentDTO>>.Fail("Mapping inspections failed");
+            return ResultDTO<List<InspectionAssignmentDTO>>.Ok(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<List<InspectionAssignmentDTO>>.ExceptionFail(ex.Message, ex);
+        }
+    }
 }
