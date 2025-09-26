@@ -1,16 +1,19 @@
-﻿@{
+﻿@using Westwind.Globalization
+@using MainApp.MVC.Helpers;
+
+@{
     Layout = "~/Areas/IntranetPortal/Views/Shared/PWA/_LayoutPWA.cshtml";
 }
-
 @section Styles {
     <link rel="stylesheet" href="~/vendor/ol/ol.css">
     <link rel="stylesheet" href="~/css/Map/ol-overrides.css">
     <link rel="stylesheet" href="~/master/custom-layerswitcher/custom-layerswitcher.css">
     <link rel="stylesheet" href="~/master/map-sidebar/map-sidebar.css">
-    <link rel="stylesheet" href="~/css/Views/map.css">
     <link rel="stylesheet" href="~/css/ViewComponents/map-view-component.css">
+    <link rel="stylesheet" href="~/InspectionPwa/css/styles.css">
+    <link rel="stylesheet" href="~/InspectionPwa/css/consolidated-styles.css">
 }
-
+ 
 <div class="container-fluid p-0">
     <div class="row m-0">
         <div class="col-xl-12 p-0">
@@ -18,30 +21,201 @@
                 @await Component.InvokeAsync("Map", new { mapDivId = "map", mapToLoad = "mainmap" })
                 @await Component.InvokeAsync("LastExtentTool")
                 @await Component.InvokeAsync("ZoomToExtentTool")
-                @await Component.InvokeAsync("MeasureLengthTool")
+                @await Component.InvokeAsync("MeasureLengthTool") 
                 @await Component.InvokeAsync("RegisterDumpsiteTool")
                 @await Component.InvokeAsync("MeasureAreaTool")
                 @await Component.InvokeAsync("GoToCoordinatesTool")
                 @await Component.InvokeAsync("HistoricData", new { detectionRunId = Model })
                 @await Component.InvokeAsync("DetectionIgnoreZonesTool")
-                @await Component.InvokeAsync("DetectionInputImagesTool")
+                @await Component.InvokeAsync("DetectionInputImagesTool") 
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        // Global variable
-        window.AppSettings = {
-            "AppPath": "@ViewData["AppPath"]",
-            "Domain": "@ViewData["Domain"]",
-            "FullAppUrl": "@ViewData["FullAppUrl"]",
-            "AppInstanceName": "@ViewData["InstanceName"]"
-        };
-        var translations = {};
-    </script>
+<!-- Hidden sidebar structure (required for functionality) -->
+<div id="map-sidebar" class="turbosidebar turbosidebar-right collapsed">
+    <div class="turbosidebar-tabs">
+        <ul>
+            <li class="active">
+                <a href="#map-sidebar-layers-pane" id="map-sidebar-layers-tool-btn">
+                    <i class="fas fa-layer-group"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="turbosidebar-content">
+        <div class="turbosidebar-pane active" id="map-sidebar-layers-pane">
+            <div class="turbosidebar-header">
+                <span class="turbosidebar-close">
+                    <i class="fas fa-times"></i>
+                </span>
+                Layers
+            </div>
+            <div id="sidebar-layers-container"></div>
+        </div>
+    </div>
+</div>
 
+<!-- PWA Mobile Action Bar -->
+<div class="mobile-action-bar d-md-none">
+    <button type="button" class="mobile-action-btn" onclick="toggleLocationTracking()">
+        <i class="fas fa-location-arrow"></i>
+        <span>Location</span>
+    </button>
+    <button type="button" class="mobile-action-btn" onclick="showMyInspections()">
+        <i class="fas fa-clipboard-list"></i>
+        <span>Inspections</span>
+    </button>
+    <button type="button" class="mobile-action-btn" onclick="showMapLayers()">
+        <i class="fas fa-layer-group"></i>
+        <span>Layers</span>
+    </button>
+    <button type="button" class="mobile-action-btn" onclick="showMapTools()">
+        <i class="fas fa-tools"></i>
+        <span>Tools</span>
+    </button>
+</div>
+
+<!-- Offline Indicator -->
+<div id="offlineIndicator" class="offline-indicator">
+    <i class="fas fa-wifi" style="opacity: 0.5;"></i> You're offline
+</div>
+
+<!-- My Inspections Sidebar -->
+<div id="inspectionsSidebar" class="inspection-sidebar">
+    <div class="sidebar-header">
+        <h5><i class="fas fa-clipboard-list"></i> My Inspections</h5>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeInspectionsSidebar()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="sidebar-content">
+        <div id="inspectionsListContainer">
+            <!-- Inspections will be loaded here -->
+        </div>
+    </div>
+</div>
+ 
+<!-- Inspection File Upload ModalPwa -->
+<div class="modal fade" id="inspectionFileUploadModalPwa" tabindex="-1" role="dialog" aria-labelledby="inspectionFileUploadModalPwaLabel" aria-hidden="true" style="">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="inspectionFileUploadModalPwaLabel">
+                    <i class="fas fa-upload"></i> Upload Inspection File
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="inspectionFileUploadForm" enctype="multipart/form-data">
+                    <input type="hidden" id="uploadInspectionId" />
+
+                    <div class="form-group">
+                        <label for="inspectionPwaFileInput">Select File <span class="text-danger">*</span></label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="inspectionPwaFileInput"
+                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.txt,.xlsx,.xls" required>
+                            <label class="custom-file-label" for="inspectionPwaFileInput">@DbResHtml.T("Choose file","Resources")</label>
+                        </div>
+                        <small class="form-text text-muted">
+                            @DbResHtml.T("Supported: PDF, Word, Images, Excel, Text files (Max 50MB)","Resources")
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inspectionPwaFileDescription">Description</label>
+                        <textarea class="form-control" id="inspectionPwaFileDescription" rows="3"
+                                  placeholder="Add a description for this inspection file"></textarea>
+                    </div>
+
+                    <!-- File preview area -->
+                    <div id="filePreview" class="d-none">
+                        <div class="card">
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1">File Preview</h6>
+                                <div id="fileInfo" class="small text-muted"></div>
+                                <div id="imagePreview" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="uploadInspectionPwaFileBtn" onclick="uploadInspectionPwaFile()">
+                    <i class="fas fa-upload"></i> Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Complete Inspection ModalPwa -->
+<div class="modal fade" id="completeInspectionModalPwa" tabindex="-1" role="dialog" aria-labelledby="completeInspectionModalPwaLabel" aria-hidden="true" style="">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="completeInspectionModalPwaLabel">
+                    <i class="fas fa-check"></i> Complete Inspection
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="completeInspectionForm">
+                    <input type="hidden" id="completeInspectionId" />
+
+                    <div class="form-group">
+                        <label for="inspectionFindings">Findings <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="inspectionFindings" rows="4" required
+                                  placeholder="Describe the inspection findings in detail"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inspectionRecommendations">Recommendations</label>
+                        <textarea class="form-control" id="inspectionRecommendations" rows="3"
+                                  placeholder="Add recommendations based on findings (optional)"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="completeInspectionBtn">
+                    <i class="fas fa-check"></i> Complete Inspection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Inspection Files ModalPwa -->
+<div class="modal fade" id="viewInspectionFilesModalPwa" tabindex="-1" role="dialog" aria-labelledby="viewInspectionFilesModalPwaLabel" aria-hidden="true" style="">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewInspectionFilesModalPwaLabel">
+                    <i class="fas fa-file-alt"></i> Inspection Files
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="inspectionFilesContent">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div> 
+@section Scripts {
+    <!-- Map Scripts -->
     <script src="~/vendor/proj4/dist/proj4-src.js"></script>
     <script src="~/vendor/ol/dist/ol.js"></script>
     <script src="~/js/proj4_defs.js"></script>
@@ -49,27 +223,1163 @@
     <script src="~/master/custom-layerswitcher/custom-layerswitcher-dependancies.js"></script>
     <script src="~/master/custom-layerswitcher/custom-layerswitcher.js"></script>
     <script src="~/js/ol-layerswitcher-mapvars-registration.js"></script>
+    <script>
+        // Global variable
+        window.AppSettings = {
+            "AppPath": "@(ViewData["AppPath"] ?? "")",
+            "Domain": "@(ViewData["Domain"] ?? "")",
+            "FullAppUrl": "@(ViewData["FullAppUrl"] ?? "")",
+            "AppInstanceName": "@(ViewData["InstanceName"] ?? "")"
+        };
+        var translations = {};
 
-    <script type="text/javascript">
-        function setMapHeight() {
-            var topnavbarHeight = $(".main-header").outerHeight();
-            var viewportHeight = $(window).height();
-            $("#map").css("height", viewportHeight - topnavbarHeight);
-            if (typeof mapVars.map.updateSize === "function") {
-                mapVars.map.updateSize();
+        // Map-related globals
+        var mapVars = {};
+        mapVars.projection = {};
+        mapVars.map = {};
+        mapVars.mapSidebar = {};
+        mapVars.mapTools = [];
+        mapVars.accessToken = "@(ViewData["access_token"] ?? "")";
+        mapVars.refreshLayerSwitcher = function () { };
+        mapVars.deactivateTools = function () {
+            if (this.mapSidebar && this.mapSidebar.close) {
+                this.mapSidebar.close();
+            }
+            this.mapTools.forEach(function (tool) {
+                if (tool.isActive) {
+                    tool.deactivateTool();
+                }
+            });
+        };
+        mapVars.findTool = function (toolName) {
+            for (var toolIndex in mapVars.mapTools) {
+                if (toolName === mapVars.mapTools[toolIndex].name) {
+                    return mapVars.mapTools[toolIndex];
+                }
+            }
+        };
+        mapVars.findLayerByName = function (layerName) {
+            if (!this.map || !this.map.getLayers) return null;
+            var layers = this.map.getLayers().array_;
+            for (var layerIndex in layers) {
+                if (layerName === layers[layerIndex].get("name")) {
+                    return layers[layerIndex];
+                }
+            }
+        };
+        mapVars.showLegendForLayers = function () {
+            if (!this.map || !this.map.getLayers) return [];
+            var layers = FindAllLayers(this.map.getLayers().array_, true);
+            var result = [];
+            layers.forEach(layer => {
+                if ((layer.getSource() instanceof ol.source.TileWMS || layer.getSource() instanceof ol.source.ImageWMS) && layer.getVisible()) {
+                    result.push(layer);
+                }
+            });
+            return result.reverse();
+        };
+        mapVars.mapLayersFromConfig = {};
+
+        function FindAllLayers(layersArray, onlyVisible) {
+            var result = [];
+            layersArray.forEach(arrayItem => {
+                if (arrayItem instanceof ol.layer.Group && arrayItem.getLayers().getLength() > 0 && (onlyVisible === false || arrayItem.getVisible() === true)) {
+                    var funcResult = FindAllLayers(arrayItem.getLayers().array_, onlyVisible);
+                    result.push.apply(result, funcResult);
+                }
+                else {
+                    if (!(arrayItem instanceof ol.layer.Group)) {
+                        result.push(arrayItem);
+                    }
+                }
+            });
+            return result;
+        }
+
+        // PWA functionality
+        let deferredPrompt;
+        let geolocationControl;
+
+        // Service Worker registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/IntranetPortal/InspectionPwa/ServiceWorker')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    }, function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // PWA install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallPrompt();
+        });
+
+        function showInstallPrompt() {
+            console.log('PWA can be installed');
+        }
+
+        // Network status
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (indicator) {
+                if (navigator.onLine) {
+                    indicator.classList.remove('show');
+                } else {
+                    indicator.classList.add('show');
+                }
             }
         }
 
-        // Set initial height when page loads
-        $(document).ready(function() {
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Mobile action bar functions
+        function toggleLocationTracking() {
+            if (window.geolocationControl) {
+                window.geolocationControl.toggleTracking();
+            }
+        }
+
+        function showMyInspections() {
+            const sidebar = document.getElementById('inspectionsSidebar');
+            if (sidebar) {
+                sidebar.classList.add('show');
+                loadMyInspections();
+            }
+        }
+
+        function closeInspectionsSidebar() {
+            const sidebar = document.getElementById('inspectionsSidebar');
+            if (sidebar) {
+                sidebar.classList.remove('show');
+            }
+        }
+
+        function showMapLayers() {
+            const layerSwitcher = document.querySelector('.layer-switcher');
+            if (layerSwitcher && mapVars.mapSidebar) {
+                mapVars.deactivateTools();
+                mapVars.mapSidebar.open('map-sidebar-layers-pane');
+                $('#map-sidebar-layers-tool-btn').parent().addClass('active');
+                if (mapVars.refreshLayerSwitcher) {
+                    mapVars.refreshLayerSwitcher();
+                }
+            }
+        }
+
+        function showMapTools() {
+            const mapToolsContainer = document.querySelector('#map-tools-container');
+            if (!mapToolsContainer) {
+                // Create a container for tools
+                const container = document.createElement('div');
+                container.id = 'map-tools-container';
+                container.className = 'map-tools-dropdown';
+                container.style.position = 'absolute';
+                container.style.top = '60px'; // Adjust based on navbar height
+                container.style.right = '10px';
+                container.style.background = '#fff';
+                container.style.border = '1px solid #ccc';
+                container.style.borderRadius = '4px';
+                container.style.padding = '10px';
+                container.style.zIndex = '2000';
+                container.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+                container.style.maxWidth = '200px';
+
+                // Build menu from mapVars.mapTools, including layer switcher
+                let html = '<div class="list-group">';
+                const tools = [
+                    { name: 'LayerSwitcher', displayName: 'Layers' }, // Explicitly include layer switcher
+                    ...(mapVars.mapTools.length > 0 ? mapVars.mapTools.map(tool => ({
+                        name: tool.name,
+                        displayName: tool.displayName || tool.name
+                    })) : [
+                        { name: 'LastExtentTool', displayName: 'Last Extent' },
+                        { name: 'ZoomToExtentTool', displayName: 'Zoom to Extent' },
+                        { name: 'MeasureLengthTool', displayName: 'Measure Length' },
+                        { name: 'RegisterDumpsiteTool', displayName: 'Register Dumpsite' },
+                        { name: 'MeasureAreaTool', displayName: 'Measure Area' },
+                        { name: 'GoToCoordinatesTool', displayName: 'Go to Coordinates' },
+                        { name: 'HistoricDataTool', displayName: 'Historic Data' },
+                        { name: 'DetectionIgnoreZonesTool', displayName: 'Ignore Zones' },
+                        { name: 'DetectionInputImagesTool', displayName: 'Input Images' }
+                    ])
+                ];
+
+                tools.forEach(tool => {
+                    html += `
+                        <button type="button" class="list-group-item list-group-item-action"
+                                onclick="activateMapTool('${tool.name}')">
+                            ${tool.displayName}
+                        </button>
+                    `;
+                });
+                html += '</div>';
+
+                container.innerHTML = html;
+                document.getElementById('map').appendChild(container);
+            } else {
+                // Toggle visibility
+                mapToolsContainer.style.display = mapToolsContainer.style.display === 'none' ? 'block' : 'none';
+            }
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function closeMenu(e) {
+                if (!mapToolsContainer.contains(e.target) && !e.target.closest('.mobile-action-btn')) {
+                    mapToolsContainer.style.display = 'none';
+                    document.removeEventListener('click', closeMenu);
+                }
+            });
+        }
+
+        function activateMapTool(toolName) {
+            if (toolName === 'LayerSwitcher') {
+                mapVars.deactivateTools();
+                if (mapVars.mapSidebar) {
+                    mapVars.mapSidebar.open('map-sidebar-layers-pane');
+                    $('#map-sidebar-layers-tool-btn').parent().addClass('active');
+                    if (mapVars.refreshLayerSwitcher) {
+                        mapVars.refreshLayerSwitcher();
+                    }
+                }
+            } else {
+                const tool = mapVars.findTool(toolName);
+                if (tool) {
+                    if (!tool.isActive) {
+                        mapVars.deactivateTools();
+                        tool.activateTool();
+                        tool.isActive = true;
+                    } else {
+                        tool.deactivateTool();
+                        tool.isActive = false;
+                        if (mapVars.mapSidebar) {
+                            mapVars.mapSidebar.close();
+                        }
+                    }
+                } else {
+                    console.warn(`Tool ${toolName} not found in mapVars.mapTools`);
+                }
+            }
+            // Hide the tools menu
+            const mapToolsContainer = document.querySelector('#map-tools-container');
+            if (mapToolsContainer) {
+                mapToolsContainer.style.display = 'none';
+            }
+        }
+
+        // Map height adjustment for PWA
+        function setMapHeight() {
+            const navbar = document.querySelector('.pwa-navbar');
+            const actionBar = document.querySelector('.mobile-action-bar');
+            const map = document.getElementById('map');
+
+            if (map) {
+                const navbarHeight = navbar ? navbar.offsetHeight : 0;
+                const actionBarHeight = actionBar ? actionBar.offsetHeight : 0;
+                const availableHeight = window.innerHeight - navbarHeight - actionBarHeight;
+
+                map.style.height = availableHeight + 'px';
+
+                if (typeof mapVars !== 'undefined' && mapVars.map && mapVars.map.updateSize) {
+                    mapVars.map.updateSize();
+                }
+            }
+        }
+
+        window.addEventListener('resize', setMapHeight);
+        window.addEventListener('orientationchange', function() {
+            setTimeout(setMapHeight, 100);
+        });
+
+        // Touch gestures for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (Math.abs(diffX) > 50) {
+                    if (diffX > 0) {
+                        closeInspectionsSidebar();
+                    }
+                }
+            }
+        });
+
+        function handleFileSelect(event) {
+            console.log('=== File Select Debug ===');
+            console.log('Event triggered:', event);
+            console.log('Event target:', event.target);
+            console.log('Event target files:', event.target.files);
+
+            const file = event.target.files[0];
+            const label = $(event.target).next('.custom-file-label');
+
+            if (file) {
+                console.log('File selected:', {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                });
+                label.text(file.name);
+                showFilePreview(file);
+
+                // Store file reference globally for debugging
+                window.selectedFile = file;
+
+            } else {
+                console.log('No file selected');
+                label.text('Choose file');
+                $('#filePreview').addClass('d-none');
+                window.selectedFile = null;
+            }
+        }
+
+        function showFilePreview(file) {
+            const preview = $('#filePreview');
+            const fileInfo = $('#fileInfo');
+            const imagePreview = $('#imagePreview');
+
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+            fileInfo.html(`
+                <strong>Name:</strong> ${file.name}<br>
+                <strong>Size:</strong> ${sizeInMB} MB<br>
+                <strong>Type:</strong> ${file.type}
+            `);
+
+            imagePreview.empty();
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.html(`
+                        <img src="${e.target.result}" class="img-fluid" style="max-height: 200px;" alt="Preview">
+                    `);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            preview.removeClass('d-none');
+        }
+
+        function loadMyInspections() {
+            const container = $('#inspectionsListContainer');
+            if (!container) return;
+
+            container.html(`
+                <div class="d-flex justify-content-center p-4">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            `);
+
+            $.get('/IntranetPortal/InspectionPwa/GetMyAssignedInspections')
+                .done((result) => {
+                    if (result.isSuccess) {
+                        displayInspectionsList(result.data);
+                    } else {
+                        showAlert('error', result.errMsg || 'Error loading inspections');
+                        container.html(`
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                ${result.errMsg || 'Error loading inspections'}
+                            </div>
+                        `);
+                    }
+                })
+                .fail(() => {
+                    showAlert('error', 'Error loading your inspections');
+                    container.html(`
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Failed to load inspections
+                        </div>
+                    `);
+                });
+        }
+
+        function displayInspectionsList(inspections) {
+            const container = $('#inspectionsListContainer');
+            if (!container) return;
+
+            if (inspections && inspections.length > 0) {
+                let html = '<div class="list-group">';
+
+                inspections.forEach((inspection) => {
+                    const createdDate = new Date(inspection.createdOn).toLocaleDateString();
+                    const statusClass = getStatusClass(inspection.status || 'Pending');
+
+                    html += `
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <i class="fas fa-file-alt"></i>
+                                    ${inspection.originalFileName || 'Inspection File'}
+                                </h6>
+                                <small class="text-muted">${createdDate}</small>
+                            </div>
+                            <p class="mb-1 text-muted">
+                                ${inspection.description || 'No description provided'}
+                            </p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge ${statusClass}">${inspection.status || 'Pending'}</span>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-primary"
+                                            onclick="showInspectionFileUploadModalPwa('${inspection.registeredDumpsiteInspectionId}')">
+                                        <i class="fas fa-upload"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info"
+                                            onclick="viewInspectionFiles('${inspection.registeredDumpsiteInspectionId}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success"
+                                            onclick="showCompleteInspectionModalPwa('${inspection.registeredDumpsiteInspectionId}')">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                container.html(html);
+            } else {
+                container.html(`
+                    <div class="text-center p-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No inspections assigned to you yet</p>
+                    </div>
+                `);
+            }
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'Detected':
+                    return 'badge-success';
+                case 'InProcess':
+                    return 'badge-warning';
+                case 'Resolver':
+                    return 'badge-secondary';
+                default:
+                    return 'badge-secondary';
+            }
+        }
+
+        function showInspectionFileUploadModalPwa(inspectionId) {
+            $('#uploadInspectionId').val(inspectionId);
+
+            // Reset form but DON'T clear the file input value directly
+            const fileInput = document.getElementById('inspectionPwaFileInput');
+            const label = $('.custom-file-label');
+
+            // Reset everything properly
+            $('#inspectionPwaFileDescription').val('');
+            $('#filePreview').addClass('d-none');
+            label.text('Choose file');
+
+            // Clear the file input by recreating it to avoid browser security restrictions
+            const newFileInput = fileInput.cloneNode(true);
+            fileInput.parentNode.replaceChild(newFileInput, fileInput);
+
+            // Re-attach event listener to the new input
+            bindFileInputEvent();
+
+            // Clear global reference
+            window.selectedFile = null;
+
+            $('#inspectionFileUploadModalPwa').modal('show');
+        }
+                function bindFileInputEvent() {
+            // Remove any existing event listeners and add new one
+            $('#inspectionPwaFileInput').off('change').on('change', function(event) {
+                console.log('=== File Select Debug ===');
+                console.log('Event triggered:', event);
+                console.log('Event target:', event.target);
+                console.log('Event target files:', event.target.files);
+
+                const file = event.target.files[0];
+                const label = $(this).next('.custom-file-label');
+
+                if (file) {
+                    console.log('File selected:', {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type
+                    });
+                    label.text(file.name);
+                    showFilePreview(file);
+
+                    // Store file reference globally
+                    window.selectedFile = file;
+                } else {
+                    console.log('No file selected');
+                    label.text('Choose file');
+                    $('#filePreview').addClass('d-none');
+                    window.selectedFile = null;
+                }
+            });
+        }
+
+                function uploadInspectionPwaFile() {
+            const fileInput = document.getElementById('inspectionPwaFileInput');
+            const inspectionId = $('#uploadInspectionId').val();
+            const description = $('#inspectionPwaFileDescription').val();
+
+            // Primary method: Direct access to the file input
+            if (fileInput.files.length === 0) {
+                showAlert('error', "FileNotFound");
+                return;
+            }
+
+            if (!fileInput) {
+                console.error('No file selected');
+                showAlert('error', 'Please select a file');
+                return;
+            }
+
+            if (!inspectionId) {
+                console.error('Missing inspection ID');
+                showAlert('error', 'Invalid inspection ID');
+                return;
+            }
+
+            // Check file size (50MB = 52428800 bytes)
+            if (fileInput.size > 52428800) {
+                console.error('File too large:', fileInput.size);
+                showAlert('error', 'File size exceeds 50MB limit');
+                return;
+            }
+
+            const uploadBtn = $('#uploadInspectionPwaFileBtn');
+            const originalText = uploadBtn.html();
+            uploadBtn.html('<i class="fas fa-spinner fa-spin"></i> Uploading...').prop('disabled', true);
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('inspectionId', inspectionId);
+            formData.append('description', description);
+
+            $.ajax({
+                url: '/IntranetPortal/InspectionPwa/UploadInspectionFile',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: (result) => {
+                    if (result.isSuccess) {
+                        showAlert('success', 'File uploaded successfully');
+                        $('#inspectionFileUploadModalPwa').modal('hide');
+                        loadMyInspections();
+                        window.selectedFile = null;
+                    } else {
+                        console.error('Upload failed with message:', result.errMsg);
+                        showAlert('error', result.errMsg || 'Upload failed');
+                    }
+                },
+                error: (xhr, status, error) => {
+                    console.error('Upload error:', {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        responseText: xhr.responseText,
+                        error: error
+                    });
+                    showAlert('error', `Error uploading file: ${xhr.status} ${xhr.statusText}`);
+                },
+                complete: () => {
+                    console.log('Upload request completed');
+                    uploadBtn.html(originalText).prop('disabled', false);
+                    cleanUpModalBackdrops();
+                }
+            });
+        }
+
+
+
+        function showCompleteInspectionModalPwa(inspectionId) {
+            $('#completeInspectionId').val(inspectionId);
+            $('#inspectionFindings').val('');
+            $('#inspectionRecommendations').val('');
+            $('#completeInspectionModalPwa').modal('show');
+        }
+
+        function completeInspection() {
+            const inspectionId = $('#completeInspectionId').val();
+            const findings = $('#inspectionFindings').val().trim();
+            const recommendations = $('#inspectionRecommendations').val().trim();
+
+            if (!findings) {
+                showAlert('error', 'Please enter inspection findings');
+                return;
+            }
+
+            const completeBtn = $('#completeInspectionBtn');
+            const originalText = completeBtn.html();
+            completeBtn.html('<i class="fas fa-spinner fa-spin"></i> Completing...').prop('disabled', true);
+
+            $.ajax({
+                url: '/IntranetPortal/InspectionPwa/CompleteInspection',
+                type: 'POST',
+                data: JSON.stringify({
+                    inspectionId: inspectionId,
+                    findings: findings,
+                    recommendations: recommendations
+                }),
+                contentType: 'application/json',
+                success: (result) => {
+                    if (result.isSuccess) {
+                        showAlert('success', 'Inspection completed successfully');
+                        $('#completeInspectionModalPwa').modal('hide');
+                        loadMyInspections();
+                    } else {
+                        showAlert('error', result.errMsg || 'Failed to complete inspection');
+                    }
+                },
+                error: () => {
+                    showAlert('error', 'Error completing inspection');
+                },
+                complete: () => {
+                    completeBtn.html(originalText).prop('disabled', false);
+                    cleanUpModalBackdrops();
+                }
+            });
+        }
+
+        function viewInspectionFiles(inspectionId) {
+            $.get('/IntranetPortal/InspectionPwa/GetInspectionFiles', { inspectionId: inspectionId })
+                .done((result) => {
+                    if (result.isSuccess) {
+                        displayInspectionFiles(result.data);
+                        $('#viewInspectionFilesModalPwa').modal('show');
+                    } else {
+                        showAlert('error', result.errMsg || 'Error loading files');
+                    }
+                })
+                .fail(() => {
+                    showAlert('error', 'Error loading inspection files');
+                });
+        }
+
+        function displayInspectionFiles(files) {
+            const content = $('#inspectionFilesContent');
+            if (!content) return;
+
+            content.empty();
+
+            if (files && files.length > 0) {
+                let filesList = '<div class="list-group">';
+
+                files.forEach((file) => {
+                    const uploadDate = new Date(file.createdOn).toLocaleDateString();
+                    filesList += `
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">${file.originalFileName}</h6>
+                                    <small class="text-muted">Uploaded: ${uploadDate}</small>
+                                    ${file.description ? `<br><small class="text-info">${file.description}</small>` : ''}
+                                </div>
+                                <div class="btn-group-vertical btn-group-sm">
+                                    <a href="/IntranetPortal/InspectionPwa/DownloadInspectionFile?fileId=${file.id}"
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm"
+                                            onclick="deleteInspectionFile('${file.id}')">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                filesList += '</div>';
+                content.html(filesList);
+            } else {
+                content.html(`
+                    <div class="text-center p-4">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No files uploaded for this inspection yet</p>
+                    </div>
+                `);
+            }
+        }
+
+        function deleteInspectionFile(fileId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Do you want to delete this file?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/IntranetPortal/InspectionPwa/DeleteInspectionFile/${fileId}`,
+                        type: 'DELETE',
+                        success: (result) => {
+                            if (result.isSuccess) {
+                                showAlert('success', 'File deleted successfully');
+                                if ($('#viewInspectionFilesModalPwa').hasClass('show')) {
+                                    const inspectionId = $('#uploadInspectionId').val();
+                                    if (inspectionId) {
+                                        viewInspectionFiles(inspectionId);
+                                    }
+                                }
+                                loadMyInspections();
+                            } else {
+                                showAlert('error', result.errMsg || 'Failed to delete file');
+                            }
+                        },
+                        error: () => {
+                            showAlert('error', 'Error deleting file');
+                        },
+                        complete: () => {
+                            cleanUpModalBackdrops();
+                        }
+                    });
+                }
+            });
+        }
+
+        function showAlert(type, message) {
+            Swal.fire({
+                icon: type,
+                title: type === 'success' ? 'Success!' : 'Error!',
+                text: message,
+                position: 'top-end',
+                toast: true,
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        // Modal backdrop cleanup
+        function cleanUpModalBackdrops() {
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+        }
+
+        // Map initialization
+        $(function () {
+            const mapConfig = @Html.Raw(Json.Serialize(Model?.MapConfiguration))
+            const layersJavaScript = @Html.Raw(Model?.LayersJavaScript != null ? Model.LayersJavaScript : "[]")
+            const mapDivId = "@(Model?.MapDivId ?? "map")";
+
+            if (!mapConfig || !mapConfig.Projection) {
+                console.error('Map configuration is missing or incomplete');
+                return;
+            }
+
+            $("#map-sidebar-layers-tool-btn").on("click", function () {
+                if (!$(this).parent().hasClass("active")) {
+                    mapVars.deactivateTools();
+                }
+            });
+
+            mapVars.projection = ol.proj.get(mapConfig.Projection).getCode();
+            mapVars.mapLayersFromConfig = layersJavaScript;
+
+            var mapLayers = [];
+            function compareOrder(a, b) {
+                if (a.get("order") < b.get("order")) {
+                    return 1;
+                }
+                if (a.get("order") > b.get("order")) {
+                    return -1;
+                }
+                return 0;
+            }
+            if (Array.isArray(mapVars.mapLayersFromConfig)) {
+                mapVars.mapLayersFromConfig.sort(compareOrder);
+                for (var layer of mapVars.mapLayersFromConfig) {
+                    if (layer instanceof ol.layer.Group) {
+                        layer.getLayers().array_.sort(compareOrder);
+                    }
+                    mapLayers.push(layer);
+                }
+            }
+
+            mapVars.map = new ol.Map({
+                layers: mapLayers,
+                target: mapDivId,
+                controls: [new ol.control.Zoom()],
+                view: new ol.View({
+                    projection: mapVars.projection,
+                    constrainResolution: true,
+                    center: [mapConfig.CenterX || 0, mapConfig.CenterY || 0],
+                    resolution: mapConfig.DefaultResolution || 1,
+                    resolutions: mapConfig.Resolutions || []
+                }),
+            });
+
+            mapVars.map.once('postrender', function (event) {
+                console.log('Map post-render event fired');
+                setMapHeight();
+            });
+
+            // Layer switcher and sidebar initialization
+            var checkExist = setInterval(function () {
+                if (mapVars.map) {
+                    mapVars.mapSidebar = new createTurboSidebar({ element: 'map-sidebar', position: 'right' });
+                    mapVars.map.addControl(mapVars.mapSidebar);
+
+                    mapVars.switcher = createCustomLayerSwitcher({
+                        target: document.getElementById('sidebar-layers-container'),
+                        show_progress: true,
+                        show_legend: false,
+                        trash: true,
+                    });
+                    mapVars.map.addControl(mapVars.switcher);
+
+                    mapVars.refreshLayerSwitcher = function () {
+                        if (mapVars.switcher && mapVars.switcher.drawPanel) {
+                            mapVars.switcher.drawPanel();
+                        }
+                    };
+
+                    clearInterval(checkExist);
+                }
+            }, 100);
+
+            var layersToCheckIfWMTSAndActivate = FindAllLayers(mapVars.mapLayersFromConfig, false);
+            layersToCheckIfWMTSAndActivate.forEach(layer => {
+                if (layer.get && layer.get("delayedLayerInitialization")) {
+                    layer.get("delayedLayerInitialization")(layer, mapVars.accessToken);
+                }
+            });
+
+            function scaleMapControl() {
+                var control = new ol.control.ScaleLine({
+                    units: 'metric',
+                    bar: true,
+                    steps: 4,
+                    text: true,
+                    minWidth: 140,
+                });
+                return control;
+            }
+
+            function mousePositionMapControl() {
+                var control = new ol.control.MousePosition({
+                    coordinateFormat: ol.coordinate.createStringXY(4),
+                    projection: mapVars.projection,
+                    className: 'map-control-mouse-position',
+                    undefinedHTML: '&nbsp;',
+                });
+                return control;
+            }
+
+            function overviewMapControl() {
+                var overviewSource = new ol.source.XYZ({
+                    url: "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                });
+                if ('@(Model?.MapOverviewUrl ?? "")' != '') {
+                    overviewSource.url = "@(Model?.MapOverviewUrl ?? "")";
+                }
+                var control = new ol.control.OverviewMap({
+                    layers: [
+                        new ol.layer.Tile({
+                            source: overviewSource,
+                        })],
+                });
+                return control;
+            }
+
+            mapVars.map.addControl(scaleMapControl());
+            mapVars.map.addControl(mousePositionMapControl());
+            mapVars.map.addControl(overviewMapControl());
+        });
+
+        // Initialize everything when document is ready
+        (document).ready(function() {
+            // Initialize PWA features
+            updateOnlineStatus();
+
+            // Bind file input event initially
+            bindFileInputEvent();
+
+            $('#uploadInspectionPwaFileBtn').on('click', uploadInspectionPwaFile);
+            $('#completeInspectionBtn').on('click', completeInspection);
+
+            if (typeof mapVars !== 'undefined' && mapVars.map) {
+                window.geolocationControl = new GeolocationControl(mapVars.map);
+            }
+
             setMapHeight();
+
+            $(document).on('hidden.bs.modal', '.modal', cleanUpModalBackdrops);
+
+            setTimeout(() => {
+                console.log('mapVars.mapTools:', mapVars.mapTools);
+            }, 1000);
         });
 
         // Update height on window resize
         window.onresize = function () {
-            setTimeout(function () {
-                setMapHeight();
-            }, 200);
+            setTimeout(setMapHeight, 200);
+        };
+
+        function showMapLayersPWA() {
+            // Create overlay if it doesn't exist
+            let overlay = document.getElementById('pwa-layers-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'pwa-layers-overlay';
+                overlay.className = 'pwa-layers-overlay';
+
+                const panel = document.createElement('div');
+                panel.className = 'pwa-layers-panel';
+
+                const header = document.createElement('div');
+                header.className = 'pwa-layers-header';
+                header.innerHTML = `
+                    <h5><i class="fas fa-layer-group"></i> Map Layers</h5>
+                    <button type="button" class="pwa-close-btn" onclick="closeLayersPWA()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+
+                const content = document.createElement('div');
+                content.className = 'pwa-layers-content';
+                content.id = 'pwa-layers-content';
+
+                panel.appendChild(header);
+                panel.appendChild(content);
+                overlay.appendChild(panel);
+                document.body.appendChild(overlay);
+
+                // Close on overlay click
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        closeLayersPWA();
+                    }
+                });
+            }
+
+            const sidebarLayersContainer = document.getElementById('sidebar-layers-container');
+            const pwaLayersContent = document.getElementById('pwa-layers-content');
+
+            if (sidebarLayersContainer && pwaLayersContent) {
+                pwaLayersContent.innerHTML = sidebarLayersContainer.innerHTML;
+
+                if (mapVars.refreshLayerSwitcher) {
+                    mapVars.refreshLayerSwitcher();
+                    setTimeout(() => {
+                        pwaLayersContent.innerHTML = sidebarLayersContainer.innerHTML;
+                    }, 100);
+                }
+            }
+
+            overlay.classList.add('show');
         }
+
+        function closeLayersPWA() {
+            const overlay = document.getElementById('pwa-layers-overlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+        }
+
+        function showMapToolsPWA() {
+            const existingDropdown = document.getElementById('map-tools-dropdown');
+
+            if (existingDropdown) {
+                if (existingDropdown.style.display === 'none' || !existingDropdown.style.display) {
+                    existingDropdown.style.display = 'block';
+                } else {
+                    existingDropdown.style.display = 'none';
+                }
+                return;
+            }
+
+            // Create dropdown
+            const dropdown = document.createElement('div');
+            dropdown.id = 'map-tools-dropdown';
+            dropdown.className = 'map-tools-dropdown';
+            dropdown.style.display = 'block';
+
+            // Build tools list
+            const tools = [
+                { name: 'LayerSwitcher', displayName: 'Layers', icon: 'fa-layer-group' },
+                { name: 'LastExtentTool', displayName: 'Last Extent', icon: 'fa-undo' },
+                { name: 'ZoomToExtentTool', displayName: 'Zoom to Extent', icon: 'fa-expand' },
+                { name: 'MeasureLengthTool', displayName: 'Measure Length', icon: 'fa-ruler' },
+                { name: 'MeasureAreaTool', displayName: 'Measure Area', icon: 'fa-vector-square' },
+                { name: 'GoToCoordinatesTool', displayName: 'Go to Coordinates', icon: 'fa-crosshairs' },
+                { name: 'RegisterDumpsiteTool', displayName: 'Register Dumpsite', icon: 'fa-map-marker-alt' },
+                { name: 'HistoricData', displayName: 'Historic Data', icon: 'fa-history' },
+                { name: 'DetectionIgnoreZonesTool', displayName: 'Ignore Zones', icon: 'fa-ban' },
+                { name: 'DetectionInputImagesTool', displayName: 'Input Images', icon: 'fa-images' }
+            ];
+
+            let html = '<div class="list-group">';
+            tools.forEach(tool => {
+                html += `
+                    <button type="button" class="list-group-item list-group-item-action"
+                            onclick="activateMapToolPWA('${tool.name}')">
+                        <i class="fas ${tool.icon}"></i> ${tool.displayName}
+                    </button>
+                `;
+            });
+            html += '</div>';
+
+            dropdown.innerHTML = html;
+            document.body.appendChild(dropdown);
+
+            // Close dropdown when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeToolsDropdown(e) {
+                    if (!dropdown.contains(e.target) && !e.target.closest('.mobile-action-btn')) {
+                        dropdown.style.display = 'none';
+                        document.removeEventListener('click', closeToolsDropdown);
+                    }
+                });
+            }, 100);
+        }
+
+        function activateMapToolPWA(toolName) {
+            // Hide the dropdown
+            const dropdown = document.getElementById('map-tools-dropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+
+            if (toolName === 'LayerSwitcher') {
+                showMapLayersPWA();
+                return;
+            }
+
+            // For other tools, use the existing activation logic
+            const tool = mapVars.findTool(toolName);
+            if (tool) {
+                if (!tool.isActive) {
+                    mapVars.deactivateTools();
+                    tool.activateTool();
+                    tool.isActive = true;
+                } else {
+                    tool.deactivateTool();
+                    tool.isActive = false;
+                }
+            } else {
+                console.warn(`Tool ${toolName} not found in mapVars.mapTools`);
+            }
+        }
+
+        // Update the existing functions in your main script
+        function showMapLayers() {
+            showMapLayersPWA();
+        }
+
+        function showMapTools() {
+            showMapToolsPWA();
+        }
+
+        // Ensure map adjustments when sidebar is hidden
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for map to be initialized
+            const checkMapReady = setInterval(() => {
+                if (mapVars.map) {
+                    // Force update map size to account for hidden sidebar
+                    setTimeout(() => {
+                        mapVars.map.updateSize();
+                    }, 500);
+                    clearInterval(checkMapReady);
+                }
+            }, 100);
+        });
+
+
+
+
+
+                // Close sidebar and clean up backdrops before showing modals
+        // function showInspectionFileUploadModalPwa(inspectionId) {
+        //     closeInspectionsSidebar();
+        //     cleanUpModalBackdrops();
+        //     $('#uploadInspectionId').val(inspectionId);
+        //     $('#inspectionPwaFileInput').val('');
+        //     $('#inspectionPwaFileDescription').val('');
+        //     $('.custom-file-label').text('Choose file');
+        //     $('#filePreview').addClass('d-none');
+        //     $('#inspectionFileUploadModalPwa').modal('show');
+        // }
+
+        // function showCompleteInspectionModalPwa(inspectionId) {
+        //     closeInspectionsSidebar();
+        //     cleanUpModalBackdrops();
+        //     $('#completeInspectionId').val(inspectionId);
+        //     $('#inspectionFindings').val('');
+        //     $('#inspectionRecommendations').val('');
+        //     $('#completeInspectionModalPwa').modal('show');
+        // }
+
+        // function viewInspectionFiles(inspectionId) {
+        //     closeInspectionsSidebar();
+        //     cleanUpModalBackdrops();
+        //     $.get('/IntranetPortal/InspectionPwa/GetInspectionFiles', { inspectionId: inspectionId })
+        //         .done((result) => {
+        //             if (result.isSuccess) {
+        //                 displayInspectionFiles(result.data);
+        //                 $('#viewInspectionFilesModalPwa').modal('show');
+        //             } else {
+        //                 showAlert('error', result.errMsg || 'Error loading files');
+        //             }
+        //         })
+        //         .fail(() => {
+        //             showAlert('error', 'Error loading inspection files');
+        //         });
+        // }
+
+        // Enhanced backdrop cleanup
+        // function cleanUpModalBackdrops() {
+        //     $('.modal-backdrop').remove();
+        //     $('body').removeClass('modal-open');
+        //     $('body').css('padding-right', '');
+        // }
+
+        // // Initialize modal event listeners
+        // $(document).ready(function() {
+        //     // Existing initialization code...
+
+        //     $('.modal').on('show.bs.modal', function() {
+        //         cleanUpModalBackdrops();
+        //         closeInspectionsSidebar();
+        //         console.log('Modal z-index:', $(this).css('z-index'));
+        //         console.log('Backdrop z-index:', $('.modal-backdrop').css('z-index'));
+        //         console.log('Sidebar z-index:', $('.inspection-sidebar').css('z-index'));
+        //     });
+
+        //     $('.modal').on('hidden.bs.modal', function() {
+        //         cleanUpModalBackdrops();
+        //     });
+
+        //     $('#inspectionsSidebar').on('transitionend', function() {
+        //         if (!$(this).hasClass('show')) {
+        //             cleanUpModalBackdrops();
+        //         }
+        //     });
+        // });
+
     </script>
 }

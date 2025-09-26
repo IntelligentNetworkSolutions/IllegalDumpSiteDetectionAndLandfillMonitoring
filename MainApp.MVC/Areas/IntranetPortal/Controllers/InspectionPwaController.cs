@@ -1,7 +1,11 @@
-﻿using DTOs.MainApp.BL.RegisteredDumpsiteDTOs;
+﻿using AutoMapper;
+using DAL.Interfaces.Helpers;
+using DTOs.MainApp.BL.RegisteredDumpsiteDTOs;
 using MainApp.BL.Interfaces.Services.RegisteredDumpsiteServices;
+using MainApp.MVC.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SD;
 using System.Security.Claims;
 
 namespace MainApp.MVC.Areas.IntranetPortal.Controllers;
@@ -13,17 +17,24 @@ public class InspectionPwaController : Controller
     private readonly IRegisteredDumpsiteService _registeredDumpsiteService;
     private readonly IWebHostEnvironment _webHostEnvironment;
     private readonly ILogger<InspectionPwaController> _logger;
+    private readonly IMapper _mapper;
+    private readonly IAppSettingsAccessor _appSettingsAccessor;
+
 
     public InspectionPwaController(
         IConfiguration configuration,
         IRegisteredDumpsiteService registeredDumpsiteService,
         IWebHostEnvironment webHostEnvironment,
-        ILogger<InspectionPwaController> logger)
+        ILogger<InspectionPwaController> logger,
+        IMapper mapper,
+        IAppSettingsAccessor appSettingsAccessor)
     {
         _configuration = configuration;
         _registeredDumpsiteService = registeredDumpsiteService;
         _webHostEnvironment = webHostEnvironment;
         _logger = logger;
+        _mapper = mapper;
+        _appSettingsAccessor = appSettingsAccessor;
     }
 
     public IActionResult Index()
@@ -87,32 +98,65 @@ public class InspectionPwaController : Controller
 
     #region Inspection File Management for PWA
 
-    //[HttpGet]
-    //public async Task<IActionResult> GetMyAssignedInspections()
-    //{
-    //    try
-    //    {
-    //        var userId = User.FindFirstValue("UserId");
-    //        if (string.IsNullOrEmpty(userId))
-    //            return Json(new { isSuccess = false, errMsg = "User not found" });
+    [HttpGet]
+    public async Task<IActionResult> GetMyAssignedInspections()
+    {
+        try
+        {
+            var userId = User.FindFirstValue("UserId");
+            if (string.IsNullOrEmpty(userId))
+                return Json(new { isSuccess = false, errMsg = "User not found" });
 
-    //        var result = await _registeredDumpsiteService.GetInspectionsByInspectorId(userId);
+            var result = await _registeredDumpsiteService.GetMyAssignedInspections(userId);
 
-    //        if (result.IsSuccess)
-    //        {
-    //            return Json(new { isSuccess = true, data = result.Data });
-    //        }
+            if (result.IsSuccess)
+            {
+                // Transform the data to include file counts and other useful info
+                var inspectionsWithCounts = result.Data?.Select(inspection => new
+                {
+                    id = inspection.Id,
+                    registeredDumpsiteInspectionId = inspection.Id,
+                    registeredDumpsiteId = inspection.RegisteredDumpsiteId,
+                    status = inspection.Status,
+                    description = inspection.RegisteredDumpsite.Description ?? "Inspection",
+                    inspectionType = inspection.Status,
+                    //priority = inspection.Status,
+                    //priorityText = GetPriorityText(inspection.Priority),
+                    scheduledDate = inspection.ScheduledDate?.ToString("yyyy-MM-dd"),
+                    completedOn = inspection.InspectionFiles.Select(assignment => assignment.CreatedOn)/*?.ToString("yyyy-MM-dd")*/,
+                    findings = inspection.Findings,
+                    recommendations = inspection.Recommendations,
+                    createdOn = inspection.CreatedOn,
+                    filesCount = inspection.InspectionFiles?.Count ?? 0,
+                    dumpsiteName = inspection.RegisteredDumpsite?.Name ?? "Unknown Location",
+                    assignedBy = inspection.CreatedBy?.FirstName ?? "System"
+                });
 
-    //        return Json(new { isSuccess = false, errMsg = result.ErrMsg });
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogError(ex, "Error getting assigned inspections for user");
-    //        return Json(new { isSuccess = false, errMsg = "An error occurred while loading your inspections" });
-    //    }
-    //}
+                return Json(new { isSuccess = true, data = inspectionsWithCounts });
+            }
+
+            return Json(new { isSuccess = false, errMsg = result.ErrMsg });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting assigned inspections for user");
+            return Json(new { isSuccess = false, errMsg = "An error occurred while loading your inspections" });
+        }
+    }
+
+    private string GetPriorityText(int priority)
+    {
+        return priority switch
+        {
+            1 => "Low",
+            2 => "Medium",
+            3 => "High",
+            _ => "Normal"
+        };
+    }
 
     [HttpPost]
+    [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
     [RequestSizeLimit(int.MaxValue)]
     [RequestFormLimits(MultipartBodyLengthLimit = int.MaxValue)]
     public async Task<IActionResult> UploadInspectionFile(Guid inspectionId, IFormFile file, string? description)
@@ -134,30 +178,62 @@ public class InspectionPwaController : Controller
             if (!assignmentCheck.IsSuccess || !assignmentCheck.Data)
                 return Json(new { isSuccess = false, errMsg = "You are not assigned to this inspection" });
 
-            var uploadResult = await _registeredDumpsiteService.UploadInspectionFile(new RegisteredDumpsiteInspectionFileDTO
+            // Get upload folder path from app settings
+            var uploadFolderResult = await _appSettingsAccessor.GetApplicationSettingValueByKey<string>(
+                "RegisteredDumpsiteInspectionFilesFolder",
+                "Uploads\\RegisteredDumpsites\\InspectionFiles"
+            );
+
+            if (!uploadFolderResult.IsSuccess && uploadFolderResult.HandleError())
+                return Json(new { isSuccess = false, errMsg = "Cannot get the application settings" });
+
+            if (string.IsNullOrEmpty(uploadFolderResult.Data))
+                return Json(new { isSuccess = false, errMsg = "Upload folder path not found" });
+
+            // Resolve physical path
+            string saveDirectory = Path.Combine(_webHostEnvironment.WebRootPath, uploadFolderResult.Data);
+            if (!Directory.Exists(saveDirectory))
+                Directory.CreateDirectory(saveDirectory);
+
+            // Save file
+            string fileExtension = Path.GetExtension(file.FileName);
+            string fileName = $"{Guid.NewGuid()}{fileExtension}";
+            string filePath = Path.Combine(saveDirectory, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // Create entity
+            var inspectionFile = new RegisteredDumpsiteInspectionFileDTO
             {
                 RegisteredDumpsiteInspectionId = inspectionId,
+                FileName = fileName,
                 OriginalFileName = file.FileName,
+                FilePath = Path.Combine(uploadFolderResult.Data, fileName),
                 ContentType = file.ContentType,
-                FileExtension = Path.GetExtension(file.FileName),
+                FileExtension = fileExtension,
                 Description = description,
                 CreatedById = userId,
                 CreatedOn = DateTime.UtcNow
-            });
+            };
 
-            if (uploadResult.IsSuccess)
-            {
-                return Json(new { isSuccess = true, message = "File uploaded successfully", data = uploadResult.Data });
-            }
+            // Save in DB
+            var createResult = await _registeredDumpsiteService.UploadInspectionFile(inspectionFile);
+            if (!createResult.IsSuccess && createResult.HandleError())
+                return Json(new { isSuccess = false, errMsg = createResult.ErrMsg });
 
-            return Json(new { isSuccess = false, errMsg = uploadResult.ErrMsg });
+            var dto = _mapper.Map<RegisteredDumpsiteInspectionFileDTO>(inspectionFile);
+            return Json(new { isSuccess = true, message = "File uploaded successfully", data = dto });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading inspection file");
-            return Json(new { isSuccess = false, errMsg = "Error uploading file" });
+            _logger.LogError(ex, "Error while uploading inspection file");
+            return Json(new { isSuccess = false, errMsg = "Error while uploading inspection file" });
         }
     }
+
 
     [HttpGet]
     public async Task<IActionResult> GetInspectionFiles(Guid inspectionId)
@@ -333,6 +409,52 @@ public class InspectionPwaController : Controller
         }
     }
 
+
+    //[HttpGet]
+    //public async Task<IActionResult> GetMyAssignedInspections()
+    //{
+    //    try
+    //    {
+    //        var userId = User.FindFirstValue("UserId");
+    //        if (string.IsNullOrEmpty(userId))
+    //            return Json(new { isSuccess = false, errMsg = "User not found" });
+
+    //        var result = await _registeredDumpsiteService.GetMyAssignedInspections(userId);
+
+    //        if (result.IsSuccess)
+    //        {
+    //            // Transform the data to include file counts and other useful info
+    //            var inspectionsWithCounts = result.Data?.Select(inspection => new
+    //            {
+    //                id = inspection.Id,
+    //                registeredDumpsiteInspectionId = inspection.Id,
+    //                registeredDumpsiteId = inspection.RegisteredDumpsiteId,
+    //                status = inspection.Status,
+    //                description = inspection.RegisteredDumpsite.Description ?? "Inspection",
+    //                inspectionType = inspection.RegisteredDumpsite.RegisteredDumpsiteWasteType,
+    //                //priority = inspection.Priority,
+    //                //priorityText = GetPriorityText(inspection.Priority),
+    //                scheduledDate = inspection.ScheduledDate?.ToString("yyyy-MM-dd"),
+    //                completedOn = inspection.InspectionDate.ToString("yyyy-MM-dd"),
+    //                findings = inspection.Findings,
+    //                recommendations = inspection.Recommendations,
+    //                createdOn = inspection.CreatedOn,
+    //                filesCount = inspection.InspectionFiles?.Count ?? 0,
+    //                dumpsiteName = inspection.RegisteredDumpsite?.Name ?? "Unknown Location",
+    //                assignedBy = inspection.CreatedBy?.UserName ?? "System"
+    //            });
+
+    //            return Json(new { isSuccess = true, data = inspectionsWithCounts });
+    //        }
+
+    //        return Json(new { isSuccess = false, errMsg = result.ErrMsg });
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogError(ex, "Error getting assigned inspections for user");
+    //        return Json(new { isSuccess = false, errMsg = "An error occurred while loading your inspections" });
+    //    }
+    //}
     #endregion
 }
 

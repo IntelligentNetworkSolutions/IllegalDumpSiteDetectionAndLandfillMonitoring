@@ -28,8 +28,7 @@
     <link rel="stylesheet" href="~/vendor/paginationjs/dist/pagination.css" />
     <link rel="stylesheet" href="~/vendor/admin-lte/plugins/ion-rangeslider/css/ion.rangeSlider.min.css">
     <link rel="stylesheet" href="~/css/sidebar.css">
-    <link rel="stylesheet" href="~/InspectionPwa/css/styles.css" />
-
+    <link rel="stylesheet" href="~/InspectionPwa/css/styles.css">
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/IntranetPortal/InspectionPwa/ManifestJson">
@@ -84,7 +83,6 @@
     <script src="~/vendor/admin-lte/plugins/ion-rangeslider/js/ion.rangeSlider.min.js"></script>
     <script src="~/vendor/admin-lte/plugins/chart.js/Chart.min.js"></script>
     <script src="~/js/notification-helpers.js"></script>
-
     <script src="~/js/site.js"></script>
 
     <!-- PWA Navbar -->
@@ -118,194 +116,6 @@
         @RenderBody()
     </div>
 
-    <!-- Mobile Action Bar -->
-    <div class="mobile-action-bar d-md-none">
-        <button type="button" class="mobile-action-btn" onclick="toggleLocationTracking()">
-            <i class="fas fa-location-arrow"></i>
-            <span>Location</span>
-        </button>
-        <button type="button" class="mobile-action-btn" onclick="showMyInspections()">
-            <i class="fas fa-clipboard-list"></i>
-            <span>Inspections</span>
-        </button>
-        <button type="button" class="mobile-action-btn" onclick="showMapLayers()">
-            <i class="fas fa-layer-group"></i>
-            <span>Layers</span>
-        </button>
-        <button type="button" class="mobile-action-btn" onclick="showMapTools()">
-            <i class="fas fa-tools"></i>
-            <span>Tools</span>
-        </button>
-    </div>
-
-    <!-- Offline Indicator -->
-    <div id="offlineIndicator" class="offline-indicator">
-        <i class="fas fa-wifi" style="opacity: 0.5;"></i> You're offline
-    </div>
-
-    <!-- My Inspections Sidebar -->
-    <div id="inspectionsSidebar" class="inspection-sidebar">
-        <div class="sidebar-header">
-            <h5><i class="fas fa-clipboard-list"></i> My Inspections</h5>
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeInspectionsSidebar()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="sidebar-content">
-            <div id="inspectionsListContainer">
-                <!-- Inspections will be loaded here -->
-            </div>
-        </div>
-    </div>
-
     @await RenderSectionAsync("Scripts", required: false)
-
-    <script>
-        // Global variable for app settings
-        window.AppSettings = {
-            "AppPath": "@ViewData["AppPath"]",
-            "Domain": "@ViewData["Domain"]",
-            "FullAppUrl": "@ViewData["FullAppUrl"]",
-            "AppInstanceName": "@ViewData["InstanceName"]"
-        };
-
-        // PWA functionality
-        let deferredPrompt;
-        let geolocationControl;
-
-        // Service Worker registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/IntranetPortal/InspectionPwa/ServiceWorker')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful');
-                    }, function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
-
-        // PWA install prompt
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            showInstallPrompt();
-        });
-
-        function showInstallPrompt() {
-            // Show install button or notification
-            console.log('PWA can be installed');
-        }
-
-        // Network status
-        function updateOnlineStatus() {
-            const indicator = document.getElementById('offlineIndicator');
-            if (navigator.onLine) {
-                indicator.classList.remove('show');
-            } else {
-                indicator.classList.add('show');
-            }
-        }
-
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-
-        // Mobile action bar functions
-        function toggleLocationTracking() {
-            if (window.geolocationControl) {
-                window.geolocationControl.toggleTracking();
-            }
-        }
-
-        function showMyInspections() {
-            const sidebar = document.getElementById('inspectionsSidebar');
-            sidebar.classList.add('show');
-
-            if (window.inspectionFileManager) {
-                window.inspectionFileManager.loadMyInspections();
-            }
-        }
-
-        function closeInspectionsSidebar() {
-            const sidebar = document.getElementById('inspectionsSidebar');
-            sidebar.classList.remove('show');
-        }
-
-        function showMapLayers() {
-            // Toggle layer switcher if available
-            const layerSwitcher = document.querySelector('.layer-switcher');
-            if (layerSwitcher) {
-                layerSwitcher.style.display = layerSwitcher.style.display === 'none' ? 'block' : 'none';
-            }
-        }
-
-        function showMapTools() {
-            // Show map tools panel
-            console.log('Show map tools');
-        }
-
-        // Initialize PWA features when document is ready
-        $(document).ready(function() {
-            updateOnlineStatus();
-
-            // Initialize geolocation control when map is ready
-            if (typeof mapVars !== 'undefined' && mapVars.map) {
-                window.geolocationControl = new GeolocationControl(mapVars.map);
-            }
-        });
-
-        // Map height adjustment for PWA
-        function setMapHeight() {
-            const navbar = document.querySelector('.pwa-navbar');
-            const actionBar = document.querySelector('.mobile-action-bar');
-            const map = document.getElementById('map');
-
-            if (map) {
-                const navbarHeight = navbar ? navbar.offsetHeight : 0;
-                const actionBarHeight = actionBar ? actionBar.offsetHeight : 0;
-                const availableHeight = window.innerHeight - navbarHeight - actionBarHeight;
-
-                map.style.height = availableHeight + 'px';
-
-                if (typeof mapVars !== 'undefined' && mapVars.map && mapVars.map.updateSize) {
-                    mapVars.map.updateSize();
-                }
-            }
-        }
-
-        window.addEventListener('resize', setMapHeight);
-        window.addEventListener('orientationchange', function() {
-            setTimeout(setMapHeight, 100);
-        });
-
-        // Touch gestures for mobile
-        let touchStartX = 0;
-        let touchStartY = 0;
-
-        document.addEventListener('touchstart', function(e) {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        });
-
-        document.addEventListener('touchend', function(e) {
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            const diffX = touchStartX - touchEndX;
-            const diffY = touchStartY - touchEndY;
-
-            // Detect swipe gestures
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (Math.abs(diffX) > 50) {
-                    if (diffX > 0) {
-                        // Swipe left - could close sidebar
-                        closeInspectionsSidebar();
-                    } else {
-                        // Swipe right - could open sidebar
-                        // showMyInspections();
-                    }
-                }
-            }
-        });
-    </script>
 </body>
 </html>

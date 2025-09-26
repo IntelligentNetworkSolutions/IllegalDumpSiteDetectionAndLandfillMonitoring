@@ -784,26 +784,58 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
         }
     }
 
-    public async Task<ResultDTO<List<InspectionAssignmentDTO>>> GetInspectionsByInspectorId(string userId)
+    public async Task<ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>> GetInspectionFilesByUserId(string userId)
     {
         try
         {
-            var result = await _inspectionRepository.GetAll(
-                filter: i => i.Assignments.Any(a => a.InspectorId == userId),
-                includeProperties: "CreatedBy,RegisteredDumpsite,RegisteredDumpsiteInspectionStatus,Assignments");
+            var result = await _inspectionFileRepository.GetAll(
+                filter: f => f.CreatedById == userId,
+                includeProperties: "CreatedBy");
+
             if (!result.IsSuccess && result.HandleError())
-                return ResultDTO<List<InspectionAssignmentDTO>>.Fail(result.ErrMsg!);
+                return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Fail(result.ErrMsg!);
+
             if (result.Data == null)
-                return ResultDTO<List<InspectionAssignmentDTO>>.Fail("Inspections not found");
-            var dtos = _mapper.Map<List<InspectionAssignmentDTO>>(result.Data);
+                return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Fail("Files not found");
+
+            var dtos = _mapper.Map<List<RegisteredDumpsiteInspectionFileDTO>>(result.Data);
             if (dtos == null)
-                return ResultDTO<List<InspectionAssignmentDTO>>.Fail("Mapping inspections failed");
-            return ResultDTO<List<InspectionAssignmentDTO>>.Ok(dtos);
+                return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Fail("Mapping files failed");
+
+            return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.Ok(dtos);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex.Message, ex);
-            return ResultDTO<List<InspectionAssignmentDTO>>.ExceptionFail(ex.Message, ex);
+            return ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>.ExceptionFail(ex.Message, ex);
         }
     }
+
+    public async Task<ResultDTO<List<RegisteredDumpsiteInspectionDTO>>> GetMyAssignedInspections(string userId)
+    {
+        try
+        {
+            var result = await _inspectionRepository.GetAll(
+                filter: i => i.CreatedById == userId,
+                includeProperties: "RegisteredDumpsite,InspectionFiles,Assignments");
+
+            if (!result.IsSuccess && result.HandleError())
+                return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail(result.ErrMsg!);
+
+            if (result.Data == null)
+                return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail("Inspections not found");
+
+            var dtos = _mapper.Map<List<RegisteredDumpsiteInspectionDTO>>(result.Data);
+            if (dtos == null)
+                return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail("Mapping inspections failed");
+
+            return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Ok(dtos);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message, ex);
+            return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.ExceptionFail(ex.Message, ex);
+        }
+    }
+
 }

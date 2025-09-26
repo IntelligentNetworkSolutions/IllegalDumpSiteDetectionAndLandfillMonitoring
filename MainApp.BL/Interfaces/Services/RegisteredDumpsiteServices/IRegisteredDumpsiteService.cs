@@ -33,5 +33,9 @@ public interface IRegisteredDumpsiteService
     Task<ResultDTO<RegisteredDumpsiteInspectionFileDTO>> GetSingleInspectionFileById(Guid fileId);
     Task<ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>> GetInspectionFilesByInspectionId(Guid inspectionId);
     Task<ResultDTO<bool>> IsUserAssignedToInspection(Guid inspectionId, string userId);
+    Task<ResultDTO<List<RegisteredDumpsiteInspectionFileDTO>>> GetInspectionFilesByUserId(string userId);
+    Task<ResultDTO<List<RegisteredDumpsiteInspectionDTO>>> GetMyAssignedInspections(string userId);
+
+
 
 }

@@ -6,7 +6,11 @@
 @using Westwind.Globalization.AspNetCore
 @using Newtonsoft.Json
 
-<style>
+@section Styles{
+    <link rel="stylesheet" href="~/InspectionPwa/css/consolidated-styles.css">
+
+}
+@* <style>
     #dumpsiteDetailsModal {
         z-index: 2000 !important;
     }
@@ -14,15 +18,10 @@
     .modal-backdrop {
         z-index: 1999 !important;
     }
-
-    /* CSS to ensure toast notifications appear above modals */
-
-    /* Ensure SweetAlert2 toasts appear above Bootstrap modals */
     .swal2-container {
         z-index: 99999 !important;
     }
 
-    /* Toast notifications container */
     .toast-container {
         position: fixed !important;
         top: 20px !important;
@@ -31,18 +30,15 @@
         pointer-events: none !important;
     }
 
-    /* Individual toast notifications */
     .toast {
         z-index: 99999 !important;
         pointer-events: auto !important;
     }
 
-    /* SweetAlert2 popup containers */
     .swal2-popup {
         z-index: 99999 !important;
     }
 
-    /* Bootstrap modal z-index adjustments */
     .modal {
         z-index: 1050;
     }
@@ -51,7 +47,6 @@
         z-index: 1040;
     }
 
-    /* Specific modal z-index overrides for your modals */
     #dumpsiteDetailsModal {
         z-index: 2000 !important;
     }
@@ -69,12 +64,10 @@
         z-index: 2000 !important;
     }
 
-    /* Ensure modal backdrops don't interfere with toasts */
     .modal-backdrop {
         z-index: 1999 !important;
     }
 
-    /* Fix for Select2 dropdowns in modals */
     .select2-container {
         z-index: 99999 !important;
     }
@@ -83,7 +76,7 @@
         z-index: 99999 !important;
     }
 
-</style>
+</style> *@
 <!-- Modal HTML -->
 <div class="modal fade" id="polygonModal" tabindex="-1" role="dialog" aria-labelledby="polygonModalLabel" aria-hidden="true" style="z-index:2000;">
     <div class="modal-dialog">
