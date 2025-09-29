@@ -153,8 +153,7 @@
     </div>
 </div>
 
-<!-- Complete Inspection ModalPwa -->
-<div class="modal fade" id="completeInspectionModalPwa" tabindex="-1" role="dialog" aria-labelledby="completeInspectionModalPwaLabel" aria-hidden="true" style="">
+<div class="modal fade" id="completeInspectionModalPwa" tabindex="-1" role="dialog" aria-labelledby="completeInspectionModalPwaLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
@@ -166,31 +165,30 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form id="completeInspectionForm">
-                    <input type="hidden" id="completeInspectionId" />
+                <input type="hidden" id="completeInspectionPwaId" />
 
-                    <div class="form-group">
-                        <label for="inspectionFindings">Findings <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="inspectionFindings" rows="4" required
-                                  placeholder="Describe the inspection findings in detail"></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="inspectionPwaFindings">Findings <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="inspectionPwaFindings" rows="4" required
+                              placeholder="Describe the inspection findings in detail"></textarea>
+                </div>
 
-                    <div class="form-group">
-                        <label for="inspectionRecommendations">Recommendations</label>
-                        <textarea class="form-control" id="inspectionRecommendations" rows="3"
-                                  placeholder="Add recommendations based on findings (optional)"></textarea>
-                    </div>
-                </form>
+                <div class="form-group">
+                    <label for="inspectionPwaRecommendations">Recommendations</label>
+                    <textarea class="form-control" id="inspectionPwaRecommendations" rows="3"
+                              placeholder="Add recommendations based on findings (optional)"></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="completeInspectionBtn">
+                <button type="button" class="btn btn-success" id="completeInspectionPwaBtn" onclick="completePwaInspection()">
                     <i class="fas fa-check"></i> Complete Inspection
                 </button>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- View Inspection Files ModalPwa -->
 <div class="modal fade" id="viewInspectionFilesModalPwa" tabindex="-1" role="dialog" aria-labelledby="viewInspectionFilesModalPwaLabel" aria-hidden="true" style="">
@@ -811,23 +809,23 @@
 
 
         function showCompleteInspectionModalPwa(inspectionId) {
-            $('#completeInspectionId').val(inspectionId);
-            $('#inspectionFindings').val('');
-            $('#inspectionRecommendations').val('');
+            $('#completeInspectionPwaId').val(inspectionId);
+            $('#inspectionPwaFindings').val('');
+            $('#inspectionPwaRecommendations').val('');
             $('#completeInspectionModalPwa').modal('show');
         }
 
-        function completeInspection() {
-            const inspectionId = $('#completeInspectionId').val();
-            const findings = $('#inspectionFindings').val().trim();
-            const recommendations = $('#inspectionRecommendations').val().trim();
+               function completePwaInspection() {
+            const inspectionId = $('#completeInspectionPwaId').val();
+            const findings = $('#inspectionPwaFindings').val().trim();
+            const recommendations = $('#inspectionPwaRecommendations').val().trim();
 
             if (!findings) {
                 showAlert('error', 'Please enter inspection findings');
                 return;
             }
 
-            const completeBtn = $('#completeInspectionBtn');
+            const completeBtn = $('#completeInspectionPwaBtn');
             const originalText = completeBtn.html();
             completeBtn.html('<i class="fas fa-spinner fa-spin"></i> Completing...').prop('disabled', true);
 
@@ -859,6 +857,7 @@
             });
         }
 
+
         function viewInspectionFiles(inspectionId) {
             $.get('/IntranetPortal/InspectionPwa/GetInspectionFiles', { inspectionId: inspectionId })
                 .done((result) => {
@@ -884,13 +883,13 @@
                 let filesList = '<div class="list-group">';
 
                 files.forEach((file) => {
-                    const uploadDate = new Date(file.createdOn).toLocaleDateString();
+                    // const uploadDate = new Date(file.createdOn).toLocaleDateString();
                     filesList += `
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
                                     <h6 class="mb-1">${file.originalFileName}</h6>
-                                    <small class="text-muted">Uploaded: ${uploadDate}</small>
+                                    <small class="text-muted">Uploaded: ${file.createdOn}</small>
                                     ${file.description ? `<br><small class="text-info">${file.description}</small>` : ''}
                                 </div>
                                 <div class="btn-group-vertical btn-group-sm">
@@ -1119,8 +1118,8 @@
             // Bind file input event initially
             bindFileInputEvent();
 
-            $('#uploadInspectionPwaFileBtn').on('click', uploadInspectionPwaFile);
-            $('#completeInspectionBtn').on('click', completeInspection);
+            // $('#uploadInspectionPwaFileBtn').on('click', uploadInspectionPwaFile);
+            // $('#completeInspectionPwaBtn').on('click', completePwaInspection);
 
             if (typeof mapVars !== 'undefined' && mapVars.map) {
                 window.geolocationControl = new GeolocationControl(mapVars.map);
@@ -1328,9 +1327,9 @@
         // function showCompleteInspectionModalPwa(inspectionId) {
         //     closeInspectionsSidebar();
         //     cleanUpModalBackdrops();
-        //     $('#completeInspectionId').val(inspectionId);
-        //     $('#inspectionFindings').val('');
-        //     $('#inspectionRecommendations').val('');
+        //     $('#completeInspectionPwaId').val(inspectionId);
+        //     $('#inspectionPwaFindings').val('');
+        //     $('#inspectionPwaRecommendations').val('');
         //     $('#completeInspectionModalPwa').modal('show');
         // }
 
