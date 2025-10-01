@@ -196,3 +196,72 @@ function ajaxErrorHandlingAlert(req = "", status = "") {
             }
         });
 }
+
+
+//translation helper
+window.resources.dbResSmart = function (resId) {
+    return resources[resId] || undefined;
+}
+
+function dbResAddIfMissing(resId, humanValue) {
+    if (window.resources != undefined) {
+        //console.log(`searching for "${resId}"`);
+        var translation = window.resources.dbResSmart(resId);
+        if (resId != "" && translation === undefined) { //|| translation === resId
+            console.log(`Translation for "${resId}" does not exist.`);
+            //console.log(`Translation for "${resId}" does not exist. Adding the missing resource.`);
+
+            //Decided to use this only in development mode
+            addMissingTranslation(resId, humanValue);
+            return resId;
+        }
+        return translation;
+    }
+    return resId;
+}
+
+function jsRes(value) {
+    var searchTerm = value.toLowerCase();
+    //Capitalize Every Word
+    //searchTerm = searchTerm.replace(/(\b[a-z](?!\s))/g, function (x) { return x.toUpperCase(); });
+    searchTerm = searchTerm.replace(/\b\w/g, function (match) {
+        return match.toUpperCase();
+    });
+
+    //searchTerm = searchTerm.replace(/[^A-Z0-9]/ig, "");
+    //Replace Non Letter and Non Number signs with empty space
+    //but keep some special letters
+    searchTerm = searchTerm.replace(/[^\wëç\-]+/ig, '');
+
+    if (window.resources != undefined) {
+        //var result = window.resources.dbRes(searchTerm);
+        var result = dbResAddIfMissing(searchTerm, value);
+        if (result != searchTerm) {
+            value = result;
+        }
+    }
+    return value;
+}
+
+function addMissingTranslation(resId, humanValue) {
+    fetch('/api/Localization/AddResource', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            ResourceSet: 'Resources',
+            ResourceId: resId,
+            Value: humanValue
+        })
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to add resource');
+            }
+            console.log('Resource added successfully');
+        })
+        .catch(error => {
+            console.error('Error adding resource:', error);
+        });
+}
