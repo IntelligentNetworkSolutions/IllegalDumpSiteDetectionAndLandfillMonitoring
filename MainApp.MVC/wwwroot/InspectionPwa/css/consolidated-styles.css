@@ -16,7 +16,7 @@
     height: 56px;
     display: flex;
     align-items: center;
-    z-index: 4500 !important; /* Above sidebars but below modals */
+    /*z-index: 4500 !important;*/ /* Above sidebars but below modals */
 }
 
 .pwa-content {
@@ -67,42 +67,19 @@
     margin-right: 0 !important;
 }
 
-/* Modal and Backdrop Styles */
-.modal {
-    z-index: 6000 !important; /* High enough to be above all other elements */
-}
-
-.modal-backdrop {
-    z-index: 5990 !important; /* Just below modals */
-}
-
-    .modal-backdrop.show {
-        z-index: 5990 !important; /* Ensure consistency */
-    }
-
-/* Specific modals for both map tool and PWA */
-#dumpsiteDetailsModal,
-#fileUploadModal,
-#createInspectionModal,
-#assignInspectorModal,
-#completeInspectionModal,
-#polygonModal,
-#overlapModal,
-#editDumpsiteModal,
 #inspectionFileUploadModalPwa,
 #completeInspectionModalPwa,
 #viewInspectionFilesModalPwa {
-    z-index: 6000 !important; /* Consistent with .modal */
+    z-index: 2200 !important; /* Consistent with .modal */
 }
 
-/* Toast and Dropdown Styles */
 .swal2-container,
 .swal2-popup,
 .toast-container,
 .toast,
 .select2-container,
 .select2-dropdown {
-    z-index: 5500 !important; /* Below modals but above other elements */
+    z-index: 2300 !important; /* Below modals but above other elements */
 }
 
 .toast-container {
@@ -127,7 +104,8 @@
     background: white;
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
     transition: right 0.3s ease;
-    z-index: 4000 !important; /* Above navbar but below modals */
+    z-index: 2100;
+    /*z-index: 4000 !important;*/ /* Above navbar but below modals */
 }
 
     .inspection-sidebar.show {
@@ -161,7 +139,7 @@
     display: none;
     justify-content: space-around;
     padding: 8px 0;
-    z-index: 4000 !important; /* Same as inspection-sidebar */
+    /*z-index: 4000 !important;*/ /* Same as inspection-sidebar */
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -213,7 +191,7 @@
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 14px;
-    z-index: 4500 !important; /* Above sidebar but below modals */
+    /*z-index: 4500 !important;*/ /* Above sidebar but below modals */
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -247,7 +225,7 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    z-index: 4500 !important; /* Above sidebar but below modals */
+    /*z-index: 4500 !important;*/ /* Above sidebar but below modals */
     min-width: 200px;
 }
 
@@ -275,7 +253,7 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 5000 !important; /* Below modals but above sidebar */
+    /*z-index: 5000 !important;*/ /* Below modals but above sidebar */
     display: none;
 }
 

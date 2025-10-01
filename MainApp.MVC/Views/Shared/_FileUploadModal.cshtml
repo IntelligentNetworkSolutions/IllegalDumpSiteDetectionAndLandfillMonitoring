@@ -439,7 +439,7 @@
             .then(function(confirmed) {
                 if (confirmed) {
                     $.ajax({
-                        url: '@Url.Action("DeleteDumpsiteFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })/' + fileId,
+                    url: '@Url.Action("DeleteDumpsiteFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })' + '?fileId=' + fileId,
                         type: 'DELETE',
                         success: function(result) {
                             if (result.isSuccess) {
@@ -595,7 +595,7 @@
             .then(function(confirmed) {
                 if (confirmed) {
                     $.ajax({
-                        url: '@Url.Action("DeleteInspectionFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })/' + fileId,
+                        url: '@Url.Action("DeleteInspectionFile", "RegisteredDumpsites", new { Area = "IntranetPortal" })' + '?fileId=' + fileId,
                         type: 'DELETE',
                         success: function(result) {
                             if (result.isSuccess) {

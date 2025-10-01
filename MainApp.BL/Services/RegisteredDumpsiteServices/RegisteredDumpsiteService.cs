@@ -370,7 +370,7 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
         {
             var result = await _inspectionRepository.GetAll(
                 filter: i => i.RegisteredDumpsiteId == dumpsiteId,
-                includeProperties: "Assignments,CreatedBy,InspectionFiles,RegisteredDumpsiteInspectionStatus");
+                includeProperties: "Assignments.Inspector,CreatedBy,InspectionFiles,RegisteredDumpsiteInspectionStatus");
 
             if (!result.IsSuccess && result.HandleError())
                 return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail(result.ErrMsg!);
@@ -539,7 +539,7 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             if (getResult.Data == null)
                 return ResultDTO.Fail("Inspection not found");
 
-            //getResult.Data.Status = RegisteredDumpsiteInspectionStatus.Completed;
+            getResult.Data.RegisteredDumpsiteInspectionStatusId = (int)SD.Enums.RegisteredDumpsiteInspectionStatus.Completed;
             getResult.Data.Findings = findings;
             getResult.Data.Recommendations = recommendations;
             getResult.Data.InspectionDate = DateTime.UtcNow;
