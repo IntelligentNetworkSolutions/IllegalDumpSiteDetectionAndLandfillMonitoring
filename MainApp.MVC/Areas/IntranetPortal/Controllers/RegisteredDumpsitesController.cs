@@ -809,7 +809,7 @@ public class RegisteredDumpsitesController : Controller
     }
 
 
-    [HttpDelete]
+    [HttpPost]
     [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
     public async Task<ResultDTO> DeleteDumpsiteFile(Guid fileId)
     {
@@ -1215,7 +1215,7 @@ public class RegisteredDumpsitesController : Controller
         }
     }
 
-    [HttpDelete]
+    [HttpPost]
     [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
     public async Task<ResultDTO> DeleteInspectionFile(Guid fileId)
     {

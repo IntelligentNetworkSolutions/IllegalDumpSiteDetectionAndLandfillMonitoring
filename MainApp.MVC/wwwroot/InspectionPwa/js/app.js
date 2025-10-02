@@ -8,7 +8,6 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
-
 // Add this to your map initialization script
 
 class GeolocationControl {
@@ -244,4 +243,4 @@ class GeolocationControl {
 }
 
 // Usage: Add this after your map is initialized
-// window.geolocationControl = new GeolocationControl(mapVars.map);
+ window.geolocationControl = new GeolocationControl(mapVars.map);

@@ -20,7 +20,7 @@
 }
 
 .pwa-content {
-    position: fixed;
+    position: relative;
     top: 56px;
     left: 0;
     right: 0;

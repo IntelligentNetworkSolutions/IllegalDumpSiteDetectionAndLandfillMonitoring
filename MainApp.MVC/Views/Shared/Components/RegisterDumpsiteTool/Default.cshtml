@@ -250,10 +250,7 @@
 
         refreshDumpsiteDetails(dumpsiteId);
     }
-
-
-
-        function refreshDumpsiteDetails(dumpsiteId) {
+    function refreshDumpsiteDetails(dumpsiteId) {
         $('#dumpsiteDetailsModal .modal-body').html('<div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Refreshing...</div>');
 
         $.get('@Url.Action("GetDumpsiteDetailsPartial", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { dumpsiteId: dumpsiteId })
@@ -265,17 +262,13 @@
             });
     }
 
-
-
     $(function () {
-        // Activate the registered dumpsites tool
         function activateRegisteredDumpsitesTool() {
             mapVars.deactivateTools();
             $("#map-sidebar-registereddumpsites-pane").addClass("active");
             this.isActive = true;
         }
 
-        // Deactivate the registered dumpsites tool and clean up interactions
         function deactivateRegisteredDumpsitesTool() {
             cleanupDrawInteraction();
             if (currentFocusedPolygon) {
@@ -308,7 +301,6 @@
             return true;
         }
 
-        // Initialize the RegisteredDumpsites tool
         var registeredDumpsites = new MapToolBaseClass("RegisteredDumpsites");
         registeredDumpsites.activateTool = activateRegisteredDumpsitesTool;
         registeredDumpsites.deactivateTool = deactivateRegisteredDumpsitesTool;
@@ -316,7 +308,6 @@
 
         mapVars.mapTools.push(registeredDumpsites);
 
-        // Sidebar tab and pane HTML structure
         var tabHtml = `
             <li>
                 <a href="#map-sidebar-registereddumpsites-pane" id="map-sidebar-registereddumpsites-btn" role="tab" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="@DbResHtml.T("Registered Dumpsites", "Resources")">
@@ -593,7 +584,7 @@
         var detailsHtml = '<h6>' + '@DbResHtml.T("Overlapping Dumpsites:", "Resources")' + '</h6>';
         detailsHtml += '<ul>';
         overlaps.forEach(function(overlap) {
-            detailsHtml += '<li><strong>' + overlap.name + '</strong> (ID: ' + overlap.id + ')</li>';
+            detailsHtml += '<li><strong>' + overlap.name + '</strong></li>';
         });
         detailsHtml += '</ul>';
 

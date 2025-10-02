@@ -201,7 +201,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div id="inspectionFilesContent">
+                <div id="inspectionFilesPwaContent">
                 </div>
             </div>
             <div class="modal-footer">
@@ -824,8 +824,10 @@
 
 
         function viewInspectionFiles(inspectionId) {
+
             $.get('/IntranetPortal/InspectionPwa/GetInspectionFiles', { inspectionId: inspectionId })
                 .done((result) => {
+
                     if (result.isSuccess) {
                         displayInspectionFiles(result.data);
                         $('#viewInspectionFilesModalPwa').modal('show');
@@ -833,14 +835,18 @@
                         showAlert('error', result.errMsg || 'Error loading files');
                     }
                 })
-                .fail(() => {
+                .fail((xhr, status, error) => {
                     showAlert('error', 'Error loading inspection files');
                 });
         }
 
         function displayInspectionFiles(files) {
-            const content = $('#inspectionFilesContent');
-            if (!content) return;
+
+            const content = $('#inspectionFilesPwaContent');
+
+            if (!content || content.length === 0) {
+                return;
+            }
 
             content.empty();
 
@@ -848,7 +854,7 @@
                 let filesList = '<div class="list-group">';
 
                 files.forEach((file) => {
-                    // const uploadDate = new Date(file.createdOn).toLocaleDateString();
+                    console.log('Processing file:', file);
                     filesList += `
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between align-items-start">
@@ -863,7 +869,7 @@
                                         <i class="fas fa-download"></i> Download
                                     </a>
                                     <button type="button" class="btn btn-outline-danger btn-sm"
-                                            onclick="deleteInspectionFile('${file.id}')">
+                                            onclick="deleteInspectionPwaFile('${file.id}')">
                                         <i class="fas fa-trash"></i> Delete
                                     </button>
                                 </div>
@@ -884,7 +890,7 @@
             }
         }
 
-        function deleteInspectionFile(fileId) {
+        function deleteInspectionPwaFile(fileId) {
             Swal.fire({
                 title: 'Are you sure?',
                 text: 'Do you want to delete this file?',
@@ -895,8 +901,8 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: `/IntranetPortal/InspectionPwa/DeleteInspectionFile/${fileId}`,
-                        type: 'DELETE',
+                    url: '@Url.Action("DeleteInspectionFile", "InspectionPwa", new { Area = "IntranetPortal" })' + '?fileId=' + fileId,
+                        type: 'POST',
                         success: (result) => {
                             if (result.isSuccess) {
                                 showAlert('success', 'File deleted successfully');
@@ -1072,7 +1078,7 @@
             mapVars.map.addControl(overviewMapControl());
         });
 
-        (document).ready(function() {
+        $(document).ready(function() {
             updateOnlineStatus();
 
             bindFileInputEvent();

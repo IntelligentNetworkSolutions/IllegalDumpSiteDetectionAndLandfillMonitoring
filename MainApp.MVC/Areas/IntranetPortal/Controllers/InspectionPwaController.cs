@@ -302,7 +302,7 @@ public class InspectionPwaController : Controller
         }
     }
 
-    [HttpDelete]
+    [HttpPost]
     public async Task<IActionResult> DeleteInspectionFile(Guid fileId)
     {
         try
