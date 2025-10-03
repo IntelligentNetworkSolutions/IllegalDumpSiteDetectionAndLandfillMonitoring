@@ -407,7 +407,6 @@ public class RegisteredDumpsitesController : Controller
     {
         try
         {
-            // Use your existing service call
             var resultDtoList = await _registeredDumpsiteWasteTypeService.GetAllRegisteredDumpsiteWasteTypes();
 
             if (!resultDtoList.IsSuccess)
@@ -455,8 +454,7 @@ public class RegisteredDumpsitesController : Controller
     {
         try
         {
-            // Use your existing service call for risk levels
-            var resultDtoList = await _registeredDumpsiteRiskLevelService.GetAllRegisteredDumpsiteRiskLevels(); // Assuming similar service exists
+            var resultDtoList = await _registeredDumpsiteRiskLevelService.GetAllRegisteredDumpsiteRiskLevels();
 
             if (!resultDtoList.IsSuccess)
             {

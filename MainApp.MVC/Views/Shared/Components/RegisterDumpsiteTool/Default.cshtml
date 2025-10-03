@@ -1389,7 +1389,7 @@
 
         modalBody.append(html);
 
-        loadDropdownData().then(() => {
+        loadDropdownDataTool().then(() => {
             $("#editedPolygonCoordinates").val(JSON.stringify(geoJson));
             $("#editDumpsiteName").val(dumpsite.name);
             $("#editDumpsiteId").val(dumpsite.id);
@@ -1406,7 +1406,7 @@
     }
 
         // Add this function to load dropdown data
-    function loadDropdownData() {
+    function loadDropdownDataTool() {
         return Promise.all([
             loadWasteTypes(),
             loadRiskLevels()
@@ -1446,7 +1446,7 @@
     }
 
     $('#polygonModal').on('shown.bs.modal', function() {
-        loadDropdownData().then(() => {
+        loadDropdownDataTool().then(() => {
             $('.select2').select2({
                 dropdownParent: $('#polygonModal'),
                 theme: 'bootstrap4'
