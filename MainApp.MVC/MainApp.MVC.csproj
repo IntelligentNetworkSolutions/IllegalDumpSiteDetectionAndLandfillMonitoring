@@ -34,6 +34,8 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.1" />
+		<PackageReference Include="Serilog" Version="4.3.0" />
+		<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
 		<PackageReference Include="Westwind.Globalization" Version="3.1.7" />
 		<PackageReference Include="Westwind.Globalization.AspnetCore" Version="3.1.7" />
 		<PackageReference Include="X.PagedList" Version="8.4.7" />

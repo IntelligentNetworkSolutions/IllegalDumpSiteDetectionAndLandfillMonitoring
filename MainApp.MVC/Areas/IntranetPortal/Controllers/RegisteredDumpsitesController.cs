@@ -944,7 +944,8 @@ public class RegisteredDumpsitesController : Controller
             var result = await _registeredDumpsiteService.CompleteInspection(
                 request.InspectionId,
                 request.Findings,
-                request.Recommendations);
+                request.Recommendations,
+                request.Notes);
 
             if (result.IsSuccess)
             {
@@ -1042,7 +1043,6 @@ public class RegisteredDumpsitesController : Controller
                 return Json(new { isSuccess = false, errMsg = "Failed to load inspectors" });
             }
 
-            // Filter users who can be inspectors (you might want to add specific role filtering)
             var inspectors = resultGetUsers.Data
                 .Select(u => new
                 {

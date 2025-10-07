@@ -61,10 +61,6 @@
                         <label for="scheduledDate">@DbResHtml.T("Scheduled Date", "Resources") <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="scheduledDate" required>
                     </div>
-                    <div class="form-group">
-                        <label for="inspectionNotes">@DbResHtml.T("Notes", "Resources")</label>
-                        <textarea class="form-control" id="inspectionNotes" rows="3" placeholder="@DbResHtml.T("Add any notes for this inspection", "Resources")"></textarea>
-                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -132,6 +128,10 @@
                     <div class="form-group">
                         <label for="inspectionRecommendations">@DbResHtml.T("Recommendations", "Resources")</label>
                         <textarea class="form-control" id="inspectionRecommendations" rows="3" placeholder="@DbResHtml.T("Add recommendations based on findings", "Resources")"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="inspectionNotes">@DbResHtml.T("Notes", "Resources")</label>
+                        <textarea class="form-control" id="inspectionNotes" rows="3" placeholder="@DbResHtml.T("Add notes based on findings", "Resources")"></textarea>
                     </div>
                 </form>
             </div>
@@ -224,20 +224,22 @@
     function showCreateInspectionModal(dumpsiteId) {
         $('#inspectionDumpsiteId').val(dumpsiteId);
         $('#scheduledDate').val('');
-        $('#inspectionNotes').val('');
         $('#createInspectionModal').modal('show');
     }
 
     function showAssignInspectorModal(inspectionId) {
         $('#assignInspectionId').val(inspectionId);
-        loadInspectors();
-        $('#assignInspectorModal').modal('show');
+        loadInspectors(function() {
+            $('#assignInspectorModal').modal('show');
+        });
     }
+
 
     function showCompleteInspectionModal(inspectionId) {
         $('#completeInspectionId').val(inspectionId);
         $('#inspectionFindings').val('');
         $('#inspectionRecommendations').val('');
+        $('#inspectionNotes').val('');
         $('#completeInspectionModal').modal('show');
     }
 
@@ -345,7 +347,6 @@
         var inspection = {
             RegisteredDumpsiteId: $('#inspectionDumpsiteId').val(),
             ScheduledDate: $('#scheduledDate').val(),
-            Notes: $('#inspectionNotes').val()
         };
 
         $.ajax({
@@ -404,6 +405,7 @@
         var inspectionId = $('#completeInspectionId').val();
         var findings = $('#inspectionFindings').val();
         var recommendations = $('#inspectionRecommendations').val();
+        var notes = $('#inspectionNotes').val();
 
         if (!findings.trim()) {
             notifyAlerts('error', 'Please enter findings');
@@ -416,7 +418,8 @@
             data: JSON.stringify({
                 inspectionId: inspectionId,
                 findings: findings,
-                recommendations: recommendations
+                recommendations: recommendations,
+                notes: notes
             }),
             contentType: 'application/json',
             success: function(result) {
@@ -483,7 +486,7 @@
         });
     }
 
-    function loadInspectors() {
+    function loadInspectors(callback) {
         $.get('@Url.Action("GetAvailableInspectors", "RegisteredDumpsites", new { Area = "IntranetPortal" })')
             .done(function(result) {
                 var select = $('#inspectorSelect');
@@ -497,11 +500,14 @@
                         }));
                     });
                 }
+
+                if (callback) callback();  // 👈 trigger callback after population
             })
             .fail(function() {
                 notifyAlerts('error', 'Error loading inspectors');
             });
     }
+
 
     function refreshDetails() {
     let dumpsiteId = $('#dumpsiteDetailsModal').data('dumpsite-id');

@@ -1,54 +1,27 @@
-using MainApp.MVC.Helpers;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using SD;
-using SD.Helpers;
-using Microsoft.IdentityModel.Logging;
-using Services.Interfaces;
-using Services;
-using DAL.Helpers;
-using MailSend.Interfaces;
-using MailSend;
-using Services.Interfaces.Services;
-using DAL.Repositories;
-using MainApp.MVC.Infrastructure.Register;
-using MainApp.MVC.Infrastructure.Configure;
-using DAL.Interfaces.Repositories;
-using DAL.Interfaces.Helpers;
-using MainApp.BL.Interfaces.Services;
-using MainApp.BL.Services;
-using MainApp.BL.Mappers;
-using MainApp.MVC.Mappers;
-using Westwind.Globalization.AspnetCore;
-using Microsoft.AspNetCore.Mvc.Localization;
-using DAL.ApplicationStorage;
-using Entities;
-using Microsoft.AspNetCore.Authorization;
-using Audit.EntityFramework;
-using SD.Enums;
 using Audit.Core;
-using Microsoft.Extensions.Localization;
-using Westwind.Globalization;
-using System.Globalization;
-using Microsoft.AspNetCore.Localization;
-using DAL.Repositories.DatasetRepositories;
-using DAL.Interfaces.Repositories.DatasetRepositories;
-using MainApp.BL.Interfaces.Services.DatasetServices;
-using DocumentFormat.OpenXml.Office2013.Drawing.ChartStyle;
-using MainApp.BL.Services.DatasetServices;
-using DAL.Interfaces.Repositories.MapConfigurationRepositories;
-using DAL.Repositories.MapConfigurationRepositories;
-using MainApp.BL.Interfaces.Services.MapConfigurationServices;
-using MainApp.BL.Services.MapConfigurationServices;
-using MainApp.BL.Services.DetectionServices;
-using DAL.Repositories.DetectionRepositories;
-using DAL.Interfaces.Repositories.DetectionRepositories;
-using MainApp.BL.Interfaces.Services.DetectionServices;
+using Audit.EntityFramework;
+using DAL.ApplicationStorage;
 using DAL.ApplicationStorage.SeedDatabase;
-using Microsoft.Extensions.Hosting;
+using Entities;
 using Hangfire;
-using Hangfire.PostgreSql;
-using MainApp.MVC.Filters;
+using MainApp.BL.Mappers;
+using MainApp.MVC.Helpers;
+using MainApp.MVC.Infrastructure.Configure;
+using MainApp.MVC.Infrastructure.Register;
+using MainApp.MVC.Mappers;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc.Localization;
+using Microsoft.Extensions.Localization;
+using Microsoft.IdentityModel.Logging;
+using SD;
+using SD.Enums;
+using SD.Helpers;
+using Serilog;
+using System.Globalization;
+using Westwind.Globalization;
+using Westwind.Globalization.AspnetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddEnvironmentVariables(prefix: "ASPNETCORE_");
@@ -61,6 +34,18 @@ if (string.IsNullOrEmpty(applicationStartMode))
     throw new Exception("ApplicationStartupMode not defined in appsettings.json");
 
 //services.RegisterWestwindLocalization(configuration);
+
+//Serilog
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    //.MinimumLevel.Debug()
+    //.MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .CreateLogger()
+    ;
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+
 services.AddLocalization(options =>
 {
     options.ResourcesPath = "Properties";

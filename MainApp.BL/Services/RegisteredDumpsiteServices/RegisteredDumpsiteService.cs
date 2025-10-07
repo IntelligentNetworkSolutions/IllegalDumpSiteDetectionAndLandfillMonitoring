@@ -499,12 +499,18 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
     {
         try
         {
-            var getResult = await _inspectionRepository.GetById(inspectionId, track: true);
+            var getResult = await _inspectionRepository.GetById(inspectionId, track: true, includeProperties: "Assignments");
             if (!getResult.IsSuccess && getResult.HandleError())
                 return ResultDTO.Fail(getResult.ErrMsg!);
 
             if (getResult.Data == null)
                 return ResultDTO.Fail("Inspection not found");
+
+            var alreadyAssigned = getResult.Data.Assignments
+                .Any(a => a.InspectorId == inspectorId);
+
+            if (alreadyAssigned)
+                return ResultDTO.Fail("Inspector is already assigned to this inspection");
 
             var assignment = new InspectionAssignment
             {
@@ -514,8 +520,10 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             };
 
             getResult.Data.Assignments.Add(assignment);
+
             var updateResult = await _inspectionRepository.Update(getResult.Data);
             await _inspectionRepository.SaveChangesAsync();
+
             if (!updateResult.IsSuccess && updateResult.HandleError())
                 return ResultDTO.Fail(updateResult.ErrMsg!);
 
@@ -528,7 +536,8 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
         }
     }
 
-    public async Task<ResultDTO> CompleteInspection(Guid inspectionId, string findings, string? recommendations)
+
+    public async Task<ResultDTO> CompleteInspection(Guid inspectionId, string findings, string? recommendations, string? notes)
     {
         try
         {
@@ -543,6 +552,7 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             getResult.Data.Findings = findings;
             getResult.Data.Recommendations = recommendations;
             getResult.Data.InspectionDate = DateTime.UtcNow;
+            getResult.Data.Notes = notes;
 
             var updateResult = await _inspectionRepository.Update(getResult.Data);
             if (!updateResult.IsSuccess && updateResult.HandleError())

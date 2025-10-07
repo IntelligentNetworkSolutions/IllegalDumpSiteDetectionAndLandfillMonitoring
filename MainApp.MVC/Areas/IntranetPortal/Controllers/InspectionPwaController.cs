@@ -363,7 +363,8 @@ public class InspectionPwaController : Controller
             var result = await _registeredDumpsiteService.CompleteInspection(
                 request.InspectionId,
                 request.Findings,
-                request.Recommendations);
+                request.Recommendations,
+                request.Notes);
 
             if (result.IsSuccess)
             {
@@ -409,52 +410,6 @@ public class InspectionPwaController : Controller
         }
     }
 
-
-    //[HttpGet]
-    //public async Task<IActionResult> GetMyAssignedInspections()
-    //{
-    //    try
-    //    {
-    //        var userId = User.FindFirstValue("UserId");
-    //        if (string.IsNullOrEmpty(userId))
-    //            return Json(new { isSuccess = false, errMsg = "User not found" });
-
-    //        var result = await _registeredDumpsiteService.GetMyAssignedInspections(userId);
-
-    //        if (result.IsSuccess)
-    //        {
-    //            // Transform the data to include file counts and other useful info
-    //            var inspectionsWithCounts = result.Data?.Select(inspection => new
-    //            {
-    //                id = inspection.Id,
-    //                registeredDumpsiteInspectionId = inspection.Id,
-    //                registeredDumpsiteId = inspection.RegisteredDumpsiteId,
-    //                status = inspection.Status,
-    //                description = inspection.RegisteredDumpsite.Description ?? "Inspection",
-    //                inspectionType = inspection.RegisteredDumpsite.RegisteredDumpsiteWasteType,
-    //                //priority = inspection.Priority,
-    //                //priorityText = GetPriorityText(inspection.Priority),
-    //                scheduledDate = inspection.ScheduledDate?.ToString("yyyy-MM-dd"),
-    //                completedOn = inspection.InspectionDate.ToString("yyyy-MM-dd"),
-    //                findings = inspection.Findings,
-    //                recommendations = inspection.Recommendations,
-    //                createdOn = inspection.CreatedOn,
-    //                filesCount = inspection.InspectionFiles?.Count ?? 0,
-    //                dumpsiteName = inspection.RegisteredDumpsite?.Name ?? "Unknown Location",
-    //                assignedBy = inspection.CreatedBy?.UserName ?? "System"
-    //            });
-
-    //            return Json(new { isSuccess = true, data = inspectionsWithCounts });
-    //        }
-
-    //        return Json(new { isSuccess = false, errMsg = result.ErrMsg });
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogError(ex, "Error getting assigned inspections for user");
-    //        return Json(new { isSuccess = false, errMsg = "An error occurred while loading your inspections" });
-    //    }
-    //}
     #endregion
 }
 
@@ -463,4 +418,5 @@ public class CompleteInspectionRequest
     public Guid InspectionId { get; set; }
     public string Findings { get; set; } = string.Empty;
     public string? Recommendations { get; set; }
+    public string? Notes { get; set; }
 }
