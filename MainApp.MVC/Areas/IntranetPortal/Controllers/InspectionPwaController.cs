@@ -3,6 +3,7 @@ using DAL.Interfaces.Helpers;
 using DTOs.MainApp.BL.RegisteredDumpsiteDTOs;
 using MainApp.BL.Interfaces.Services.RegisteredDumpsiteServices;
 using MainApp.MVC.Filters;
+using MainApp.MVC.ViewModels.IntranetPortal.RegisteredDumpsite;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SD;
@@ -142,17 +143,6 @@ public class InspectionPwaController : Controller
             _logger.LogError(ex, "Error getting assigned inspections for user");
             return Json(new { isSuccess = false, errMsg = "An error occurred while loading your inspections" });
         }
-    }
-
-    private string GetPriorityText(int priority)
-    {
-        return priority switch
-        {
-            1 => "Low",
-            2 => "Medium",
-            3 => "High",
-            _ => "Normal"
-        };
     }
 
     [HttpPost]
@@ -344,27 +334,25 @@ public class InspectionPwaController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> CompleteInspection([FromBody] CompleteInspectionRequest request)
+    public async Task<IActionResult> CompleteInspection([FromBody] CompleteInspectionViewModel viewModel)
     {
         try
         {
-            if (request == null || request.InspectionId == Guid.Empty || string.IsNullOrEmpty(request.Findings))
-                return Json(new { isSuccess = false, errMsg = "Invalid request data" });
+            if (viewModel == null || viewModel.InspectionId == Guid.Empty || string.IsNullOrEmpty(viewModel.Findings))
+                return Json(new { isSuccess = false, errMsg = "Invalid viewModel data" });
 
             var userId = User.FindFirstValue("UserId");
             if (string.IsNullOrEmpty(userId))
                 return Json(new { isSuccess = false, errMsg = "User not found" });
 
             // Check if user is assigned to this inspection
-            var assignmentCheck = await _registeredDumpsiteService.IsUserAssignedToInspection(request.InspectionId, userId);
+            var assignmentCheck = await _registeredDumpsiteService.IsUserAssignedToInspection(viewModel.InspectionId, userId);
             if (!assignmentCheck.IsSuccess || !assignmentCheck.Data)
                 return Json(new { isSuccess = false, errMsg = "You are not assigned to this inspection" });
 
-            var result = await _registeredDumpsiteService.CompleteInspection(
-                request.InspectionId,
-                request.Findings,
-                request.Recommendations,
-                request.Notes);
+            var inspectionDTO = _mapper.Map<CompleteInspectionDTO>(viewModel);
+
+            var result = await _registeredDumpsiteService.CompleteInspection(inspectionDTO);
 
             if (result.IsSuccess)
             {
@@ -411,12 +399,4 @@ public class InspectionPwaController : Controller
     }
 
     #endregion
-}
-
-public class CompleteInspectionRequest
-{
-    public Guid InspectionId { get; set; }
-    public string Findings { get; set; } = string.Empty;
-    public string? Recommendations { get; set; }
-    public string? Notes { get; set; }
 }

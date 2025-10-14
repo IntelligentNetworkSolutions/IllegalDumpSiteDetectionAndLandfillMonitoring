@@ -1,0 +1,20 @@
+﻿#fileUploadModal,
+#createInspectionModal,
+#assignInspectorModal,
+#completeInspectionModal {
+    z-index: 2200 !important;
+}
+
+#polygonModal,
+#overlapModal,
+#editDumpsiteModal,
+#dumpsiteDetailsModal {
+    z-index: 2000 !important;
+}
+
+.swal2-popup,
+.swal2-container,
+.toast,
+.toast-container {
+    z-index: 2300 !important;
+}

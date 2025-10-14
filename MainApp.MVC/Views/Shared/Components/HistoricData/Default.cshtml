@@ -559,12 +559,6 @@
         return selectedConfidenceRates;
     }
 
-
-
-    //kj
-
-        // Add this to your existing script section in the historic data view
-
     // $(function () {
         // Initialize the Convert Detected Dumpsite tool
         function activateConvertDetectedDumpsiteTool() {
@@ -835,7 +829,6 @@
 
     async function loadDropdownData() {
         try {
-            // Fetch Waste Types
             const wasteTypesResponse = await $.ajax({
                 type: "GET",
                 url: "@Url.Action("GetWasteTypes", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
@@ -851,7 +844,6 @@
                 console.error("Failed to load waste types");
             }
 
-            // Fetch Risk Levels
             const riskLevelsResponse = await $.ajax({
                 type: "GET",
                 url: "@Url.Action("GetRiskLevels", "RegisteredDumpsites", new { Area = "IntranetPortal" })",
@@ -951,17 +943,14 @@
                 return;
             }
 
-            // Parse and reformat GeoJSON
             var geoJsonObject = JSON.parse(geoJsonString);
             var geoJsonFormat = new ol.format.GeoJSON();
             var feature = geoJsonFormat.readFeature(geoJsonObject);
             var formattedGeoJson = geoJsonFormat.writeFeature(feature);
 
-            // Check for overlaps with existing registered dumpsites
             var overlaps = checkForOverlapsInHistoricData(feature);
             
             if (overlaps.length > 0) {
-                // Close convert modal and show overlap resolution
                 closeConvertDumpsiteModal();
                 
                 var convertDumpsiteData = {

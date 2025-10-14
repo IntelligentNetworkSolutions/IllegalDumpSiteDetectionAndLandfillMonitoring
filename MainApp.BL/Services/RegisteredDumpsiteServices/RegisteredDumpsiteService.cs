@@ -537,11 +537,11 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
     }
 
 
-    public async Task<ResultDTO> CompleteInspection(Guid inspectionId, string findings, string? recommendations, string? notes)
+    public async Task<ResultDTO> CompleteInspection(CompleteInspectionDTO inspectionDTO)
     {
         try
         {
-            var getResult = await _inspectionRepository.GetById(inspectionId, track: true);
+            var getResult = await _inspectionRepository.GetById(inspectionDTO.InspectionId, track: true);
             if (!getResult.IsSuccess && getResult.HandleError())
                 return ResultDTO.Fail(getResult.ErrMsg!);
 
@@ -549,10 +549,10 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
                 return ResultDTO.Fail("Inspection not found");
 
             getResult.Data.RegisteredDumpsiteInspectionStatusId = (int)SD.Enums.RegisteredDumpsiteInspectionStatus.Completed;
-            getResult.Data.Findings = findings;
-            getResult.Data.Recommendations = recommendations;
+            getResult.Data.Findings = inspectionDTO.Findings;
+            getResult.Data.Recommendations = inspectionDTO.Recommendations;
             getResult.Data.InspectionDate = DateTime.UtcNow;
-            getResult.Data.Notes = notes;
+            getResult.Data.Notes = inspectionDTO.Notes;
 
             var updateResult = await _inspectionRepository.Update(getResult.Data);
             if (!updateResult.IsSuccess && updateResult.HandleError())
@@ -825,9 +825,7 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
     {
         try
         {
-            var result = await _inspectionRepository.GetAll(
-                filter: i => i.CreatedById == userId,
-                includeProperties: "RegisteredDumpsite,InspectionFiles,Assignments");
+            var result = await _inspectionRepository.GetAll(includeProperties: "RegisteredDumpsite,InspectionFiles,Assignments");
 
             if (!result.IsSuccess && result.HandleError())
                 return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail(result.ErrMsg!);
@@ -835,7 +833,9 @@ public class RegisteredDumpsiteService : IRegisteredDumpsiteService
             if (result.Data == null)
                 return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail("Inspections not found");
 
-            var dtos = _mapper.Map<List<RegisteredDumpsiteInspectionDTO>>(result.Data);
+            var filteredList = result.Data.Where(x => x.Assignments.Any(a => a.InspectorId == userId)).ToList();
+
+            var dtos = _mapper.Map<List<RegisteredDumpsiteInspectionDTO>>(filteredList);
             if (dtos == null)
                 return ResultDTO<List<RegisteredDumpsiteInspectionDTO>>.Fail("Mapping inspections failed");
 

@@ -83,12 +83,12 @@
                                             }
                                             <br><small class="text-muted">@file.CreatedOn.ToString("dd/MM/yyyy HH:mm")</small>
                                         </div>
-                                        <div class="btn-group">
+                                        <div class="btn-group gap-3" >
                                             <a href="@Url.Action("DownloadDumpsiteFile", "RegisteredDumpsites", new { area = "IntranetPortal", fileId = file.Id })"
-                                               class="btn btn-xs btn-outline-primary">
+                                               class="btn btn-xs btn-outline-primary px-3 py-1">
                                                 <i class="fas fa-download"></i>
                                             </a>
-                                            <button type="button" class="btn btn-xs btn-outline-danger" onclick="deleteDumpsiteFile('@file.Id')">
+                                            <button type="button" class="btn btn-xs btn-outline-danger px-3 py-1" onclick="deleteDumpsiteFile('@file.Id')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -181,7 +181,8 @@
                                                         </button>
                                                     }
                                                     @if (inspection.Status == RegisteredDumpsiteInspectionStatus.Assigned ||
-                                                                                            inspection.Status == RegisteredDumpsiteInspectionStatus.InProgress || inspection.Status == RegisteredDumpsiteInspectionStatus.Scheduled)
+                                                         inspection.Status == RegisteredDumpsiteInspectionStatus.InProgress || 
+                                                         inspection.Status == RegisteredDumpsiteInspectionStatus.Scheduled)
                                                     {
                                                         <button type="button" class="btn btn-xs btn-primary mx-1" onclick="showInspectionFileUploadModal('@inspection.Id')">
                                                             <i class="fas fa-upload"></i>

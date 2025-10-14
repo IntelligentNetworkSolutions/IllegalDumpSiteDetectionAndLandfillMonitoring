@@ -5,7 +5,7 @@
 <div class="modal fade" id="fileUploadModal" tabindex="-1" role="dialog" aria-labelledby="fileUploadModalLabel" aria-hidden="true" style="z-index:2200;">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title" id="fileUploadModalLabel">
                     <i class="fas fa-upload"></i> @DbResHtml.T("Upload File", "Resources")
                 </h5>
@@ -46,7 +46,7 @@
 <div class="modal fade" id="createInspectionModal" tabindex="-1" role="dialog" aria-labelledby="createInspectionModalLabel" aria-hidden="true" style="z-index:2200;">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title" id="createInspectionModalLabel">
                     <i class="fas fa-plus"></i> @DbResHtml.T("Schedule Inspection", "Resources")
                 </h5>
@@ -65,7 +65,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">@DbResHtml.T("Cancel", "Resources")</button>
-                <button type="button" class="btn btn-success" onclick="createInspection()">
+                <button type="button" class="btn btn-success" onclick="createInspection()"> 
                     <i class="fas fa-plus"></i> @DbResHtml.T("Schedule", "Resources")
                 </button>
             </div>
@@ -77,7 +77,7 @@
 <div class="modal fade" id="assignInspectorModal" tabindex="-1" role="dialog" aria-labelledby="assignInspectorModalLabel" aria-hidden="true" style="z-index:2200;">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title" id="assignInspectorModalLabel">
                     <i class="fas fa-user-plus"></i> @DbResHtml.T("Assign Inspector", "Resources")
                 </h5>
@@ -110,7 +110,7 @@
 <div class="modal fade" id="completeInspectionModal" tabindex="-1" role="dialog" aria-labelledby="completeInspectionModalLabel" aria-hidden="true" style="z-index:2200;">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title" id="completeInspectionModalLabel">
                     <i class="fas fa-check"></i> @DbResHtml.T("Complete Inspection", "Resources")
                 </h5>
@@ -149,7 +149,7 @@
 <div class="modal fade" id="inspectionFileUploadModal" tabindex="-1" role="dialog" aria-labelledby="inspectionFileUploadModalLabel" aria-hidden="true" style="z-index:2200;">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title" id="inspectionFileUploadModalLabel">
                     <i class="fas fa-upload"></i> @DbResHtml.T("Upload Inspection File", "Resources")
                 </h5>
@@ -187,10 +187,10 @@
 </div>
 
 <!-- Inspection Files View Modal -->
-<div class="modal fade" id="inspectionFilesModal" tabindex="-1" role="dialog" aria-labelledby="inspectionFilesModalLabel" aria-hidden="true" style="z-index:2200;">
+<div class="modal fade" id="inspectionFilesModal" tabindex="-1" role="dialog" aria-labelledby="inspectionFilesModalLabel" aria-hidden="true" style="z-index:1050;">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title" id="inspectionFilesModalLabel">
                     <i class="fas fa-file"></i> @DbResHtml.T("Inspection Files", "Resources")
                 </h5>
@@ -244,37 +244,60 @@
     }
 
     function viewInspectionDetails(inspectionId) {
-        // Load inspection details in a modal or navigate to details page
         $.get('@Url.Action("GetInspectionDetails", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { inspectionId: inspectionId })
             .done(function(result) {
                 if (result.isSuccess) {
-                    // Show inspection details in a modal or update UI
                     showInspectionDetailsModal(result.data);
                 } else {
-                    notifyAlerts('error', result.errMsg || 'Error loading inspection details');
+                    Swal.fire({
+                        title: '@DbResHtml.T("Error", "Resources")',
+                        text: result.errMsg || '@DbResHtml.T("Error loading inspection details", "Resources")',
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 }
             })
             .fail(function() {
-                notifyAlerts('error', 'Error loading inspection details');
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error loading inspection details", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             });
     }
 
+        function formatDate(date) {
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+
+        // Return the formatted date in the desired format
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
     function showInspectionDetailsModal(inspection) {
-        // Create and show a modal with inspection details
+
+    let formattedScheduledDate = inspection.scheduledDate ? formatDate(inspection.scheduledDate) : '-';
+    let formattedInspectionDate = inspection.inspectionDate ? formatDate(inspection.inspectionDate) : '-';
+
         let modalContent = `
             <div class="modal fade" id="inspectionDetailsModal" tabindex="-1" role="dialog" style="z-index:2300">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
-                        <div class="modal-header">
+                        <div class="modal-header bg-gradient-primary">
                             <h5 class="modal-title">Inspection Details</h5>
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
                         </div>
                         <div class="modal-body">
                             <table class="table">
-                                <tr><td><strong>Scheduled Date:</strong></td><td>${inspection.scheduledDate || '-'}</td></tr>
+                                <tr><td><strong>Scheduled Date:</strong></td><td>${formattedScheduledDate}</td></tr>
                                 <tr><td><strong>Inspector:</strong></td><td>${inspection.inspector?.userName || 'Not Assigned'}</td></tr>
                                 <tr><td><strong>Status:</strong></td><td>${inspection.status}</td></tr>
-                                <tr><td><strong>Inspection Date:</strong></td><td>${inspection.inspectionDate || '-'}</td></tr>
+                                <tr><td><strong>Inspection Date:</strong></td><td>${formattedInspectionDate}</td></tr>
                                 <tr>
                                     <td><strong>Findings:</strong></td>
                                     <td class="text-wrap text-break" style="max-height: 300px; overflow-y: auto;">${inspection.findings || '-'}</td>
@@ -314,7 +337,12 @@
         var description = $('#fileDescription').val();
 
         if (fileInput.files.length === 0) {
-            notifyAlerts("error", "Please select a file");
+            Swal.fire({
+                title: '@DbResHtml.T("Error", "Resources")',
+                text: '@DbResHtml.T("Please select a file", "Resources")',
+                icon: 'error',
+                confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+            });
             return;
         }
 
@@ -330,15 +358,30 @@
             contentType: false,
             success: function(result) {
                 if (result.isSuccess) {
-                    notifyAlerts("success", "File uploaded successfully");
+                    Swal.fire({
+                        title: '@DbResHtml.T("Success", "Resources")',
+                        text: '@DbResHtml.T("File uploaded successfully", "Resources")',
+                        icon: 'success',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                     $('#fileUploadModal').modal('hide');
                     refreshDetails();
                 } else {
-                    notifyAlerts('error', result.errMsg);
+                    Swal.fire({
+                        title: '@DbResHtml.T("Error", "Resources")',
+                        text: result.errMsg || '@DbResHtml.T("Error uploading file", "Resources")',
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 }
             },
             error: function() {
-                notifyAlerts("error", "Error uploading file");
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error uploading file", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             }
         });
     }
@@ -356,15 +399,30 @@
             contentType: 'application/json',
             success: function(result) {
                 if (result.isSuccess) {
-                    notifyAlerts('success', 'Inspection scheduled successfully');
+                    Swal.fire({
+                        title: '@DbResHtml.T("Success", "Resources")',
+                        text: '@DbResHtml.T("Inspection scheduled successfully", "Resources")',
+                        icon: 'success',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                     $('#createInspectionModal').modal('hide');
                     refreshDetails();
                 } else {
-                    notifyAlerts('error', result.errMsg);
+                    Swal.fire({
+                        title: '@DbResHtml.T("Error", "Resources")',
+                        text: result.errMsg || '@DbResHtml.T("Error scheduling inspection", "Resources")',
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 }
             },
             error: function() {
-                notifyAlerts('error', 'Error scheduling inspection');
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error scheduling inspection", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             }
         });
     }
@@ -374,7 +432,12 @@
         var inspectorId = $('#inspectorSelect').val();
 
         if (!inspectorId) {
-            notifyAlerts('error', 'Please select an inspector');
+            Swal.fire({
+                title: '@DbResHtml.T("Error", "Resources")',
+                text: '@DbResHtml.T("Please select an inspector", "Resources")',
+                icon: 'error',
+                confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+            });
             return;
         }
 
@@ -388,15 +451,31 @@
             contentType: 'application/json',
             success: function(result) {
                 if (result.isSuccess) {
-                    notifyAlerts('success', 'Inspector assigned successfully');
+                    Swal.fire({
+                        title: '@DbResHtml.T("Success", "Resources")',
+                        text: '@DbResHtml.T("Inspector assigned successfully", "Resources")',
+                        icon: 'success',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                     $('#assignInspectorModal').modal('hide');
                     refreshDetails();
                 } else {
-                    notifyAlerts('error', result.errMsg);
+                    $('#assignInspectorModal').modal('hide');
+                    Swal.fire({
+                        title: '@DbResHtml.T("Error", "Resources")',
+                        text: result.errMsg || '@DbResHtml.T("Error assigning inspector", "Resources")',
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 }
             },
             error: function() {
-                notifyAlerts('error', 'Error assigning inspector');
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error assigning inspector", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             }
         });
     }
@@ -408,7 +487,12 @@
         var notes = $('#inspectionNotes').val();
 
         if (!findings.trim()) {
-            notifyAlerts('error', 'Please enter findings');
+            Swal.fire({
+                title: '@DbResHtml.T("Error", "Resources")',
+                text: '@DbResHtml.T("Please enter findings", "Resources")',
+                icon: 'error',
+                confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+            });
             return;
         }
 
@@ -424,15 +508,30 @@
             contentType: 'application/json',
             success: function(result) {
                 if (result.isSuccess) {
-                    notifyAlerts('success', 'Inspection completed successfully');
+                    Swal.fire({
+                        title: '@DbResHtml.T("Success", "Resources")',
+                        text: '@DbResHtml.T("Inspection completed successfully", "Resources")',
+                        icon: 'success',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                     $('#completeInspectionModal').modal('hide');
                     refreshDetails();
                 } else {
-                    notifyAlerts('error', result.errMsg);
+                    Swal.fire({
+                        title: '@DbResHtml.T("Error", "Resources")',
+                        text: result.errMsg || '@DbResHtml.T("Error completing inspection", "Resources")',
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 }
             },
             error: function() {
-                notifyAlerts('error', 'Error completing inspection');
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error completing inspection", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             }
         });
     }
@@ -501,21 +600,24 @@
                     });
                 }
 
-                if (callback) callback();  // 👈 trigger callback after population
+                if (callback) callback();
             })
             .fail(function() {
-                notifyAlerts('error', 'Error loading inspectors');
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error loading inspectors", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             });
     }
-
 
     function refreshDetails() {
     let dumpsiteId = $('#dumpsiteDetailsModal').data('dumpsite-id');
     refreshDumpsiteDetails(dumpsiteId);
     }
 
-    function showInspectionFileUploadModal(inspectionId) {
-        // First check if user is assigned to this inspection
+       function showInspectionFileUploadModal(inspectionId) {
         $.get('@Url.Action("CheckInspectionAssignment", "RegisteredDumpsites", new { Area = "IntranetPortal" })', { inspectionId: inspectionId })
             .done(function(result) {
                 if (result.isSuccess && result.data) {
@@ -525,11 +627,21 @@
                     $('.custom-file-label').text('Choose file');
                     $('#inspectionFileUploadModal').modal('show');
                 } else {
-                    notifyAlerts('error', 'You are not assigned to this inspection');
+                    Swal.fire({
+                        title: '@DbResHtml.T("Error", "Resources")',
+                        text: '@DbResHtml.T("You are not assigned to this inspection", "Resources")',
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 }
             })
             .fail(function() {
-                notifyAlerts('error', 'Error checking inspection assignment');
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error checking inspection assignment", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             });
     }
 
@@ -540,7 +652,12 @@
         var description = $('#inspectionFileDescription').val();
 
         if (fileInput.files.length === 0) {
-            notifyAlerts("error", "Please select a file");
+            Swal.fire({
+                title: '@DbResHtml.T("Error", "Resources")',
+                text: '@DbResHtml.T("Please select a file", "Resources")',
+                icon: 'error',
+                confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+            });
             return;
         }
 
@@ -556,15 +673,30 @@
             contentType: false,
             success: function(result) {
                 if (result.isSuccess) {
-                    notifyAlerts("success", "Inspection file uploaded successfully");
+                    Swal.fire({
+                        title: '@DbResHtml.T("Success", "Resources")',
+                        text: '@DbResHtml.T("Inspection file uploaded successfully", "Resources")',
+                        icon: 'success',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                     $('#inspectionFileUploadModal').modal('hide');
                     refreshDetails();
                 } else {
-                    notifyAlerts('error', result.errMsg);
+                    Swal.fire({
+                        title: '@DbResHtml.T("Error", "Resources")',
+                        text: result.errMsg || '@DbResHtml.T("Error uploading inspection file", "Resources")',
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 }
             },
             error: function() {
-                notifyAlerts("error", "Error uploading inspection file");
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error uploading inspection file", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             }
         });
     }
@@ -576,14 +708,23 @@
                     displayInspectionFiles(result.data);
                     $('#inspectionFilesModal').modal('show');
                 } else {
-                    notifyAlerts('error', result.errMsg || 'Error loading inspection files');
+                    Swal.fire({
+                        title: '@DbResHtml.T("Error", "Resources")',
+                        text: result.errMsg || '@DbResHtml.T("Error loading inspection files", "Resources")',
+                        icon: 'error',
+                        confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                    });
                 }
             })
             .fail(function() {
-                notifyAlerts('error', 'Error loading inspection files');
+                Swal.fire({
+                    title: '@DbResHtml.T("Error", "Resources")',
+                    text: '@DbResHtml.T("Error loading inspection files", "Resources")',
+                    icon: 'error',
+                    confirmButtonText: '@DbResHtml.T("Ok", "Resources")'
+                });
             });
     }
-
     function displayInspectionFiles(files) {
         var content = $('#inspectionFilesContent');
         content.empty();
@@ -655,6 +796,7 @@
                                     viewInspectionFiles(inspectionId);
                                 }
                             }
+                            $('#inspectionFilesModal').modal('hide');
                             refreshDetails();
                         } else {
                             Swal.fire({

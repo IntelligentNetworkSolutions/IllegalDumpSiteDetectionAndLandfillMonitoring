@@ -11,5 +11,6 @@ public class RegisteredDumpsiteProfile : Profile
         CreateMap<RegisteredDumpsiteDTO, RegisteredDumpsiteViewModel>().ReverseMap();
         CreateMap<RegisteredDumpsiteWasteTypeDTO, RegisteredDumpsiteWasteTypeViewModel>().ReverseMap();
         CreateMap<RegisteredDumpsiteRiskLevelDTO, RegisteredDumpsiteRiskLevelViewModel>().ReverseMap();
+        CreateMap<CompleteInspectionDTO, CompleteInspectionViewModel>().ReverseMap();
     }
 }

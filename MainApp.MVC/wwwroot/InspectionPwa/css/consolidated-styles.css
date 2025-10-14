@@ -50,14 +50,12 @@
         color: white !important;
     }
 
-/* Hide unnecessary elements in PWA */
 .main-sidebar,
 .control-sidebar,
 .turbosidebar {
     display: none !important;
 }
 
-/* Ensure map controls are not offset when sidebar is hidden */
 .turbosidebar-left ~ .turbosidebar-map .ol-zoom,
 .turbosidebar-left ~ .turbosidebar-map .ol-scale-line,
 .turbosidebar-right ~ .turbosidebar-map .ol-rotate,
@@ -70,7 +68,7 @@
 #inspectionFileUploadModalPwa,
 #completeInspectionModalPwa,
 #viewInspectionFilesModalPwa {
-    z-index: 2200 !important; /* Consistent with .modal */
+    z-index: 2200 !important; 
 }
 
 .swal2-container,
@@ -79,7 +77,7 @@
 .toast,
 .select2-container,
 .select2-dropdown {
-    z-index: 2300 !important; /* Below modals but above other elements */
+    z-index: 2300 !important; 
 }
 
 .toast-container {
@@ -93,7 +91,6 @@
     pointer-events: auto !important;
 }
 
-/* Inspection Sidebar */
 .inspection-sidebar {
     position: fixed;
     top: 56px;

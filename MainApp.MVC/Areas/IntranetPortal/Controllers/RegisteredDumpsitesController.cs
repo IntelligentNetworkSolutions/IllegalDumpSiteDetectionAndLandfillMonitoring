@@ -668,22 +668,6 @@ public class RegisteredDumpsitesController : Controller
     }
     #endregion
 
-    private IActionResult HandleErrorRedirect(string configKey, int statusCode)
-    {
-        string? errorPath = _configuration[configKey];
-        if (string.IsNullOrEmpty(errorPath))
-        {
-            return statusCode switch
-            {
-                404 => NotFound(),
-                403 => Forbid(),
-                405 => StatusCode(405),
-                _ => BadRequest()
-            };
-        }
-        return Redirect(errorPath);
-    }
-
     #region File Management
     [HttpPost]
     [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
@@ -934,18 +918,16 @@ public class RegisteredDumpsitesController : Controller
 
     [HttpPost]
     [HasAuthClaim(nameof(SD.AuthClaims.MapToolRegisterDumpsites))]
-    public async Task<IActionResult> CompleteInspection([FromBody] CompleteInspectionRequest request)
+    public async Task<IActionResult> CompleteInspection([FromBody] CompleteInspectionViewModel viewModel)
     {
         try
         {
-            if (request == null || request.InspectionId == Guid.Empty || string.IsNullOrEmpty(request.Findings))
-                return Json(new { isSuccess = false, errMsg = "Invalid request data" });
+            if (viewModel == null || viewModel.InspectionId == Guid.Empty || string.IsNullOrEmpty(viewModel.Findings))
+                return Json(new { isSuccess = false, errMsg = "Invalid viewModel data" });
 
-            var result = await _registeredDumpsiteService.CompleteInspection(
-                request.InspectionId,
-                request.Findings,
-                request.Recommendations,
-                request.Notes);
+            var inspectionDTO = _mapper.Map<CompleteInspectionDTO>(viewModel);
+
+            var result = await _registeredDumpsiteService.CompleteInspection(inspectionDTO);
 
             if (result.IsSuccess)
             {
@@ -1084,7 +1066,6 @@ public class RegisteredDumpsitesController : Controller
         }
     }
     #endregion
-
 
     #region Inspection File Management
 
@@ -1266,7 +1247,7 @@ public class RegisteredDumpsitesController : Controller
 
     #endregion
 
-    // last
+    // for historic data tool
 
     [HttpPost]
     public async Task<IActionResult> ConvertDetectedDumpsite([FromBody] ConvertDetectedDumpsiteRequest request)
@@ -1308,6 +1289,21 @@ public class RegisteredDumpsitesController : Controller
             _logger.LogError(ex, "Error retrieving detected dumpsite details");
             return Ok(new { isSuccess = false, errMsg = "An error occurred while retrieving dumpsite details" });
         }
+    }
+    private IActionResult HandleErrorRedirect(string configKey, int statusCode)
+    {
+        string? errorPath = _configuration[configKey];
+        if (string.IsNullOrEmpty(errorPath))
+        {
+            return statusCode switch
+            {
+                404 => NotFound(),
+                403 => Forbid(),
+                405 => StatusCode(405),
+                _ => BadRequest()
+            };
+        }
+        return Redirect(errorPath);
     }
 
 }

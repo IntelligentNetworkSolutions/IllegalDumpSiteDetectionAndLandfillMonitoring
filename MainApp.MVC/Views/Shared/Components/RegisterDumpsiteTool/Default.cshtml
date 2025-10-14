@@ -7,83 +7,15 @@
 @using Newtonsoft.Json
 
 @section Styles{
-    <link rel="stylesheet" href="~/InspectionPwa/css/consolidated-styles.css">
-
+    <link rel="stylesheet" href="~/InspectionPwa/css/consolidated-styles.css">  
+    <link rel="stylesheet" href="~/css/RegisteredDumpsite/dumpsiteTool.css" />
 }
- <style>
 
-    #fileUploadModal,
-    #createInspectionModal,
-    #assignInspectorModal,
-    #completeInspectionModal {
-        z-index: 2200 !important;
-    }
-
-    #polygonModal,
-    #overlapModal,
-    #editDumpsiteModal,
-    #dumpsiteDetailsModal  {
-        z-index: 2000 !important;
-    }
-
-    .swal2-popup,
-    .swal2-container,
-    .toast{
-        z-index: 2300 !important;
-    }
-
-/* 
-    .modal-backdrop {
-        z-index: 1999 !important;
-    }
-    .swal2-container {
-        z-index: 99999 !important;
-    } */
-/* 
-    .toast-container {
-        position: fixed !important;
-        top: 20px !important;
-        right: 20px !important;
-        z-index: 99999 !important;
-        pointer-events: none !important;
-    }
-
-    .toast {
-        z-index: 99999 !important;
-        pointer-events: auto !important;
-    }
-
-
-
-    .modal {
-        z-index: 1050;
-    }
-
-    .modal-backdrop {
-        z-index: 1040;
-    } */
-
-
-/* 
-
-    .modal-backdrop {
-        z-index: 1999 !important;
-    }
-
-    .select2-container {
-        z-index: 99999 !important;
-    }
-
-    .select2-dropdown {
-        z-index: 99999 !important;
-    } */
-
-</style> 
 <!-- Modal HTML -->
 <div class="modal fade" id="polygonModal" tabindex="-1" role="dialog" aria-labelledby="polygonModalLabel" aria-hidden="true" style="z-index:2000;">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary ">
                 <h5 class="modal-title" id="polygonModalLabel">@DbResHtml.T("Proceed adding new registered dumpsite", "Resources")</h5>
             </div>
             <div class="modal-body">
@@ -129,10 +61,10 @@
 </div>
 
 <!-- Overlap Resolution Modal -->
-<div class="modal fade" id="overlapModal" tabindex="-1" role="dialog" aria-labelledby="overlapModalLabel" aria-hidden="true" style="z-index:2100;">
+<div class="modal fade" id="overlapModal" tabindex="-1" role="dialog" aria-labelledby="overlapModalLabel" aria-hidden="true" @* style="z-index:2100;" *@>
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title" id="overlapModalLabel">@DbResHtml.T("Dumpsite Overlap Detected", "Resources")</h5>
             </div>
             <div class="modal-body">
@@ -177,17 +109,17 @@
     </div>
 </div>
 
-<div class="modal fade" id="editDumpsiteModal" tabindex="-1" role="dialog" aria-labelledby="editDumpsiteModalLabel" aria-hidden="true" style="z-index:2000;">
+<div class="modal fade" id="editDumpsiteModal" tabindex="-1" role="dialog" aria-labelledby="editDumpsiteModalLabel" aria-hidden="true" @* style="z-index:2000;" *@>
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title" id="editDumpsiteModalLabel">@DbResHtml.T("Proceed editing the selected registered dumpsite", "Resources")</h5>
             </div>
             <div id="editDumpsiteModalBody" class="modal-body">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal" onclick="closeEditDumpsiteModal()">@DbResHtml.T("Cancel", "Resources")</button>
-                <button type="button" class="btn btn-sm bg-gradient-warning text-white" onclick="saveEditDumpsite()">@DbResHtml.T("Save", "Resources")</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal" onclick="closeEditDumpsiteModal()">@DbResHtml.T("Cancel", "Resources")</button>
+                <button type="button" class="btn btn-sm bg-gradient-primary text-white" onclick="saveEditDumpsite()">@DbResHtml.T("Save", "Resources")</button>
             </div>
         </div>
     </div>
@@ -196,7 +128,7 @@
 <div class="modal fade" id="dumpsiteDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-gradient-primary">
                 <h5 class="modal-title">Dumpsite Details</h5>
                 <button type="button" class="close" data-dismiss="modal">&times;</button>
             </div>
@@ -828,7 +760,8 @@
                         },
                         icon: "success"
                     });
-                        setTimeout(function () { location.reload(); }, 2000);
+                        closeOverlapModal();
+                        setTimeout(function () { location.reload(); }, 1000);
                     } else {
                     Swal.fire({
                         text: data.errMsg || '@DbResHtml.T("Merge operation failed", "Resources")',
@@ -1377,7 +1310,7 @@
                                 </select>
                             </div>
                             <div class="form-group clearfix">
-                                <div class="icheck-warning mt-3 text-bold">
+                                <div class="icheck-primary mt-3 text-bold">
                                     <input type="checkbox" id="isEditDumpsiteEnabled" />
                                     <label for="isEditDumpsiteEnabled">
                                         @DbResHtml.T("Is Enabled", "Resources")
@@ -1802,10 +1735,10 @@
                             text: '@DbResHtml.T("Dumpsites merged successfully", "Resources")',
                             confirmButtonText: '@DbResHtml.T("Ok", "Resources")',
                             didOpen: () => {
-                                manageMapSidebarZIndex(originalZIndex, '1040');
+                                manageMapSidebarZIndex(originalZIndex, '2300');
                             },
                             willClose: () => {
-                                manageMapSidebarZIndex(originalZIndex, '1040');
+                                manageMapSidebarZIndex(originalZIndex, '2300');
                             },
                             icon: "success"
                         });

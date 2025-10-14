@@ -174,7 +174,13 @@
                 <div class="form-group">
                     <label for="inspectionPwaRecommendations">Recommendations</label>
                     <textarea class="form-control" id="inspectionPwaRecommendations" rows="3"
-                              placeholder="Add recommendations based on findings (optional)"></textarea>
+                    placeholder="Add recommendations based on findings (optional)"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="inspectionPwaNotes">Notes</label>
+                    <textarea class="form-control" id="inspectionPwaNotes" rows="3"
+                    placeholder="Add notes based on findings (optional)"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
@@ -299,7 +305,7 @@
         // Service Worker registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/IntranetPortal/InspectionPwa/ServiceWorker')
+                 navigator.serviceWorker.register('/mainapp/IntranetPortal/InspectionPwa/ServiceWorker')
                     .then(function(registration) {
                         console.log('ServiceWorker registration successful');
                     }, function(err) {
@@ -574,21 +580,21 @@
                 </div>
             `);
 
-            $.get('/IntranetPortal/InspectionPwa/GetMyAssignedInspections')
-                .done((result) => {
-                    if (result.isSuccess) {
-                        displayInspectionsList(result.data);
-                    } else {
-                        showAlert('error', result.errMsg || 'Error loading inspections');
-                        container.html(`
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                ${result.errMsg || 'Error loading inspections'}
-                            </div>
-                        `);
-                    }
-                })
-                .fail(() => {
+        $.get('@Url.Action("GetMyAssignedInspections", "InspectionPwa", new { Area = "IntranetPortal" })')
+            .done((result) => {
+                if (result.isSuccess) {
+                    displayInspectionsList(result.data);
+                } else {
+                    showAlert('error', result.errMsg || 'Error loading inspections');
+                    container.html(`
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            ${result.errMsg || 'Error loading inspections'}
+                        </div>
+                    `);
+                }
+            })
+            .fail(() => {
                     showAlert('error', 'Error loading your inspections');
                     container.html(`
                         <div class="alert alert-danger">
@@ -610,12 +616,12 @@
                     const createdDate = new Date(inspection.createdOn).toLocaleDateString();
                     const statusClass = getStatusClass(inspection.status || 'Pending');
 
-                    html += `
+                    html += `   
                         <div class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">
                                     <i class="fas fa-file-alt"></i>
-                                    ${inspection.originalFileName || 'Inspection File'}
+                                    ${inspection.dumpsiteName || 'Inspection File'}
                                 </h6>
                                 <small class="text-muted">${createdDate}</small>
                             </div>
@@ -748,7 +754,7 @@
             formData.append("description", description);
 
             $.ajax({
-                url: '/IntranetPortal/InspectionPwa/UploadInspectionFile',
+                url: '@Url.Action("UploadInspectionFile", "InspectionPwa", new { Area = "IntranetPortal" })',
                 type: 'POST',
                 data: formData,
                 processData: false,
@@ -777,13 +783,15 @@
             $('#completeInspectionPwaId').val(inspectionId);
             $('#inspectionPwaFindings').val('');
             $('#inspectionPwaRecommendations').val('');
+            $('#inspectionPwaNotes').val('');
             $('#completeInspectionModalPwa').modal('show');
         }
 
-               function completePwaInspection() {
+       function completePwaInspection() {
             const inspectionId = $('#completeInspectionPwaId').val();
             const findings = $('#inspectionPwaFindings').val().trim();
             const recommendations = $('#inspectionPwaRecommendations').val().trim();
+            const notes = $('#inspectionPwaNotes').val().trim();
 
             if (!findings) {
                 showAlert('error', 'Please enter inspection findings');
@@ -795,12 +803,13 @@
             completeBtn.html('<i class="fas fa-spinner fa-spin"></i> Completing...').prop('disabled', true);
 
             $.ajax({
-                url: '/IntranetPortal/InspectionPwa/CompleteInspection',
+                url: '@Url.Action("CompleteInspection", "InspectionPwa", new { Area = "IntranetPortal" })',
                 type: 'POST',
                 data: JSON.stringify({
                     inspectionId: inspectionId,
                     findings: findings,
-                    recommendations: recommendations
+                    recommendations: recommendations,
+                    notes: notes
                 }),
                 contentType: 'application/json',
                 success: (result) => {
@@ -825,9 +834,8 @@
 
         function viewInspectionFiles(inspectionId) {
 
-            $.get('/IntranetPortal/InspectionPwa/GetInspectionFiles', { inspectionId: inspectionId })
-                .done((result) => {
-
+            $.get('@Url.Action("GetInspectionFiles", "InspectionPwa", new { Area = "IntranetPortal" })', { inspectionId: inspectionId })
+                    .done((result) => {
                     if (result.isSuccess) {
                         displayInspectionFiles(result.data);
                         $('#viewInspectionFilesModalPwa').modal('show');
@@ -864,8 +872,9 @@
                                     ${file.description ? `<br><small class="text-info">${file.description}</small>` : ''}
                                 </div>
                                 <div class="btn-group-vertical btn-group-sm">
-                                    <a href="/IntranetPortal/InspectionPwa/DownloadInspectionFile?fileId=${file.id}"
-                                       class="btn btn-outline-primary btn-sm">
+                                      <a href="@Url.Action("DownloadInspectionFile", "InspectionPwa", new { Area = "IntranetPortal" })?fileId=${file.id}"
+
+                                               class="btn btn-outline-primary btn-sm">
                                         <i class="fas fa-download"></i> Download
                                     </a>
                                     <button type="button" class="btn btn-outline-danger btn-sm"
@@ -933,14 +942,14 @@
                 icon: type,
                 title: type === 'success' ? 'Success!' : 'Error!',
                 text: message,
-                position: 'top-end',
-                toast: true,
-                showConfirmButton: false,
-                timer: 5000,
-                timerProgressBar: true,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
+                // // position: 'top-end',
+                // toast: true,
+                // showConfirmButton: false,
+                // timer: 5000,
+                // timerProgressBar: true,
+                // didOpen: () => {
+                //     Swal.showLoading();
+                // }
             });
         }
 
