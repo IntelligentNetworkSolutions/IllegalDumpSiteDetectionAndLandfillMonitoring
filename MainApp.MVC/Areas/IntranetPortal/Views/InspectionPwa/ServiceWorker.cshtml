@@ -6,7 +6,7 @@ const appPath = "@ViewData["AppPath"]";
 
 // Only cache essential PWA resources
 const assets = [
-    "/IntranetPortal/InspectionPwa/"
+    "/MainApp/IntranetPortal/InspectionPwa/"
 ];
 
 // Install event
@@ -63,7 +63,7 @@ self.addEventListener("fetch", fetchEvent => {
     const url = new URL(fetchEvent.request.url);
 
     // Only handle PWA app requests
-    if (url.pathname.startsWith('/IntranetPortal/InspectionPwa/')) {
+    if (url.pathname.startsWith('/MainApp/IntranetPortal/InspectionPwa/')) {
         fetchEvent.respondWith(
             fetch(fetchEvent.request)
                 .then(response => {

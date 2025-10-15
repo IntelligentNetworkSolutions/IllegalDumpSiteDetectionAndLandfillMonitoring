@@ -63,10 +63,12 @@ public class InspectionPwaController : Controller
         var appPath = _configuration.GetValue<string>("DomainSettings:PwaAppPath", "");
         var manifestFile = _configuration.GetValue<string>("AppInstanceSettings:InstanceName", "");
         var area = _configuration.GetValue<string>("ApplicationStartupMode", "");
+        var mainAppPath = _configuration.GetValue<string>("DomainSettings:MainAppPath", ""); // On server
         appPath = appPath != "" ? "/" + appPath : "";
         area = area != "" ? "/" + area : "";
+        mainAppPath = mainAppPath != "" ? "/" + mainAppPath : "";
         ViewData["AppPath"] = "/InspectionPwa";
-        ViewData["FullAppUrl"] = "https://" + domain + area + appPath;
+        ViewData["FullAppUrl"] = "https://" + domain + mainAppPath + area + appPath;
         ViewData["InstanceName"] = manifestFile;
         ViewData["Area"] = area;
         ViewData["Domain"] = domain;
@@ -82,10 +84,12 @@ public class InspectionPwaController : Controller
         var domain = _configuration.GetValue<string>("DomainSettings:MainDomain");
         var appPath = _configuration.GetValue<string>("DomainSettings:PwaAppPath", "");
         var area = _configuration.GetValue<string>("ApplicationStartupMode", "");
+        var mainAppPath = _configuration.GetValue<string>("DomainSettings:MainAppPath", "");
         appPath = !string.IsNullOrEmpty(appPath) ? "/" + appPath : "";
         area = !string.IsNullOrEmpty(area) ? "/" + area : "";
+        mainAppPath = !string.IsNullOrEmpty(mainAppPath) ? "/" + mainAppPath : "";
         ViewData["AppPath"] = appPath;
-        ViewData["FullAppUrl"] = "https://" + domain + area + appPath;
+        ViewData["FullAppUrl"] = "https://" + domain + mainAppPath + area + appPath;
         ViewData["Area"] = area;
         ViewData["Domain"] = domain;
 
