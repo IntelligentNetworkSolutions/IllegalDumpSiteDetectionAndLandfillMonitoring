@@ -67,7 +67,7 @@ public class InspectionPwaController : Controller
         appPath = appPath != "" ? "/" + appPath : "";
         area = area != "" ? "/" + area : "";
         mainAppPath = mainAppPath != "" ? "/" + mainAppPath : "";
-        ViewData["AppPath"] = "/InspectionPwa";
+        ViewData["AppPath"] = "/MainApp/InspectionPwa";
         ViewData["FullAppUrl"] = "https://" + domain + mainAppPath + area + appPath;
         ViewData["InstanceName"] = manifestFile;
         ViewData["Area"] = area;
